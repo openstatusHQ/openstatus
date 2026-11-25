@@ -16,7 +16,7 @@ export async function deleteNotification(args: {
   input: DeleteNotificationInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "notifications:write");
   const input = DeleteNotificationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

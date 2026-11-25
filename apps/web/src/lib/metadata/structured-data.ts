@@ -19,6 +19,7 @@ import type {
   WithContext,
 } from "schema-dts";
 
+import type { ContentSection } from "../../content/sections";
 import type { MDXData } from "../../content/utils";
 import { BASE_URL } from "./shared-metadata";
 
@@ -38,6 +39,10 @@ export const getJsonLDWebPage = (
     "@type": "WebPage",
     name: `${input.metadata.title} | openstatus`,
     headline: input.metadata.description,
+    datePublished: input.metadata.publishedAt.toISOString(),
+    dateModified: (
+      input.metadata.updatedAt ?? input.metadata.publishedAt
+    ).toISOString(),
     mainEntityOfPage: {
       "@type": "WebPage",
       "@id": BASE_URL,
@@ -66,7 +71,9 @@ export const getJsonLDBlogPosting = (
     "@type": "BlogPosting",
     headline: post.metadata.title,
     datePublished: post.metadata.publishedAt.toISOString(),
-    dateModified: post.metadata.publishedAt.toISOString(),
+    dateModified: (
+      post.metadata.updatedAt ?? post.metadata.publishedAt
+    ).toISOString(),
     description: post.metadata.description,
     image: post.metadata.image
       ? `${BASE_URL}${post.metadata.image}`
@@ -92,7 +99,9 @@ export const getJsonLDTechArticle = (
     headline: doc.metadata.title,
     description: doc.metadata.description,
     datePublished: doc.metadata.publishedAt.toISOString(),
-    dateModified: doc.metadata.publishedAt.toISOString(),
+    dateModified: (
+      doc.metadata.updatedAt ?? doc.metadata.publishedAt
+    ).toISOString(),
     url: `${BASE_URL}${doc.href}`,
     author: {
       "@type": "Organization",
@@ -123,6 +132,15 @@ export const getJsonLDOrganization = (): WithContext<Organization> => {
       "https://bsky.app/profile/openstatus.dev",
       "https://x.com/openstatushq",
     ],
+    // Same address the contact page and every email footer already carry —
+    // it is what lets an assistant tie the entity to the registered company.
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: "122 Rue Amelot",
+      postalCode: "75011",
+      addressLocality: "Paris",
+      addressCountry: "FR",
+    },
     contactPoint: [
       {
         "@type": "ContactPoint",
@@ -168,7 +186,7 @@ export const getJsonLDProduct = (): WithContext<Product> => {
     "@type": "Product",
     name: "openstatus",
     description:
-      "The open-source status page and uptime monitoring platform trusted by growing teams.",
+      "The open-source status page, incident response and uptime monitoring platform. Run incidents from Slack or your AI agent and declare monitors in code.",
     image: `${BASE_URL}/assets/logos/OpenStatus-Logo.svg`,
     url: BASE_URL,
     brand: {
@@ -196,9 +214,10 @@ export const getJsonLDSoftwareApplication =
       name: "openstatus",
       url: BASE_URL,
       description:
-        "The open-source status page and uptime monitoring platform trusted by growing teams.",
+        "The open-source status page, incident response and uptime monitoring platform. Run incidents from Slack or your AI agent and declare monitors in code.",
       applicationCategory: "BusinessApplication",
-      applicationSubCategory: "Status Pages & Uptime Monitoring",
+      applicationSubCategory:
+        "Status Pages, Incident Response & Uptime Monitoring",
       operatingSystem: "Web, Self-hosted",
       offers: Object.entries(allPlans).map(([_, value]) => ({
         "@type": "Offer",
@@ -274,6 +293,17 @@ export function getJsonLDItemList(
     },
   };
 }
+
+// Home → section → optional leaf (a post, a category); paths are site-relative.
+export const getJsonLDSectionBreadcrumb = (
+  section: Pick<ContentSection, "label" | "path">,
+  leaf?: { label: string; path: string },
+): WithContext<BreadcrumbList> =>
+  getJsonLDBreadcrumbList([
+    { name: "Home", url: BASE_URL },
+    { name: section.label, url: `${BASE_URL}${section.path}` },
+    ...(leaf ? [{ name: leaf.label, url: `${BASE_URL}${leaf.path}` }] : []),
+  ]);
 
 export const getJsonLDBreadcrumbList = (
   items: { name: string; url: string }[],

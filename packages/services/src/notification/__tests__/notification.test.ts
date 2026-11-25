@@ -3,18 +3,15 @@ import {
   monitor,
   notification,
   notificationsToMonitors,
+  selectWorkspaceSchema,
+  workspace,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  cleanQuotaGatedTables,
   expectAuditRow,
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
@@ -28,6 +25,7 @@ import {
 } from "../../errors";
 import { createNotification } from "../create";
 import { deleteNotification } from "../delete";
+import { getNotificationLimit } from "../limit";
 import { getNotification, listNotifications } from "../list";
 import { updateNotification } from "../update";
 
@@ -37,17 +35,34 @@ let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
 let teamMonitorId: number;
 
-beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
+// Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
+// negative-path tests (`notification-channels: 1`). The shared seeded free
+// workspace (#2) is written concurrently by the apps/server RPC suites under
+// parallel test execution, which intermittently exhausts the quota and fails
+// the wrong assertion. An isolated workspace removes that cross-suite race;
+// every test writes inside a rolled-back transaction, so its committed
+// notification count stays at zero for the whole suite.
+const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
 
-  // Clear quota-gated rows on the free workspace so
-  // `notification-channels: 1` (free plan) can actually be exercised
-  // by negative-path tests — any leftover row from prior runs tripped
-  // `LimitExceededError` before the intended assertion fired.
-  await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
+beforeAll(async () => {
+  const team = (await createWorkspaceFixture("team")).workspace;
+  teamCtx = makeUserCtx(team, { userId: 1 });
+
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
+    .catch(() => undefined);
+  const freeRow = await db
+    .insert(workspace)
+    .values({
+      slug: FREE_WS_SLUG,
+      name: `${TEST_PREFIX}-free`,
+      plan: "free",
+      limits: JSON.stringify(getLimits("free")),
+    })
+    .returning()
+    .get();
+  freeCtx = makeUserCtx(selectWorkspaceSchema.parse(freeRow), { userId: 2 });
 
   const monitorRow = await db
     .insert(monitor)
@@ -69,6 +84,10 @@ afterAll(async () => {
   await db
     .delete(monitor)
     .where(eq(monitor.id, teamMonitorId))
+    .catch(() => undefined);
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
     .catch(() => undefined);
 });
 
@@ -181,6 +200,35 @@ describe("createNotification", () => {
     });
   });
 
+  test("throws ValidationError for deprecated sms before quota and plan gates", async () => {
+    await withTestTransaction(async (tx) => {
+      const grandfathered = {
+        ...teamCtx,
+        workspace: {
+          ...teamCtx.workspace,
+          // quota 0 proves the guard runs before assertWithinLimit
+          limits: {
+            ...teamCtx.workspace.limits,
+            sms: true,
+            "notification-channels": 0,
+          },
+        },
+        db: tx,
+      };
+      await expect(
+        createNotification({
+          ctx: grandfathered,
+          input: {
+            name: `${TEST_PREFIX}-deprecated-sms`,
+            provider: "sms",
+            data: { sms: "+10000000000" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
       const readOnlyCtx = {
@@ -205,7 +253,7 @@ describe("createNotification", () => {
     });
   });
 
-  test("throws ForbiddenError for cross-workspace monitor", async () => {
+  test("throws NotFoundError for cross-workspace monitor", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
         createNotification({
@@ -217,7 +265,7 @@ describe("createNotification", () => {
             monitors: [teamMonitorId], // team's monitor
           },
         }),
-      ).rejects.toBeInstanceOf(ForbiddenError);
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 });
@@ -326,7 +374,7 @@ describe("updateNotification", () => {
       const [inserted] = await tx
         .insert(notification)
         .values({
-          workspaceId: SEEDED_WORKSPACE_FREE_ID,
+          workspaceId: freeCtx.workspace.id,
           name: `${TEST_PREFIX}-downgrade-gate`,
           provider: "pagerduty",
           data: JSON.stringify({
@@ -353,6 +401,33 @@ describe("updateNotification", () => {
           },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("keeps a deprecated sms channel editable when the plan flag is off", async () => {
+    await withTestTransaction(async (tx) => {
+      const [inserted] = await tx
+        .insert(notification)
+        .values({
+          workspaceId: freeCtx.workspace.id,
+          name: `${TEST_PREFIX}-deprecated-sms`,
+          provider: "sms",
+          data: JSON.stringify({ sms: "+10000000000" }),
+        })
+        .returning();
+      if (!inserted) throw new Error("direct insert failed");
+
+      const updated = await updateNotification({
+        ctx: { ...freeCtx, db: tx },
+        input: {
+          id: inserted.id,
+          name: `${TEST_PREFIX}-deprecated-sms-renamed`,
+          data: { sms: "+10000000000" },
+          monitors: [],
+        },
+      });
+
+      expect(updated.name).toBe(`${TEST_PREFIX}-deprecated-sms-renamed`);
     });
   });
 });
@@ -414,5 +489,98 @@ describe("list / get", () => {
       });
       expect(freeItems.find((n) => n.id === row.id)).toBeUndefined();
     });
+  });
+});
+
+describe("notification-channel count quota", () => {
+  const input = (name: string) => ({
+    name,
+    provider: "email" as const,
+    data: { email: `${name}@openstatus.dev` },
+    monitors: [],
+  });
+
+  test("createNotification rejects once the plan's channel cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Free plan caps notification channels at 1.
+      const ctx = { ...freeCtx, db: tx };
+      await createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-1`) });
+
+      await expect(
+        createNotification({ ctx, input: input(`${TEST_PREFIX}-cap-2`) }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-monitors",
+          userId: 1,
+          scopes: ["monitors:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createNotification({
+          ctx,
+          input: {
+            name: `${TEST_PREFIX}-other-group`,
+            provider: "discord",
+            data: { discord: "https://discord.com/api/webhooks/1/abc" },
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listNotifications({
+          ctx,
+          input: { limit: 100, offset: 0, order: "desc" },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+});
+
+describe("getNotificationLimit", () => {
+  test("counts the workspace's channels against its plan cap", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      expect(await getNotificationLimit({ ctx })).toEqual({
+        currentCount: 0,
+        maxCount: 1,
+        limitReached: false,
+      });
+
+      await createNotification({
+        ctx,
+        input: {
+          name: `${TEST_PREFIX}-limit`,
+          provider: "discord",
+          data: { discord: "https://discord.com/api/webhooks/1/abc" },
+          monitors: [],
+        },
+      });
+
+      expect(await getNotificationLimit({ ctx })).toEqual({
+        currentCount: 1,
+        maxCount: 1,
+        limitReached: true,
+      });
+    });
+  });
+
+  test("rejects other-group key", async () => {
+    const ctx = makeApiKeyCtx(teamCtx.workspace, {
+      keyId: "k-monitors",
+      userId: 1,
+      scopes: ["monitors:read"],
+    });
+    await expect(getNotificationLimit({ ctx })).rejects.toBeInstanceOf(
+      ForbiddenError,
+    );
   });
 });

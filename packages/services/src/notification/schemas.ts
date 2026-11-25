@@ -45,6 +45,15 @@ export type UpdateNotificationInput = z.infer<typeof UpdateNotificationInput>;
 export const DeleteNotificationInput = z.object({ id: z.number().int() });
 export type DeleteNotificationInput = z.infer<typeof DeleteNotificationInput>;
 
+export const ClaimNotificationTriggerInput = z.object({
+  monitorId: z.number().int(),
+  notificationId: z.number().int(),
+  cronTimestamp: z.number().int(),
+});
+export type ClaimNotificationTriggerInput = z.infer<
+  typeof ClaimNotificationTriggerInput
+>;
+
 export const GetNotificationInput = z.object({ id: z.number().int() });
 export type GetNotificationInput = z.infer<typeof GetNotificationInput>;
 

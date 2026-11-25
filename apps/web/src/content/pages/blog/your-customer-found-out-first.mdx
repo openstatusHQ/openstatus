@@ -1,0 +1,125 @@
+---
+title: "Your Monitoring Is Green. Your Customer Found Out First."
+description: "Most uptime monitoring exists so a dashboard can be green, not so you find out first. Why homepage pings, 200s, and single-region checks are theater — and what to monitor instead."
+author: "Maximilian Kaske"
+publishedAt: "2026-07-24"
+image: "/assets/posts/your-customer-found-out-first/your-customer-found-out-first.png"
+category: "education"
+faq:
+  - question: "Why do outages get reported by customers before monitoring catches them?"
+    answer: "Because most monitoring checks the wrong thing: a cached homepage instead of the login, checkout, or API paths customers actually use. A CDN-served 200 can stay green while every authenticated request fails."
+  - question: "Is a 200 status code enough to consider a service up?"
+    answer: "No. Error pages, maintenance pages, empty JSON responses, and broken backends frequently return 200. A meaningful check asserts on the response body and latency, not just the status code."
+  - question: "Why should uptime checks run from multiple regions?"
+    answer: "A single-region check tells you the service is reachable from that region — nothing more. DNS issues, routing problems, and regional provider outages routinely take a service down for one continent while it stays up for another."
+  - question: "How does a status page reduce the damage of an outage?"
+    answer: "Customers forgive incidents; they don't forgive silence. Publishing before the support tickets arrive turns 'they didn't even know' into 'they told me before I noticed' — and deflects the duplicate tickets while you fix the actual problem."
+---
+
+The worst message in software is not a pager alert.
+
+It's a customer email: "Hey, is the API down? We've been getting errors for the last hour."
+
+You check your monitoring. Green. You check the status page. Green. You check the app. Broken.
+
+Every engineer has lived this moment. Almost nobody talks about it, because it's embarrassing — you *had* monitoring. You paid for it. It ran every five minutes, all year. And when it mattered, a customer with zero tooling beat it by an hour, armed with nothing but the ability to actually use your product.
+
+Let's be blunt about why: most uptime monitoring is theater. It exists so a dashboard can be green, not so you find out first.
+
+## You're Monitoring the Thing That Can't Go Down
+
+Here's the standard setup: a check on `https://yourapp.com`, every five minutes, expecting a 200.
+
+That URL is your marketing page. It's static. It's cached on a CDN with a hundred points of presence and a five-nines SLA that someone else is on the hook for. It is the single most resilient URL you own. Monitoring it is like checking whether gravity still works.
+
+Meanwhile, the things that actually break — the login flow, the checkout, the API auth, the search endpoint that quietly depends on a database index someone dropped — have no check at all. Your customers don't visit your homepage. They log in, they call your API, they pay you. That's the product. The homepage is the brochure.
+
+When the database falls over, the CDN keeps serving that beautiful cached 200. Your monitor is green. Your product is dead. Both things are true, because you're not monitoring your product. You're monitoring your brochure.
+
+If your checks would stay green with the database unplugged, you don't have uptime monitoring. You have a screensaver.
+
+## A 200 Is Not a Success
+
+The second lie is the status code.
+
+Things that return 200: your maintenance page. Your framework's pretty error page. A JSON body that says `{"error": "internal server error"}` because someone caught the exception and forgot the status code. An empty array where the data should be. A login page, served to what should have been an authenticated request.
+
+"The server responded" and "the product worked" are different claims. A status code only makes the first one. Every backend framework ships a default error handler, and half of them are wired to return 200 with an apology in the body. Your monitor reads the envelope and never opens the letter.
+
+A check that means something makes assertions: the body contains what a working system would say, the response shape is right, the latency is inside the budget. "It returned *something* within 30 seconds" is not a health check. It's a liveness check for your load balancer, and your load balancer was never the thing you were worried about.
+
+## "Up" From Where?
+
+Third lie: the single region.
+
+Your check runs from one datacenter — usually the same one your infrastructure lives in, because that's the default. So what you're actually measuring is: "can our cloud reach our cloud?" Congratulations. That path has never been the problem.
+
+Your users are on hotel wifi in Singapore, on mobile networks in São Paulo, behind corporate proxies in Frankfurt. DNS propagation is regional. Routing failures are regional. Provider outages are regional. "Down" is not a global boolean — a service is routinely dead for an entire continent while the monitoring, sitting comfortably next to the origin, reports all clear.
+
+This is also where latency goes to hide. A check from us-east-1 to us-east-1 returns in 80ms forever. The customer in Sydney waiting four seconds for every API call doesn't show up anywhere — and slow is just down with better manners. Nobody churns saying "the service was slow." They churn saying "it didn't work." If you don't [measure from where your users are](/guides/what-is-synthetic-monitoring), you're not measuring their experience. You're measuring your intranet.
+
+## The Alert Went to a Muted Channel
+
+Suppose everything above is fixed. The check is real, it asserts on the body, it runs from eight regions. It fires.
+
+Into `#alerts`. A channel with 40,000 unread messages, muted by every member since the week it was created, because it also receives every deploy notification, every dependency bump, and every recovery message for every flap of every non-critical check.
+
+This is the part of the pipeline nobody audits. Teams tune their *checks* obsessively and their *routing* never. An alert that lands where nobody looks is functionally identical to no alert — worse, actually, because it produces the artifact of diligence. When the postmortem asks "did we know?", the answer is the most damning one available: yes. It was in the channel. Nobody saw it, because we trained everyone to never look.
+
+The fix isn't more alerts. It's fewer, real ones. If a check flaps, fix the check or delete it — every false alarm you tolerate is a withdrawal from the account you'll need during a real incident. An alert should mean: a human acts now. Everything else is a log line wearing an alert costume.
+
+## Meanwhile, Your Status Page Says Nothing
+
+Now the incident is real and acknowledged. Engineers are on it. And the status page — the one artifact whose entire job is this exact moment — sits green for another ninety minutes.
+
+Partly that's [politics](/blog/status-pages-is-politics): publishing an incident feels like an admission, so it waits for someone senior enough to say yes, and the wording takes three drafts. Partly it's plumbing: the status page is a separate system someone has to remember to update, mid-incident, while everything is on fire. Update the page or fix the bug — guess which one loses. Every time.
+
+So your customers refresh a green page while getting errors, and draw the only available conclusion: *these people don't even know.* That's the sentence that kills trust. Not the outage — the silence. An incident says your system failed; a green page during an incident says your honesty did.
+
+Here's what nobody tells you: customers are shockingly forgiving of downtime that's communicated. "We know, here's what's happening, next update in 30 minutes" converts an angry ticket queue into people patiently watching your updates. The same outage, communicated first by you instead of discovered by them, is a completely different event. One is an incident. The other is a betrayal. A [public postmortem](/guides/public-postmortem-underrated-marketing) afterward doesn't just cost you nothing — it's the cheapest trust-building content you will ever publish.
+
+## The Whole Point Is To Find Out First
+
+Strip everything away and uptime monitoring has exactly one job: **you learn about the outage before your customer does.** Every minute between "it broke" and "you knew" is a minute where your customers are your monitoring — the most expensive on-call rotation ever assembled, staffed by the people you can least afford to burn, filing their findings as churn.
+
+Measure that gap. Not [the nines](/guides/why-uptime-percentage-is-misleading) — nines are a marketing number, computed generously, argued about in SLA disputes. Time-to-know is an engineering number, and it's brutally honest. If a customer has ever told you about an outage first, your time-to-know was negative, and no dashboard full of 99.98% changes that.
+
+What closing the gap actually takes is everything above, wired in series:
+
+- **Monitor transactions, not pages.** The login, the checkout, the API calls your customers pay for. If the checks stay green while the database is unplugged, they're testing the wrong thing.
+- **Assert on meaning, not existence.** Response body, response shape, and a latency budget — because [slow is down](/guides/why-is-my-monitor-failing), just politer about it.
+- **Check from where your users are.** Multiple regions, including the far ones. "Up from inside our own cloud" is not a claim about your users.
+- **Make alerts mean "act now."** Route them where someone looks. Delete the ones that flap. A muted channel is an outage in your outage detection.
+- **Wire the status page into the flow.** If publishing an incident takes a meeting, it will always lose to fixing the incident. It should take one action — or happen automatically — so your customers hear it from you, not from each other.
+
+None of this is exotic. It's just the difference between monitoring built to *know* and monitoring built to *reassure*. Theater optimizes for the green dashboard. The real thing optimizes for the gap.
+
+This is why we build [openstatus](https://www.openstatus.dev): synthetic checks that run your actual transactions with real assertions, from regions all over the world, tied to a status page that's part of the incident flow instead of an afterthought. It's [open source](https://github.com/openstatusHQ/openstatus) — the checker, the dashboard, all of it — because "trust our monitoring" should not itself require blind trust.
+
+Your customers already monitor your product with every request they make. The only question is whether you find out before they tell you.
+
+## Frequently asked questions
+
+<Details summary="Why do outages get reported by customers before monitoring catches them?">
+
+Because most monitoring checks the wrong thing: a cached homepage instead of the login, checkout, or API paths customers actually use. A CDN-served 200 can stay green while every authenticated request fails.
+
+</Details>
+
+<Details summary="Is a 200 status code enough to consider a service up?">
+
+No. Error pages, maintenance pages, empty JSON responses, and broken backends frequently return 200. A meaningful check asserts on the response body and latency, not just the status code.
+
+</Details>
+
+<Details summary="Why should uptime checks run from multiple regions?">
+
+A single-region check tells you the service is reachable from that region — nothing more. DNS issues, routing problems, and regional provider outages routinely take a service down for one continent while it stays up for another.
+
+</Details>
+
+<Details summary="How does a status page reduce the damage of an outage?">
+
+Customers forgive incidents; they don't forgive silence. Publishing before the support tickets arrive turns 'they didn't even know' into 'they told me before I noticed' — and deflects the duplicate tickets while you fix the actual problem.
+
+</Details>

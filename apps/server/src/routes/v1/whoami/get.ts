@@ -1,6 +1,10 @@
 import { createRoute } from "@hono/zod-openapi";
 import { eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
+import {
+  type SettableScope,
+  apiKeySettableScopes,
+} from "@openstatus/db/src/schema/api-keys/constants";
 import { workspace } from "@openstatus/db/src/schema/workspaces";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
@@ -12,7 +16,7 @@ const getRoute = createRoute({
   method: "get",
   tags: ["whoami"],
   path: "/",
-  summary: "Get your informations",
+  summary: "Get your information",
   description: "Get the current workspace information attached to the API key.",
   responses: {
     200: {
@@ -45,11 +49,9 @@ export function registerGetWhoami(api: typeof whoamiApi) {
       });
     }
 
-    // Filter `'*'` out of the public response. The schema's enum would
-    // otherwise reject the parse — we don't expose super-admin scope
-    // even when the actor holds it.
-    const publicScopes = apiKey.scopes.filter(
-      (s): s is "read" | "write" => s === "read" || s === "write",
+    // `'*'` is never exposed, and the schema enum would reject it.
+    const publicScopes = apiKey.scopes.filter((s): s is SettableScope =>
+      (apiKeySettableScopes as readonly string[]).includes(s),
     );
 
     const data = WorkspaceSchema.parse({

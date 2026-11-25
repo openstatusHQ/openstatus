@@ -1,3 +1,4 @@
+import { resolveChatModel } from "@openstatus/ai";
 import {
   type ChatStoredMessage,
   storedMessageSchema,
@@ -24,11 +25,7 @@ import { z } from "zod";
 import { toAiSdkTools } from "@/lib/agent-tools/adapter";
 import { getChatServiceContext } from "@/lib/agent-tools/context";
 import { chatRateLimit } from "@/lib/rate-limit/chat";
-
-export const runtime = "edge";
-
-const CHAT_MODEL_FREE = "anthropic/claude-haiku-4.5";
-const CHAT_MODEL_PAID = "anthropic/claude-sonnet-4.5";
+import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
 // Drop tool parts that have no result the SDK can turn into a tool_result
 // block. `ignoreIncompleteToolCalls` doesn't cover `approval-requested`, so
@@ -55,14 +52,7 @@ const requestSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  if (!process.env.AI_GATEWAY_API_KEY) {
-    return NextResponse.json(
-      { error: "Chat is not configured on this deployment." },
-      { status: 503 },
-    );
-  }
-
-  const workspaceSlug = (await cookies()).get("workspace-slug")?.value;
+  const workspaceSlug = (await cookies()).get(WORKSPACE_SLUG_COOKIE)?.value;
   const ctx = await getChatServiceContext({ workspaceSlug });
   if (!ctx || ctx.actor.type !== "user") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -76,6 +66,17 @@ export async function POST(req: NextRequest) {
   }
 
   const plan = ctx.workspace.plan ?? "free";
+
+  // Provider is resolved from env: a self-hosted OpenAI-compatible endpoint
+  // (`AI_BASE_URL`) or the Vercel AI Gateway (`AI_GATEWAY_API_KEY`). `null`
+  // means neither is configured.
+  const model = resolveChatModel({ plan });
+  if (!model) {
+    return NextResponse.json(
+      { error: "Chat is not configured on this deployment." },
+      { status: 503 },
+    );
+  }
 
   // Skip the LLM-cost cap entirely in non-prod so testing doesn't
   // burn through the daily allowance. The Redis counter still
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
   );
 
   const result = streamText({
-    model: plan === "free" ? CHAT_MODEL_FREE : CHAT_MODEL_PAID,
+    model,
     system: buildAgentSystemPrompt({
       workspaceName: ctx.workspace.name ?? "Unknown",
       surface: "dashboard",

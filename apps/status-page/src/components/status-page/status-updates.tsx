@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Inbox } from "@openstatus/icons";
 import {
   StatusUpdates as BlockStatusUpdates,
   StatusUpdatesContent,
@@ -8,7 +9,6 @@ import {
   StatusUpdatesRss,
   StatusUpdatesSection,
   StatusUpdatesSlack,
-  StatusUpdatesSsh,
   StatusUpdatesTrigger,
 } from "@openstatus/ui/components/blocks/status-updates";
 import { Button } from "@openstatus/ui/components/ui/button";
@@ -21,7 +21,6 @@ import {
 } from "@openstatus/ui/components/ui/tabs";
 import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Inbox } from "lucide-react";
 import { useExtracted } from "next-intl";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -32,8 +31,6 @@ import {
   FormSubscribeEmail,
   type FormValues,
 } from "../forms/form-subscribe-email";
-
-export type StatusUpdateType = "email" | "rss" | "ssh" | "json" | "slack";
 
 type Page = NonNullable<RouterOutputs["statusPage"]["get"]>;
 
@@ -55,14 +52,12 @@ function getUpdateLink(
 }
 
 interface StatusUpdatesProps extends React.ComponentProps<typeof Button> {
-  types?: StatusUpdateType[];
   page?: Page | null;
   onSubscribe?: (values: FormValues) => Promise<void> | void;
 }
 
 export function StatusUpdates({
   className,
-  types = ["rss", "ssh", "json", "slack"],
   page,
   onSubscribe,
   ...props
@@ -75,12 +70,12 @@ export function StatusUpdates({
   // page payload, which intentionally omits it.
   const [password] = useCookieState(createProtectedCookieKey(domain));
 
+  const types = page?.statusUpdateTypes ?? [];
   if (types.length === 0) return null;
 
   const rssUrl = getUpdateLink("rss", page, password);
   const atomUrl = getUpdateLink("atom", page, password);
   const jsonUrl = getUpdateLink("json", page, password);
-  const sshCommand = `ssh ${page?.slug}@ssh.openstatus.dev`;
 
   return (
     <BlockStatusUpdates>
@@ -99,9 +94,6 @@ export function StatusUpdates({
             ) : null}
             {types.includes("json") ? (
               <TabsTrigger value="json">{t("JSON")}</TabsTrigger>
-            ) : null}
-            {types.includes("ssh") ? (
-              <TabsTrigger value="ssh">{t("SSH")}</TabsTrigger>
             ) : null}
           </TabsList>
           <TabsContent value="email" className="flex flex-col gap-2">
@@ -138,9 +130,6 @@ export function StatusUpdates({
           </TabsContent>
           <TabsContent value="json">
             <StatusUpdatesJson url={jsonUrl} />
-          </TabsContent>
-          <TabsContent value="ssh">
-            <StatusUpdatesSsh command={sshCommand} />
           </TabsContent>
           <TabsContent value="slack">
             <StatusUpdatesSlack rssUrl={rssUrl} />

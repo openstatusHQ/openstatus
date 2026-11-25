@@ -1,7 +1,10 @@
-import type { Locale } from "@openstatus/locales";
+import type { PageConfiguration as DBPageConfiguration } from "@openstatus/db/src/schema";
+import { defaultLocale, type Locale } from "@openstatus/locales";
 import type {
+  CustomTheme,
   PageComponent,
   PageComponentGroup,
+  PageConfiguration,
   PageSubscriber,
   StatusPage,
   StatusPageSummary,
@@ -11,13 +14,18 @@ import {
   ComponentDayStatus,
   ComponentEventStatus,
   ComponentEventType,
-  OverallStatus,
   PageAccessType,
+  PageBarType,
   PageComponentType,
+  PageMetricType,
   PageTheme,
   Locale as ProtoLocale,
   SubscriberSource,
 } from "@openstatus/proto/status_page/v1";
+import {
+  type CustomTheme as DbCustomTheme,
+  hasCustomTheme,
+} from "@openstatus/theme-store";
 
 /**
  * Database types
@@ -40,6 +48,7 @@ type DBPage = {
   defaultLocale: Locale;
   locales: Locale[] | null;
   allowIndex: boolean;
+  customTheme?: DbCustomTheme | null;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -77,7 +86,7 @@ export type DBPageSubscriber = {
   updatedAt: Date | null;
   source: "self_signup" | "vendor" | "import";
   name: string | null;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   webhookUrl: string | null;
   channelConfig: string | null;
   componentIds?: number[];
@@ -153,6 +162,50 @@ export function protoThemeToDb(theme: PageTheme): "system" | "light" | "dark" {
     default:
       return "system";
   }
+}
+
+function metricTypeToProto(
+  value: DBPageConfiguration["value"],
+): PageMetricType {
+  switch (value) {
+    case "duration":
+      return PageMetricType.DURATION;
+    case "requests":
+      return PageMetricType.REQUESTS;
+    case "runs":
+      return PageMetricType.RUNS;
+    case "manual":
+      return PageMetricType.MANUAL;
+    default:
+      return PageMetricType.UNSPECIFIED;
+  }
+}
+
+function barTypeToProto(type: DBPageConfiguration["type"]): PageBarType {
+  switch (type) {
+    case "absolute":
+      return PageBarType.ABSOLUTE;
+    case "manual":
+      return PageBarType.MANUAL;
+    default:
+      return PageBarType.UNSPECIFIED;
+  }
+}
+
+/**
+ * Convert the DB page configuration (parsed via pageConfigurationSchema) to proto.
+ */
+export function dbConfigurationToProto(
+  configuration: DBPageConfiguration,
+): PageConfiguration {
+  return {
+    $typeName: "openstatus.status_page.v1.PageConfiguration" as const,
+    metricType: metricTypeToProto(configuration.value),
+    barType: barTypeToProto(configuration.type),
+    showUptime: configuration.uptime,
+    themeKey: configuration.theme,
+    days: configuration.days,
+  };
 }
 
 /**
@@ -247,36 +300,43 @@ export function eventStatusToProto(
   }
 }
 
+// Keyed by `Locale`, so adding a language to `@openstatus/locales` fails to
+// compile until the proto enum gains a matching value — a missing case here
+// used to silently fold the locale to EN and produce duplicates on read.
+const DB_LOCALE_TO_PROTO: Record<Locale, ProtoLocale> = {
+  en: ProtoLocale.EN,
+  fr: ProtoLocale.FR,
+  de: ProtoLocale.DE,
+  tr: ProtoLocale.TR,
+  hi: ProtoLocale.HI,
+  ko: ProtoLocale.KO,
+  ja: ProtoLocale.JA,
+};
+
+const PROTO_LOCALE_TO_DB: Record<ProtoLocale, Locale | null> = {
+  [ProtoLocale.UNSPECIFIED]: null,
+  [ProtoLocale.EN]: "en",
+  [ProtoLocale.FR]: "fr",
+  [ProtoLocale.DE]: "de",
+  [ProtoLocale.TR]: "tr",
+  [ProtoLocale.HI]: "hi",
+  [ProtoLocale.KO]: "ko",
+  [ProtoLocale.JA]: "ja",
+};
+
 /**
  * Convert DB locale string to proto enum.
  */
 export function dbLocaleToProto(locale: Locale): ProtoLocale {
-  switch (locale) {
-    case "en":
-      return ProtoLocale.EN;
-    case "fr":
-      return ProtoLocale.FR;
-    case "de":
-      return ProtoLocale.DE;
-    default:
-      return ProtoLocale.EN;
-  }
+  return DB_LOCALE_TO_PROTO[locale] ?? ProtoLocale.UNSPECIFIED;
 }
 
 /**
- * Convert proto locale enum to DB string.
+ * Convert proto locale enum to DB string. Unknown/unspecified values fall back
+ * to the default locale.
  */
 export function protoLocaleToDb(locale: ProtoLocale): Locale {
-  switch (locale) {
-    case ProtoLocale.EN:
-      return "en";
-    case ProtoLocale.FR:
-      return "fr";
-    case ProtoLocale.DE:
-      return "de";
-    default:
-      return "en";
-  }
+  return PROTO_LOCALE_TO_DB[locale] ?? defaultLocale;
 }
 
 /**
@@ -299,11 +359,33 @@ export function dbPageToProto(page: DBPage): StatusPage {
     createdAt: page.createdAt?.toISOString() ?? "",
     updatedAt: page.updatedAt?.toISOString() ?? "",
     defaultLocale: dbLocaleToProto(page.defaultLocale),
-    locales: page.locales?.map(dbLocaleToProto) ?? [],
+    locales: page.locales
+      ? [...new Set(page.locales.map(dbLocaleToProto))]
+      : [],
     password: page.password ?? "",
     authEmailDomains: page.authEmailDomains?.split(",").filter(Boolean) ?? [],
     allowIndex: page.allowIndex ?? true,
     allowedIpRanges: page.allowedIpRanges ?? "",
+    customTheme: dbCustomThemeToProto(page.customTheme),
+  };
+}
+
+export function dbCustomThemeToProto(
+  customTheme: DbCustomTheme | null | undefined,
+): CustomTheme | undefined {
+  if (!hasCustomTheme(customTheme)) return undefined;
+  // ThemeVars values are `string | undefined`; proto maps require `string`.
+  const pick = (vars?: Record<string, string | undefined>) => {
+    const out: Record<string, string> = {};
+    for (const [name, value] of Object.entries(vars ?? {})) {
+      if (typeof value === "string") out[name] = value;
+    }
+    return out;
+  };
+  return {
+    $typeName: "openstatus.status_page.v1.CustomTheme" as const,
+    light: pick(customTheme.light),
+    dark: pick(customTheme.dark),
   };
 }
 
@@ -433,15 +515,4 @@ export function dbSubscriberToProto(
       : undefined,
     componentIds: (subscriber.componentIds ?? []).map(String),
   };
-}
-
-/**
- * Get overall status based on component statuses.
- * This is a placeholder - the actual implementation would look at
- * monitor statuses, active incidents, and maintenance windows.
- */
-export function getOverallStatusValue(): OverallStatus {
-  // Default to operational - in a real implementation this would
-  // aggregate status from monitors and incidents
-  return OverallStatus.OPERATIONAL;
 }

@@ -1,9 +1,9 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Success, Globe, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { Table } from "@tanstack/react-table";
-import { CircleCheck, Globe, X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 
@@ -50,7 +50,7 @@ export function SubscribersDataTableToolbar({
             column={table.getColumn("status")}
             title="Status"
             options={statusOptions}
-            icon={CircleCheck}
+            icon={Success}
           />
         )}
         {table.getColumn("source") && sourceOptions.length > 0 && (
@@ -68,7 +68,7 @@ export function SubscribersDataTableToolbar({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <X />
+            <Close />
           </Button>
         )}
       </div>

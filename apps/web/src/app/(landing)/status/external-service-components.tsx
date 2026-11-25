@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown, ChevronRight } from "@openstatus/icons";
 import { StatusBar } from "@openstatus/ui/components/blocks/status-bar";
 import type {
   StatusBarData,
@@ -12,10 +13,14 @@ import {
   CollapsibleTrigger,
 } from "@openstatus/ui/components/ui/collapsible";
 import { cn } from "@openstatus/ui/lib/utils";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ExternalServicePill } from "./external-service-pill";
+import { renderIncidentEvent } from "./incident-event";
+import {
+  type OverlayIncident,
+  bucketIncidentsByUtcDay,
+} from "./incident-events";
 
 export type ComponentHistoryDay = {
   day: string;
@@ -34,6 +39,7 @@ export type ExternalServiceComponentItem = {
   indicator: string;
   status: string;
   history: ComponentHistoryDay[];
+  incidents?: OverlayIncident[];
 };
 
 export type ExternalServiceComponentsProps = {
@@ -89,10 +95,12 @@ function indicatorToStatusType(args: {
 function buildSeries(
   history: ComponentHistoryDay[],
   days: number,
+  incidents?: OverlayIncident[],
 ): StatusBarData[] {
   const byDay = new Map<string, ComponentHistoryDay>();
   for (const r of history) byDay.set(r.day.slice(0, 10), r);
 
+  const eventsByDay = bucketIncidentsByUtcDay(incidents ?? [], { days });
   const out: StatusBarData[] = [];
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
@@ -111,7 +119,7 @@ function buildSeries(
       day: iso,
       bar: [{ status, height: 100 }],
       card: [{ status, value: systemStatusLabels[status].short }],
-      events: [],
+      events: eventsByDay.get(iso) ?? [],
     });
   }
   return out;
@@ -178,7 +186,7 @@ function ComponentRow({
   days: number;
   hrefBase?: string;
 }) {
-  const series = buildSeries(component.history, days);
+  const series = buildSeries(component.history, days, component.incidents);
   return (
     <div className="border-border/50 flex flex-col gap-1 border-b py-2 last:border-b-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -199,7 +207,7 @@ function ComponentRow({
         />
       </div>
       <div className="[&_[data-slot=status-bar-item]]:rounded-none [&_[data-slot=status-bar-item]>div]:rounded-none [&_[data-slot=status-bar-item]>div>div]:rounded-none">
-        <StatusBar data={series} />
+        <StatusBar data={series} renderEvent={renderIncidentEvent} />
       </div>
     </div>
   );
@@ -232,9 +240,9 @@ function SectionBlock({
       <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left">
         <span className="flex items-center gap-2 text-sm font-medium">
           {open ? (
-            <ChevronDownIcon className="size-4 shrink-0" />
+            <ChevronDown className="size-4 shrink-0" />
           ) : (
-            <ChevronRightIcon className="size-4 shrink-0" />
+            <ChevronRight className="size-4 shrink-0" />
           )}
           {label}
           <span className="text-muted-foreground">

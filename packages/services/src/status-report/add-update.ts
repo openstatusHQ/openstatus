@@ -1,15 +1,18 @@
-import { eq } from "@openstatus/db";
 import {
-  statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { StatusReport, StatusReportUpdate } from "../types";
+import { recomputeReportStatus } from "./derive-status";
 import {
   getCurrentImpactsForReport,
   getReportInWorkspace,
@@ -29,8 +32,9 @@ export async function addStatusReportUpdate(args: {
   input: AddStatusReportUpdateInput;
 }): Promise<AddStatusReportUpdateResult> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = AddStatusReportUpdateInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     const report = await getReportInWorkspace({
@@ -96,6 +100,8 @@ export async function addStatusReportUpdate(args: {
         status: input.status,
         date,
         message: input.message,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();
@@ -106,12 +112,11 @@ export async function addStatusReportUpdate(args: {
       componentImpacts: writtenImpacts,
     });
 
-    const updatedReport = await tx
-      .update(statusReport)
-      .set({ status: input.status, updatedAt: new Date() })
-      .where(eq(statusReport.id, report.id))
-      .returning()
-      .get();
+    // derived, not assigned — a back-dated update must not win
+    const updatedReport = await recomputeReportStatus(tx, report.id, {
+      touchIfLatestIs: newUpdate.id,
+      updatedBy: actorUserId,
+    });
 
     if (!updatedReport) {
       throw new InternalServiceError(

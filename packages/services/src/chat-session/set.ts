@@ -5,12 +5,13 @@ import {
   chatSession,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { UnauthorizedError } from "../errors";
+import { NotFoundError, UnauthorizedError } from "../errors";
 import { compactMessages, getChatSessionInWorkspace } from "./internal";
 import { SetChatSessionMessagesInput } from "./schemas";
 
@@ -20,10 +21,15 @@ import { SetChatSessionMessagesInput } from "./schemas";
  * full-replace lets each fire be the canonical snapshot. Existing-row
  * `createdAt` wins on overlap so older messages don't drift forward.
  */
+// Per-user UI state, not workspace configuration: only user actors get past
+// `tryGetActorUserId`, so `requireScope` could never fire, and the audit action
+// union has no `chat_session` verb.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function setChatSessionMessages(args: {
   ctx: ServiceContext;
   input: SetChatSessionMessagesInput;
 }): Promise<ChatSessionRow> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const input = SetChatSessionMessagesInput.parse(args.input);
 
@@ -51,6 +57,7 @@ export async function setChatSessionMessages(args: {
       .where(eq(chatSession.id, session.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("chat_session", session.id);
 
     return updated;
   });

@@ -9,12 +9,10 @@ import {
   statusReportUpdateToPageComponents,
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -28,7 +26,7 @@ let teamCtx: ServiceContext;
 let workspaceId: number;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
   workspaceId = team.id;
 });

@@ -1,0 +1,205 @@
+---
+title: "Introducing @openstatus/health: health endpoints that say which dependency is down"
+description: "After three years of watching what our users monitor, we extracted our own health endpoints into a package. Per-dependency probes, ok | degraded | unhealthy, and adapters for Hono, Elysia, Express, Next.js and TanStack Start."
+author: "Thibault Le Ouay Ducasse"
+publishedAt: "2026-09-17"
+category: "engineering"
+image: "/assets/posts/introducing-openstatus-health/health.png"
+---
+
+We have been doing uptime checks for a living for the last three years.
+
+In that time we have seen a lot of the endpoints our users point us at, and
+most of them answer the same way: `200 OK`, or a `500` with zero context.
+
+Here is a real one, from [trigger.dev](https://github.com/triggerdotdev/trigger.dev/blob/7e56062499a3ffd63dc077ddd9bb2529dfb49231/apps/webapp/app/routes/healthcheck.tsx)
+:
+
+```ts
+export const loader: LoaderFunction = async ({ request }) => {
+  try {
+    await rbac.isUsingPlugin();
+
+    if (env.HEALTHCHECK_DATABASE_DISABLED === "1") {
+      return new Response("OK");
+    }
+
+    await prisma.$queryRaw`SELECT 1`;
+
+    return new Response("OK");
+  } catch (error: unknown) {
+    console.log("healthcheck ❌", { error });
+    return new Response("ERROR", { status: 500 });
+  }
+};
+```
+
+There is nothing wrong with it. We wrote the same thing, several times, in our
+own services.
+
+The problem is that it’s a boolean. When it flips to 500, **you know something broke.
+You do not know what**. You find out by opening a second tab, jumping into your logging provider, and hunting through stack traces.
+
+
+Worse, it is all-or-nothing. If Redis is your cache and not your database,
+losing it should not take the whole service out of the load balancer. That
+`try/catch` cannot express the difference.
+
+So we extracted the `/health` endpoints that sit in front of our own services
+and shipped them as a package.
+
+Now, you could set up a full observability stack, OpenTelemetry collectors, trace exporters, and APM agents. But for many microservices, serverless functions, or mid-sized applications, full OpenTelemetry setup is overkill when all you need is actionable, low-overhead health reporting at the network edge.
+
+
+## @openstatus/health
+
+[`@openstatus/health`](https://github.com/openstatusHQ/health) is a
+dependency-free core that runs *probes* against your database, cache and
+third-party APIs to generate a single diagnostic report. Thin adapters mount it as
+`GET /health` on your framework. Thin probe packages know how to ping one
+dependency each.
+
+It runs on Node ≥ 22, Deno, Bun and edge runtimes, and is published to both
+[npm](https://www.npmjs.com/package/@openstatus/health) and
+[JSR](https://jsr.io/@openstatus/health).
+
+Install the core, one adapter, and the probes you need:
+
+```sh
+npm install @openstatus/health @openstatus/health-hono @openstatus/health-turso
+```
+
+Mount the route:
+
+```ts
+import { Hono } from "hono";
+import { healthRoute } from "@openstatus/health-hono";
+import { tursoProbe } from "@openstatus/health-turso";
+import { unkeyProbe } from "@openstatus/health-unkey";
+
+const app = new Hono();
+
+app.route("/", healthRoute({ probes: [tursoProbe({ client }), unkeyProbe()] }));
+
+export default app;
+```
+
+And `GET /health` answers with the aggregate status *and* one entry per
+dependency:
+
+```json
+{
+  "status": "degraded",
+  "checkedAt": "2026-09-11T12:00:00.000Z",
+  "latencyMs": 41,
+  "checks": [
+    { "name": "database", "status": "ok",      "critical": true,  "latencyMs": 3 },
+    { "name": "redis",    "status": "skipped", "critical": false, "latencyMs": 0 }
+  ]
+}
+```
+
+That is the whole point. The endpoint names the dependency.
+
+## Three states, not two
+
+A probe is either critical or it is not, and the report follows from that:
+
+- a failing or timed-out **critical** probe makes the report `unhealthy`
+- a failing **non-critical** probe makes it `degraded`
+- `skipped` probes never affect the outcome
+
+`ok` and `degraded` answer `200`, `unhealthy` answers `503`. Both codes are
+configurable. Your load balancer keeps the instance in rotation while Redis is
+slow, and pulls it when Postgres is gone.
+
+## One package per concern
+
+The core has zero runtime dependencies and contains only the probe runner, cache layer, and status renderer. Everything else is completely opt-in.
+
+- **Adapters**: Hono, Elysia, Express 4/5, Next.js App Router, TanStack Start,
+  and `createHealthHandler()` for anything with a Fetch API (`Deno.serve`,
+  `Bun.serve`, Workers).
+- **Probes**: Postgres, MySQL, MongoDB, Turso, Neon, PlanetScale, Supabase,
+  Convex, Prisma, Drizzle, ClickHouse, D1, Redis, Upstash, S3, R2, Workers KV,
+  BullMQ, Inngest, QStash, Trigger.dev, Kafka, NATS, Algolia, Meilisearch,
+  Typesense, Stripe, Clerk, WorkOS, Resend, Sentry, PostHog, Unkey, OpenAI,
+  Anthropic, plus DNS, TCP, TLS, gRPC, disk and memory.
+- **Hosting metadata**: Fly.io, Railway, Vercel, Koyeb and Cloudflare, which
+  add `region`, `instanceId`, `service` and `version` under `server` so you know
+  *which replica* answered.
+
+Adapters hold no response logic, they mount the same core, so status codes,
+caching and rendering are identical whether you run Hono on Bun or Express on
+Node. And CI bundles a one-line consumer of every package and fails if an
+unrelated library lands in the output, so importing the Hono adapter never
+drags in Express.
+
+Here is the same endpoint on Next.js, with a different probe:
+
+```ts
+// app/health/route.ts
+import { healthRoute } from "@openstatus/health-next";
+import { supabaseProbe } from "@openstatus/health-supabase";
+
+// required: keeps Next.js from statically caching the route
+export const dynamic = "force-dynamic";
+
+export const { GET, HEAD } = healthRoute({ probes: [supabaseProbe({ client })] });
+```
+
+Probes never read your environment. They take a client, a base URL, or a host
+and port, which makes them testable, and lets an unconfigured optional
+dependency report `skipped` instead of failing.
+
+## Two endpoints, one line apart
+
+Most platforms ask your service two distinct questions:
+
+- **Liveness** (/livez): "Are you still running?" (If false: restart container)
+- **Readiness** (/readyz): "Can you process incoming traffic?" (If false: route traffic elsewhere)
+
+You can separate these concerns in two lines of code by re-using the adapter:
+
+```ts
+// Liveness: Process is alive (no checks run, always 200 OK)
+app.route("/", healthRoute({ path: "/livez", probes: [] }));
+
+// Readiness: Downstream dependencies are operational (800ms hard timeout)
+app.route("/", healthRoute({ path: "/readyz", probes, deadlineMs: 800 }));
+```
+
+An empty probe list is always `ok`, so `/livez` just proves the process is
+still answering. `/readyz` runs the real checks, and `deadlineMs` caps the
+whole round so one hung dependency cannot make the endpoint hang too.
+
+You can also set `cacheMs` and `staleMs` to answer from the last report while
+a refresh runs in the background. A health endpoint polled every second
+should not become its own load test.
+
+If you would rather not publish your dependency list, set
+`exposeChecks: false` and the body drops to `status` and `checkedAt`, which is
+all a load balancer reads anyway. It also accepts a function of the request, so
+one route can stay terse for anonymous callers and detailed for your on-call
+engineer.
+
+## Missing a provider? Add it
+
+Missing a provider? Just add it.
+
+A probe is just a plain function that accepts a client or URL connection and returns a standard status object (most built-in probes are under 50 lines of code including unit tests).
+
+Open an issue or a PR on
+[openstatusHQ/health](https://github.com/openstatusHQ/health). If you want to
+sanity-check the shape first, the existing probes are the template.
+
+## Now go monitor it
+
+One thing to keep in mind when you point a monitor at it: `degraded` answers
+`200`. A status-code assertion alone will miss it. Assert on the body instead,
+`"status":"ok"`, and you get alerted while you still have a working database.
+
+- [github.com/openstatusHQ/health](https://github.com/openstatusHQ/health)
+- [Documentation on openstatus.dev](/health)
+- [Discord](https://discord.gg/openstatus), if you want a framework or a probe
+  we do not cover yet. Adapters and probes are small, issues and PRs welcome.

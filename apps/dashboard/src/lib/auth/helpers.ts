@@ -1,62 +1,31 @@
-import { db, eq } from "@openstatus/db";
-import { user, usersToWorkspaces, workspace } from "@openstatus/db/src/schema";
+import {
+  createUserWithWorkspace,
+  getUserByEmail as getUserByEmailService,
+  getUserForAuth,
+} from "@openstatus/services/user";
 import type { AdapterUser } from "next-auth/adapters";
 import * as randomWordSlugs from "random-word-slugs";
 
-export async function createUser(data: AdapterUser) {
-  const newUser = await db
-    .insert(user)
-    .values({
+export { normalizeEmail } from "@openstatus/services/user";
+
+/** An ambiguous legacy email throws, failing the sign-in with `?error=Configuration`. */
+export function getUserByEmail(email: string) {
+  return getUserByEmailService({ input: { email } });
+}
+
+export function createUser(data: AdapterUser) {
+  return createUserWithWorkspace({
+    input: {
       email: data.email,
       photoUrl: data.image,
       name: data.name,
       firstName: data.firstName,
       lastName: data.lastName,
-    })
-    .returning()
-    .get();
-
-  let slug: string | undefined = undefined;
-
-  while (!slug) {
-    slug = randomWordSlugs.generateSlug(2);
-    const slugAlreadyExists = await db
-      .select()
-      .from(workspace)
-      .where(eq(workspace.slug, slug))
-      .get();
-
-    if (slugAlreadyExists) {
-      console.warn(`slug already exists: '${slug} - recreating new one'`);
-      slug = undefined;
-    }
-  }
-
-  const newWorkspace = await db
-    .insert(workspace)
-    .values({ slug, name: "" })
-    .returning({ id: workspace.id })
-    .get();
-
-  await db
-    .insert(usersToWorkspaces)
-    .values({
-      userId: newUser.id,
-      workspaceId: newWorkspace.id,
-      role: "owner",
-    })
-    .returning()
-    .get();
-
-  return newUser;
+    },
+    generateSlug: () => randomWordSlugs.generateSlug(2),
+  });
 }
 
-export async function getUser(id: string) {
-  const _user = await db
-    .select()
-    .from(user)
-    .where(eq(user.id, Number(id)))
-    .get();
-
-  return _user || null;
+export function getUser(id: string) {
+  return getUserForAuth({ input: { userId: Number(id) } });
 }

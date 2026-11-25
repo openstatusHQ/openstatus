@@ -25,7 +25,8 @@ type TCPData struct {
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
 
-	Error uint8 `json:"error"`
+	Error    uint8 `json:"error"`
+	Attempts int   `json:"attempts"`
 }
 
 func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Request[private_locationv1.IngestTCPRequest]) (*connect.Response[private_locationv1.IngestTCPResponse], error) {
@@ -38,7 +39,7 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 		return nil, NewValidationError(err)
 	}
 
-	ic, err := h.getIngestContext(ctx, token, req.Msg.Id)
+	ic, err := h.getIngestContext(ctx, token, req.Msg.MonitorId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -58,6 +59,7 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 		WorkspaceID:   int64(ic.Monitor.WorkspaceID),
 		Timestamp:     req.Msg.Timestamp,
 		Error:         uint8(req.Msg.Error),
+		Attempts:      attemptCount(req.Msg.Attempts),
 		Region:        strconv.Itoa(ic.Region.ID),
 		MonitorID:     int64(ic.Monitor.ID),
 		Timing:        req.Msg.Timing,
@@ -66,9 +68,18 @@ func (h *privateLocationHandler) IngestTCP(ctx context.Context, req *connect.Req
 		Trigger:       "cron",
 		URI:           req.Msg.Uri,
 		RequestStatus: req.Msg.RequestStatus,
+		ErrorMessage:  req.Msg.Message,
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceTCP, ic.Region.ID)
+
+	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
+		RequestStatus: data.RequestStatus,
+		Message:       data.ErrorMessage,
+		Latency:       data.Latency,
+		CronTimestamp: data.CronTimestamp,
+		ErrorFlag:     data.Error,
+	})
 
 	return connect.NewResponse(&private_locationv1.IngestTCPResponse{}), nil
 }

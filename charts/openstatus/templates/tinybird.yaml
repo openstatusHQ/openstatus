@@ -1,0 +1,91 @@
+{{- if .Values.tinybird.enabled }}
+{{- $name := include "openstatus.component" (dict "ctx" $ "component" "tinybird-local") }}
+{{- $p := .Values.tinybird.persistence }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "tinybird-local") | nindent 4 }}
+  ports:
+    - name: http
+      port: 7181
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+    app.kubernetes.io/component: tinybird-local
+spec:
+  serviceName: {{ $name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "tinybird-local") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "tinybird-local") | nindent 8 }}
+    spec:
+      {{- include "openstatus.scheduling" . | nindent 6 }}
+      containers:
+        - name: tinybird-local
+          image: {{ include "openstatus.externalImage" .Values.tinybird.image | quote }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          env:
+            {{- range $k, $v := .Values.tinybird.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 7181
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 5
+          startupProbe:
+            httpGet:
+              path: /
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          resources:
+            {{- toYaml .Values.tinybird.resources | nindent 12 }}
+          volumeMounts:
+            - name: clickhouse
+              mountPath: /var/lib/clickhouse
+            - name: redis
+              mountPath: /redis-data
+  volumeClaimTemplates:
+    - metadata:
+        name: clickhouse
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with $p.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $p.clickhouse.size }}
+    - metadata:
+        name: redis
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        {{- with $p.storageClass }}
+        storageClassName: {{ . }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $p.redis.size }}
+{{- end }}

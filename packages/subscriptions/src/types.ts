@@ -11,10 +11,11 @@ export interface Subscription {
   componentIds: number[]; // Empty = entire page
 
   // Only ONE identifier populated based on channelType
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email?: string;
   webhookUrl?: string;
-  channelConfig?: string; // JSON string for headers, secrets, etc.
+  slackChannelId?: string;
+  channelConfig?: string; // JSON string for headers, secrets, slack teamId, etc.
 
   token?: string;
   acceptedAt?: Date;
@@ -38,12 +39,12 @@ export interface PageUpdate {
   message: string;
   pageComponentIds: number[];
   pageComponents: string[];
-  date: string; // can be single string or "from - to"
+  date: string; // ISO timestamp of the update itself
 
   // Optional fields consumed by the prepared (staged) generic webhook payload.
   // Populated by the matching dispatcher; ignored by email/Slack/Discord
   // builders, which key off the fields above.
-  updateId?: number; // statusReportUpdate.id (status reports only)
+  updateId?: number; // entity-specific update row id
   pageComponentsWithId?: { id: number; name: string }[];
   // Current impact per component as of this update (not the raw delta).
   componentsWithImpact?: {

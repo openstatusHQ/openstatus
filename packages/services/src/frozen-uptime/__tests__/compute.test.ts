@@ -1,0 +1,249 @@
+import { describe, expect, test } from "vitest";
+
+import {
+  type ComputeCountRow,
+  computeMonitorMonth,
+  monthDays,
+  monthRange,
+  previousMonth,
+} from "../compute";
+
+const MONTH = "2026-06-01";
+
+const row = (
+  day: string,
+  counts: Partial<Pick<ComputeCountRow, "ok" | "degraded" | "error">> = {},
+  monitorId = "77",
+): ComputeCountRow => ({
+  monitorId,
+  day,
+  ok: counts.ok ?? 0,
+  degraded: counts.degraded ?? 0,
+  error: counts.error ?? 0,
+});
+
+describe("previousMonth", () => {
+  test("returns the UTC first-of-month before now", () => {
+    expect(previousMonth(new Date(Date.UTC(2026, 6, 10)))).toBe("2026-06-01");
+    expect(previousMonth(new Date(Date.UTC(2026, 0, 10)))).toBe("2025-12-01");
+  });
+});
+
+describe("monthRange", () => {
+  test("spans [first-of-month, first-of-next-month) in UTC ms", () => {
+    const { start, end } = monthRange(MONTH);
+    expect(start).toBe(Date.UTC(2026, 5, 1));
+    expect(end).toBe(Date.UTC(2026, 6, 1));
+  });
+
+  test("uses local midnight in the given time zone", () => {
+    // Berlin is UTC+2 in June, UTC+1 in December
+    expect(monthRange(MONTH, "Europe/Berlin")).toEqual({
+      start: Date.UTC(2026, 4, 31, 22),
+      end: Date.UTC(2026, 5, 30, 22),
+    });
+    expect(monthRange("2026-12-01", "Europe/Berlin")).toEqual({
+      start: Date.UTC(2026, 10, 30, 23),
+      end: Date.UTC(2026, 11, 31, 23),
+    });
+  });
+});
+
+describe("monthDays", () => {
+  test("handles 31/30/28-day months and leap February", () => {
+    expect(monthDays("2026-07-01").length).toBe(31);
+    expect(monthDays("2026-06-01").length).toBe(30);
+    expect(monthDays("2026-02-01").length).toBe(28);
+    expect(monthDays("2028-02-01").length).toBe(29);
+    expect(monthDays(MONTH)[0]).toBe("2026-06-01");
+    expect(monthDays(MONTH)[29]).toBe("2026-06-30");
+  });
+});
+
+describe("computeMonitorMonth", () => {
+  test("slices ISO day strings and zero-fills missing days", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [
+        row("2026-06-05T00:00:00.000Z", { ok: 42, degraded: 1 }),
+        row("2026-06-30", { ok: 7, error: 2 }),
+      ],
+    });
+
+    expect(computed).not.toBeNull();
+    expect(computed?.days.length).toBe(30);
+    expect(computed?.days[4]).toEqual({
+      day: "2026-06-05",
+      requests: { ok: 42, degraded: 1, error: 0 },
+    });
+    expect(computed?.days[29]).toEqual({
+      day: "2026-06-30",
+      requests: { ok: 7, degraded: 0, error: 2 },
+    });
+    expect(computed?.days[0]).toEqual({
+      day: "2026-06-01",
+      requests: { ok: 0, degraded: 0, error: 0 },
+    });
+  });
+
+  test("drops rows outside the month and rows of other monitors", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [
+        row("2026-05-31", { ok: 99 }),
+        row("2026-07-01", { ok: 99 }),
+        row("2026-06-10", { ok: 99 }, "88"),
+        row("2026-06-10", { ok: 5 }),
+      ],
+    });
+
+    expect(computed?.days[9].requests.ok).toBe(5);
+    expect(computed?.days.every((d) => d.requests.ok <= 5)).toBe(true);
+  });
+
+  test("sums multiple rows for the same day instead of overwriting", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [
+        row("2026-06-10", { ok: 10, degraded: 1 }),
+        row("2026-06-10T12:00:00.000Z", { ok: 5, error: 2 }),
+      ],
+    });
+
+    expect(computed?.days[9]).toEqual({
+      day: "2026-06-10",
+      requests: { ok: 15, degraded: 1, error: 2 },
+    });
+  });
+
+  test("adds the runs of a day when given", () => {
+    const runs = { ok: 280, degraded: 1, error: 3 };
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [row("2026-06-10", { ok: 10 })],
+      runs: new Map([["2026-06-10", runs]]),
+    });
+    expect(computed?.days[9]).toEqual({
+      day: "2026-06-10",
+      requests: { ok: 10, degraded: 0, error: 0 },
+      runs,
+    });
+    expect(computed?.days[0]).not.toHaveProperty("runs");
+  });
+
+  test("returns null when the monitor has no counts in the month", () => {
+    expect(
+      computeMonitorMonth({ month: MONTH, monitorId: 77, counts: [] }),
+    ).toBeNull();
+    expect(
+      computeMonitorMonth({
+        month: MONTH,
+        monitorId: 77,
+        counts: [
+          row("2026-05-31", { ok: 1 }),
+          row("2026-06-10", { ok: 1 }, "88"),
+        ],
+      }),
+    ).toBeNull();
+  });
+});
+
+describe("computeMonitorMonth bad ranges", () => {
+  const bucket = (day: string, b: number, degraded: number, error: number) => ({
+    day,
+    bucket: b,
+    degraded,
+    error,
+  });
+
+  test("attaches ranges to the right day and leaves clean days without bad", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [
+        row("2026-06-10", { ok: 8520, error: 120 }),
+        row("2026-06-11", { ok: 8640 }),
+      ],
+      runs: new Map([
+        ["2026-06-10", { ok: 1420, degraded: 0, error: 20 }],
+        ["2026-06-11", { ok: 1440, degraded: 0, error: 0 }],
+      ]),
+      bad: {
+        requests: [
+          bucket("2026-06-10", 95, 0, 30),
+          bucket("2026-06-10T00:00:00.000Z", 94, 0, 90),
+        ],
+        runs: [bucket("2026-06-10", 94, 0, 15), bucket("2026-06-10", 95, 0, 5)],
+      },
+    });
+
+    expect(computed?.bucketMismatch).toBe(false);
+    expect(computed?.days[9].bad).toEqual({
+      requests: [
+        [94, 1, 0, 90],
+        [95, 1, 0, 30],
+      ],
+      runs: [
+        [94, 1, 0, 15],
+        [95, 1, 0, 5],
+      ],
+    });
+    expect(computed?.days[10]).not.toHaveProperty("bad");
+    expect(computed?.days[0]).not.toHaveProperty("bad");
+  });
+
+  test("a measure without failures has no list", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [row("2026-06-10", { ok: 10, degraded: 2 })],
+      bad: { requests: [bucket("2026-06-10", 3, 2, 0)], runs: [] },
+    });
+    expect(computed?.days[9].bad).toEqual({ requests: [[3, 1, 2, 0]] });
+  });
+
+  test("ranges that do not add up to the day counts are dropped and flagged", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [
+        row("2026-06-10", { ok: 10, error: 5 }),
+        row("2026-06-12", { ok: 10, error: 1 }),
+      ],
+      bad: {
+        requests: [
+          bucket("2026-06-10", 3, 0, 4),
+          bucket("2026-06-12", 0, 0, 1),
+        ],
+        runs: [],
+      },
+    });
+    expect(computed?.bucketMismatch).toBe(true);
+    expect(computed?.days.some((d) => "bad" in d)).toBe(false);
+  });
+
+  test("run failures without run ranges are a mismatch", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [row("2026-06-10", { ok: 10 })],
+      runs: new Map([["2026-06-10", { ok: 1, degraded: 0, error: 1 }]]),
+      bad: { requests: [], runs: [] },
+    });
+    expect(computed?.bucketMismatch).toBe(true);
+  });
+
+  test("without bucket data the month has no ranges", () => {
+    const computed = computeMonitorMonth({
+      month: MONTH,
+      monitorId: 77,
+      counts: [row("2026-06-10", { ok: 10, error: 1 })],
+    });
+    expect(computed?.bucketMismatch).toBe(false);
+    expect(computed?.days[9]).not.toHaveProperty("bad");
+  });
+});

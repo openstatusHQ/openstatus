@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { page } from "../pages";
+import { user } from "../users";
 import { workspace } from "../workspaces";
 
 export const maintenance = sqliteTable(
@@ -9,6 +10,8 @@ export const maintenance = sqliteTable(
   {
     id: integer("id").primaryKey(),
     title: text("title", { length: 256 }).notNull(),
+    // deprecated: mirror of the first `maintenance_update` (backfilled in
+    // migration 0092); dropped in a follow-up
     message: text("message").notNull(),
 
     from: integer("from", { mode: "timestamp" }).notNull(),
@@ -18,6 +21,9 @@ export const maintenance = sqliteTable(
     pageId: integer("page_id").references(() => page.id, {
       onDelete: "cascade",
     }),
+
+    createdBy: integer("created_by").references(() => user.id),
+    updatedBy: integer("updated_by").references(() => user.id),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
@@ -30,4 +36,27 @@ export const maintenance = sqliteTable(
     index("maintenance_page_id_idx").on(t.pageId),
     index("maintenance_workspace_id_idx").on(t.workspaceId),
   ],
+);
+
+export const maintenanceUpdate = sqliteTable(
+  "maintenance_update",
+  {
+    id: integer("id").primaryKey(),
+    message: text("message").notNull(),
+    date: integer("date", { mode: "timestamp" }).notNull(),
+    maintenanceId: integer("maintenance_id")
+      .references(() => maintenance.id, { onDelete: "cascade" })
+      .notNull(),
+
+    createdBy: integer("created_by").references(() => user.id),
+    updatedBy: integer("updated_by").references(() => user.id),
+
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => [index("maintenance_update_maintenance_id_idx").on(t.maintenanceId)],
 );

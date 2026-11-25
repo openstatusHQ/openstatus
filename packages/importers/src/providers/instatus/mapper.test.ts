@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import {
   MOCK_COMPONENTS,
@@ -118,6 +117,7 @@ describe("mapIncidentStatus", () => {
     ["IDENTIFIED", "identified"],
     ["MONITORING", "monitoring"],
     ["RESOLVED", "resolved"],
+    ["unknown", "investigating"],
   ] as const) {
     it(`maps ${input} to ${expected}`, () => {
       expect(mapIncidentStatus(input)).toBe(expected);

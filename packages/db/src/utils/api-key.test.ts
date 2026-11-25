@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import {
   generateApiKey,
@@ -185,6 +184,14 @@ describe("API Key Utilities", () => {
     it("should handle zero debounce period", () => {
       const oneSecondAgo = new Date(Date.now() - 1000);
       expect(shouldUpdateLastUsed(oneSecondAgo, 0)).toBe(true);
+    });
+
+    it("should measure against an injected clock when provided", () => {
+      const lastUsed = new Date("2026-01-01T00:00:00Z");
+      const twoMinutesLater = new Date("2026-01-01T00:02:00Z");
+      const tenMinutesLater = new Date("2026-01-01T00:10:00Z");
+      expect(shouldUpdateLastUsed(lastUsed, 5, twoMinutesLater)).toBe(false);
+      expect(shouldUpdateLastUsed(lastUsed, 5, tenMinutesLater)).toBe(true);
     });
 
     it("should handle very long debounce periods", () => {

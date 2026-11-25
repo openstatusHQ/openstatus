@@ -24,7 +24,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="edit-status-page">
         <SectionHeader>
           <SectionTitle>{statusPage.title}</SectionTitle>
           <SectionDescription>Customize your status page.</SectionDescription>

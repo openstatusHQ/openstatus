@@ -1,27 +1,18 @@
 "use client";
 
 import type { AppRouter } from "@openstatus/api";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createTRPCClient, loggerLink } from "@trpc/client";
+import type { QueryClient } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { createTRPCClient } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
 
-import { endingLink } from "@/lib/trpc/shared";
+import { makeQueryClient } from "@/lib/trpc/query-client";
+import { endingLink, sentryLoggerLink } from "@/lib/trpc/shared";
 
 export const { TRPCProvider, useTRPC, useTRPCClient } =
   createTRPCContext<AppRouter>();
 
-function makeQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client
-        staleTime: 60 * 1000,
-      },
-    },
-  });
-}
 let browserQueryClient: QueryClient | undefined = undefined;
 function getQueryClient() {
   if (typeof window === "undefined") {
@@ -41,11 +32,7 @@ export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
   const [trpcClient] = useState(() =>
     createTRPCClient<AppRouter>({
       links: [
-        loggerLink({
-          enabled: (opts) =>
-            process.env.NODE_ENV === "development" ||
-            (opts.direction === "down" && opts.result instanceof Error),
-        }),
+        sentryLoggerLink(),
         endingLink({
           headers: {
             "x-trpc-source": "client",

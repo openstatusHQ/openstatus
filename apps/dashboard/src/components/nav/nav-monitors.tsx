@@ -1,226 +1,165 @@
 "use client";
 
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuAction,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSkeleton,
-  useSidebar,
-} from "@openstatus/ui/components/ui/sidebar";
-import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@openstatus/ui/components/ui/tooltip";
-import { cn } from "@openstatus/ui/lib/utils";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { isTRPCClientError } from "@trpc/client";
-import { MoreHorizontal, Plus } from "lucide-react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
-import { toast } from "sonner";
+import type { RouterOutputs } from "@openstatus/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
-import { ExportCodeDialog } from "@/components/dialogs/export-code";
+import type { StatusVariant } from "@/components/common/status-dot";
 import { UpgradeDialog } from "@/components/dialogs/upgrade";
-import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { getActions } from "@/data/monitors.client";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
+import { NAV } from "@/config/nav";
+import {
+  type MonitorHealth,
+  compareMonitorHealth,
+  getMonitorHealth,
+  monitorHealthConfig,
+} from "@/data/monitors.client";
+import { useNow } from "@/hooks/use-now";
+import { formatClockOrDay, formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
-export const STATUS = {
-  degraded: "bg-warning border border-warning",
-  error: "bg-destructive border border-destructive",
-  inactive: "bg-muted-foreground/70 border border-muted-foreground/70",
-  active: "bg-success border border-success",
-};
+import { NavGroupButton, NavGroupItem, NavGroupStatus } from "./nav-group";
+import {
+  NavPeek,
+  NavPeekContent,
+  NavPeekCreate,
+  NavPeekEmpty,
+  NavPeekItem,
+  NavPeekItemMeta,
+  NavPeekItemTitle,
+  NavPeekList,
+  NavPeekSearch,
+  NavPeekTrigger,
+} from "./nav-peek";
 
-export function NavMonitors() {
-  const [openDialog, setOpenDialog] = useState(false);
-  const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
-  const { isMobile, setOpenMobile } = useSidebar();
+type Monitor = RouterOutputs["monitor"]["list"][number];
+
+function healthReason(m: Monitor, health: MonitorHealth, now: Date) {
+  if (health === "inactive") return "paused";
+  if (health === "maintenance" && m.maintenance) {
+    return `until ${formatClockOrDay(m.maintenance.until, now)}`;
+  }
+  if (health === "error" || health === "degraded") {
+    const open = m.incidents.find((i) => !i.resolvedAt);
+    const word = health === "error" ? "down" : "degraded";
+    return open
+      ? `${word} ${formatDurationShort(now.getTime() - new Date(open.startedAt).getTime())}`
+      : word;
+  }
+  return null;
+}
+
+/** Sidebar item for monitors: worst status at a glance, the list on hover. */
+export function NavMonitorsItem() {
   const trpc = useTRPC();
-  const router = useRouter();
-  const pathname = usePathname();
-  const {
-    data: monitors,
-    isLoading,
-    refetch,
-  } = useQuery(trpc.monitor.list.queryOptions());
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const queryClient = useQueryClient();
-  const deleteMonitorMutation = useMutation(
-    trpc.monitor.delete.mutationOptions({
-      onSuccess: () => {
-        refetch();
-        queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
-        });
-      },
-    }),
+  const { data: monitors = [], isPending } = useQuery(
+    trpc.monitor.list.queryOptions(),
   );
-  const cloneMonitorMutation = useMutation(
-    trpc.monitor.clone.mutationOptions({
-      onSuccess: (newMonitor) => {
-        refetch();
-        queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
-        });
-        router.push(`/monitors/${newMonitor.id}`);
-      },
-    }),
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const [paywall, setPaywall] = useState(false);
+  const limitReached = workspace
+    ? monitors.length >= workspace.limits.monitors
+    : false;
+  const boundary = useMaintenanceTick(
+    monitors.flatMap((m) =>
+      m.maintenance
+        ? [{ from: m.maintenance.until, to: m.maintenance.until }]
+        : [],
+    ),
   );
+  // The client only knows the winning window; the server picks the next one.
+  useEffect(() => {
+    if (boundary === 0) return;
+    void queryClient.invalidateQueries({ queryKey: trpc.monitor.pathKey() });
+  }, [boundary, queryClient, trpc]);
+  const now = useNow(60_000);
 
-  if (!workspace || !monitors) return null;
-
-  const limitReached = monitors.length >= workspace.limits.monitors;
+  const rows = [...monitors]
+    .sort(compareMonitorHealth)
+    .map((m) => ({ m, health: getMonitorHealth(m) }));
+  const failing = rows.filter(
+    (r) => r.health === "error" || r.health === "degraded",
+  ).length;
+  const paused = rows.filter((r) => r.health === "inactive").length;
+  const inMaintenance = rows.filter((r) => r.health === "maintenance").length;
+  const worst: StatusVariant = rows.some((r) => r.health === "error")
+    ? "destructive"
+    : failing
+      ? "warning"
+      : inMaintenance
+        ? "info"
+        : paused === rows.length
+          ? "default"
+          : "success";
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel
-        className="flex items-center justify-between pr-1"
-        style={{ paddingRight: 4 }}
-      >
-        <div className="flex items-center gap-1">
-          <span>Monitors</span>
-          {isLoading ? (
-            <Skeleton className="h-4 w-5 shrink-0" />
-          ) : (
-            <code className="text-muted-foreground">({monitors.length})</code>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <SidebarMenuAction
-                  data-limited={limitReached}
-                  className="relative top-0 right-0 border data-[limited=true]:opacity-80"
-                  onClick={() => {
-                    if (limitReached) {
-                      setOpenUpgradeDialog(true);
-                      return;
-                    }
-                    router.push("/monitors/create");
-                    setOpenMobile(false);
-                  }}
-                >
-                  <Plus className="text-muted-foreground" />
-                  <span className="sr-only">Create Monitor</span>
-                </SidebarMenuAction>
-              </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                {limitReached ? "Upgrade" : "Create Monitor"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      </SidebarGroupLabel>
-      <SidebarMenu>
-        {isLoading ? (
-          <SidebarMenuItem>
-            <SidebarMenuSkeleton />
-          </SidebarMenuItem>
-        ) : monitors && monitors.length > 0 ? (
-          monitors.map((item) => {
-            const isActive = pathname.startsWith(`/monitors/${item.id}/`);
-            const actions = getActions({
-              edit: () => router.push(`/monitors/${item.id}/edit`),
-              "copy-id": () => {
-                navigator.clipboard.writeText(item.id.toString());
-                toast.success("Monitor ID copied to clipboard");
-              },
-              clone: () => {
-                const promise = cloneMonitorMutation.mutateAsync({
-                  id: item.id,
-                });
-                toast.promise(promise, {
-                  loading: "Cloning monitor...",
-                  success: "Monitor cloned",
-                  error: (error) => {
-                    if (isTRPCClientError(error)) {
-                      return error.message;
-                    }
-                    return "Failed to clone monitor";
-                  },
-                });
-              },
-              // export: () => setOpenDialog(true),
-            });
-            return (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton
-                  className="group-has-data-[sidebar=menu-dot]/menu-item:pr-11"
-                  isActive={isActive}
-                  asChild
-                >
-                  <Link
-                    href={`/monitors/${item.id}/overview`}
-                    onClick={() => setOpenMobile(false)}
-                    className="font-commit-mono tracking-tight"
+    <NavGroupItem>
+      <NavPeek>
+        <NavPeekTrigger>
+          <NavGroupButton item={NAV.monitors} tooltip={false} />
+        </NavPeekTrigger>
+        {isPending ? null : (
+          <NavPeekContent label="Monitors">
+            {monitors.length ? (
+              <NavPeekSearch placeholder="Search monitors…" />
+            ) : null}
+            <NavPeekList>
+              {rows.map(({ m, health }) => {
+                const variant = monitorHealthConfig[health].variant;
+                const reason = healthReason(m, health, now);
+                return (
+                  <NavPeekItem
+                    key={m.id}
+                    // unique even when two monitors share a name
+                    value={`${m.name} #${m.id}`}
+                    keywords={[m.url, m.jobType, ...m.tags.map((t) => t.name)]}
+                    href={`/monitors/${m.id}/overview`}
+                    variant={variant}
                   >
-                    <span>{item.name}</span>
-                  </Link>
-                </SidebarMenuButton>
-                <div
-                  data-sidebar="menu-dot"
-                  className={cn(
-                    "absolute top-1.5 right-1 flex h-2.5 items-center justify-center p-2.5 transition-all duration-200 group-focus-within/menu-item:right-6 group-hover/menu-action:right-6 group-hover/menu-item:right-6 group-data-[state=open]/menu-action:right-6 [&:has(+[data-sidebar=menu-action][data-state=open])]:right-6",
-                    isMobile && "right-6",
-                  )}
-                >
-                  <div className="relative flex items-center justify-center">
-                    <div
-                      className={cn(
-                        "absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                        STATUS[item.active ? item.status : "inactive"],
-                      )}
-                    >
-                      <span className="sr-only">{item.status}</span>
-                    </div>
-                  </div>
-                </div>
-                <QuickActions
-                  actions={actions}
-                  deleteAction={{
-                    confirmationValue: item.name ?? "monitor",
-                    submitAction: async () => {
-                      await deleteMonitorMutation.mutateAsync({
-                        id: item.id,
-                      });
-                      if (pathname.startsWith(`/monitors/${item.id}`)) {
-                        router.push("/monitors");
-                      }
-                    },
-                  }}
-                  side={isMobile ? "bottom" : "right"}
-                  align={isMobile ? "end" : "start"}
-                >
-                  <SidebarMenuAction showOnHover>
-                    <MoreHorizontal />
-                    <span className="sr-only">More</span>
-                  </SidebarMenuAction>
-                </QuickActions>
-              </SidebarMenuItem>
-            );
-          })
-        ) : (
-          <SidebarMenuItem>
-            <SidebarMenuButton disabled>
-              <span>No monitors found</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+                    <NavPeekItemTitle>{m.name}</NavPeekItemTitle>
+                    {reason ? (
+                      <NavPeekItemMeta variant={variant}>
+                        {reason}
+                      </NavPeekItemMeta>
+                    ) : null}
+                  </NavPeekItem>
+                );
+              })}
+              {monitors.length ? <NavPeekEmpty>No match</NavPeekEmpty> : null}
+              <NavPeekCreate
+                href="/monitors/create"
+                data-limit="monitors"
+                onPaywall={limitReached ? () => setPaywall(true) : undefined}
+              >
+                Create monitor
+              </NavPeekCreate>
+            </NavPeekList>
+          </NavPeekContent>
         )}
-      </SidebarMenu>
-      <ExportCodeDialog open={openDialog} onOpenChange={setOpenDialog} />
+      </NavPeek>
       <UpgradeDialog
-        open={openUpgradeDialog}
-        onOpenChange={setOpenUpgradeDialog}
+        open={paywall}
+        onOpenChange={setPaywall}
+        limit="monitors"
       />
-    </SidebarGroup>
+      {monitors.length ? (
+        <NavGroupStatus
+          variant={worst}
+          count={monitors.length}
+          label={`${monitors.length} ${monitors.length === 1 ? "monitor" : "monitors"}, ${
+            failing
+              ? `${failing} ${failing === 1 ? "needs" : "need"} attention`
+              : inMaintenance && paused
+                ? `${inMaintenance} in maintenance, ${paused} paused`
+                : inMaintenance
+                  ? `${inMaintenance} in maintenance, the rest normal`
+                  : paused
+                    ? `${paused} paused, the rest normal`
+                    : "all normal"
+          }`}
+        />
+      ) : null}
+    </NavGroupItem>
   );
 }

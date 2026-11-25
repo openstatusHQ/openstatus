@@ -4,18 +4,19 @@ import type { RouterOutputs } from "@openstatus/api";
 import { monitorRegions } from "@openstatus/db/src/schema/constants";
 import { startOfDay, subDays } from "date-fns";
 
-import type { MetricCard } from "@/components/metric/metric-card";
-import { formatDateTime, formatMilliseconds } from "@/lib/formatter";
+import type { MetricStatus } from "@/components/metric/metric-strip";
+import { formatMilliseconds } from "@/lib/formatter";
 
+import { getMonitorHealth } from "./monitors.client";
 import type { RegionMetric } from "./region-metrics";
 
 export const STATUS = ["success", "error", "degraded"] as const;
 export const PERIODS = ["1d", "7d", "14d", "30d", "90d"] as const;
-// 30d/90d require a paid plan; the dropdown gates them for free workspaces.
-export const PAID_PERIODS = ["30d", "90d"] as const;
+// 14d+ require a paid plan; the dropdown gates them for free workspaces.
+export const PAID_PERIODS = ["14d", "30d", "90d"] as const;
 
 // longest window a free workspace may view; paid periods snap back to this.
-export const FREE_MAX_PERIOD = "14d" as const;
+export const FREE_MAX_PERIOD = "7d" as const;
 
 export type Period = (typeof PERIODS)[number];
 export type PaidPeriod = (typeof PAID_PERIODS)[number];
@@ -57,52 +58,58 @@ export function mapMetrics(metrics: RouterOutputs["tinybird"]["metrics"]) {
   });
 }
 
+/** The current row carries a lastTimestamp; the previous one never does. */
+/** Only the current-window row carries a lastTimestamp; the previous-window row never does. */
+export function hasMetricsData(metrics: RouterOutputs["tinybird"]["metrics"]) {
+  return (mapMetrics(metrics) ?? []).some((row) => !!row.lastTimestamp);
+}
+
 export const metricsCards = {
   uptime: {
-    label: "UPTIME",
-    variant: "success",
+    label: "Uptime",
+    status: "success",
   },
   degraded: {
-    label: "DEGRADED",
-    variant: "warning",
+    label: "Degraded",
+    status: "warning",
   },
   error: {
-    label: "FAILING",
-    variant: "destructive",
+    label: "Failing",
+    status: "destructive",
   },
   total: {
-    label: "REQUESTS",
-    variant: "default",
+    label: "Requests",
+    status: undefined,
   },
   lastTimestamp: {
-    label: "LAST CHECKED",
-    variant: "ghost",
+    label: "Last checked",
+    status: undefined,
   },
   p50: {
     label: "P50",
-    variant: "default",
+    status: undefined,
   },
   p75: {
     label: "P75",
-    variant: "default",
+    status: undefined,
   },
   p90: {
     label: "P90",
-    variant: "default",
+    status: undefined,
   },
   p95: {
     label: "P95",
-    variant: "default",
+    status: undefined,
   },
   p99: {
     label: "P99",
-    variant: "default",
+    status: undefined,
   },
 } as const satisfies Record<
   keyof ReturnType<typeof mapMetrics>[number],
   {
     label: string;
-    variant: React.ComponentProps<typeof MetricCard>["variant"];
+    status: MetricStatus | undefined;
   }
 >;
 
@@ -112,7 +119,7 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
       return {
         ...status,
         ok: status.success,
-        interval: formatDateTime(status.interval),
+        interval: status.interval.getTime(),
         total: status.success + status.error + status.degraded,
       };
     })
@@ -121,79 +128,66 @@ export function mapUptime(status: RouterOutputs["tinybird"]["uptime"]) {
 
 /**
  * Transform Tinybird `metricsRegions` response into RegionMetric[] for UI.
+ * Every requested region is returned, with `buckets: 0` when it has no data.
  */
 export function mapRegionMetrics(
   timeline: RouterOutputs["tinybird"]["metricsRegions"] | undefined,
   regions: string[],
-  percentile: (typeof PERCENTILES)[number],
 ): RegionMetric[] {
-  if (!timeline)
-    return (regions
+  const map = new Map<string, RegionMetric>(
+    [...regions]
       .sort((a, b) => a.localeCompare(b))
-      .map((region) => ({
+      .map((region) => [
         region,
-        p50: 0,
-        p90: 0,
-        p99: 0,
-        trend: [] as {
-          latency: number;
-          timestamp: number;
-          [key: string]: number;
-        }[],
-      })) ?? []) satisfies RegionMetric[];
+        { region, p50: 0, p75: 0, p90: 0, p95: 0, p99: 0, buckets: 0 },
+      ]),
+  );
 
-  type TimelineRow = (typeof timeline.data)[number];
+  for (const row of timeline?.data ?? []) {
+    const entry = map.get(row.region);
+    if (!entry) continue;
+    entry.p50 += row.p50Latency ?? 0;
+    entry.p75 += row.p75Latency ?? 0;
+    entry.p90 += row.p90Latency ?? 0;
+    entry.p95 += row.p95Latency ?? 0;
+    entry.p99 += row.p99Latency ?? 0;
+    entry.buckets++;
+  }
 
-  const map = new Map<
-    string,
-    {
-      region: string;
-      p50: number;
-      p90: number;
-      p99: number;
-      trend: {
-        latency: number;
-        timestamp: number;
-        [key: string]: number;
-      }[];
-    }
-  >();
-
-  (timeline.data as TimelineRow[])
-    .filter((row) => regions.includes(row.region))
-    .sort((a, b) => a.region.localeCompare(b.region))
-    .forEach((row) => {
-      const region = row.region;
-      const entry = map.get(region) ?? {
-        region,
-        p50: 0,
-        p90: 0,
-        p99: 0,
-        trend: [],
-      };
-
-      entry.trend.push({
-        latency: row[PERCENTILE_MAP[percentile]] ?? 0,
-        timestamp: row.timestamp,
-        [region]: row[PERCENTILE_MAP[percentile]] ?? 0,
-      });
-
-      entry.p50 += row.p50Latency ?? 0;
-      entry.p90 += row.p90Latency ?? 0;
-      entry.p99 += row.p99Latency ?? 0;
-
-      map.set(region, entry);
-    });
-
-  map.forEach((entry) => {
-    const count = entry.trend.length || 1;
-    entry.trend.reverse();
+  for (const entry of map.values()) {
+    const count = entry.buckets || 1;
     entry.p50 = Math.round(entry.p50 / count);
+    entry.p75 = Math.round(entry.p75 / count);
     entry.p90 = Math.round(entry.p90 / count);
+    entry.p95 = Math.round(entry.p95 / count);
     entry.p99 = Math.round(entry.p99 / count);
-  });
+  }
 
-  return Array.from(map.values()) as RegionMetric[];
+  return Array.from(map.values());
+}
+
+/**
+ * Shared axis end for the regions range plot, rounded up to a readable value.
+ * A P99 more than twice the median P99 is an outlier: the axis ignores it
+ * instead of squashing every other region to the left, plus 10% headroom for
+ * the overflow badge. Every P90 fits. An outlier that still lands under the
+ * rounded axis is drawn normally; the cell flags only `p99 > max`.
+ */
+export function getRegionAxisMax(metrics: RegionMetric[]) {
+  const reporting = metrics.filter((m) => m.buckets > 0);
+  if (!reporting.length) return 100;
+  const p99s = reporting.map((m) => m.p99).sort((a, b) => a - b);
+  const mid = p99s.length / 2;
+  const median =
+    p99s.length % 2 ? p99s[Math.floor(mid)] : (p99s[mid - 1] + p99s[mid]) / 2;
+  const fits = p99s.filter((p99) => p99 <= median * 2);
+  // headroom on the right keeps the overflow badge clear of the markers
+  const value =
+    Math.max(...fits, ...reporting.map((m) => m.p90)) *
+    (fits.length < p99s.length ? 1.1 : 1);
+  if (value <= 0) return 100;
+  const step = 10 ** Math.floor(Math.log10(value));
+  return Math.ceil(value / step) * step;
 }
 
 export function mapGlobalMetrics(
@@ -216,7 +210,7 @@ export type MonitorListMetric = {
   title: string;
   key: "degraded" | "error" | "active" | "inactive" | "p95";
   value: number | string | undefined;
-  variant: React.ComponentProps<typeof MetricCard>["variant"];
+  status: MetricStatus | undefined;
 };
 
 export const globalCards = [
@@ -266,48 +260,40 @@ export function getMonitorListMetrics(
     monitorId: string;
   }[] = [],
 ): readonly MonitorListMetric[] {
-  const variantMap: Record<
+  const statusMap: Record<
     (typeof globalCards)[number],
-    React.ComponentProps<typeof MetricCard>["variant"]
+    MetricStatus | undefined
   > = {
     active: "success",
     degraded: "warning",
     error: "destructive",
-    inactive: "default",
-    p95: "ghost",
-  } as const;
+    inactive: undefined,
+    p95: undefined,
+  };
 
   return globalCards.map((key) => {
     let value: number | string | undefined;
     switch (key) {
       case "active":
-        value = monitors.filter(
-          (m) => m.status === "active" && m.active,
-        ).length;
-        break;
       case "degraded":
-        value = monitors.filter(
-          (m) => m.status === "degraded" && m.active,
-        ).length;
-        break;
       case "error":
-        value = monitors.filter((m) => m.status === "error" && m.active).length;
-        break;
       case "inactive":
-        value = monitors.filter((m) => m.active === false).length;
+        // a monitor in maintenance holds its last status; it counts in none
+        value = monitors.filter((m) => getMonitorHealth(m) === key).length;
         break;
       case "p95":
-        const p95 = data.sort((a, b) => b.p95Latency - a.p95Latency)[0]
+        const p95 = [...data].sort((a, b) => b.p95Latency - a.p95Latency)[0]
           ?.p95Latency;
-        value = p95 ? formatMilliseconds(p95) : "N/A";
+        value = p95 != null ? formatMilliseconds(p95) : "—";
         break;
     }
 
     return {
       title: metricsGlobalCards[key].title,
       key,
-      value,
-      variant: variantMap[key],
+      // a count of nothing is not a zero
+      value: monitors.length === 0 ? "—" : value,
+      status: statusMap[key],
     } as const;
   }) as readonly MonitorListMetric[];
 }
@@ -316,28 +302,37 @@ export function mapLatency(
   latency: RouterOutputs["tinybird"]["metricsLatency"],
   percentile: (typeof PERCENTILES)[number],
 ) {
-  return latency.data?.map((metric) => {
-    return {
-      timestamp: formatDateTime(new Date(metric.timestamp)),
+  // pipes disagree on ORDER BY; the chart needs oldest → newest
+  return [...(latency.data ?? [])]
+    .sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
+    .map((metric) => ({
+      timestamp: metric.timestamp,
       latency: metric[PERCENTILE_MAP[percentile]],
-    };
-  });
+    }));
 }
 
 export function mapTimingPhases(
   timingPhases: RouterOutputs["tinybird"]["metricsTimingPhases"],
   percentile: (typeof PERCENTILES)[number],
 ) {
-  return timingPhases.data?.map((metric) => {
-    return {
-      timestamp: formatDateTime(new Date(metric.timestamp)),
-      dns: metric[`${percentile}Dns`],
-      ttfb: metric[`${percentile}Ttfb`],
-      transfer: metric[`${percentile}Transfer`],
-      connect: metric[`${percentile}Connect`],
-      tls: metric[`${percentile}Tls`],
-    };
-  });
+  return [...(timingPhases.data ?? [])]
+    .sort(
+      (a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+    )
+    .map((metric) => {
+      return {
+        timestamp: metric.timestamp,
+        dns: metric[`${percentile}Dns`],
+        ttfb: metric[`${percentile}Ttfb`],
+        transfer: metric[`${percentile}Transfer`],
+        connect: metric[`${percentile}Connect`],
+        tls: metric[`${percentile}Tls`],
+      };
+    });
 }
 
 export const periodToInterval = {
@@ -348,13 +343,18 @@ export const periodToInterval = {
   "90d": 1440,
 } satisfies Record<(typeof PERIODS)[number], number>;
 
-export const periodToFromDate = {
-  "1d": startOfDay(subDays(new Date(), 1)),
-  "7d": startOfDay(subDays(new Date(), 7)),
-  "14d": startOfDay(subDays(new Date(), 14)),
-  "30d": startOfDay(subDays(new Date(), 30)),
-  "90d": startOfDay(subDays(new Date(), 90)),
-} satisfies Record<(typeof PERIODS)[number], Date>;
+const periodToDays = {
+  "1d": 1,
+  "7d": 7,
+  "14d": 14,
+  "30d": 30,
+  "90d": 90,
+} satisfies Record<(typeof PERIODS)[number], number>;
+
+// computed per call so a tab left open past midnight keeps sliding its window
+export function periodToFromDate(period: (typeof PERIODS)[number]) {
+  return startOfDay(subDays(new Date(), periodToDays[period]));
+}
 
 // Minimum selectable resolution (minutes) per period. Long windows floor the
 // interval so charts stay readable and queries bounded. Mirrors the server-side
@@ -364,5 +364,14 @@ export const periodToMinInterval = {
   "7d": 5,
   "14d": 5,
   "30d": 240,
+  "90d": 1440,
+} satisfies Record<(typeof PERIODS)[number], (typeof INTERVALS)[number]>;
+
+// Coarsest useful resolution per period: a 1d window at 8h/1d buckets is 1–3 points.
+export const periodToMaxInterval = {
+  "1d": 240,
+  "7d": 1440,
+  "14d": 1440,
+  "30d": 1440,
   "90d": 1440,
 } satisfies Record<(typeof PERIODS)[number], (typeof INTERVALS)[number]>;

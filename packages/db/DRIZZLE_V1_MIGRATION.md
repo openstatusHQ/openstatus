@@ -43,7 +43,7 @@ Upgrade references:
 ## Phase 0 — Spike & de-risk
 - [x] Create a working branch for the spike. (jj change off main)
 - [x] Read the RQBv2 relation-definition migration guide and query-syntax guide end-to-end.
-- [x] Bump catalog entries in `pnpm-workspace.yaml`: `drizzle-orm → 1.0.0-rc.4`, `drizzle-kit → 1.0.0-rc.4`.
+- [x] Bump catalog entries in `pnpm-workspace.yaml`: `drizzle-orm → 1.0.0-rc.6`, `drizzle-kit → 1.0.0-rc.6`.
 - [x] Run `pnpm install`; confirm the lockfile resolves cleanly.
 - [x] Confirm `drizzle-orm/libsql/http` and `drizzle-orm/libsql` entrypoints still exist on the RC. (also `zod`, `relations`, `defineRelations`, `sqlite-proxy`)
 - [x] Confirm libSQL/Turso dialect is supported on the RC (drizzle-kit + runtime).

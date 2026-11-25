@@ -1,7 +1,8 @@
-import { db, schema } from "@openstatus/db";
 import type { ServiceContext } from "@openstatus/services";
+import { resolveActiveWorkspace } from "@openstatus/services/user";
 
 import { auth } from "@/lib/auth";
+import { WORKSPACE_SLUG_COOKIE } from "@/lib/workspace-cookie";
 
 /**
  * Build a `ServiceContext` from a Next.js Edge Route Handler request.
@@ -20,45 +21,21 @@ export async function getServiceContextFromRequest(
   const userId = Number(session.user.id);
   if (Number.isNaN(userId)) return null;
 
-  // `orderBy` on the join makes the no-cookie fallback below deterministic:
-  // `usersToWorkspaces[0]` is the user's earliest membership instead of
-  // whatever order Turso happens to return.
-  const userAndWorkspace = await db.query.user.findFirst({
-    where: { id: userId },
-    with: {
-      usersToWorkspaces: {
-        orderBy: { createdAt: "asc" },
-        with: {
-          workspace: true,
-        },
-      },
-    },
-  });
-
-  if (!userAndWorkspace) return null;
-
   // Use slice rather than split("=")[1] so values containing "=" (e.g.
   // base64-padded variants in other flows) survive intact.
-  const workspaceSlugCookie = (() => {
+  const workspaceSlug = (() => {
     const raw = req.headers
       .get("cookie")
       ?.split(";")
       .map((c) => c.trim())
-      .find((c) => c.startsWith("workspace-slug="));
+      .find((c) => c.startsWith(`${WORKSPACE_SLUG_COOKIE}=`));
     return raw ? raw.slice(raw.indexOf("=") + 1) : undefined;
   })();
 
-  // Fall back to first workspace when the cookie is stale (slug renamed,
-  // user removed) — matches `enforceUserIsAuthed` in tRPC.
-  const activeWorkspace = workspaceSlugCookie
-    ? (userAndWorkspace.usersToWorkspaces?.find(
-        ({ workspace }) => workspace.slug === workspaceSlugCookie,
-      )?.workspace ?? userAndWorkspace.usersToWorkspaces?.[0]?.workspace)
-    : userAndWorkspace.usersToWorkspaces?.[0]?.workspace;
-
-  if (!activeWorkspace) return null;
-
-  const workspace = schema.selectWorkspaceSchema.parse(activeWorkspace);
+  // A stale cookie falls back to the earliest workspace, as in tRPC.
+  const resolved = await resolveActiveWorkspace({ userId, workspaceSlug });
+  if (!resolved.ok) return null;
+  const { workspace } = resolved.value;
 
   return {
     workspace,

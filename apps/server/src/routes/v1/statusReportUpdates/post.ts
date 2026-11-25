@@ -41,6 +41,7 @@ export function registerPostStatusReportUpdate(
 ) {
   return api.openapi(createStatusUpdate, async (c) => {
     const workspaceId = c.get("workspace").id;
+    const actorUserId = c.get("apiKey").createdById ?? null;
     const input = c.req.valid("json");
     const limits = c.get("workspace").limits;
 
@@ -69,6 +70,8 @@ export function registerPostStatusReportUpdate(
           ...input,
           date: new Date(input.date),
           statusReportId: _statusReport.id,
+          createdBy: actorUserId,
+          updatedBy: actorUserId,
         })
         .returning()
         .get();
@@ -78,6 +81,7 @@ export function registerPostStatusReportUpdate(
         .set({
           status: input.status,
           updatedAt: new Date(),
+          updatedBy: actorUserId,
         })
         .where(eq(statusReport.id, _statusReport.id));
 

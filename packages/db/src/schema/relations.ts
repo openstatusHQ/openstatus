@@ -8,6 +8,8 @@ export const relations = defineRelations(schema, (r) => ({
     pages: r.many.page(),
     monitors: r.many.monitor(),
     notifications: r.many.notification(),
+    statusReports: r.many.statusReport(),
+    ssoDomains: r.many.workspaceSsoDomain(),
     users: r.many.user({
       from: r.workspace.id.through(r.usersToWorkspaces.workspaceId),
       to: r.user.id.through(r.usersToWorkspaces.userId),
@@ -46,6 +48,16 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.statusReport.workspaceId,
       to: r.workspace.id,
     }),
+    createdByUser: r.one.user({
+      from: r.statusReport.createdBy,
+      to: r.user.id,
+      alias: "statusReportCreatedBy",
+    }),
+    updatedByUser: r.one.user({
+      from: r.statusReport.updatedBy,
+      to: r.user.id,
+      alias: "statusReportUpdatedBy",
+    }),
     pageComponents: r.many.pageComponent({
       from: r.statusReport.id.through(
         r.statusReportsToPageComponents.statusReportId,
@@ -64,6 +76,16 @@ export const relations = defineRelations(schema, (r) => ({
     }),
     statusReportUpdateToPageComponents:
       r.many.statusReportUpdateToPageComponents(),
+    createdByUser: r.one.user({
+      from: r.statusReportUpdate.createdBy,
+      to: r.user.id,
+      alias: "statusReportUpdateCreatedBy",
+    }),
+    updatedByUser: r.one.user({
+      from: r.statusReportUpdate.updatedBy,
+      to: r.user.id,
+      alias: "statusReportUpdateUpdatedBy",
+    }),
     pageComponents: r.many.pageComponent({
       from: r.statusReportUpdate.id.through(
         r.statusReportUpdateToPageComponents.statusReportUpdateId,
@@ -151,26 +173,29 @@ export const relations = defineRelations(schema, (r) => ({
     }),
   },
 
-  incidentTable: {
+  monitorIncidentTable: {
     monitor: r.one.monitor({
-      from: r.incidentTable.monitorId,
+      from: r.monitorIncidentTable.monitorId,
       to: r.monitor.id,
-      optional: false,
     }),
     workspace: r.one.workspace({
-      from: r.incidentTable.workspaceId,
+      from: r.monitorIncidentTable.workspaceId,
       to: r.workspace.id,
-      optional: false,
     }),
     acknowledgedByUser: r.one.user({
-      from: r.incidentTable.acknowledgedBy,
+      from: r.monitorIncidentTable.acknowledgedBy,
       to: r.user.id,
-      alias: "incident_acknowledged_by",
+      alias: "monitorIncidentAcknowledgedBy",
     }),
     resolvedByUser: r.one.user({
-      from: r.incidentTable.resolvedBy,
+      from: r.monitorIncidentTable.resolvedBy,
       to: r.user.id,
-      alias: "incident_resolved_by",
+      alias: "monitorIncidentResolvedBy",
+    }),
+    excusedByUser: r.one.user({
+      from: r.monitorIncidentTable.excusedBy,
+      to: r.user.id,
+      alias: "monitorIncidentExcusedBy",
     }),
   },
 
@@ -202,6 +227,7 @@ export const relations = defineRelations(schema, (r) => ({
 
   maintenance: {
     maintenancesToPageComponents: r.many.maintenancesToPageComponents(),
+    maintenanceUpdates: r.many.maintenanceUpdate(),
     page: r.one.page({
       from: r.maintenance.pageId,
       to: r.page.id,
@@ -211,6 +237,16 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.maintenance.workspaceId,
       to: r.workspace.id,
       optional: false,
+    }),
+    createdByUser: r.one.user({
+      from: r.maintenance.createdBy,
+      to: r.user.id,
+      alias: "maintenanceCreatedBy",
+    }),
+    updatedByUser: r.one.user({
+      from: r.maintenance.updatedBy,
+      to: r.user.id,
+      alias: "maintenanceUpdatedBy",
     }),
     pageComponents: r.many.pageComponent({
       from: r.maintenance.id.through(
@@ -360,7 +396,7 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
     }),
     monitorsToNotifications: r.many.notificationsToMonitors(),
-    incidents: r.many.incidentTable(),
+    monitorIncidents: r.many.monitorIncidentTable(),
     monitorStatus: r.many.monitorStatusTable(),
     privateLocationToMonitors: r.many.privateLocationToMonitors(),
     monitorTags: r.many.monitorTag({
@@ -376,6 +412,247 @@ export const relations = defineRelations(schema, (r) => ({
       to: r.privateLocation.id.through(
         r.privateLocationToMonitors.privateLocationId,
       ),
+    }),
+  },
+
+  maintenanceUpdate: {
+    maintenance: r.one.maintenance({
+      from: r.maintenanceUpdate.maintenanceId,
+      to: r.maintenance.id,
+      optional: false,
+    }),
+    createdByUser: r.one.user({
+      from: r.maintenanceUpdate.createdBy,
+      to: r.user.id,
+      alias: "maintenanceUpdateCreatedBy",
+    }),
+    updatedByUser: r.one.user({
+      from: r.maintenanceUpdate.updatedBy,
+      to: r.user.id,
+      alias: "maintenanceUpdateUpdatedBy",
+    }),
+  },
+
+  workspaceSsoDomain: {
+    workspace: r.one.workspace({
+      from: r.workspaceSsoDomain.workspaceId,
+      to: r.workspace.id,
+      optional: false,
+    }),
+  },
+
+  incident: {
+    workspace: r.one.workspace({
+      from: r.incident.workspaceId,
+      to: r.workspace.id,
+      optional: false,
+    }),
+    commander: r.one.user({
+      from: r.incident.commanderId,
+      to: r.user.id,
+      alias: "incidentCommander",
+    }),
+    declaredByUser: r.one.user({
+      from: r.incident.declaredBy,
+      to: r.user.id,
+      alias: "incidentDeclaredBy",
+    }),
+    resolvedByUser: r.one.user({
+      from: r.incident.resolvedBy,
+      to: r.user.id,
+      alias: "incidentResolvedBy",
+    }),
+    acknowledgedByUser: r.one.user({
+      from: r.incident.acknowledgedBy,
+      to: r.user.id,
+      alias: "incidentAcknowledgedBy",
+    }),
+    statusReport: r.one.statusReport({
+      from: r.incident.statusReportId,
+      to: r.statusReport.id,
+    }),
+    events: r.many.incidentEvent(),
+  },
+
+  incidentEvent: {
+    incident: r.one.incident({
+      from: r.incidentEvent.incidentId,
+      to: r.incident.id,
+      optional: false,
+    }),
+    createdByUser: r.one.user({
+      from: r.incidentEvent.createdBy,
+      to: r.user.id,
+    }),
+  },
+
+  incidentPostmortem: {
+    incident: r.one.incident({
+      from: r.incidentPostmortem.incidentId,
+      to: r.incident.id,
+      optional: false,
+    }),
+    approvedByUser: r.one.user({
+      from: r.incidentPostmortem.approvedBy,
+      to: r.user.id,
+    }),
+  },
+
+  notificationOutbox: {
+    monitor: r.one.monitor({
+      from: r.notificationOutbox.monitorId,
+      to: r.monitor.id,
+      optional: false,
+    }),
+    notification: r.one.notification({
+      from: r.notificationOutbox.notificationId,
+      to: r.notification.id,
+      optional: false,
+    }),
+    incident: r.one.monitorIncidentTable({
+      from: r.notificationOutbox.incidentId,
+      to: r.monitorIncidentTable.id,
+    }),
+  },
+
+  monitorTransition: {
+    monitor: r.one.monitor({
+      from: r.monitorTransition.monitorId,
+      to: r.monitor.id,
+      optional: false,
+    }),
+  },
+
+  monitorHeartbeatState: {
+    monitor: r.one.monitor({
+      from: r.monitorHeartbeatState.monitorId,
+      to: r.monitor.id,
+      optional: false,
+    }),
+  },
+
+  frozenMonitorUptime: {
+    monitor: r.one.monitor({
+      from: r.frozenMonitorUptime.monitorId,
+      to: r.monitor.id,
+      optional: false,
+    }),
+    workspace: r.one.workspace({
+      from: r.frozenMonitorUptime.workspaceId,
+      to: r.workspace.id,
+      optional: false,
+    }),
+  },
+
+  privateLocationMonitorStatus: {
+    monitor: r.one.monitor({
+      from: r.privateLocationMonitorStatus.monitorId,
+      to: r.monitor.id,
+      optional: false,
+    }),
+    privateLocation: r.one.privateLocation({
+      from: r.privateLocationMonitorStatus.privateLocationId,
+      to: r.privateLocation.id,
+      optional: false,
+    }),
+  },
+
+  monitorMaintenanceWindow: {
+    workspace: r.one.workspace({
+      from: r.monitorMaintenanceWindow.workspaceId,
+      to: r.workspace.id,
+      optional: false,
+    }),
+    monitors: r.many.monitorMaintenanceWindowToMonitor(),
+    createdByUser: r.one.user({
+      from: r.monitorMaintenanceWindow.createdBy,
+      to: r.user.id,
+      alias: "monitorMaintenanceWindowCreatedBy",
+    }),
+    updatedByUser: r.one.user({
+      from: r.monitorMaintenanceWindow.updatedBy,
+      to: r.user.id,
+      alias: "monitorMaintenanceWindowUpdatedBy",
+    }),
+  },
+
+  monitorMaintenanceWindowToMonitor: {
+    window: r.one.monitorMaintenanceWindow({
+      from: r.monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId,
+      to: r.monitorMaintenanceWindow.id,
+      optional: false,
+    }),
+    monitor: r.one.monitor({
+      from: r.monitorMaintenanceWindowToMonitor.monitorId,
+      to: r.monitor.id,
+      optional: false,
+    }),
+  },
+
+  slackUser: {
+    workspace: r.one.workspace({
+      from: r.slackUser.workspaceId,
+      to: r.workspace.id,
+      optional: false,
+    }),
+    user: r.one.user({
+      from: r.slackUser.userId,
+      to: r.user.id,
+      optional: false,
+    }),
+  },
+
+  oauthClient: {
+    sessions: r.many.oauthSession(),
+    authorizationCodes: r.many.oauthAuthorizationCode(),
+    grants: r.many.oauthGrant(),
+  },
+
+  oauthSession: {
+    client: r.one.oauthClient({
+      from: r.oauthSession.clientId,
+      to: r.oauthClient.clientId,
+      optional: false,
+    }),
+  },
+
+  oauthGrant: {
+    client: r.one.oauthClient({
+      from: r.oauthGrant.clientId,
+      to: r.oauthClient.clientId,
+      optional: false,
+    }),
+    user: r.one.user({
+      from: r.oauthGrant.userId,
+      to: r.user.id,
+      optional: false,
+    }),
+    workspace: r.one.workspace({
+      from: r.oauthGrant.workspaceId,
+      to: r.workspace.id,
+      optional: false,
+    }),
+  },
+
+  oauthAuthorizationCode: {
+    client: r.one.oauthClient({
+      from: r.oauthAuthorizationCode.clientId,
+      to: r.oauthClient.clientId,
+      optional: false,
+    }),
+    grant: r.one.oauthGrant({
+      from: r.oauthAuthorizationCode.grantId,
+      to: r.oauthGrant.id,
+    }),
+    user: r.one.user({
+      from: r.oauthAuthorizationCode.userId,
+      to: r.user.id,
+      optional: false,
+    }),
+    workspace: r.one.workspace({
+      from: r.oauthAuthorizationCode.workspaceId,
+      to: r.workspace.id,
+      optional: false,
     }),
   },
 }));

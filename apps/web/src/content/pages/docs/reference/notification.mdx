@@ -54,15 +54,13 @@ Sends notifications to a Google Chat space.
 
 - **Webhook URL** (required) — a [Google Chat webhook URL](https://developers.google.com/workspace/chat/quickstart/webhooks) for the target space.
 
-### SMS
+### Microsoft Teams
 
-Sends alerts as SMS messages to a mobile phone number.
+Sends notifications to a Microsoft Teams channel through a Power Automate workflow.
 
 **Configuration:**
 
-- **Phone number** (required) — the recipient's phone number in international format (e.g., `+14155552671`).
-
-**Note:** SMS delivery can vary by country due to provider routing. Contact support if delivery issues are encountered. WhatsApp notifications may be an alternative.
+- **Webhook URL** (required) — the URL of a Power Automate *"When a Teams webhook request is received"* workflow. Example: `https://prod-00.westeurope.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke`.
 
 ### WhatsApp
 
@@ -155,6 +153,7 @@ Integrates with OpsGenie for incident management.
 **Configuration:**
 
 - **API key** (required) — an API key obtained from your OpsGenie account.
+- **Region** (required) — the OpsGenie API region your account lives in: `us` or `eu`.
 
 ### PagerDuty
 
@@ -162,7 +161,7 @@ Integrates with PagerDuty for incident alerting.
 
 **Configuration:**
 
-- **Integration steps** (required) — follow the specific integration steps provided within the PagerDuty workflow to set up this channel.
+- **Integration key** (required) — the Events API v2 integration key for your PagerDuty service. The dashboard walks you through the PagerDuty connect flow, which fills this in for you.
 
 ### Ntfy
 

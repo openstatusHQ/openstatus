@@ -6,13 +6,10 @@
     "moduleResolution": "bundler",
     "declaration": true,
     "declarationMap": true,
-    "outDir": "gen/ts",
-    "rootDir": "gen/ts",
     "strict": true,
     "skipLibCheck": true,
-    "emitDeclarationOnly": true,
     "allowImportingTsExtensions": true
   },
-  "include": ["gen/ts/**/*.ts"],
+  "include": ["gen/ts/**/*.ts", "scripts/**/*.ts"],
   "exclude": ["node_modules"]
 }

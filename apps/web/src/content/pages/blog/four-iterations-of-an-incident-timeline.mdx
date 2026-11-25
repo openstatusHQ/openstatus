@@ -1,0 +1,128 @@
+---
+title: "Four iterations of an incident timeline"
+description: "How the incident activity timeline in openstatus went from a log-file list to a Linear-style hierarchy in four phases, and how I work with Claude Code and Claude Design to get there."
+author: "Maximilian Kaske"
+publishedAt: "2026-10-16"
+category: "engineering"
+image: "/assets/posts/four-iterations-of-an-incident-timeline/four-iterations-of-an-incident-timeline.png"
+---
+
+We've been building [incident response into openstatus](/blog/launching-incident-management). The activity timeline is the part you stare at most during an incident, so it got the most iterations. Four phases until we got where we are now. There are still some inconsistent paddings, but the core is done.
+
+<Grid cols={2} variant="borderless">
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/01-plain-list.png" alt="1. From the plan" className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/02-timeline-rail.png" alt="2. The right shape" className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/03-avatars.png" alt="3. Avatars" className="img-fit" />
+
+</div>
+<div>
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png" alt="4. Hierarchy" className="img-fit" />
+
+</div>
+</Grid>
+
+## How I work with Claude
+
+I use Claude Code **without a harness** or much configuration. A simple setup is easy to adapt and doesn't bind me to anything. My terminal and settings look like they always did. I'm sure I'm not using it to its full potential, but I don't feel like I'm missing something.
+
+For deterministic tasks and fixes I use Claude Code remote. It spins up a VM and works isolated from the rest. When I'm hands-down on UI, or I want to test and navigate the codebase, I run Claude Code in the terminal. No worktrees either.
+
+I write a lot of `PLAN.md` files and `/loop` over them once I'm *afk*. I keep several Claude Code tabs open, each grilling me on a different idea with Matt Pocock's grill-me skill. I rarely read those plans in full, except when it's a collaboration with Thibault on a bigger feature like incident response. We worked on that plan for a couple of days, with the idea spelled out for weeks before. Leave it, iterate the next day.
+
+While a loop runs I go bouldering or for a walk. When I'm back I click through the local dev server myself, because the details only show up when you use the real thing. Whatever feels off, I send as a screenshot: the broken part **boxed in red**, one sentence. Those small fixes happen right there in the session, no loop needed. Most loops run locally, and nothing gets pushed for a preview deployment until it feels right. When the work runs in a remote Claude Code session, I pull the branch and click through it locally before merging anything heavy on the dashboard.
+
+For UI I use Claude Design for a first feeling, usually three or four variations. It's linked to our GitHub repo, so the mocks come out in our own design system.
+
+## Phase 1: from the plan
+
+Phase 1 came from the plan. Thibault ran Claude through it and we got 21 stacked PRs to merge. They were good. The incidents page was feature-flagged to our workspace, and we merged one PR after the other. Thibault focused on the Slack app, me on the dashboard.
+
+The UI came out raw, but the plan was followed to the letter. The two-column layout, the composer above the timeline, the properties on the right, the linked status report: all of that is in the spec. The buttons, badges and selects are ours, because the design system is in the repo and every session reads it. What was missing was **hierarchy**. Every event rendered the same: a left border, Type · Name · time, body text. Notes from Slack showed up as a bare "From Slack" link. It worked, and it looked like a *log file*.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/01-plain-list.png" alt="Phase 1: every event as a bordered block with type, name and time" className="img-fit" />
+
+## Phase 2: the right shape
+
+I wanted a timeline with a visual distinction between event types. So I gave Claude Design a full-page screenshot of the current state and a few instructions:
+
+> Focus on the content, not the layout. It's too flat. I want the events presented as a timeline. The inputs on the right should be transparent and only show their borders on hover or click.
+
+A few minutes later:
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/claude-design-mock.png" alt="The first Claude Design output: status pill and severity chip in the header, ghost inputs on the right, composer with a Set status to footer, icon discs on a rail" className="img-fit" />
+
+**A lot better** than what we had. Ghost inputs on the right, the status change in the composer footer, icon discs on a rail, status chips. Next, I pasted a screenshot of it into Claude Code:
+
+> The draft is good. Take your time and figure out how we get there. Be thoughtful about the React components, the way we do it in general: structure, compound components, cva. Don't commit, implement until you believe it's good. The components will be reused for status reports and maintenances later on.
+
+What came back is the mock in our components, minus what didn't survive the data model. The incident ID went, since our IDs are autoincrement and "INC-011" would be a lie. Affected monitors went, since the incident doesn't link to monitors yet. Good enough for a first real update.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/02-timeline-rail.png" alt="Phase 2: a vertical rail with an icon per event type and status pills" className="img-fit" />
+
+## Phase 3: avatars
+
+A minor visual step. I kept the core Claude Design returned and focused on the user avatars.
+
+> Notes show an author avatar and a type icon side by side. That's redundant. Make the avatar the timeline node, with the type as a small badge.
+
+The first pass still rendered both. "There is redundancy, check again" fixed it. *More important than the avatars*, this phase migrated status reports and maintenances onto the **same timeline, composer and aside components**.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/03-avatars.png" alt="Phase 3: the author avatar is the timeline node, the type a small badge" className="img-fit" />
+
+## Phase 4: hierarchy
+
+The last big push. I shared the current visuals on X and [@mfts0](https://x.com/mfts0) pointed me to [Linear](https://linear.app). I've been using Linear for a while and I know their timeline. Sometimes you need a *small nudge* in the right direction.
+
+I stared at their timeline for a while. What makes it good is the hierarchy of events. Comments are *loud*, everything else is *quiet*. You read the conversation and skim the plumbing. And because the shape repeats on every issue, you learn the workflow without anyone explaining it. Our timeline had no levels, so every event asked for the same attention.
+
+We needed the same. I gave Claude Design some Linear screenshots and a few of our current designs:
+
+> Design our timelines closer to Linear. The composer is always the first thing, and the activity is newest first.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/claude-design-linear-mock.png" alt="The second Claude Design output: composer on top, notes and status changes as cards, system events as one-liners" className="img-fit" />
+
+I could probably have given Claude Code the Linear screenshots directly. Then the loop:
+
+> /loop and improve our activity timeline across incidents, maintenances and status reports, a bit à la Linear like the screenshots. Don't commit, implement and rework over time. Keep everything on the same compound components.
+
+Then one observation at a time, each with a boxed screenshot:
+
+> Feels too crowded.
+
+> Linear doesn't highlight simple event names in the timeline, only comments. Do the same.
+
+What changed:
+
+- Notes and status changes became cards written as sentences: Thibault marked Resolved.
+- System events collapsed into one-liners: linked status report #3473.
+- The composer got subtle actions in its footer. No border, no descriptive text.
+- The "Post public update" button in the aside took way too much visual space. The linked status report is now one row in the label-value properties, actions behind a menu.
+
+<Image src="/assets/posts/four-iterations-of-an-incident-timeline/04-hierarchy.png" alt="Phase 4: notes and status changes as cards, system events as one-liners" className="img-fit" />
+
+The timeline is shorter and quieter because it has levels. The important parts read like a conversation.
+
+I still feel like a **meat proxy**. I juggle between Claude Code, Claude Design and localhost, adding instructions and being a mostly useless human in the loop. Useless in the typing sense only. I'm in *full control* of what gets built, what gets dropped and what ships. Four phases, a handful of prompts that said what was wrong rather than what to build, and the timeline is where I want it.
+
+## Less meat proxy
+
+Two things came out of this that aren't the timeline.
+
+A `DESIGN.md` at the repo root. `AGENTS.md` says where code lives, `DESIGN.md` says what *good* looks like: hierarchy over decoration, two row kinds on one rail, sentences instead of labels, composer first and newest first. Every rule in there is something I typed into a prompt during one of the phases, usually more than once. Now every session reads it before touching anything a user sees.
+
+And the screenshot loop as a `screenshot` skill. Before, every session rebuilt it: borrow Playwright from somewhere, find the port, get past the login, set the theme. Now it runs on [agent-browser](https://github.com/vercel-labs/agent-browser) from Vercel instead of our own browser code, with a thin script for the parts that are ours: the seeded session, light and dark, mobile and desktop, the element instead of the viewport. Claude Code judges the PNGs against `DESIGN.md`, and for a dropdown or a dialog it drives agent-browser directly.
+
+The goal is fewer rounds where I'm the proxy. I still review on localhost, but the first pass should come back **already looked at**.
+
+Get inspired by the interfaces you use every day, make them your own, and inspire the next person. That's the circle of UI.

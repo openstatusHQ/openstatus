@@ -1,7 +1,8 @@
-"use client";
+import { KeyRound } from "lucide-react";
+import Link from "next/link";
 
-import { useQuery } from "@tanstack/react-query";
-
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
   Section,
   SectionDescription,
@@ -10,47 +11,36 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
-import { useTRPC } from "@/lib/trpc/client";
+import { FormCardPointer } from "@/components/forms/form-card-pointer";
 
-import { SlackIntegrationCard } from "./slack-card";
+import { ConnectedAppsCard } from "./connected-apps-card";
 
 export default function Page() {
-  const trpc = useTRPC();
-  //  FIXME: we should use workspace limit here
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
-
-  const { data: integrations } = useQuery(
-    trpc.integrationRouter.list.queryOptions(),
-  );
-
-  if (!integrations) return null;
-
-  const slackIntegration = integrations.find((i) => i.name === "slack-agent");
-
   return (
     <SectionGroup>
-      <Section>
+      <Section id="integrations">
         <SectionHeader>
           <SectionTitle>Integrations</SectionTitle>
           <SectionDescription>
             Connect third-party services to your workspace.
           </SectionDescription>
         </SectionHeader>
+        <NoteDismissible cookieKey="note_integrations_api_keys">
+          <KeyRound />
+          Looking for your API keys? They live under Developers.
+          <NoteButton variant="default" asChild>
+            <Link href="/developers/api-keys">Go to API keys</Link>
+          </NoteButton>
+        </NoteDismissible>
         <FormCardGroup>
-          <SlackIntegrationCard
-            locked={!workspace?.limits["slack-agent"]}
-            integration={
-              slackIntegration
-                ? {
-                    id: slackIntegration.id,
-                    externalId: slackIntegration.externalId,
-                    data: slackIntegration.data as {
-                      teamName?: string;
-                    },
-                  }
-                : null
-            }
+          <FormCardPointer
+            id="slack"
+            title="Slack"
+            description="The Slack agent is connected, reconnected and removed under Agents."
+            href="/agents/slack#slack"
+            action="Go to Slack agent"
           />
+          <ConnectedAppsCard />
         </FormCardGroup>
       </Section>
     </SectionGroup>

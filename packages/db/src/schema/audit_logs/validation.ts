@@ -90,6 +90,17 @@ const apiKeyActions = [
   action("api_key.delete", "api_key", intId),
 ] as const;
 
+// `delete` covers every revocation path: manual, re-consent, member removal
+// and account deletion. `metadata` carries client name and scope on create.
+const oauthGrantActions = [
+  action("oauth_grant.create", "oauth_grant", intId, {
+    optionalMetadata: true,
+  }),
+  action("oauth_grant.delete", "oauth_grant", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
 const notificationActions = [
   action("notification.create", "notification", intId),
   action("notification.update", "notification", intId),
@@ -99,7 +110,7 @@ const notificationActions = [
 const userActions = [action("user.delete", "user", intId)] as const;
 
 const workspaceActions = [
-  action("workspace.update", "workspace", intId),
+  action("workspace.update", "workspace", intId, { optionalMetadata: true }),
 ] as const;
 
 const maintenanceActions = [
@@ -110,9 +121,49 @@ const maintenanceActions = [
   action("maintenance.delete", "maintenance", intId),
 ] as const;
 
+const maintenanceUpdateActions = [
+  action("maintenance_update.create", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+  action("maintenance_update.update", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+  action("maintenance_update.delete", "maintenance_update", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
+const monitorIncidentActions = [
+  action("monitor_incident.create", "monitor_incident", intId),
+  action("monitor_incident.update", "monitor_incident", intId),
+  action("monitor_incident.delete", "monitor_incident", intId),
+] as const;
+
 const incidentActions = [
-  action("incident.update", "incident", intId),
+  action("incident.create", "incident", intId, { optionalMetadata: true }),
+  action("incident.update", "incident", intId, { optionalMetadata: true }),
   action("incident.delete", "incident", intId),
+] as const;
+
+// Append-only timeline: events are never updated or deleted on their own.
+const incidentEventActions = [
+  action("incident_event.create", "incident_event", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
+const incidentPostmortemActions = [
+  action("incident_postmortem.create", "incident_postmortem", intId, {
+    optionalMetadata: true,
+  }),
+  action("incident_postmortem.update", "incident_postmortem", intId, {
+    optionalMetadata: true,
+  }),
+] as const;
+
+const slackUserActions = [
+  action("slack_user.create", "slack_user", intId, { optionalMetadata: true }),
+  action("slack_user.delete", "slack_user", intId, { optionalMetadata: true }),
 ] as const;
 
 const statusReportActions = [
@@ -127,8 +178,12 @@ const statusReportUpdateActions = [
   action("status_report_update.create", "status_report_update", intId, {
     optionalMetadata: true,
   }),
-  action("status_report_update.update", "status_report_update", intId),
-  action("status_report_update.delete", "status_report_update", intId),
+  action("status_report_update.update", "status_report_update", intId, {
+    optionalMetadata: true,
+  }),
+  action("status_report_update.delete", "status_report_update", intId, {
+    optionalMetadata: true,
+  }),
 ] as const;
 
 const invitationActions = [
@@ -139,15 +194,27 @@ const invitationActions = [
 
 // Several entities below carry only a subset of the create/update/delete
 // triplet. This is intentional, not an oversight:
-//   - `member`: rows are created via `invitation.accept`, not directly.
-//   - `incident`: rows originate from the checker pipeline, not user
-//     mutations.
-// When those write paths migrate to the service layer, add the missing
-// verbs alongside.
+//   - `member`: invitation-driven joins are recorded as `invitation.update`
+//     (the acceptance stamp), so `member.create` covers only the paths that
+//     mint a membership with no invitation behind it — today, SSO JIT
+//     provisioning.
+//   - `monitor_incident`: nothing deletes one.
+// When a write path for a missing verb appears in the service layer, add the
+// verb alongside.
 const memberActions = [
-  // `entityId` is the removed user's id. Member rows have no surrogate key —
+  // `entityId` is the affected user's id. Member rows have no surrogate key —
   // they're (userId, workspaceId) composite — so the user id is the most
   // useful identifier to fix on in the audit log.
+  action("member.create", "member", intId, { optionalMetadata: true }),
+  // Only a role change today (ownership transfer). A transfer writes two rows,
+  // one per affected user, paired through this metadata, so it is required.
+  action("member.update", "member", intId).extend({
+    metadata: z.object({
+      reason: z.literal("ownership_transfer"),
+      fromUserId: intId,
+      toUserId: intId,
+    }),
+  }),
   action("member.delete", "member", intId),
 ] as const;
 
@@ -167,12 +234,46 @@ const monitorTagActions = [
   action("monitor_tag.delete", "monitor_tag", intId),
 ] as const;
 
+const monitorMaintenanceWindowActions = [
+  action(
+    "monitor_maintenance_window.create",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.update",
+    "monitor_maintenance_window",
+    intId,
+  ),
+  action(
+    "monitor_maintenance_window.delete",
+    "monitor_maintenance_window",
+    intId,
+  ),
+] as const;
+
 const privateLocationActions = [
   action("private_location.create", "private_location", intId, {
     optionalMetadata: true,
   }),
   action("private_location.update", "private_location", intId),
   action("private_location.delete", "private_location", intId),
+] as const;
+
+// `entityId` is the workspace id — SSO config has no surrogate key of its own.
+// Verified-domain rows fold into the same entity, distinguished by
+// `metadata.domain`; `delete` therefore means "a domain was dropped", never
+// "SSO was turned off" (that's an `update` on the `ssoEnabled` switch).
+const ssoActions = [
+  action("workspace_sso.create", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
+  action("workspace_sso.update", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
+  action("workspace_sso.delete", "workspace_sso", intId, {
+    optionalMetadata: true,
+  }),
 ] as const;
 
 export const auditActionSchema = z.discriminatedUnion("action", [
@@ -182,11 +283,17 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...pageComponentGroupActions,
   ...pageSubscriberActions,
   ...apiKeyActions,
+  ...oauthGrantActions,
   ...notificationActions,
   ...userActions,
   ...workspaceActions,
   ...maintenanceActions,
+  ...maintenanceUpdateActions,
+  ...monitorIncidentActions,
   ...incidentActions,
+  ...incidentEventActions,
+  ...incidentPostmortemActions,
+  ...slackUserActions,
   ...statusReportActions,
   ...statusReportUpdateActions,
   ...invitationActions,
@@ -194,6 +301,8 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...integrationActions,
   ...monitorTagActions,
   ...privateLocationActions,
+  ...monitorMaintenanceWindowActions,
+  ...ssoActions,
 ]);
 
 /**

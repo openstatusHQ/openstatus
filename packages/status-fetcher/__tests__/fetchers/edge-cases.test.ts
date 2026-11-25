@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { Exit } from "effect";
+import { describe, expect, it } from "vitest";
 
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import { BetterStackFetcher } from "../../src/fetchers/betterstack";
@@ -186,16 +185,10 @@ describe("Fetcher Edge Cases", () => {
       };
 
       const mockResponse = {
-        activeIncidents: [],
-        activeMaintenances: [],
-        status: {
-          text: "Unknown",
-          type: "UNKNOWN",
-        },
         page: {
           name: "Test",
           url: "https://test.instatus.com",
-          updated: "2024-02-16T12:00:00.000Z",
+          status: "UNKNOWN",
         },
       };
 

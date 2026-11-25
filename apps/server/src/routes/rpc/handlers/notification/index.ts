@@ -1,10 +1,12 @@
 import type { ServiceImpl } from "@connectrpc/connect";
 import type { NotificationService } from "@openstatus/proto/notification/v1";
-import { ForbiddenError } from "@openstatus/services";
+import { NotFoundError, requireScope } from "@openstatus/services";
 import {
+  assertProviderAllowed,
   createNotification,
   deleteNotification,
   getNotification,
+  getNotificationLimit,
   listNotifications,
   updateNotification,
 } from "@openstatus/services/notification";
@@ -19,7 +21,6 @@ import {
   protoProviderToDb,
 } from "./converters";
 import { monitorNotFoundError, notificationIdRequiredError } from "./errors";
-import { getNotificationLimitInfo } from "./limits";
 import { sendTestNotification } from "./test-providers";
 
 type ProtoData = Parameters<typeof protoDataToDb>[1];
@@ -45,18 +46,10 @@ function protoDataToServiceInput(
   return JSON.parse(protoDataToDb(provider, data));
 }
 
-/**
- * Remap the service's `ForbiddenError` (thrown by `validateMonitorIds`
- * on an unknown or cross-workspace monitor) to `monitorNotFoundError`
- * (Code.NotFound / HTTP 404). The service deliberately doesn't
- * distinguish "monitor doesn't exist" from "monitor in another
- * workspace" (an existence-leak guard), but the Connect contract
- * surfaces this as 404 so clients keying on the status code get the
- * same "resource not accessible" signal regardless of cause.
- */
-function rethrowMonitorNotFound(err: unknown, monitorIds: string[]): never {
-  if (err instanceof ForbiddenError && err.message.startsWith("Monitor ")) {
-    throw monitorNotFoundError(monitorIds.join(","));
+/** An unusable monitor id gets the documented monitor-not-found error. */
+function rethrowMonitorNotFound(err: unknown): never {
+  if (err instanceof NotFoundError && err.entity === "monitor") {
+    throw monitorNotFoundError(String(err.id));
   }
   throw err;
 }
@@ -76,7 +69,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
             data: protoDataToServiceInput(req.provider, req.data) as never,
             monitors: req.monitorIds.map((id) => Number(id)),
           },
-        }).catch((err) => rethrowMonitorNotFound(err, req.monitorIds));
+        }).catch(rethrowMonitorNotFound);
         // Re-fetch to get the authoritative persisted monitor set —
         // mirrors the `updateNotification` pattern and removes the
         // approximation that used to echo `req.monitorIds` deduped.
@@ -179,7 +172,7 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
               ? req.monitorIds.map((mid) => Number(mid))
               : existing.monitors.map((m) => m.id),
           },
-        }).catch((err) => rethrowMonitorNotFound(err, req.monitorIds));
+        }).catch(rethrowMonitorNotFound);
 
         const full = await getNotification({ ctx: sCtx, input: { id } });
         return {
@@ -209,13 +202,17 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
       }
     },
 
-    async sendTestNotification(req, _ctx) {
+    async sendTestNotification(req, ctx) {
       // Wrapped in `toConnectError` for symmetry with the CRUD handlers
       // above — any `ServiceError` / `ZodError` thrown from within
       // `test-providers.ts` (or a future helper it grows) gets mapped
       // to the right gRPC status instead of falling through to the
       // interceptor's generic catch.
       try {
+        // Sends from platform credentials to a caller-chosen destination.
+        const sCtx = toServiceCtx(getRpcContext(ctx));
+        requireScope(sCtx, "notifications:write");
+        assertProviderAllowed(sCtx.workspace, protoProviderToDb(req.provider));
         return await sendTestNotification(req.provider, req.data);
       } catch (err) {
         toConnectError(err);
@@ -223,11 +220,12 @@ export const notificationServiceImpl: ServiceImpl<typeof NotificationService> =
     },
 
     async checkNotificationLimit(_req, ctx) {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
-      const limits = rpcCtx.workspace.limits;
-
-      const info = await getNotificationLimitInfo(workspaceId, limits);
-      return info;
+      try {
+        return await getNotificationLimit({
+          ctx: toServiceCtx(getRpcContext(ctx)),
+        });
+      } catch (err) {
+        toConnectError(err);
+      }
     },
   };

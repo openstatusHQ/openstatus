@@ -1,9 +1,9 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Database, Account, Close, Speed } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import type { Table } from "@tanstack/react-table";
-import { Database, User, X, Zap } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 
@@ -55,7 +55,7 @@ export function AuditLogsDataTableToolbar({
             column={table.getColumn("actorType")}
             title="Actor type"
             options={actorTypeOptions}
-            icon={User}
+            icon={Account}
           />
         )}
         {table.getColumn("action") && actionOptions.length > 0 && (
@@ -63,7 +63,7 @@ export function AuditLogsDataTableToolbar({
             column={table.getColumn("action")}
             title="Action"
             options={actionOptions}
-            icon={Zap}
+            icon={Speed}
           />
         )}
         {table.getColumn("entityType") && entityTypeOptions.length > 0 && (
@@ -81,7 +81,7 @@ export function AuditLogsDataTableToolbar({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <X />
+            <Close />
           </Button>
         )}
       </div>

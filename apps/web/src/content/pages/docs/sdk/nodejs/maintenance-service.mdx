@@ -4,7 +4,7 @@ title: Maintenance Service
 description: "Manage scheduled maintenance windows with the openstatus Node.js SDK"
 ---
 
-Manage scheduled maintenance windows. The Maintenance Service provides 5 RPC methods.
+Manage scheduled maintenance windows. The Maintenance Service provides 8 RPC methods.
 
 ## Create Maintenance Window
 
@@ -15,8 +15,8 @@ const { maintenance } = await client.maintenance.v1.MaintenanceService
     message: "We will be upgrading our database infrastructure.",
     from: "2024-01-20T02:00:00Z",
     to: "2024-01-20T04:00:00Z",
-    pageId: "page_123",
-    pageComponentIds: ["comp_456"],
+    pageId: "1",
+    pageComponentIds: ["12"],
     notify: true,
   });
 
@@ -34,7 +34,7 @@ const { maintenances, totalSize } = await client.maintenance.v1
   .MaintenanceService.listMaintenances({
     limit: 10,
     offset: 0,
-    pageId: "page_123",
+    pageId: "1",
   });
 
 console.log(`Found ${totalSize} maintenance windows`);
@@ -46,7 +46,7 @@ console.log(`Found ${totalSize} maintenance windows`);
 
 ```typescript
 const { maintenance } = await client.maintenance.v1.MaintenanceService
-  .getMaintenance({ id: "maint_123" });
+  .getMaintenance({ id: "123" });
 
 console.log(`Title: ${maintenance?.title}`);
 console.log(`From: ${maintenance?.from}`);
@@ -58,7 +58,7 @@ console.log(`To: ${maintenance?.to}`);
 ```typescript
 const { maintenance } = await client.maintenance.v1.MaintenanceService
   .updateMaintenance({
-    id: "maint_123",
+    id: "123",
     title: "Extended Database Upgrade",
     to: "2024-01-20T06:00:00Z",
   });
@@ -68,5 +68,37 @@ const { maintenance } = await client.maintenance.v1.MaintenanceService
 
 ```typescript
 const { success } = await client.maintenance.v1.MaintenanceService
-  .deleteMaintenance({ id: "maint_123" });
+  .deleteMaintenance({ id: "123" });
+```
+
+## Maintenance Updates
+
+A maintenance is a timeline of dated notes; the first one is written at creation. A maintenance always keeps at least one update: deleting the last one fails with `invalid_argument`; delete the maintenance instead.
+
+### Add Maintenance Update
+
+```typescript
+const { maintenanceUpdate } = await client.maintenance.v1.MaintenanceService
+  .addMaintenanceUpdate({
+    maintenanceId: "123",
+    message: "Work has started.",
+    notify: true,
+  });
+```
+
+### Update Maintenance Update
+
+```typescript
+const { maintenanceUpdate } = await client.maintenance.v1.MaintenanceService
+  .updateMaintenanceUpdate({
+    id: "456",
+    message: "Work has started, running 30 minutes behind.",
+  });
+```
+
+### Delete Maintenance Update
+
+```typescript
+const { success } = await client.maintenance.v1.MaintenanceService
+  .deleteMaintenanceUpdate({ id: "456" });
 ```

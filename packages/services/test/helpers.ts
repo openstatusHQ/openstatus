@@ -1,19 +1,47 @@
-import { and, db, desc, eq, inArray } from "@openstatus/db";
+import { and, db, desc, eq, inArray, sql } from "@openstatus/db";
 import {
   type Scope,
   auditLog,
-  notification,
-  page,
-  pageComponent,
   selectWorkspaceSchema,
-  workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
+import { createTestWorkspace } from "@openstatus/db/src/test/factories";
+import { expect } from "vitest";
 
 import type { Actor, DB, DrizzleTx, ServiceContext } from "../src/context";
+import { isRetryableDbError } from "../src/retry";
 import type { Workspace } from "../src/types";
 
 class RollbackSignal extends Error {}
+
+/** The transaction never started: `fn` did not run, so it's safe to retry. */
+class BeginFailed extends Error {
+  constructor(readonly original: unknown) {
+    super("test transaction failed to begin");
+  }
+}
+
+// `db.transaction()` opens with `BEGIN IMMEDIATE`, so every test transaction
+// takes the single write lock up front. Parallel test files queue on it, and a
+// waiter that loses gets SQLITE_BUSY ("database is locked") or sqld's
+// TRANSACTION_TIMEOUT — surfaced on the test's first query, since libsql
+// pipelines BEGIN with it.
+const BEGIN_MAX_ATTEMPTS = 8;
+const BEGIN_BASE_DELAY_MS = 50;
+const BEGIN_MAX_DELAY_MS = 1_000;
+
+function isLockContention(err: unknown): boolean {
+  if (isRetryableDbError(err)) return true;
+  let current: unknown = err;
+  for (let depth = 0; depth < 10; depth++) {
+    if (typeof current !== "object" || current === null) return false;
+    if ("code" in current && current.code === "TRANSACTION_TIMEOUT") {
+      return true;
+    }
+    if (!("cause" in current) || current.cause === current) return false;
+    current = current.cause;
+  }
+  return false;
+}
 
 /**
  * Wrap a test body in a transaction that always rolls back, so per-test
@@ -33,13 +61,43 @@ class RollbackSignal extends Error {}
  *   - Inside the callback, replace any `db.select(...)` /
  *     `db.insert(...)` / `db.delete(...)` with the same call on `tx`.
  *     Reads via committed `db` will not see the in-tx writes.
+ *
+ * Lock contention while BEGIN acquires the write lock is retried with
+ * backoff. Once the transaction has started, `fn` holds the lock, so its
+ * own queries are never retried (and `fn` never runs twice).
  */
 export async function withTestTransaction<T>(
   fn: (tx: DrizzleTx) => Promise<T>,
 ): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await runRolledBack(fn);
+    } catch (e) {
+      if (!(e instanceof BeginFailed)) throw e;
+      if (attempt >= BEGIN_MAX_ATTEMPTS || !isLockContention(e.original)) {
+        throw e.original;
+      }
+      const delay = Math.min(
+        BEGIN_BASE_DELAY_MS * 2 ** (attempt - 1),
+        BEGIN_MAX_DELAY_MS,
+      );
+      await new Promise((resolve) =>
+        setTimeout(resolve, delay / 2 + Math.random() * (delay / 2)),
+      );
+    }
+  }
+}
+
+async function runRolledBack<T>(fn: (tx: DrizzleTx) => Promise<T>): Promise<T> {
   let result!: T;
   try {
     await db.transaction(async (tx) => {
+      // Force the BEGIN now so lock contention is isolated from `fn`.
+      try {
+        await tx.run(sql`select 1`);
+      } catch (e) {
+        throw new BeginFailed(e);
+      }
       result = await fn(tx);
       throw new RollbackSignal();
     });
@@ -47,44 +105,6 @@ export async function withTestTransaction<T>(
     if (!(e instanceof RollbackSignal)) throw e;
   }
   return result;
-}
-
-/**
- * Clear leftover quota-gated rows on a workspace so tests that rely on
- * a specific cap state (e.g. `free` plan has `status-pages: 1`,
- * `notification-channels: 1`) can run regardless of what prior tests
- * or aborted runs left behind.
- *
- * Intended for `beforeAll` of suites that exercise the `free`
- * workspace — the tight-plan negative tests break randomly otherwise
- * because cumulative state trips a quota check before the test can
- * hit its intended assertion. Scoped to the two tables that have bit
- * us repeatedly in CI; extend when a new quota-gated table surfaces.
- */
-export async function cleanQuotaGatedTables(
-  workspaceId: number,
-): Promise<void> {
-  // Pages → delete dependent pageComponents first to satisfy FKs.
-  const pages = await db
-    .select({ id: page.id })
-    .from(page)
-    .where(eq(page.workspaceId, workspaceId))
-    .all();
-  const pageIds = pages.map((p) => p.id);
-  if (pageIds.length > 0) {
-    await db
-      .delete(pageComponent)
-      .where(inArray(pageComponent.pageId, pageIds))
-      .catch(() => undefined);
-    await db
-      .delete(page)
-      .where(inArray(page.id, pageIds))
-      .catch(() => undefined);
-  }
-  await db
-    .delete(notification)
-    .where(eq(notification.workspaceId, workspaceId))
-    .catch(() => undefined);
 }
 
 /** Wipe audit_log rows for a workspace. Call in `beforeEach` / `afterEach`. */
@@ -107,7 +127,7 @@ export async function clearAuditLog(
  * the audit row outlives the entity, and because SQLite recycles
  * INTEGER PRIMARY KEY ids after deletes, a later test's freshly-inserted
  * entity can land on the orphan's id and inherit its actor attribution.
- * See docs/adr/test-audit-cleanup.md.
+ * See packages/services/AGENTS.md.
  */
 export async function clearAuditLogFor(args: {
   entityType: string;
@@ -130,23 +150,32 @@ export async function clearAuditLogFor(args: {
     .catch(() => undefined);
 }
 
+export type WorkspaceFixture = {
+  workspace: Workspace;
+  /** Owner of the workspace — pass to `makeUserCtx` for a member-of-workspace actor. */
+  userId: number;
+};
+
 /**
- * Load a seeded workspace by id (defaults to id=1, the `team` plan fixture).
- * Tests that need a fresh workspace should insert one explicitly and clean up;
- * isolating every test with its own workspace is the prevailing convention.
+ * A workspace owned by this suite alone, on the given plan.
+ *
+ * Call this in `beforeAll` instead of reaching for a seeded workspace. Suites
+ * that share workspace 1 race each other over `audit_log`, plan quotas and
+ * row counts once test files run in parallel — a private workspace makes those
+ * assertions deterministic.
+ *
+ * `overrides` reaches the workspace row directly — pass `limits` to model a
+ * purchased add-on, which is stored as an override on top of the plan defaults.
  */
-export async function loadSeededWorkspace(id = 1): Promise<Workspace> {
-  const row = await db
-    .select()
-    .from(workspaceTable)
-    .where(eq(workspaceTable.id, id))
-    .get();
-  if (!row) {
-    throw new Error(
-      `loadSeededWorkspace(${id}): workspace not found. Did you seed the db?`,
-    );
-  }
-  return selectWorkspaceSchema.parse(row);
+export async function createWorkspaceFixture(
+  plan: "team" | "free" | "scale" = "team",
+  overrides: { limits?: string; ssoEnabled?: boolean } = {},
+): Promise<WorkspaceFixture> {
+  const { workspace, user } = await createTestWorkspace({ plan, ...overrides });
+  return {
+    workspace: selectWorkspaceSchema.parse(workspace),
+    userId: user.id,
+  };
 }
 
 export function makeUserCtx(
@@ -207,7 +236,8 @@ export function makeSlackCtx(
   opts: {
     teamId: string;
     slackUserId: string;
-    userId?: number;
+    userId: number;
+    permalink?: string;
     requestId?: string;
   },
 ): ServiceContext {
@@ -218,6 +248,7 @@ export function makeSlackCtx(
       teamId: opts.teamId,
       slackUserId: opts.slackUserId,
       userId: opts.userId,
+      permalink: opts.permalink,
     },
     requestId: opts.requestId,
   };

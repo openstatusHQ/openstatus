@@ -1,7 +1,10 @@
 "use client";
 
+import { headerAssertion } from "@openstatus/assertions";
+import { MONITOR_METHODS } from "@openstatus/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useQueryStates } from "nuqs";
 
 import {
   EmptyStateContainer,
@@ -17,10 +20,59 @@ import {
 import { FormGeneral } from "@/components/forms/monitor/form-general";
 import { useTRPC } from "@/lib/trpc/client";
 
+import { searchParamsParsers } from "./search-params";
+
+function safeHostname(url: string) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return url;
+  }
+}
+
+// prefill from play tools (e.g. /play/cdn-checker): malformed params fall
+// back to an empty form rather than erroring
+function buildPrefill(params: {
+  url: string | null;
+  name: string | null;
+  method: string | null;
+  assertionHeaderKey: string | null;
+  assertionHeaderCompare: string | null;
+  assertionHeaderValue: string | null;
+}): React.ComponentProps<typeof FormGeneral>["defaultValues"] {
+  if (!params.url) return undefined;
+
+  const assertion = headerAssertion.safeParse({
+    type: "header",
+    version: "v1",
+    compare: params.assertionHeaderCompare ?? "eq",
+    key: params.assertionHeaderKey,
+    target: params.assertionHeaderValue,
+  });
+
+  const method = MONITOR_METHODS.find(
+    (m) => m === params.method?.toUpperCase(),
+  );
+
+  return {
+    active: true,
+    name: params.name ?? safeHostname(params.url),
+    type: "http",
+    method: method ?? "GET",
+    url: params.url,
+    headers: [],
+    body: "",
+    assertions: assertion.success ? [assertion.data] : [],
+    skipCheck: false,
+    saveCheck: false,
+  };
+}
+
 export default function Page() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const router = useRouter();
+  const [params] = useQueryStates(searchParamsParsers);
 
   const triggerCheckMutation = useMutation(
     trpc.checker.triggerChecker.mutationOptions({}),
@@ -32,7 +84,7 @@ export default function Page() {
         queryClient.invalidateQueries({
           queryKey: trpc.monitor.list.queryKey(),
         });
-        if (data.active) {
+        if (data.active && data.jobType !== "heartbeat") {
           triggerCheckMutation.mutate({ id: data.id });
         }
         router.push(`/monitors/${data.id}/edit`);
@@ -42,11 +94,12 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="create-monitor">
         <SectionHeader>
           <SectionTitle>Create Monitor</SectionTitle>
         </SectionHeader>
         <FormGeneral
+          defaultValues={buildPrefill(params)}
           onSubmit={async (data) => {
             await createMonitorMutation.mutateAsync({
               name: data.name,
@@ -57,13 +110,17 @@ export default function Page() {
               body: data.body,
               active: data.active,
               assertions: data.assertions,
+              grpcService: data.grpcService,
+              grpcTls: data.grpcTls,
               saveCheck: data.saveCheck,
               skipCheck: data.skipCheck,
+              heartbeatPeriod: data.heartbeatPeriod,
+              heartbeatGrace: data.heartbeatGrace,
             });
           }}
         />
       </Section>
-      <Section>
+      <Section id="next-steps">
         <EmptyStateContainer>
           <EmptyStateTitle>Create and start customizing</EmptyStateTitle>
           <EmptyStateDescription>

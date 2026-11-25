@@ -4,6 +4,7 @@ import { TableCellBoolean } from "@/components/data-table/table-cell-boolean";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { entityKinds } from "@/data/entity-refs.client";
 
 import type { ResultTableData } from "./result-table";
 
@@ -29,7 +30,7 @@ export function listMonitorsTable(
       id: m.id,
       cells: {
         name: (
-          <TableCellLink href={`/monitors/${m.id}/overview`} value={m.name} />
+          <TableCellLink href={entityKinds.monitor.href(m)} value={m.name} />
         ),
         jobType: (
           <TableCellText

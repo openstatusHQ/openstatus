@@ -67,7 +67,7 @@
       "type": "registry:lib",
       "title": "Status Utilities",
       "description": "Utility functions for status formatting and display",
-      "dependencies": ["date-fns"],
+      "dependencies": ["date-fns", "@date-fns/utc@2.1.1"],
       "cssVars": {
         "theme": {
           "color-success": "var(--success)",
@@ -172,6 +172,7 @@
       "title": "Status Timestamp",
       "description": "Interactive timestamp display with tooltip (simple) or hover-card (rich) variants showing multiple timezone formats",
       "registryDependencies": [
+        "status-i18n",
         "hover-card",
         "tooltip",
         "use-copy-to-clipboard",
@@ -180,7 +181,6 @@
       "dependencies": [
         "@radix-ui/react-hover-card",
         "date-fns",
-        "@date-fns/utc@2.1.0",
         "lucide-react"
       ],
       "files": [

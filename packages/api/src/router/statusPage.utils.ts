@@ -1,21 +1,73 @@
 import type { PageComponentImpact } from "@openstatus/db/src/schema";
 import {
-  LEGACY_IMPACT_WEIGHT,
   impactToStatusType,
   impactUptimeWeight,
+  LEGACY_IMPACT_WEIGHT,
   worstImpact,
 } from "@openstatus/db/src/schema";
 import {
+  clipToCoverage,
+  type CoverageSegment,
+  type DayWindow,
+  downtimeIntervals,
   type Event,
+  probeDowntimeIntervals,
   type StatusData,
+  type UptimeWindow,
+  type WeightedInterval,
+  dayCoverage,
+  dayWindow,
+  durationDowntimeMs,
+  floorPct,
   getHighestPriorityStatus,
   getWorstVariant,
+  heartbeatCoverageStart,
   isDateWithinEvent,
+  mergedDowntimeMs,
   reportEventDayImpact,
   reportEventDayStatus,
+  reportsOnlyDowntimeMs,
+  requestsTally,
 } from "@openstatus/services/status-timeline";
 
 export * from "@openstatus/services/status-timeline";
+
+// Status pages must render even when Tinybird is degraded. Read latency above
+// this budget is treated as an outage and the page falls back to manual mode.
+export const TINYBIRD_FALLBACK_TIMEOUT_MS = 5_000;
+
+// Discriminated result of a guarded Tinybird read: `ok: true` carries the data,
+// `ok: false` (timeout or error) carries `null` and signals manual-mode fallback.
+export type TinybirdResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; data: null };
+
+// Races a Tinybird read against the fallback budget. `ok: false` (timeout or
+// thrown error) signals the caller to serve manual mode — DB-authored events
+// only — instead of hanging or 500ing on Tinybird.
+export async function withTinybirdFallback<T>(
+  fetch: () => Promise<T>,
+  timeoutMs = TINYBIRD_FALLBACK_TIMEOUT_MS,
+): Promise<TinybirdResult<T>> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const data = await Promise.race([
+      fetch(),
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(
+          () => reject(new Error("tinybird timeout")),
+          timeoutMs,
+        );
+      }),
+    ]);
+    return { ok: true, data };
+  } catch (err) {
+    console.error("[status-page] tinybird unhealthy, using manual mode:", err);
+    return { ok: false, data: null };
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 type UptimeData = {
   day: string;
@@ -32,8 +84,6 @@ type UptimeData = {
   }[];
 };
 
-// Constants for time calculations
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const MILLISECONDS_PER_MINUTE = 1000 * 60;
 
 // Helper to format numbers
@@ -43,14 +93,9 @@ function formatNumber(num: number): string {
   return num.toString();
 }
 
-// Helper to check if date is today
-function isToday(date: Date): boolean {
-  const today = new Date();
-  return (
-    date.getDate() === today.getDate() &&
-    date.getMonth() === today.getMonth() &&
-    date.getFullYear() === today.getFullYear()
-  );
+function isToday({ start, end }: DayWindow): boolean {
+  const now = Date.now();
+  return start <= now && now < end;
 }
 
 // Helper to format duration from minutes
@@ -63,52 +108,44 @@ function formatDuration(minutes: number): string {
 }
 
 // Helper to calculate total minutes in a day (handles today vs past days)
-function getTotalMinutesInDay(date: Date): number {
-  const now = new Date();
-  const startOfDay = new Date(date);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-
-  if (isToday(date)) {
-    const minutesElapsed = Math.floor(
-      (now.getTime() - startOfDay.getTime()) / MILLISECONDS_PER_MINUTE,
-    );
-    return minutesElapsed;
-  }
-  return 24 * 60;
+function getTotalMinutesInDay(day: DayWindow): number {
+  const until = isToday(day) ? Date.now() : day.end;
+  return Math.floor((until - day.start) / MILLISECONDS_PER_MINUTE);
 }
 
 // Helper to calculate duration in minutes for a specific event type
-function calculateEventDurationMinutes(events: Event[], date: Date): number {
-  const totalDuration = getTotalEventsDurationMs(events, date);
+function calculateEventDurationMinutes(
+  events: Event[],
+  day: DayWindow,
+): number {
+  const totalDuration = getTotalEventsDurationMs(events, day);
   return Math.round(totalDuration / MILLISECONDS_PER_MINUTE);
 }
 
 // Helper to calculate maintenance duration in minutes for a specific day
 function getMaintenanceDurationMinutes(
   maintenances: Event[],
-  date: Date,
+  day: DayWindow,
 ): number {
-  return calculateEventDurationMinutes(maintenances, date);
+  return calculateEventDurationMinutes(maintenances, day);
 }
 
 // Helper to get adjusted total minutes accounting for maintenance
 function getAdjustedTotalMinutesInDay(
-  date: Date,
+  day: DayWindow,
   maintenances: Event[],
 ): number {
-  const totalMinutes = getTotalMinutesInDay(date);
-  const maintenanceMinutes = getMaintenanceDurationMinutes(maintenances, date);
+  const totalMinutes = getTotalMinutesInDay(day);
+  const maintenanceMinutes = getMaintenanceDurationMinutes(maintenances, day);
   return Math.max(0, totalMinutes - maintenanceMinutes);
 }
 
-function getTotalEventsDurationMs(events: Event[], date: Date): number {
+function getTotalEventsDurationMs(events: Event[], day: DayWindow): number {
   if (events.length === 0) return 0;
 
-  const startOfDay = new Date(date);
-  startOfDay.setUTCHours(0, 0, 0, 0);
-
-  const endOfDay = new Date(date);
-  endOfDay.setUTCHours(23, 59, 59, 999);
+  const { start: startOfDay, end } = day;
+  // the overlap math below treats `endOfDay` as an inclusive bound
+  const endOfDay = end - 1;
 
   const total = events.reduce((acc, curr) => {
     if (!curr.from) return acc;
@@ -117,23 +154,19 @@ function getTotalEventsDurationMs(events: Event[], date: Date): number {
     const eventEnd = curr.to ? new Date(curr.to) : new Date();
 
     // Only count events that overlap with this date
-    if (
-      eventEnd.getTime() < startOfDay.getTime() ||
-      eventStart.getTime() > endOfDay.getTime()
-    ) {
+    if (eventEnd.getTime() < startOfDay || eventStart.getTime() > endOfDay) {
       return acc;
     }
 
     // Calculate the overlapping duration within the date boundaries
-    const overlapStart = Math.max(eventStart.getTime(), startOfDay.getTime());
-    const overlapEnd = Math.min(eventEnd.getTime(), endOfDay.getTime());
+    const overlapStart = Math.max(eventStart.getTime(), startOfDay);
+    const overlapEnd = Math.min(eventEnd.getTime(), endOfDay);
 
     const duration = overlapEnd - overlapStart;
     return acc + Math.max(0, duration);
   }, 0);
 
-  // Cap at 24 hours per day
-  return Math.min(total, MILLISECONDS_PER_DAY);
+  return Math.min(total, end - startOfDay);
 }
 
 export function setDataByType({
@@ -141,18 +174,21 @@ export function setDataByType({
   data,
   cardType,
   barType,
+  timeZone = "UTC",
 }: {
   events: Event[];
   data: StatusData[];
-  cardType: "requests" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
   barType: "absolute" | "dominant" | "manual";
+  /** IANA zone whose calendar days the bars stand for */
+  timeZone?: string;
 }): UptimeData[] {
   // Helper functions moved inside to share inputs and avoid parameter passing
   function createEventSegments(
     incidents: Event[],
     reports: Event[],
     maintenances: Event[],
-    date: Date,
+    day: DayWindow,
   ): Array<{ status: "info" | "degraded" | "error"; count: number }> {
     // impact reports contribute per-interval slices to each color bucket, so a
     // 1h major_outage inside a 24h report only paints 1h red; legacy reports
@@ -168,7 +204,7 @@ export function setDataByType({
         const color = impactToStatusType(iv.impact);
         if (color === "success") continue;
         const slice = { ...report, from: iv.from, to: iv.to };
-        if (!isDateWithinEvent(date, slice)) continue;
+        if (!isDateWithinEvent(day, slice)) continue;
         (color === "error" ? errorSlices : degradedSlices).push(slice);
       }
     }
@@ -186,37 +222,36 @@ export function setDataByType({
       .filter(({ events }) => events.length > 0)
       .map(({ status, events }) => ({
         status,
-        count: getTotalEventsDurationMs(events, date),
+        count: getTotalEventsDurationMs(events, day),
       }));
   }
 
   function createErrorOnlyBarData(
     errorSegmentCount: number,
+    dayMs: number,
   ): UptimeData["bar"] {
     return [
       {
         status: "success" as const,
-        height:
-          ((MILLISECONDS_PER_DAY - errorSegmentCount) / MILLISECONDS_PER_DAY) *
-          100,
+        height: ((dayMs - errorSegmentCount) / dayMs) * 100,
       },
       {
         status: "error" as const,
-        height: (errorSegmentCount / MILLISECONDS_PER_DAY) * 100,
+        height: (errorSegmentCount / dayMs) * 100,
       },
     ];
   }
 
   function createProportionalBarData(
     segments: Array<{ status: "info" | "degraded" | "error"; count: number }>,
+    dayMs: number,
   ): UptimeData["bar"] {
     // Downtime keeps its true proportion of the day; maintenance/reports are
     // highlight events that fill the remaining space (no uptime shown).
     const errorMs = segments
       .filter((segment) => segment.status === "error")
       .reduce((sum, segment) => sum + segment.count, 0);
-    const errorHeight =
-      (Math.min(errorMs, MILLISECONDS_PER_DAY) / MILLISECONDS_PER_DAY) * 100;
+    const errorHeight = (Math.min(errorMs, dayMs) / dayMs) * 100;
     const remainingHeight = Math.max(0, 100 - errorHeight);
 
     const highlightSegments = segments.filter(
@@ -321,17 +356,21 @@ export function setDataByType({
       count: number;
     }>,
   ): UptimeData["card"] {
+    const unit = cardType === "runs" ? "runs" : "reqs";
     return entries
       .filter((entry) => entry.count > 0)
       .map((entry) => ({
         status: entry.status,
-        value: `${formatNumber(entry.count)} reqs`,
+        value: `${formatNumber(entry.count)} ${unit}`,
       }));
   }
 
   // Helper to calculate duration in minutes for a specific event type
-  function calculateEventDurationMinutes(events: Event[], date: Date): number {
-    const totalDuration = getTotalEventsDurationMs(events, date);
+  function calculateEventDurationMinutes(
+    events: Event[],
+    day: DayWindow,
+  ): number {
+    const totalDuration = getTotalEventsDurationMs(events, day);
     return Math.round(totalDuration / MILLISECONDS_PER_MINUTE);
   }
 
@@ -339,7 +378,7 @@ export function setDataByType({
   function createDurationCardEntry(
     status: "error" | "degraded" | "info" | "success",
     events: Event[],
-    date: Date,
+    day: DayWindow,
     durationMap: Map<string, number>,
     maintenances: Event[] = [],
   ): {
@@ -352,10 +391,7 @@ export function setDataByType({
       durationMap.forEach((minutes) => (totalEventMinutes += minutes));
 
       // Use adjusted total minutes accounting for maintenance
-      const totalMinutesInDay = getAdjustedTotalMinutesInDay(
-        date,
-        maintenances,
-      );
+      const totalMinutesInDay = getAdjustedTotalMinutesInDay(day, maintenances);
       const successMinutes = Math.max(totalMinutesInDay - totalEventMinutes, 0);
 
       if (successMinutes === 0) return null;
@@ -366,7 +402,7 @@ export function setDataByType({
     }
 
     // For error, degraded, info - calculate from events
-    const minutes = calculateEventDurationMinutes(events, date);
+    const minutes = calculateEventDurationMinutes(events, day);
     durationMap.set(status, minutes);
 
     if (minutes === 0) return null;
@@ -377,10 +413,11 @@ export function setDataByType({
   }
 
   return data.map((dayData) => {
-    const date = new Date(dayData.day);
+    const day = dayWindow(dayData.day, timeZone);
+    const dayMs = day.end - day.start;
 
     // Find events for this day
-    const dayEvents = events.filter((event) => isDateWithinEvent(date, event));
+    const dayEvents = events.filter((event) => isDateWithinEvent(day, event));
 
     // Determine status override based on events
     const incidents = dayEvents.filter((e) => e.type === "incident");
@@ -393,7 +430,7 @@ export function setDataByType({
     // worst impact color across the day's reports; "success" (operational all
     // day) means reports don't color the day
     const reportsDayStatus = reports.length
-      ? getWorstVariant(reports.map((e) => reportEventDayStatus(e, date)))
+      ? getWorstVariant(reports.map((e) => reportEventDayStatus(e, day)))
       : undefined;
     const activeReportsDayStatus =
       reportsDayStatus === "success" ? undefined : reportsDayStatus;
@@ -418,7 +455,7 @@ export function setDataByType({
             incidents,
             reports,
             maintenances,
-            date,
+            day,
           );
 
           // Special case: if only errors exist, show uptime vs downtime
@@ -426,10 +463,10 @@ export function setDataByType({
             eventSegments.length === 1 &&
             eventSegments[0].status === "error"
           ) {
-            barData = createErrorOnlyBarData(eventSegments[0].count);
+            barData = createErrorOnlyBarData(eventSegments[0].count, dayMs);
           } else {
             // Multiple segments: show proportional distribution
-            barData = createProportionalBarData(eventSegments);
+            barData = createProportionalBarData(eventSegments, dayMs);
           }
         } else if (total === 0) {
           // Empty day - no data available
@@ -480,6 +517,7 @@ export function setDataByType({
 
     switch (cardType) {
       case "requests":
+      case "runs":
         if (total === 0) {
           cardData = createEmptyCardData(eventStatus);
         } else {
@@ -498,18 +536,41 @@ export function setDataByType({
           cardData = entries
             .map((entry) => {
               // Map each entry status to its corresponding events
-              const eventMap = {
+              const eventByStatus: Record<string, Event[]> = {
                 error: incidents,
                 degraded: reports,
                 info: maintenances,
                 success: [], // Success is calculated differently
               };
+              const events = eventByStatus[entry.status];
 
-              const events = eventMap[entry.status as keyof typeof eventMap];
+              // When there are no events for this status but the data shows a
+              // non-zero count, calculate a proportional duration from the data
+              // so the card reflects actual probe-based status, not just events.
+              if (
+                events.length === 0 &&
+                (entry.status === "error" || entry.status === "degraded") &&
+                entry.count > 0
+              ) {
+                const totalMinutes = getAdjustedTotalMinutesInDay(
+                  day,
+                  maintenances,
+                );
+                const statusMinutes = Math.round(
+                  (entry.count / total) * totalMinutes,
+                );
+                if (statusMinutes === 0) return null;
+                durationMap.set(entry.status, statusMinutes);
+                return {
+                  status: entry.status,
+                  value: formatDuration(statusMinutes),
+                };
+              }
+
               return createDurationCardEntry(
                 entry.status,
                 events,
-                date,
+                day,
                 durationMap,
                 maintenances,
               );
@@ -531,7 +592,7 @@ export function setDataByType({
         const manualCardStatus =
           activeReportsDayStatus ?? (hasMaintenances ? "info" : undefined);
         const dayImpacts = reports
-          .map((e) => reportEventDayImpact(e, date))
+          .map((e) => reportEventDayImpact(e, day))
           .filter((i): i is PageComponentImpact => i !== null);
         const worstDayImpact =
           dayImpacts.length > 0 ? worstImpact(dayImpacts) : null;
@@ -591,7 +652,7 @@ export function setDataByType({
         ...reports.map((e) => ({
           ...e,
           status:
-            reportEventDayStatus(e, date) === "error"
+            reportEventDayStatus(e, day) === "error"
               ? ("error" as const)
               : ("degraded" as const),
         })),
@@ -604,117 +665,111 @@ export function setDataByType({
   });
 }
 
-type WeightedInterval = { from: number; to: number; weight: number };
-
-// concurrent events describing the same outage must not double-count
-// downtime: per time slice the worst (max) weight wins, mirroring
-// mergeWorstImpactIntervals — summing could push uptime negative
-function mergedDowntimeMs(intervals: WeightedInterval[]): number {
-  const boundaries = [
-    ...new Set(intervals.flatMap((iv) => [iv.from, iv.to])),
-  ].sort((a, b) => a - b);
-
-  let total = 0;
-  for (let i = 0; i + 1 < boundaries.length; i++) {
-    const sliceStart = boundaries[i];
-    const sliceEnd = boundaries[i + 1];
-    let weight = 0;
-    for (const iv of intervals) {
-      if (iv.from <= sliceStart && iv.to >= sliceEnd) {
-        weight = Math.max(weight, iv.weight);
-      }
-    }
-    total += weight * (sliceEnd - sliceStart);
-  }
-  return total;
-}
-
 export function getUptime({
   data,
   events,
   barType,
   cardType,
+  privateLocationOnly = false,
+  heartbeat = false,
+  timeZone = "UTC",
 }: {
   data: StatusData[];
   events: Event[];
   barType: "absolute" | "dominant" | "manual";
-  cardType: "requests" | "duration" | "dominant" | "manual";
+  cardType: "requests" | "runs" | "duration" | "dominant" | "manual";
+  /** no public regions and ≥1 private location: include probe errors in duration uptime */
+  privateLocationOnly?: boolean;
+  /** pings are not checks: uptime is incident time since the first signal */
+  heartbeat?: boolean;
+  /** IANA zone whose calendar days `data` is keyed by */
+  timeZone?: string;
 }): string {
-  // Clamp event durations to the data lookback window to avoid
-  // events outside the window producing negative uptime values.
-  const timestamps = data.map((d) => new Date(d.day).getTime());
-  const windowStart = timestamps.length > 0 ? Math.min(...timestamps) : 0;
-  const windowEndDate = new Date(
-    timestamps.length > 0 ? Math.max(...timestamps) : Date.now(),
-  );
-  windowEndDate.setUTCHours(23, 59, 59, 999);
-  const windowEnd = windowEndDate.getTime();
-
-  function clampedInterval(
-    from: Date,
-    to: Date | null,
-    weight: number,
-  ): WeightedInterval | null {
-    const start = Math.max(from.getTime(), windowStart);
-    const end = Math.min((to ?? new Date()).getTime(), windowEnd);
-    if (end <= start || weight === 0) return null;
-    return { from: start, to: end, weight };
+  if (heartbeat && barType !== "manual") {
+    const start = heartbeatCoverageStart(data, events, timeZone);
+    if (start === null) return "100%";
+    const days = data
+      .map((d) => dayWindow(d.day, timeZone))
+      .filter((d) => d.end > start)
+      .map((d) => ({ start: Math.max(d.start, start), end: d.end }));
+    const { segments, totalMs } = dayCoverage(days);
+    if (totalMs === 0) return "100%";
+    const window: UptimeWindow = {
+      start: Math.min(...segments.map((s) => s.start)),
+      end: Math.max(...segments.map((s) => s.end)) - 1,
+      now: Date.now(),
+    };
+    const downtime = durationDowntimeMs(events, window, segments);
+    return `${floorPct((totalMs - downtime) / totalMs)}%`;
   }
 
-  function reportImpactIntervals(event: Event): WeightedInterval[] {
-    return (event.impactIntervals ?? [])
-      .map((iv) =>
-        clampedInterval(iv.from, iv.to, impactUptimeWeight(iv.impact)),
-      )
-      .filter((iv): iv is WeightedInterval => iv !== null);
-  }
+  if (barType === "manual" || cardType === "duration") {
+    // Clamp event durations to the data lookback window to avoid
+    // events outside the window producing negative uptime values.
+    const days = data.map((d) => dayWindow(d.day, timeZone));
+    const { segments: coverage, totalMs: total } = dayCoverage(days);
+    if (total === 0) return "100%";
+    const window: UptimeWindow = {
+      start: Math.min(...days.map((d) => d.start)),
+      end: Math.max(...days.map((d) => d.end)) - 1,
+      now: Date.now(),
+    };
 
-  if (barType === "manual") {
-    // NOTE: we want only user events; legacy reports (no impact rows) keep
-    // their full duration as downtime
-    const intervals = events
-      .filter((e) => e.type === "report")
-      .flatMap((e) =>
-        e.impactIntervals
-          ? reportImpactIntervals(e)
-          : (clampedInterval(e.from, e.to, LEGACY_IMPACT_WEIGHT) ?? []),
+    let duration: number;
+    if (barType === "manual") {
+      // Manual mode: only count manually created reports
+      duration = reportsOnlyDowntimeMs(events, window, coverage);
+    } else {
+      // Duration mode = detected incidents + impact-weighted reports. Private
+      // probes never open incidents, so private-only monitors fall back to probe
+      // errors; for public monitors the day-wide probe weight would stack on top
+      // of the incident covering the same outage and nearly double it (#2481).
+      const eventIntervals = downtimeIntervals(events, window, false);
+      const probeIntervals = privateLocationOnly
+        ? probeDowntimeIntervals(data, window, timeZone)
+        : [];
+      const allIntervals = [...eventIntervals, ...probeIntervals];
+      duration = mergedDowntimeMs(
+        coverage ? clipToCoverage(allIntervals, coverage) : allIntervals,
       );
+    }
 
-    const total = data.length * MILLISECONDS_PER_DAY;
-    if (total === 0) return "100%";
-    const duration = mergedDowntimeMs(intervals);
-
-    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
+    return `${floorPct((total - duration) / total)}%`;
   }
 
-  if (cardType === "duration") {
-    // incidents and impact-report downtime share one timeline so an incident
-    // plus a report describing the same outage counts once; legacy reports
-    // stay ignored to preserve pre-impact uptime values
-    const intervals = events.flatMap((e) => {
-      if (e.type === "incident") return clampedInterval(e.from, e.to, 1) ?? [];
-      if (e.type === "report") return reportImpactIntervals(e);
-      return [];
-    });
+  const { up, total } = requestsTally(data);
+  if (total === 0) return "100%";
+  return `${floorPct(up / total)}%`;
+}
 
-    const total = data.length * MILLISECONDS_PER_DAY;
-    if (total === 0) return "100%";
-    const duration = mergedDowntimeMs(intervals);
+const JOB_TYPES = ["http", "tcp", "dns", "icmp", "grpc", "heartbeat"] as const;
 
-    return `${Math.floor(((total - duration) / total) * 10000) / 100}%`;
-  }
-
-  const { ok, total } = data.reduce(
-    (acc, item) => ({
-      ok: acc.ok + item.ok + item.degraded,
-      total: acc.total + item.ok + item.degraded + item.error,
+// Tinybird pipes are split per job type: query every type that has monitors
+// in parallel, then key the rows by monitor id.
+export async function fetchByJobType<Row extends { monitorId: string }>(
+  components: { monitor: { id: number; jobType: string } }[],
+  // `null` skips a type that has no pipe for this metric
+  procedureFor: (
+    type: (typeof JOB_TYPES)[number],
+  ) => ((args: { monitorIds: string[] }) => Promise<{ data: Row[] }>) | null,
+): Promise<Map<string, Row[]>> {
+  const results = await Promise.all(
+    JOB_TYPES.map((type) => {
+      const monitorIds = components
+        .filter((c) => c.monitor.jobType === type)
+        .map((c) => c.monitor.id.toString());
+      if (monitorIds.length === 0) return null;
+      return procedureFor(type)?.({ monitorIds }) ?? null;
     }),
-    {
-      ok: 0,
-      total: 0,
-    },
   );
 
-  if (total === 0) return "100%";
-  return `${Math.floor((ok / total) * 10000) / 100}%`;
+  const byMonitorId = new Map<string, Row[]>();
+  for (const result of results) {
+    for (const row of result?.data ?? []) {
+      const rows = byMonitorId.get(row.monitorId);
+      if (rows) rows.push(row);
+      else byMonitorId.set(row.monitorId, [row]);
+    }
+  }
+  return byMonitorId;
 }

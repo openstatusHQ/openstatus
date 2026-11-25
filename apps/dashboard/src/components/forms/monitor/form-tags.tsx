@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Check, Expand } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -26,7 +27,6 @@ import {
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -128,19 +128,19 @@ export function FormTags({
         id="monitor-tags-form"
         {...props}
       >
-        <FormCard>
+        <FormCard id="tags">
           <FormCardHeader>
             <FormCardTitle>Tags</FormCardTitle>
             <FormCardDescription>
               Add tags to categorize and organize your monitor.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid gap-4 md:grid-cols-2">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="tags"
               render={({ field }) => (
-                <FormItem className="flex flex-col md:col-span-1">
+                <FormItem className="flex flex-col sm:col-span-2">
                   <FormLabel>Tags</FormLabel>
                   <Popover>
                     <PopoverTrigger asChild>
@@ -149,7 +149,7 @@ export function FormTags({
                           variant="outline"
                           role="combobox"
                           className={cn(
-                            "h-auto min-h-9 w-full justify-between",
+                            "w-full justify-between",
                             !field.value?.length && "text-muted-foreground",
                           )}
                         >
@@ -174,7 +174,7 @@ export function FormTags({
                               </span>
                             )}
                           </div>
-                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          <Expand className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </FormControl>
                     </PopoverTrigger>
@@ -251,9 +251,7 @@ export function FormTags({
                   })),
                 }}
               >
-                <Button variant="outline" size="sm">
-                  Edit Tags
-                </Button>
+                <Button variant="outline">Edit Tags</Button>
               </FormSheetMonitorTag>
             </div>
           </FormCardContent>

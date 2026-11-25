@@ -1,0 +1,32 @@
+DESCRIPTION >
+	Stores all the data from the icmp_response table for the last 30 days, mainly used for accessing the data details.
+
+
+TAGS "icmp, full"
+
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        monitorId,
+        region,
+        timestamp,
+        cronTimestamp,
+        timing,
+        workspaceId,
+        latency,
+        latencyMin,
+        latencyMax,
+        packetsSent,
+        packetsReceived,
+        errorMessage,
+        error,
+        trigger,
+        uri,
+        id,
+        requestStatus
+    FROM icmp_response__v0
+
+TYPE materialized
+DATASOURCE mv__icmp_full_30d__v0

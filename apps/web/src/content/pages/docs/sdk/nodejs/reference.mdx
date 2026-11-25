@@ -56,6 +56,23 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `MONITORING` | Fix deployed, monitoring |
 | `RESOLVED` | Issue fully resolved |
 
+### IncidentSeverity
+
+| Value | Description |
+|-------|-------------|
+| `CRITICAL` | Core functionality is down for most users |
+| `MAJOR` | Significant impact on part of the product |
+| `MINOR` | Limited impact or a degraded experience |
+
+### IncidentStatus
+
+| Value | Description |
+|-------|-------------|
+| `OPEN` | The team is working on it |
+| `MITIGATED` | Impact is contained, the fix is not final |
+| `RESOLVED` | The incident is over |
+| `CANCELED` | A false alarm; closes the incident |
+
 ### OverallStatus
 
 | Value | Description |
@@ -75,11 +92,12 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `EMAIL` | Email notification |
 | `GOOGLE_CHAT` | Google Chat webhook |
 | `GRAFANA_ONCALL` | Grafana OnCall |
+| `MS_TEAMS` | Microsoft Teams (Power Automate workflow) |
 | `NTFY` | Ntfy push service |
 | `PAGERDUTY` | PagerDuty |
 | `OPSGENIE` | Opsgenie |
 | `SLACK` | Slack webhook |
-| `SMS` | SMS notification |
+| `SMS` | Deprecated, use `WHATSAPP`. Kept for existing channels |
 | `TELEGRAM` | Telegram bot |
 | `WEBHOOK` | Custom webhook |
 | `WHATSAPP` | WhatsApp |
@@ -98,6 +116,7 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 | `PUBLIC` | Publicly accessible |
 | `PASSWORD_PROTECTED` | Requires password |
 | `AUTHENTICATED` | Requires authentication |
+| `IP_RESTRICTED` | Restricted to the CIDR ranges in `allowed_ip_ranges` |
 
 ### PageTheme
 
@@ -113,6 +132,21 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 |-------|-------------|
 | `MONITOR` | Linked to a monitor |
 | `STATIC` | Static component (manual) |
+
+### PageMetricType
+
+| Value | Description |
+|-------|-------------|
+| `DURATION` | Status bars represent response duration |
+| `REQUESTS` | Status bars represent request counts |
+| `MANUAL` | Status bars set manually |
+
+### PageBarType
+
+| Value | Description |
+|-------|-------------|
+| `ABSOLUTE` | Status bar computed from absolute values |
+| `MANUAL` | Status bar set manually |
 
 ### NumberComparator
 
@@ -158,7 +192,7 @@ description: "Complete reference for enums, regions, assertions, and TypeScript 
 
 ## Regions
 
-Monitor from 28 global locations across multiple providers.
+Monitor from 27 global locations across multiple providers.
 
 ```typescript
 import { Region } from "@openstatus/sdk-node";
@@ -166,13 +200,12 @@ import { Region } from "@openstatus/sdk-node";
 regions: [Region.FLY_AMS, Region.FLY_IAD, Region.KOYEB_FRA];
 ```
 
-### Fly.io Regions (18)
+### Fly.io Regions (17)
 
 | Enum Value | Location |
 |------------|----------|
 | `FLY_AMS` | Amsterdam |
 | `FLY_ARN` | Stockholm |
-| `FLY_BOM` | Mumbai |
 | `FLY_CDG` | Paris |
 | `FLY_DFW` | Dallas |
 | `FLY_EWR` | Newark |
@@ -343,7 +376,8 @@ All types and enums exported from `@openstatus/sdk-node`:
 - `ListSubscribersRequest`, `ListSubscribersResponse`
 - `GetStatusPageContentRequest`, `GetStatusPageContentResponse`
 - `GetOverallStatusRequest`, `GetOverallStatusResponse`, `ComponentStatus`
-- `OverallStatus`, `PageAccessType`, `PageTheme`, `PageComponentType`
+- `GetStatusPageOverviewRequest`, `GetStatusPageOverviewResponse`, `PageConfiguration`
+- `OverallStatus`, `PageAccessType`, `PageTheme`, `PageComponentType`, `PageMetricType`, `PageBarType`
 
 ### Maintenance Types
 
@@ -358,7 +392,7 @@ All types and enums exported from `@openstatus/sdk-node`:
 
 - `Notification`, `NotificationSummary`
 - `NotificationData`
-- `DiscordData`, `EmailData`, `GoogleChatData`, `GrafanaOncallData`, `NtfyData`, `OpsgenieData`, `PagerDutyData`, `SlackData`, `SmsData`, `TelegramData`, `WebhookData`, `WebhookHeader`, `WhatsappData`
+- `DiscordData`, `EmailData`, `GoogleChatData`, `GrafanaOncallData`, `MsTeamsData`, `NtfyData`, `OpsgenieData`, `PagerDutyData`, `SlackData`, `SmsData`, `TelegramData`, `WebhookData`, `WebhookHeader`, `WhatsappData`
 - `CreateNotificationRequest`, `CreateNotificationResponse`
 - `GetNotificationRequest`, `GetNotificationResponse`
 - `ListNotificationsRequest`, `ListNotificationsResponse`

@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import { page, pageSubscriber } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 // Test data setup
 let testPageId: number;

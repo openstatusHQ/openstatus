@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import {
   AppHeader,
   AppHeaderActions,
@@ -23,13 +25,20 @@ export default async function Layout({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const monitorId = Number.parseInt(id);
+  if (Number.isNaN(monitorId)) notFound();
   const queryClient = getQueryClient();
 
-  await fetchQueryOrNotFound(
-    trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
-  );
-  await queryClient.prefetchQuery(trpc.notification.list.queryOptions());
-  await queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions());
+  const [monitor] = await Promise.all([
+    fetchQueryOrNotFound(trpc.monitor.get.queryOptions({ id: monitorId })),
+    queryClient.prefetchQuery(trpc.privateLocation.list.queryOptions()),
+  ]);
+  // the overview picks "waiting for first ping" or the ping chart from this
+  if (monitor.jobType === "heartbeat") {
+    await queryClient.prefetchQuery(
+      trpc.monitor.heartbeat.queryOptions({ id: monitorId }),
+    );
+  }
 
   return (
     <HydrateClient>

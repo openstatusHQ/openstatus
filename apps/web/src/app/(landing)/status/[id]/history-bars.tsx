@@ -6,6 +6,12 @@ import type {
   StatusType,
 } from "@openstatus/ui/components/blocks/status.types";
 
+import { renderIncidentEvent } from "../incident-event";
+import {
+  type OverlayIncident,
+  bucketIncidentsByUtcDay,
+} from "../incident-events";
+
 type DailyRow = {
   day: string;
   worstIndicator: string;
@@ -49,6 +55,7 @@ function labelFor(status: StatusType): string {
 export type HistoryBarsProps = {
   daily: DailyRow[];
   days: number;
+  incidents?: OverlayIncident[];
 };
 
 const INDICATOR_SEVERITY: Record<string, number> = {
@@ -87,6 +94,9 @@ function buildSeries(props: HistoryBarsProps): StatusBarData[] {
       snapshotCount: prev.snapshotCount + r.snapshotCount,
     });
   }
+  const eventsByDay = bucketIncidentsByUtcDay(props.incidents ?? [], {
+    days: props.days,
+  });
   const out: StatusBarData[] = [];
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
@@ -105,7 +115,7 @@ function buildSeries(props: HistoryBarsProps): StatusBarData[] {
       day: iso,
       bar: [{ status, height: 100 }],
       card: [{ status, value: labelFor(status) }],
-      events: [],
+      events: eventsByDay.get(iso) ?? [],
     });
   }
   return out;
@@ -113,13 +123,5 @@ function buildSeries(props: HistoryBarsProps): StatusBarData[] {
 
 export function HistoryBars(props: HistoryBarsProps) {
   const data = buildSeries(props);
-  // Square the bars: the shared StatusBar block hard-codes rounded-full on the
-  // item root, an overflow-hidden clip wrapper, and each segment. Override the
-  // radius for this page only (descendant selectors outrank the block's
-  // single-class utilities) without forking the shared component.
-  return (
-    <div className="[&_[data-slot=status-bar-item]]:rounded-none [&_[data-slot=status-bar-item]>div]:rounded-none [&_[data-slot=status-bar-item]>div>div]:rounded-none">
-      <StatusBar data={data} />
-    </div>
-  );
+  return <StatusBar data={data} renderEvent={renderIncidentEvent} />;
 }

@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   check,
+  index,
   integer,
   sqliteTable,
   text,
@@ -21,7 +22,7 @@ export const pageSubscriber = sqliteTable(
 
     // Added: channel type discriminator
     channelType: text("channel_type", {
-      enum: ["email", "webhook"],
+      enum: ["email", "webhook", "slack"],
     })
       .notNull()
       .default("email"),
@@ -29,6 +30,11 @@ export const pageSubscriber = sqliteTable(
     // Added: webhook-specific fields (null for email channel)
     webhookUrl: text("webhook_url"),
     channelConfig: text("channel_config"),
+
+    // Slack channel id (null for non-slack channels). teamId + channelName
+    // live in channelConfig; the bot token is resolved from the integration
+    // row at send time, never persisted here.
+    slackChannelId: text("slack_channel_id"),
 
     // How the subscription was created. Vendor-added rows skip verification
     // and are editable from the dashboard.
@@ -54,6 +60,10 @@ export const pageSubscriber = sqliteTable(
     ),
   },
   (table) => ({
+    // Plain, not partial: the three partial uniques below all lead with a
+    // channel identifier, so nothing could serve a page_id lookup.
+    pageIdIdx: index("page_subscriber_page_id_idx").on(table.pageId),
+
     // Partial unique index: one active email subscription per page
     emailPageActiveIdx: uniqueIndex("idx_page_subscriber_email_page_active")
       .on(sql`LOWER(${table.email})`, table.pageId)
@@ -68,10 +78,19 @@ export const pageSubscriber = sqliteTable(
         sql`${table.unsubscribedAt} IS NULL AND ${table.channelType} = 'webhook'`,
       ),
 
+    // Partial unique index: one active slack subscription per (channel, page).
+    slackChannelPageActiveIdx: uniqueIndex(
+      "idx_page_subscriber_slack_channel_page_active",
+    )
+      .on(table.slackChannelId, table.pageId)
+      .where(
+        sql`${table.unsubscribedAt} IS NULL AND ${table.channelType} = 'slack'`,
+      ),
+
     // CHECK constraint: only correct identifier populated per channel type
     channelCheck: check(
       "page_subscriber_channel_check",
-      sql`(${table.channelType} = 'email' AND ${table.email} IS NOT NULL AND ${table.webhookUrl} IS NULL) OR (${table.channelType} = 'webhook' AND ${table.webhookUrl} IS NOT NULL AND ${table.email} IS NULL)`,
+      sql`(${table.channelType} = 'email' AND ${table.email} IS NOT NULL AND ${table.webhookUrl} IS NULL) OR (${table.channelType} = 'webhook' AND ${table.webhookUrl} IS NOT NULL AND ${table.email} IS NULL) OR (${table.channelType} = 'slack' AND ${table.slackChannelId} IS NOT NULL AND ${table.email} IS NULL AND ${table.webhookUrl} IS NULL)`,
     ),
   }),
 );

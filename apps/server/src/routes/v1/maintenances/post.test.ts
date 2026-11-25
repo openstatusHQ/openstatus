@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import { maintenance } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeEach, test } from "@std/testing/bdd";
+import { beforeEach, expect, test } from "vitest";
 
 import { app } from "@/index";
 
@@ -221,7 +220,7 @@ test("no auth key should return 401", async () => {
   expect(res.status).toBe(401);
 });
 
-test("create a maintenance calls dispatchMaintenanceUpdate", async () => {
+test("create a maintenance dispatches its first update", async () => {
   const from = new Date();
   const to = new Date(from.getTime() + 3600000);
 
@@ -252,4 +251,27 @@ test("create a maintenance calls dispatchMaintenanceUpdate", async () => {
   if (result.success) {
     await db.delete(maintenance).where(eq(maintenance.id, result.data.id));
   }
+});
+
+test("create a maintenance with an empty message should return 400", async () => {
+  const from = new Date();
+  const to = new Date(from.getTime() + 3600000);
+
+  const res = await app.request("/v1/maintenance", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      title: "Empty Message",
+      message: "",
+      from: from.toISOString(),
+      to: to.toISOString(),
+      monitorIds: [1],
+      pageId: 1,
+    }),
+  });
+
+  expect(res.status).toBe(400);
 });

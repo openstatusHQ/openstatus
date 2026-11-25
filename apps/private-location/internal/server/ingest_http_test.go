@@ -2,17 +2,23 @@ package server_test
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/libsql/sqlite-antlr4-parser/sqliteparserutils"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/database"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/server"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/tinybird"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/workflows"
 	private_locationv1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
+	"github.com/stretchr/testify/require"
 )
 
 func testDB() *sqlx.DB {
@@ -21,12 +27,27 @@ func testDB() *sqlx.DB {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	db, err := sqlx.Connect("sqlite3", f.Name())
+	db, err := database.Open("file:"+f.Name(), "")
 	if err != nil {
 		log.Fatalln(err)
 	}
+	// libSQL enforces foreign keys by default and the fixture isn't insert-ordered.
+	// The pragma is per-connection, so pin the pool to a single connection.
+	db.SetMaxOpenConns(1)
+	db.MustExec("PRAGMA foreign_keys = OFF")
+
 	dat, err := os.ReadFile("./db_testdata")
-	db.MustExec(string(dat))
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// libSQL executes a single statement per call, so run the fixture one statement at a time.
+	stmts, info := sqliteparserutils.SplitStatement(string(dat))
+	if info.IncompleteCreateTriggerStatement || info.IncompleteMultilineComment {
+		log.Fatalln("db_testdata ends with an incomplete statement")
+	}
+	for _, stmt := range stmts {
+		db.MustExec(stmt)
+	}
 
 	return db
 }
@@ -220,6 +241,57 @@ func TestIngestHTTP_WithFullData(t *testing.T) {
 	}
 	if resp == nil {
 		t.Errorf("expected not nil response, got nil")
+	}
+}
+
+// TestIngestHTTP_ForwardsErrorAndMessage guards against the probe's error flag
+// and failure message being dropped on the way to Tinybird and alerting: the
+// `error` column stayed 0 for every private check and alerts had empty bodies.
+func TestIngestHTTP_ForwardsErrorAndMessage(t *testing.T) {
+	var capturedBody []byte
+	interceptor := &interceptorHTTPClient{
+		f: func(req *http.Request) (*http.Response, error) {
+			if req.Body != nil {
+				capturedBody, _ = io.ReadAll(req.Body)
+			}
+			return &http.Response{StatusCode: http.StatusAccepted}, nil
+		},
+	}
+	h := server.NewPrivateLocationServer(testDB(), tinybird.NewClient(interceptor.GetHTTPClient(), "apiKey"))
+	workflowsClient := recordingWorkflows{called: make(chan workflows.Payload, 1)}
+	h.WorkflowsClient = workflowsClient
+
+	const message = "Request failed with status code 500"
+	req := connect.NewRequest(&private_locationv1.IngestHTTPRequest{
+		Id:            "request-err",
+		MonitorId:     "5",
+		Timestamp:     1234567890,
+		CronTimestamp: 1234567800,
+		Url:           "https://example.com/api",
+		RequestStatus: "error",
+		StatusCode:    500,
+		Error:         1,
+		Message:       message,
+	})
+	req.Header().Set("openstatus-token", "my-secret-key")
+
+	_, err := h.IngestHTTP(context.Background(), req)
+	require.NoError(t, err)
+
+	var event struct {
+		Error   uint8  `json:"error"`
+		Message string `json:"message"`
+	}
+	require.NoError(t, json.Unmarshal(capturedBody, &event))
+	require.Equal(t, uint8(1), event.Error)
+	require.Equal(t, message, event.Message)
+
+	select {
+	case payload := <-workflowsClient.called:
+		require.Equal(t, "error", payload.Status)
+		require.Equal(t, message, payload.Message)
+	case <-time.After(2 * time.Second):
+		t.Fatal("expected the failed check to be forwarded to the workflows service")
 	}
 }
 

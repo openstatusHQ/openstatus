@@ -1,10 +1,16 @@
 import { locales } from "@openstatus/locales";
 import type { ThemeKey } from "@openstatus/theme-store";
-import { THEME_KEYS } from "@openstatus/theme-store";
+import {
+  hasCustomTheme,
+  sanitizeCustomTheme,
+  THEME_KEYS,
+  validateCustomTheme,
+} from "@openstatus/theme-store";
+import { isKnownTimeZone } from "@openstatus/utils";
 import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
-import { pageAccessTypes } from "./constants";
+import { pageAccessTypes, pageCardValues } from "./constants";
 import { page } from "./page";
 
 // Exported so `@openstatus/services` can reuse the canonical rules in
@@ -28,6 +34,14 @@ export const customDomainSchema = z
   )
   .or(z.enum([""]));
 
+// ClickHouse rejects offsets like "+09:00" that Intl accepts.
+export const timeZoneSchema = z
+  .string()
+  .refine(
+    (value) => /^[A-Za-z]/.test(value) && isKnownTimeZone(value),
+    "Unknown IANA time zone",
+  );
+
 const stringToArray = z.preprocess((val) => {
   if (val && String(val).length > 0) {
     return String(val).split(",");
@@ -35,14 +49,42 @@ const stringToArray = z.preprocess((val) => {
   return [];
 }, z.array(z.string()));
 
+// Loose { light, dark } var maps — write paths enforce the supported var
+// names / safe values; `.catch(null)` degrades corrupt stored json to "no
+// overrides" instead of tanking every page read.
+const themeVarsSchema = z.record(z.string(), z.string());
+export const customThemeSchema = z.object({
+  light: themeVarsSchema.optional(),
+  dark: themeVarsSchema.optional(),
+});
+
+// Strict write-side counterpart: only supported var names and values that
+// can't break out of the inline <style> tag the status page renders them
+// into. Empty / nullish input clears the column.
+export const customThemeWriteSchema = customThemeSchema
+  .superRefine((value, ctx) => {
+    const result = validateCustomTheme(value);
+    if (!result.valid) {
+      for (const message of result.errors) {
+        ctx.addIssue({ code: "custom", message });
+      }
+    }
+  })
+  .nullish()
+  .transform((v) => {
+    if (v == null || !hasCustomTheme(v)) return null;
+    return sanitizeCustomTheme(v);
+  });
+
 export const insertPageSchema = createInsertSchema(page, {
+  title: z.string().trim().min(1, "Title must be at least 1 character long"),
   customDomain: customDomainSchema.prefault(""),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   icon: z.string().optional(),
   slug: slugSchema,
 })
   .extend({
-    password: z.string().nullable().optional().prefault(""),
+    password: z.string().nullable().prefault(""),
     monitors: z
       .array(
         z.object({
@@ -51,7 +93,7 @@ export const insertPageSchema = createInsertSchema(page, {
           order: z.number().prefault(0).optional(),
         }),
       )
-      .optional()
+
       .prefault([]),
     authEmailDomains: z.array(z.string()).nullish(),
     allowedIpRanges: z
@@ -65,8 +107,10 @@ export const insertPageSchema = createInsertSchema(page, {
           .pipe(z.cidrv4()),
       )
       .nullish(),
-    defaultLocale: z.enum(locales).optional().prefault("en"),
+    defaultLocale: z.enum(locales).prefault("en"),
     locales: z.array(z.enum(locales)).nullable().optional(),
+    defaultTimezone: timeZoneSchema.prefault("UTC"),
+    customTheme: customThemeWriteSchema,
   })
   .refine(
     (data) => {
@@ -89,7 +133,7 @@ export const insertPageSchema = createInsertSchema(page, {
 // barType and rendering manual-mode bars as empty).
 export const pageConfigurationSchema = z.object({
   value: z
-    .enum(["duration", "requests", "manual"])
+    .enum(pageCardValues)
     .nullish()
     .transform((v) => v ?? "requests"),
   type: z
@@ -113,13 +157,16 @@ export const pageConfigurationSchema = z.object({
 export type PageConfiguration = z.infer<typeof pageConfigurationSchema>;
 
 export const selectPageSchema = createSelectSchema(page).extend({
-  password: z.string().optional().nullable().prefault(""),
+  password: z.string().nullable().prefault(""),
+  customTheme: customThemeSchema.nullish().catch(null),
   configuration: pageConfigurationSchema.nullish().prefault({}),
   accessType: z.enum(pageAccessTypes).prefault("public"),
   authEmailDomains: stringToArray.prefault([]),
   allowedIpRanges: stringToArray.prefault([]),
   defaultLocale: z.enum(locales).prefault("en"),
   locales: z.array(z.enum(locales)).nullable().prefault(null),
+  // A zone the runtime cannot resolve must not take the whole page down.
+  defaultTimezone: timeZoneSchema.catch("UTC"),
 });
 
 export type InsertPage = z.infer<typeof insertPageSchema>;

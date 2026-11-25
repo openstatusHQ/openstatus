@@ -3,6 +3,7 @@ import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { entityKinds } from "@/data/entity-refs.client";
 
 import type { ResultTableData } from "./result-table";
 
@@ -23,10 +24,7 @@ export function listStatusPagesTable(
       id: p.id,
       cells: {
         title: (
-          <TableCellLink
-            href={`/status-pages/${p.id}/status-reports`}
-            value={p.title}
-          />
+          <TableCellLink href={entityKinds.page.href(p)} value={p.title} />
         ),
         slug: (
           <TableCellText

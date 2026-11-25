@@ -19,35 +19,56 @@ const ESCALATED_TITLE =
 type PillStyle = {
   label: string;
   className: string;
+  dot: string;
+  text: string;
+  box: string;
 };
 
 const MAINTENANCE: PillStyle = {
   label: "Maintenance",
   className: "bg-info/15 text-info border-info/30",
+  dot: "bg-info",
+  text: "text-info",
+  box: "border-info/30 bg-info/5",
 };
 
 const INDICATOR_PILLS: Record<string, PillStyle> = {
   none: {
     label: "Operational",
     className: "bg-success/15 text-success border-success/30",
+    dot: "bg-success",
+    text: "text-success",
+    box: "border-success/30 bg-success/5",
   },
   minor: {
     label: "Minor Issue",
     className: "bg-warning/15 text-warning border-warning/30",
+    dot: "bg-warning",
+    text: "text-warning",
+    box: "border-warning/40 bg-warning/5",
   },
   major: {
     label: "Partial Outage",
     className: "bg-destructive/15 text-destructive border-destructive/30",
+    dot: "bg-destructive",
+    text: "text-destructive",
+    box: "border-destructive/30 bg-destructive/5",
   },
   critical: {
     label: "Major Outage",
     className: "bg-destructive/20 text-destructive border-destructive/40",
+    dot: "bg-destructive",
+    text: "text-destructive",
+    box: "border-destructive/30 bg-destructive/5",
   },
 };
 
 const UNKNOWN_PILL: PillStyle = {
   label: "Unknown",
   className: "bg-muted text-muted-foreground border-muted-foreground/20",
+  dot: "bg-muted-foreground/40",
+  text: "text-muted-foreground",
+  box: "border-border bg-muted/30",
 };
 
 export function getPillStyle(args: {
@@ -98,6 +119,38 @@ export function ExternalServicePill({
       >
         user-reported
       </span>
+    </span>
+  );
+}
+
+export function ServiceStatusLabel({
+  indicator,
+  status,
+  escalated,
+  quietWhenOk,
+  className,
+}: {
+  indicator: string;
+  status: string;
+  escalated?: boolean;
+  // In long lists only problems carry a visible label; "ok" is just the dot.
+  quietWhenOk?: boolean;
+  className?: string;
+}) {
+  const pill = getPillStyle({ indicator, status });
+  const label = escalated ? "User-reported" : pill.label;
+  const quiet = quietWhenOk && !escalated && pill.label === "Operational";
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 text-xs whitespace-nowrap",
+        pill.text,
+        className,
+      )}
+      title={escalated ? ESCALATED_TITLE : undefined}
+    >
+      <span aria-hidden="true" className={cn("size-2 shrink-0", pill.dot)} />
+      <span className={quiet ? "sr-only" : undefined}>{label}</span>
     </span>
   );
 }

@@ -85,7 +85,7 @@ export function FormNotifiers({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="notifications">
           <FormCardHeader>
             <FormCardTitle>Notifications</FormCardTitle>
             <FormCardDescription>

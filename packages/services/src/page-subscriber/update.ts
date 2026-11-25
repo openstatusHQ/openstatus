@@ -34,12 +34,11 @@ export async function updatePageSubscriberChannel(args: {
   input: UpdatePageSubscriberChannelInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "subscribers:write");
   const input = UpdatePageSubscriberChannelInput.parse(args.input);
 
-  // `assertSafeUrl` does a DNS lookup to block private/internal targets;
-  // keep it outside the tx so we don't hold the SQLite write lock across
-  // a network call.
+  // String-only check (no DNS resolution) — a public name pointing at a
+  // private address still passes. Delivery and test sends never follow redirects.
   if (input.webhookUrl !== undefined) {
     await assertSafeUrl(input.webhookUrl);
   }

@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { expect, test } from "vitest";
 
 import { app } from "@/index";
 
@@ -124,9 +123,7 @@ test("no auth key should return 401", async () => {
     headers: {
       "content-type": "application/json",
     },
-    body: JSON.stringify({
-      /* */
-    }),
+    body: JSON.stringify({/* */}),
   });
 
   expect(res.status).toBe(401);

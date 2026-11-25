@@ -3,17 +3,15 @@ import { notFound } from "next/navigation";
 
 import { CustomMDX } from "../../../../content/mdx";
 import { CustomImage } from "../../../../content/mdx-components/custom-image";
+import { sections } from "../../../../content/sections";
 import { getCustomerPages } from "../../../../content/utils";
 import { JsonLd } from "../../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  getPageMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { getPageMetadata } from "../../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDFAQPage,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
   getJsonLDWebPage,
 } from "../../../../lib/metadata/structured-data";
 
@@ -58,11 +56,10 @@ export default async function CustomerPage({
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
     getJsonLDWebPage(page),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Customers", url: `${BASE_URL}/customers` },
-      { name: page.metadata.title, url: `${BASE_URL}/customers/${slug}` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.customers, {
+      label: page.metadata.title,
+      path: page.href,
+    }),
     getJsonLDFAQPage(page),
   ]);
 

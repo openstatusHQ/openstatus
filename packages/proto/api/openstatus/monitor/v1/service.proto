@@ -5,7 +5,10 @@ package openstatus.monitor.v1;
 import "buf/validate/validate.proto";
 import "gnostic/openapi/v3/annotations.proto";
 import "openstatus/monitor/v1/dns_monitor.proto";
+import "openstatus/monitor/v1/grpc_monitor.proto";
+import "openstatus/monitor/v1/heartbeat_monitor.proto";
 import "openstatus/monitor/v1/http_monitor.proto";
+import "openstatus/monitor/v1/icmp_monitor.proto";
 import "openstatus/monitor/v1/monitor.proto";
 import "openstatus/monitor/v1/tcp_monitor.proto";
 
@@ -38,6 +41,15 @@ service MonitorService {
   // CreateDNSMonitor creates a new DNS monitor.
   rpc CreateDNSMonitor(CreateDNSMonitorRequest) returns (CreateDNSMonitorResponse);
 
+  // CreateICMPMonitor creates a new ICMP monitor.
+  rpc CreateICMPMonitor(CreateICMPMonitorRequest) returns (CreateICMPMonitorResponse);
+
+  // CreateGRPCMonitor creates a new gRPC health check monitor.
+  rpc CreateGRPCMonitor(CreateGRPCMonitorRequest) returns (CreateGRPCMonitorResponse);
+
+  // CreateHeartbeatMonitor creates a new heartbeat monitor that your job pings.
+  rpc CreateHeartbeatMonitor(CreateHeartbeatMonitorRequest) returns (CreateHeartbeatMonitorResponse);
+
   // UpdateHTTPMonitor updates an existing HTTP monitor.
   rpc UpdateHTTPMonitor(UpdateHTTPMonitorRequest) returns (UpdateHTTPMonitorResponse);
 
@@ -46,6 +58,15 @@ service MonitorService {
 
   // UpdateDNSMonitor updates an existing DNS monitor.
   rpc UpdateDNSMonitor(UpdateDNSMonitorRequest) returns (UpdateDNSMonitorResponse);
+
+  // UpdateICMPMonitor updates an existing ICMP monitor.
+  rpc UpdateICMPMonitor(UpdateICMPMonitorRequest) returns (UpdateICMPMonitorResponse);
+
+  // UpdateGRPCMonitor updates an existing gRPC monitor.
+  rpc UpdateGRPCMonitor(UpdateGRPCMonitorRequest) returns (UpdateGRPCMonitorResponse);
+
+  // UpdateHeartbeatMonitor updates an existing heartbeat monitor.
+  rpc UpdateHeartbeatMonitor(UpdateHeartbeatMonitorRequest) returns (UpdateHeartbeatMonitorResponse);
 
   // TriggerMonitor initiates an immediate check for a monitor across all configured regions.
   rpc TriggerMonitor(TriggerMonitorRequest) returns (TriggerMonitorResponse) {
@@ -76,7 +97,7 @@ service MonitorService {
   }
 
   // GetMonitor returns a single monitor by ID within the authenticated workspace.
-  // Returns the monitor configuration (HTTP, TCP, or DNS) using the MonitorConfig oneof type.
+  // Returns the monitor configuration (HTTP, TCP, DNS, ICMP, gRPC, or heartbeat) using the MonitorConfig oneof type.
   rpc GetMonitor(GetMonitorRequest) returns (GetMonitorResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
@@ -89,6 +110,21 @@ service MonitorService {
   // GetMonitorHTTPResponseLog returns one response log for an HTTP monitor.
   rpc GetMonitorHTTPResponseLog(GetMonitorHTTPResponseLogRequest) returns (GetMonitorHTTPResponseLogResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // ListMonitorHeartbeatPings returns the pings a heartbeat monitor received, newest first.
+  rpc ListMonitorHeartbeatPings(ListMonitorHeartbeatPingsRequest) returns (ListMonitorHeartbeatPingsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+    option (gnostic.openapi.v3.operation) = {
+      description: "Returns the pings a heartbeat monitor received, newest first, with their method, headers and body. Pings older than the plan's data retention are not returned. Requires the response logs feature on the workspace plan. Page through results by passing next_cursor back as cursor."
+    };
+  }
+
+  // RegenerateHeartbeatToken replaces the ping URL of a heartbeat monitor.
+  rpc RegenerateHeartbeatToken(RegenerateHeartbeatTokenRequest) returns (RegenerateHeartbeatTokenResponse) {
+    option (gnostic.openapi.v3.operation) = {
+      description: "Generates a new ping URL for a heartbeat monitor. The previous ping URL stops working immediately, so update your jobs with the returned ping_url."
+    };
   }
 }
 
@@ -126,6 +162,42 @@ message CreateDNSMonitorRequest {
 message CreateDNSMonitorResponse {
   // The created monitor with assigned ID.
   DNSMonitor monitor = 1;
+}
+
+// CreateICMPMonitorRequest is the request to create a new ICMP monitor.
+message CreateICMPMonitorRequest {
+  // Monitor configuration (required).
+  ICMPMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateICMPMonitorResponse is the response after creating an ICMP monitor.
+message CreateICMPMonitorResponse {
+  // The created monitor with assigned ID.
+  ICMPMonitor monitor = 1;
+}
+
+// CreateHeartbeatMonitorRequest is the request to create a new heartbeat monitor.
+message CreateHeartbeatMonitorRequest {
+  // Monitor configuration (required).
+  HeartbeatMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateHeartbeatMonitorResponse is the response after creating a heartbeat monitor.
+message CreateHeartbeatMonitorResponse {
+  // The created monitor with its ping URL.
+  HeartbeatMonitor monitor = 1;
+}
+
+// CreateGRPCMonitorRequest is the request to create a new gRPC monitor.
+message CreateGRPCMonitorRequest {
+  // Monitor configuration (required).
+  GRPCMonitor monitor = 1 [(buf.validate.field).required = true];
+}
+
+// CreateGRPCMonitorResponse is the response after creating a gRPC monitor.
+message CreateGRPCMonitorResponse {
+  // The created monitor with assigned ID.
+  GRPCMonitor monitor = 1;
 }
 
 // UpdateHTTPMonitorRequest is the request to update an existing HTTP monitor.
@@ -171,6 +243,51 @@ message UpdateDNSMonitorRequest {
 message UpdateDNSMonitorResponse {
   // The updated monitor.
   DNSMonitor monitor = 1;
+}
+
+// UpdateICMPMonitorRequest is the request to update an existing ICMP monitor.
+message UpdateICMPMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional ICMPMonitor monitor = 2;
+}
+
+// UpdateICMPMonitorResponse is the response after updating an ICMP monitor.
+message UpdateICMPMonitorResponse {
+  // The updated monitor.
+  ICMPMonitor monitor = 1;
+}
+
+// UpdateHeartbeatMonitorRequest is the request to update an existing heartbeat monitor.
+message UpdateHeartbeatMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional HeartbeatMonitor monitor = 2;
+}
+
+// UpdateHeartbeatMonitorResponse is the response after updating a heartbeat monitor.
+message UpdateHeartbeatMonitorResponse {
+  // The updated monitor.
+  HeartbeatMonitor monitor = 1;
+}
+
+// UpdateGRPCMonitorRequest is the request to update an existing gRPC monitor.
+message UpdateGRPCMonitorRequest {
+  // Monitor ID to update (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Updated monitor configuration (all fields optional for partial updates).
+  optional GRPCMonitor monitor = 2;
+}
+
+// UpdateGRPCMonitorResponse is the response after updating a gRPC monitor.
+message UpdateGRPCMonitorResponse {
+  // The updated monitor.
+  GRPCMonitor monitor = 1;
 }
 
 // TriggerMonitorRequest is the request to trigger a monitor check.
@@ -220,6 +337,15 @@ message ListMonitorsResponse {
   // DNS monitors in the workspace.
   repeated DNSMonitor dns_monitors = 3;
 
+  // ICMP monitors in the workspace.
+  repeated ICMPMonitor icmp_monitors = 5;
+
+  // gRPC monitors in the workspace.
+  repeated GRPCMonitor grpc_monitors = 6;
+
+  // Heartbeat monitors in the workspace.
+  repeated HeartbeatMonitor heartbeat_monitors = 7;
+
   // Total number of monitors across all types.
   int32 total_size = 4;
 }
@@ -257,6 +383,12 @@ message MonitorConfig {
     TCPMonitor tcp = 2;
     // DNS monitor configuration.
     DNSMonitor dns = 3;
+    // ICMP monitor configuration.
+    ICMPMonitor icmp = 4;
+    // gRPC monitor configuration.
+    GRPCMonitor grpc = 5;
+    // Heartbeat monitor configuration.
+    HeartbeatMonitor heartbeat = 6;
   }
 }
 
@@ -319,7 +451,7 @@ message GetMonitorRequest {
 
 // GetMonitorResponse is the response containing the monitor.
 message GetMonitorResponse {
-  // The monitor configuration (one of HTTP, TCP, or DNS).
+  // The monitor configuration (one of HTTP, TCP, DNS, ICMP, gRPC, or heartbeat).
   MonitorConfig monitor = 1;
 }
 
@@ -452,4 +584,57 @@ message GetMonitorHTTPResponseLogRequest {
 message GetMonitorHTTPResponseLogResponse {
   // Response log details.
   HTTPResponseLogDetail log = 1;
+}
+
+// ListMonitorHeartbeatPingsRequest is the request to list the pings of a heartbeat monitor.
+message ListMonitorHeartbeatPingsRequest {
+  // Monitor ID to list pings for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+
+  // Start of the window as Unix milliseconds, clamped to the plan's data retention.
+  optional int64 from_timestamp = 2;
+
+  // End of the window as Unix milliseconds.
+  optional int64 to_timestamp = 3;
+
+  // Only return pings of these kinds. Empty returns every kind.
+  repeated HeartbeatPingKind kinds = 4 [(buf.validate.field).repeated = {
+    max_items: 2
+    items: {
+      enum: {
+        defined_only: true
+        not_in: [0]
+      }
+    }
+  }];
+
+  // Cursor from a previous response's next_cursor.
+  optional string cursor = 5 [(buf.validate.field).string.max_len = 64];
+
+  // Maximum number of pings to return (1-100, defaults to 50).
+  optional int32 limit = 6 [(buf.validate.field).int32 = {
+    gte: 1
+    lte: 100
+  }];
+}
+
+// ListMonitorHeartbeatPingsResponse is the response containing heartbeat pings.
+message ListMonitorHeartbeatPingsResponse {
+  // Pings, newest first.
+  repeated HeartbeatPing pings = 1;
+
+  // Cursor for the next page, unset on the last page.
+  optional string next_cursor = 2;
+}
+
+// RegenerateHeartbeatTokenRequest is the request to replace a heartbeat monitor's ping URL.
+message RegenerateHeartbeatTokenRequest {
+  // Monitor ID to regenerate the ping URL for (required).
+  string id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+// RegenerateHeartbeatTokenResponse is the response containing the monitor with its new ping URL.
+message RegenerateHeartbeatTokenResponse {
+  // The monitor with its new ping URL.
+  HeartbeatMonitor monitor = 1;
 }

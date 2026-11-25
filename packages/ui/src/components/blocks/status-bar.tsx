@@ -514,7 +514,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
         <HoverCardTrigger asChild>
           <div
             ref={ref}
-            className="group focus-visible:ring-ring/50 relative flex h-full flex-1 cursor-pointer flex-col rounded-full outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] aria-pressed:opacity-80"
+            className="group focus-visible:ring-ring/50 relative flex h-full flex-1 cursor-pointer flex-col rounded-lg outline-none hover:opacity-80 focus-visible:opacity-80 focus-visible:ring-[2px] aria-pressed:opacity-80"
             onClick={() => handlers.onClick(index)}
             onFocus={() => handlers.onFocus(index)}
             onBlur={handlers.onBlur}
@@ -528,7 +528,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
             aria-expanded={isActive}
             data-slot="status-bar-item"
           >
-            <div className="flex h-full w-full flex-col overflow-hidden rounded-full">
+            <div className="flex h-full w-full flex-col overflow-hidden rounded-lg">
               {/* Render bar segments */}
               {item.bar.map((segment, segmentIndex) => {
                 if (renderBar) {
@@ -537,10 +537,7 @@ const StatusBarItem = forwardRef<HTMLDivElement, StatusBarItemProps>(
                 return (
                   <div
                     key={`${item.day}-${segment.status}-${segmentIndex}`}
-                    className={cn("w-full transition-all", {
-                      "rounded-t-full": segmentIndex === 0,
-                      "rounded-b-full": segmentIndex === item.bar.length - 1,
-                    })}
+                    className="w-full transition-all"
                     style={{
                       height: `${segment.height}%`,
                       backgroundColor: statusColors[segment.status],
@@ -615,9 +612,7 @@ export function StatusBarCard({
   const labels = useStatusBlocksLabels();
   return (
     <div data-slot="status-bar-card">
-      <div className="p-2 text-xs">
-        {labels.formatDateShort(new Date(item.day))}
-      </div>
+      <div className="p-2 text-xs">{labels.formatDay(item.day)}</div>
       {item.card.length > 0 && (
         <>
           <Separator />
@@ -666,7 +661,7 @@ export function StatusBarCard({
           <Separator />
           <div className="text-muted-foreground flex cursor-pointer items-center p-2 text-xs">
             <span>{labels.clickAgainToUnpin}</span>
-            <kbd className="border-input bg-background text-muted-foreground ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded border px-1.5 font-mono text-[10px] font-medium">
+            <kbd className="border-input bg-background text-muted-foreground ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded-sm border px-1.5 font-mono text-[10px] font-medium">
               Esc
             </kbd>
           </div>
@@ -737,7 +732,7 @@ function StatusBarContent({
     <div className="flex items-baseline gap-4" data-slot="status-bar-content">
       <div className="flex items-center gap-2">
         <div
-          className="h-2.5 w-2.5 rounded-sm"
+          className="h-2.5 w-2.5 rounded-lg"
           style={{
             backgroundColor: statusColors[status],
           }}
@@ -818,7 +813,7 @@ export function StatusBarEvent({
   type: StatusEventType;
   isAggregated?: boolean;
   /** Overrides the type-derived dot color (e.g. the day's worst report impact). */
-  status?: Exclude<StatusType, "empty">;
+  status?: StatusType;
 }) {
   const labels = useStatusBlocksLabels();
   if (!from) return null;
@@ -835,10 +830,8 @@ export function StatusBarEvent({
       <div className="text-muted-foreground hover:text-foreground absolute inset-0">
         <div className="flex items-center gap-2">
           <div
-            className="h-2.5 w-2.5 shrink-0 rounded-sm"
-            style={{
-              backgroundColor: statusColors[status],
-            }}
+            className="h-2.5 w-2.5 shrink-0 rounded-lg"
+            style={{ backgroundColor: statusColors[status] }}
           />
           <div className="truncate">{name}</div>
         </div>

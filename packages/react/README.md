@@ -61,7 +61,7 @@ access the type response of the api call to:
 `https://api.openstatus.dev/public/status/:slug`
 
 Learn more about our supported
-[API endpoints](https://www.openstatus.dev/docs/api-reference/auth).
+[API endpoints](https://api.openstatus.dev/v1).
 
 ```ts
 import { getStatus } from "@openstatus/react";
@@ -89,7 +89,7 @@ export type Status =
   | "incident";
 ```
 
-Learn more in the [docs](https://www.openstatus.dev/docs/packages/react).
+Learn more in the [docs](https://www.openstatus.dev/docs/guides/how-to-use-react-widget).
 
 ### About OpenStatus
 

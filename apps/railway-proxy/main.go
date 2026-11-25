@@ -80,6 +80,11 @@ func isDialError(err error) bool {
 	return false
 }
 
+// The checker responds only after its whole retry loop, which can run for
+// several monitor timeouts (up to 5m each). Matches the Cloud Tasks dispatch
+// deadline set by the workflows cron.
+const checkerResponseTimeout = 30 * time.Minute
+
 // Tuned for Railway internal networking: short dial timeout so a dead pod
 // fails fast instead of stalling for the default 30s, plus aggressive idle
 // pruning so we don't reuse connections that the platform has silently torn down.
@@ -94,7 +99,7 @@ func newTransport() *http.Transport {
 		IdleConnTimeout:       60 * time.Second,
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
-		ResponseHeaderTimeout: 60 * time.Second,
+		ResponseHeaderTimeout: checkerResponseTimeout,
 		ForceAttemptHTTP2:     true,
 	}
 }
@@ -233,7 +238,7 @@ func main() {
 		Handler:           router,
 		ReadHeaderTimeout: 10 * time.Second,
 		ReadTimeout:       60 * time.Second,
-		WriteTimeout:      60 * time.Second,
+		WriteTimeout:      checkerResponseTimeout,
 		IdleTimeout:       120 * time.Second,
 	}
 

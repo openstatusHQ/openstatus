@@ -1,4 +1,3 @@
-import { count, eq } from "@openstatus/db";
 import {
   notification,
   notificationsToMonitors,
@@ -8,9 +7,11 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { ValidationError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Notification } from "../types";
 import {
+  DEPRECATED_PROVIDERS,
   assertProviderAllowed,
   validateMonitorIds,
   validateNotificationData,
@@ -22,36 +23,36 @@ export async function createNotification(args: {
   input: CreateNotificationInput;
 }): Promise<Notification> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "notifications:write");
   const input = CreateNotificationInput.parse(args.input);
 
+  // Static check first: must win over quota/ownership errors, needs no DB.
+  if (DEPRECATED_PROVIDERS.has(input.provider)) {
+    throw new ValidationError(
+      `The provider ${input.provider} is deprecated, use whatsapp instead`,
+    );
+  }
+
   return withTransaction(ctx, async (tx) => {
-    // Plan gate on notification count.
-    const existing = await tx
-      .select({ count: count() })
-      .from(notification)
-      .where(eq(notification.workspaceId, ctx.workspace.id))
-      .get();
-    if (
-      existing &&
-      existing.count >= ctx.workspace.limits["notification-channels"]
-    ) {
-      throw new LimitExceededError(
-        "notification-channels",
-        ctx.workspace.limits["notification-channels"],
-      );
-    }
-
-    // Plan gate on provider (sms / pagerduty / opsgenie / …).
-    assertProviderAllowed(ctx.workspace, input.provider);
-
-    validateNotificationData(input.provider, input.data);
-
+    // Ownership before quota: a cross-workspace monitor must fail with
+    // ForbiddenError regardless of the workspace's notification count.
     const validatedMonitors = await validateMonitorIds({
       tx,
       workspaceId: ctx.workspace.id,
       monitorIds: input.monitors,
     });
+
+    // Plan gate on notification count.
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "notification-channels",
+    });
+
+    // Plan gate on provider (pagerduty / opsgenie / …).
+    assertProviderAllowed(ctx.workspace, input.provider);
+
+    validateNotificationData(input.provider, input.data);
 
     const row = await tx
       .insert(notification)

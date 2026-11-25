@@ -1,4 +1,12 @@
-import { and, count, eq, inArray, isNull, sql } from "@openstatus/db";
+import {
+  and,
+  db as defaultDb,
+  eq,
+  inArray,
+  isNull,
+  ne,
+  sql,
+} from "@openstatus/db";
 import { monitor, page } from "@openstatus/db/src/schema";
 import {
   type pageAccessTypes,
@@ -31,19 +39,6 @@ export async function getPageInWorkspace(args: {
   return row;
 }
 
-/** Count the workspace's pages. */
-export async function countPagesInWorkspace(
-  tx: DB,
-  workspaceId: number,
-): Promise<number> {
-  const res = await tx
-    .select({ count: count() })
-    .from(page)
-    .where(eq(page.workspaceId, workspaceId))
-    .get();
-  return res?.count ?? 0;
-}
-
 /**
  * Assert a slug is free — rejects reserved subdomains and already-taken
  * slugs. Optionally exempts a page id (for updates where the current slug
@@ -71,6 +66,26 @@ export async function assertSlugAvailable(args: {
   if (conflicts.length > 0) {
     throw new ConflictError(
       "This slug is already taken. Please choose another one.",
+    );
+  }
+}
+
+/** Assert no other page, in any workspace, already serves this custom domain. */
+export async function assertCustomDomainAvailable(args: {
+  tx?: DB;
+  customDomain: string | null | undefined;
+  excludePageId?: number;
+}): Promise<void> {
+  const { tx = defaultDb, customDomain, excludePageId } = args;
+  if (!customDomain) return;
+  const rows = await tx
+    .select({ id: page.id })
+    .from(page)
+    .where(sql`lower(${page.customDomain}) = ${customDomain.toLowerCase()}`)
+    .all();
+  if (rows.some((r) => r.id !== excludePageId)) {
+    throw new ConflictError(
+      "This domain is already used by another status page.",
     );
   }
 }
@@ -162,16 +177,24 @@ export function assertAccessTypeAllowed(
   }
 }
 
-/** Plan gate on the workspace's `status-pages` cap. */
-export async function assertStatusPageQuota(
-  tx: DB,
-  workspace: Workspace,
-): Promise<void> {
-  const current = await countPagesInWorkspace(tx, workspace.id);
-  if (current >= workspace.limits["status-pages"]) {
-    throw new LimitExceededError(
-      "status-pages",
-      workspace.limits["status-pages"],
-    );
-  }
+/** Id of a page, in any workspace, still holding `domain` (case-insensitive). */
+export async function findCustomDomainHolder(args: {
+  domain: string;
+  excludePageId?: number;
+  db?: DB;
+}): Promise<number | undefined> {
+  const db = args.db ?? defaultDb;
+  const row = await db
+    .select({ id: page.id })
+    .from(page)
+    .where(
+      and(
+        sql`lower(${page.customDomain}) = ${args.domain.toLowerCase()}`,
+        args.excludePageId !== undefined
+          ? ne(page.id, args.excludePageId)
+          : undefined,
+      ),
+    )
+    .get();
+  return row?.id;
 }

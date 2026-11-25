@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/openstatushq/openstatus/apps/checker/pkg/tinybird"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/tinybird"
 	"github.com/stretchr/testify/require"
 )
 

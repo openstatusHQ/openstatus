@@ -1,4 +1,5 @@
 import type { Locale } from "@openstatus/locales";
+import type { CustomTheme } from "@openstatus/theme-store";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
@@ -25,6 +26,10 @@ export const page = sqliteTable(
       .notNull()
       .default("system"),
 
+    // Per-mode CSS variable overrides ({ light, dark }) merged over the
+    // configured theme vars. Gated by the "custom-theme" plan limit.
+    customTheme: text("custom_theme", { mode: "json" }).$type<CustomTheme>(),
+
     // Password protecting the status page - no specific restriction on password
     password: text("password", { length: 256 }),
     // @deprecated: instead, use accessType
@@ -46,6 +51,8 @@ export const page = sqliteTable(
       .default("en")
       .$type<Locale>(),
     locales: text("locales", { mode: "json" }).$type<Locale[]>(),
+    // IANA zone the public page renders its bars and timestamps in
+    defaultTimezone: text("default_timezone").notNull().default("UTC"),
 
     legacyPage: integer("legacy_page", { mode: "boolean" })
       .notNull()

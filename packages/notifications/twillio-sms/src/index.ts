@@ -1,5 +1,8 @@
 import { phoneDataSchema } from "@openstatus/db/src/schema";
-import type { NotificationContext } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  monitorTarget,
+} from "@openstatus/notification-base";
 
 import { env } from "./env";
 
@@ -17,7 +20,7 @@ export const sendAlert = async ({
   body.set("From", "+14807252613");
   body.set(
     "Body",
-    `Your monitor ${name} / ${monitor.url} is down with ${
+    `Your monitor ${name} / ${monitorTarget(monitor)} is down with ${
       statusCode ? `status code ${statusCode}` : `error: ${message}`
     }`,
   );
@@ -49,7 +52,10 @@ export const sendRecovery = async ({
   const body = new FormData();
   body.set("To", notificationData.sms);
   body.set("From", "+14807252613");
-  body.set("Body", `Your monitor ${name} / ${monitor.url} is up again`);
+  body.set(
+    "Body",
+    `Your monitor ${name} / ${monitorTarget(monitor)} is up again`,
+  );
 
   const res = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,
@@ -78,7 +84,10 @@ export const sendDegraded = async ({
   const body = new FormData();
   body.set("To", notificationData.sms);
   body.set("From", "+14807252613");
-  body.set("Body", `Your monitor ${name} / ${monitor.url} is degraded `);
+  body.set(
+    "Body",
+    `Your monitor ${name} / ${monitorTarget(monitor)} is degraded `,
+  );
 
   const res = await fetch(
     `https://api.twilio.com/2010-04-01/Accounts/${env.TWILLIO_ACCOUNT_ID}/Messages.json`,

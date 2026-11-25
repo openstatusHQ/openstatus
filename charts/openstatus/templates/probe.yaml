@@ -1,0 +1,39 @@
+{{- if .Values.probe.enabled }}
+{{- if not .Values.probe.existingSecret }}
+{{- fail "probe.existingSecret is required: a Secret with OPENSTATUS_KEY from Settings > Private Locations" }}
+{{- end }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "openstatus.component" (dict "ctx" $ "component" "probe") }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+    app.kubernetes.io/component: probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "probe") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "probe") | nindent 8 }}
+    spec:
+      {{- include "openstatus.scheduling" . | nindent 6 }}
+      containers:
+        - name: probe
+          image: {{ include "openstatus.image" (dict "ctx" $ "name" .Values.probe.image) }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          env:
+            - name: OPENSTATUS_INGEST_URL
+              value: {{ .Values.probe.ingestUrl | default (include "openstatus.url" (dict "ctx" $ "component" "private-location" "port" 8080)) | quote }}
+            - name: OPENSTATUS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.probe.existingSecret }}
+                  key: OPENSTATUS_KEY
+          resources:
+            {{- toYaml .Values.probe.resources | nindent 12 }}
+{{- end }}

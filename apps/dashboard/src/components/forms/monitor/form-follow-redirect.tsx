@@ -72,7 +72,7 @@ export function FormFollowRedirect({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="follow-redirects">
           <FormCardHeader>
             <FormCardTitle>Follow Redirects</FormCardTitle>
             <FormCardDescription>
@@ -108,7 +108,7 @@ export function FormFollowRedirect({
             <FormCardFooterInfo>
               Learn more about{" "}
               <Link
-                href="https://www.openstatus.dev/docs/monitoring/customization/follow-redirects/"
+                href="https://www.openstatus.dev/docs/reference/http-monitor/#follow-redirects"
                 rel="noreferrer"
                 target="_blank"
               >

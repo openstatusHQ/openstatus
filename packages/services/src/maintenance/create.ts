@@ -1,10 +1,14 @@
-import { maintenance } from "@openstatus/db/src/schema";
+import { maintenance, maintenanceUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError } from "../errors";
-import type { Maintenance } from "../types";
+import type { Maintenance, MaintenanceUpdate } from "../types";
 import {
   assertPageInWorkspace,
   updatePageComponentAssociations,
@@ -12,13 +16,19 @@ import {
 } from "./internal";
 import { CreateMaintenanceInput } from "./schemas";
 
+export type CreateMaintenanceResult = {
+  maintenance: Maintenance;
+  initialUpdate: MaintenanceUpdate;
+};
+
 export async function createMaintenance(args: {
   ctx: ServiceContext;
   input: CreateMaintenanceInput;
-}): Promise<Maintenance> {
+}): Promise<CreateMaintenanceResult> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = CreateMaintenanceInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     await assertPageInWorkspace({
@@ -45,9 +55,12 @@ export async function createMaintenance(args: {
         workspaceId: ctx.workspace.id,
         pageId: input.pageId,
         title: input.title,
+        // deprecated column: mirrors the first update until it is dropped
         message: input.message,
         from: input.from,
         to: input.to,
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
       })
       .returning()
       .get();
@@ -58,6 +71,18 @@ export async function createMaintenance(args: {
       componentIds: validated.componentIds,
     });
 
+    const initialUpdate = await tx
+      .insert(maintenanceUpdate)
+      .values({
+        maintenanceId: record.id,
+        message: input.message,
+        date: input.date ?? new Date(),
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
+      })
+      .returning()
+      .get();
+
     await emitAudit(tx, ctx, {
       action: "maintenance.create",
       entityType: "maintenance",
@@ -65,6 +90,14 @@ export async function createMaintenance(args: {
       after: record,
     });
 
-    return record;
+    await emitAudit(tx, ctx, {
+      action: "maintenance_update.create",
+      entityType: "maintenance_update",
+      entityId: initialUpdate.id,
+      after: initialUpdate,
+      metadata: { maintenanceId: record.id },
+    });
+
+    return { maintenance: record, initialUpdate };
   });
 }

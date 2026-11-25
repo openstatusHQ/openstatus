@@ -29,7 +29,8 @@ type DNSResponse struct {
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
 
-	Error uint8 `json:"error"`
+	Error    uint8 `json:"error"`
+	Attempts int   `json:"attempts"`
 }
 
 func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Request[private_locationv1.IngestDNSRequest]) (*connect.Response[private_locationv1.IngestDNSResponse], error) {
@@ -42,7 +43,7 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		return nil, NewValidationError(err)
 	}
 
-	ic, err := h.getIngestContext(ctx, token, req.Msg.Id)
+	ic, err := h.getIngestContext(ctx, token, req.Msg.MonitorId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -58,12 +59,10 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 	}
 
 	records := make(map[string][]string)
-	for _, record := range req.Msg.Records {
+	for recordType, record := range req.Msg.Records {
 		r := []string{}
-		for _, value := range record.GetRecord() {
-			r = append(r, value)
-		}
-		records[record.String()] = r
+		r = append(r, record.GetRecord()...)
+		records[recordType] = r
 	}
 
 	recordsJSON, err := json.Marshal(records)
@@ -76,6 +75,7 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		WorkspaceID:   int64(ic.Monitor.WorkspaceID),
 		Timestamp:     req.Msg.Timestamp,
 		Error:         uint8(req.Msg.Error),
+		Attempts:      attemptCount(req.Msg.Attempts),
 		Region:        strconv.Itoa(ic.Region.ID),
 		MonitorID:     int64(ic.Monitor.ID),
 		Timing:        req.Msg.Timing,
@@ -85,9 +85,18 @@ func (h *privateLocationHandler) IngestDNS(ctx context.Context, req *connect.Req
 		URI:           req.Msg.Uri,
 		RequestStatus: req.Msg.RequestStatus,
 		Records:       string(recordsJSON),
+		ErrorMessage:  req.Msg.Message,
 	}
 
 	h.sendEventAndUpdateLastSeen(ctx, data, tinybird.DatasourceDNS, ic.Region.ID)
+
+	h.forwardStatusUpdate(ctx, ic, statusUpdateInput{
+		RequestStatus: data.RequestStatus,
+		Message:       data.ErrorMessage,
+		Latency:       data.Latency,
+		CronTimestamp: data.CronTimestamp,
+		ErrorFlag:     data.Error,
+	})
 
 	return connect.NewResponse(&private_locationv1.IngestDNSResponse{}), nil
 }

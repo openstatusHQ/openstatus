@@ -5,6 +5,7 @@ node_modules
 /apps/docs
 /apps/screenshot-service
 /apps/web
+/apps/external-status
 /apps/dashboard
 /apps/status-page
 /apps/workflows

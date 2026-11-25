@@ -1,6 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
 import { Effect } from "effect";
+import { describe, expect, it } from "vitest";
 
 import { fetchers as allFetchers } from "../src/fetchers";
 import type { StatusPageEntry, StatusPageProvider } from "../src/types";
@@ -225,13 +224,10 @@ describe("Integration Tests", () => {
         {
           fetcher: "instatus",
           mockResponse: {
-            activeIncidents: [],
-            activeMaintenances: [],
-            status: { text: "All Good", type: "UP" },
             page: {
               name: "Test",
               url: "https://test.instatus.com",
-              updated: "2024-02-16T12:00:00.000Z",
+              status: "UP",
             },
           },
         },

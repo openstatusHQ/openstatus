@@ -25,7 +25,8 @@ export const NotificationSchema = z
       example: "OpenStatus Discord",
     }),
     provider: z.enum(notificationProvider).openapi({
-      description: "The provider of the notification",
+      description:
+        "The provider of the notification. `sms` is deprecated, use `whatsapp` instead.",
       example: "discord",
     }),
     payload: z.any().openapi({

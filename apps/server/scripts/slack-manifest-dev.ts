@@ -1,0 +1,38 @@
+// Writes slack-manifest.dev.json (gitignored) for the local `openstatus-dev`
+// app: the production manifest renamed, with every api.openstatus.dev URL
+// pointed at your tunnel. The tunnel origin comes from SLACK_REDIRECT_URI in
+// .env, so the manifest and the OAuth callback the server sends can't disagree.
+// Also prints it, so it can be piped straight to the clipboard.
+//
+//   pnpm slack:manifest:dev | pbcopy   # then App Manifest → JSON → paste
+import { writeFile } from "node:fs/promises";
+
+import manifest from "../slack-manifest.json" with { type: "json" };
+
+const PROD_ORIGIN = "https://api.openstatus.dev";
+const DEV_NAME = "openstatus-dev";
+
+const redirectUri = process.env.SLACK_REDIRECT_URI;
+if (!redirectUri) {
+  console.error(
+    "SLACK_REDIRECT_URI is not set — add https://<tunnel>/slack/oauth/callback to apps/server/.env",
+  );
+  process.exit(1);
+}
+const redirectUrl = new URL(redirectUri);
+if (redirectUrl.pathname !== "/slack/oauth/callback") {
+  console.error(
+    `SLACK_REDIRECT_URI must have the exact path /slack/oauth/callback — got ${redirectUri}`,
+  );
+  process.exit(1);
+}
+const devOrigin = redirectUrl.origin;
+
+const dev = structuredClone(manifest);
+dev.display_information.name = DEV_NAME;
+dev.features.bot_user.display_name = DEV_NAME;
+dev.oauth_config.redirect_urls = [redirectUri];
+
+const output = `${JSON.stringify(dev, null, 2).replaceAll(PROD_ORIGIN, devOrigin)}\n`;
+await writeFile(new URL("../slack-manifest.dev.json", import.meta.url), output);
+console.log(output);

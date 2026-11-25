@@ -1,10 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Tag, Close } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Input } from "@openstatus/ui/components/ui/input";
 import type { Table } from "@tanstack/react-table";
-import { Tag, X } from "lucide-react";
 
 import { DataTableFacetedFilter } from "@/components/ui/data-table/data-table-faceted-filter";
 
@@ -29,7 +29,7 @@ export function MonitorDataTableToolbar({
           placeholder="Filter by name, url, type..."
           value={(table.getState().globalFilter as string) ?? ""}
           onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="h-8 w-[150px] lg:w-[250px]"
+          className="h-8 w-[150px] shadow-none lg:w-[250px]"
         />
         {table.getColumn("tags") && (
           <DataTableFacetedFilter
@@ -49,7 +49,7 @@ export function MonitorDataTableToolbar({
             className="h-8 px-2 lg:px-3"
           >
             Reset
-            <X />
+            <Close />
           </Button>
         )}
       </div>

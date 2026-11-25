@@ -10,7 +10,11 @@ import {
   sql,
 } from "@openstatus/db";
 import {
-  incidentTable,
+  type ActiveMaintenance,
+  activeMaintenanceByMonitor,
+} from "@openstatus/db/src/maintenance";
+import {
+  monitorIncidentTable,
   monitor,
   monitorTag,
   monitorTagsToMonitors,
@@ -18,32 +22,41 @@ import {
   notificationsToMonitors,
   privateLocation,
   privateLocationToMonitors,
-  selectIncidentSchema,
+  selectMonitorIncidentSchema,
   selectMonitorSchema,
   selectMonitorTagSchema,
   selectNotificationSchema,
   selectPrivateLocationSchema,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
+import { NotFoundError } from "../errors";
 import type {
-  Incident,
+  MonitorIncident,
   Monitor,
   MonitorTag,
   Notification,
   PrivateLocation,
 } from "../types";
-import { getMonitorInWorkspace } from "./internal";
-import { GetMonitorInput, ListMonitorsInput } from "./schemas";
+import { findMissingMonitorId, getMonitorInWorkspace } from "./internal";
+import {
+  GetMonitorInput,
+  ListMonitorRowsInput,
+  ListMonitorsInput,
+} from "./schemas";
 
 export type MonitorListItem = Monitor & {
   tags: MonitorTag[];
-  incidents: Incident[];
+  incidents: MonitorIncident[];
+  /** The maintenance window or status-page maintenance it is in right now. */
+  maintenance: ActiveMaintenance | null;
 };
 
 export type MonitorWithRelations = Monitor & {
   tags: MonitorTag[];
-  incidents: Incident[];
+  incidents: MonitorIncident[];
+  maintenance: ActiveMaintenance | null;
   notifications: Notification[];
   privateLocations: PrivateLocation[];
 };
@@ -72,76 +85,81 @@ async function enrichMonitorsBatch(
   // our hands instead of relying on drizzle's auto-derived `row.<table_name>`
   // keys, which are named after the JS variable and silently break on
   // schema rename.
-  const [tagRows, incidentRows, notifRows, locRows] = await Promise.all([
-    db
-      .select({
-        monitorId: monitorTagsToMonitors.monitorId,
-        tag: monitorTag,
-      })
-      .from(monitorTag)
-      .innerJoin(
-        monitorTagsToMonitors,
-        eq(monitorTagsToMonitors.monitorTagId, monitorTag.id),
-      )
-      .where(
-        and(
-          inArray(monitorTagsToMonitors.monitorId, ids),
-          eq(monitorTag.workspaceId, workspaceId),
-        ),
-      )
-      .all(),
-    db
-      .select()
-      .from(incidentTable)
-      .where(
-        and(
-          inArray(incidentTable.monitorId, ids),
-          // Scope to caller's workspace — defence-in-depth in case an
-          // incident.monitorId somehow points cross-workspace. The
-          // `incident.monitorId` FK doesn't enforce workspace ownership.
-          eq(incidentTable.workspaceId, workspaceId),
-        ),
-      )
-      .all(),
-    include.notifications
-      ? db
-          .select({
-            monitorId: notificationsToMonitors.monitorId,
-            notification,
-          })
-          .from(notification)
-          .innerJoin(
-            notificationsToMonitors,
-            eq(notificationsToMonitors.notificationId, notification.id),
-          )
-          .where(
-            and(
-              inArray(notificationsToMonitors.monitorId, ids),
-              eq(notification.workspaceId, workspaceId),
-            ),
-          )
-          .all()
-      : Promise.resolve([]),
-    include.privateLocations
-      ? db
-          .select({
-            monitorId: privateLocationToMonitors.monitorId,
-            location: privateLocation,
-          })
-          .from(privateLocation)
-          .innerJoin(
-            privateLocationToMonitors,
-            eq(privateLocationToMonitors.privateLocationId, privateLocation.id),
-          )
-          .where(
-            and(
-              inArray(privateLocationToMonitors.monitorId, ids),
-              eq(privateLocation.workspaceId, workspaceId),
-            ),
-          )
-          .all()
-      : Promise.resolve([]),
-  ]);
+  const [tagRows, incidentRows, notifRows, locRows, maintenanceByMonitor] =
+    await Promise.all([
+      db
+        .select({
+          monitorId: monitorTagsToMonitors.monitorId,
+          tag: monitorTag,
+        })
+        .from(monitorTag)
+        .innerJoin(
+          monitorTagsToMonitors,
+          eq(monitorTagsToMonitors.monitorTagId, monitorTag.id),
+        )
+        .where(
+          and(
+            inArray(monitorTagsToMonitors.monitorId, ids),
+            eq(monitorTag.workspaceId, workspaceId),
+          ),
+        )
+        .all(),
+      db
+        .select()
+        .from(monitorIncidentTable)
+        .where(
+          and(
+            inArray(monitorIncidentTable.monitorId, ids),
+            // Scope to caller's workspace — defence-in-depth in case an
+            // incident.monitorId somehow points cross-workspace. The
+            // `incident.monitorId` FK doesn't enforce workspace ownership.
+            eq(monitorIncidentTable.workspaceId, workspaceId),
+          ),
+        )
+        .all(),
+      include.notifications
+        ? db
+            .select({
+              monitorId: notificationsToMonitors.monitorId,
+              notification,
+            })
+            .from(notification)
+            .innerJoin(
+              notificationsToMonitors,
+              eq(notificationsToMonitors.notificationId, notification.id),
+            )
+            .where(
+              and(
+                inArray(notificationsToMonitors.monitorId, ids),
+                eq(notification.workspaceId, workspaceId),
+              ),
+            )
+            .all()
+        : Promise.resolve([]),
+      include.privateLocations
+        ? db
+            .select({
+              monitorId: privateLocationToMonitors.monitorId,
+              location: privateLocation,
+            })
+            .from(privateLocation)
+            .innerJoin(
+              privateLocationToMonitors,
+              eq(
+                privateLocationToMonitors.privateLocationId,
+                privateLocation.id,
+              ),
+            )
+            .where(
+              and(
+                inArray(privateLocationToMonitors.monitorId, ids),
+                eq(privateLocation.workspaceId, workspaceId),
+              ),
+            )
+            .all()
+        : Promise.resolve([]),
+      activeMaintenanceByMonitor(db, workspaceId, ids, new Date()),
+    ]);
 
   const tagsByMonitor = new Map<number, MonitorTag[]>();
   for (const row of tagRows) {
@@ -151,10 +169,10 @@ async function enrichMonitorsBatch(
     else tagsByMonitor.set(row.monitorId, [tag]);
   }
 
-  const incidentsByMonitor = new Map<number, Incident[]>();
+  const incidentsByMonitor = new Map<number, MonitorIncident[]>();
   for (const row of incidentRows) {
     if (row.monitorId == null) continue;
-    const incident = selectIncidentSchema.parse(row);
+    const incident = selectMonitorIncidentSchema.parse(row);
     const arr = incidentsByMonitor.get(row.monitorId);
     if (arr) arr.push(incident);
     else incidentsByMonitor.set(row.monitorId, [incident]);
@@ -183,6 +201,7 @@ async function enrichMonitorsBatch(
     incidents: incidentsByMonitor.get(r.id) ?? [],
     notifications: notifsByMonitor.get(r.id) ?? [],
     privateLocations: locsByMonitor.get(r.id) ?? [],
+    maintenance: maintenanceByMonitor.get(r.id) ?? null,
   }));
 }
 
@@ -191,6 +210,7 @@ export async function listMonitors(args: {
   input: ListMonitorsInput;
 }): Promise<ListMonitorsResult> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = ListMonitorsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -200,28 +220,32 @@ export async function listMonitors(args: {
   ];
   const whereClause = and(...conditions);
 
-  const [countRow, rows] = await Promise.all([
-    db
+  const rows = await db
+    .select()
+    .from(monitor)
+    .where(whereClause)
+    .orderBy(
+      input.order === "asc" ? asc(monitor.active) : desc(monitor.active),
+      input.order === "asc" ? asc(monitor.createdAt) : desc(monitor.createdAt),
+    )
+    .limit(input.limit)
+    .offset(input.offset)
+    .all();
+
+  // A short page is the last page, so the total is already known and the
+  // extra `count(*)` is only paid when a full page comes back — or when an
+  // empty page leaves it ambiguous whether we ran off the end. The tRPC
+  // `list` procedure discards `totalSize` entirely.
+  let totalSize = input.offset + rows.length;
+  if (rows.length === input.limit || (rows.length === 0 && input.offset > 0)) {
+    const countRow = await db
       .select({ count: sql<number>`count(*)` })
       .from(monitor)
       .where(whereClause)
-      .get(),
-    db
-      .select()
-      .from(monitor)
-      .where(whereClause)
-      .orderBy(
-        input.order === "asc" ? asc(monitor.active) : desc(monitor.active),
-        input.order === "asc"
-          ? asc(monitor.createdAt)
-          : desc(monitor.createdAt),
-      )
-      .limit(input.limit)
-      .offset(input.offset)
-      .all(),
-  ]);
+      .get();
+    totalSize = countRow?.count ?? totalSize;
+  }
 
-  const totalSize = countRow?.count ?? 0;
   const enriched = await enrichMonitorsBatch(db, rows, ctx.workspace.id);
   // `list` only exposes tags + incidents to match the tRPC `list` shape.
   const items: MonitorListItem[] = enriched.map(
@@ -235,6 +259,7 @@ export async function getMonitor(args: {
   input: GetMonitorInput;
 }): Promise<MonitorWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "monitors:read");
   const input = GetMonitorInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
   const record = await getMonitorInWorkspace({
@@ -248,4 +273,81 @@ export async function getMonitor(args: {
   });
   // oxlint-disable-next-line typescript/no-non-null-assertion -- always defined for len === 1
   return enriched!;
+}
+
+/** One monitor in the caller's workspace, raw DB shape, without relations. */
+export async function getMonitorRow(args: {
+  ctx: ServiceContext;
+  input: GetMonitorInput;
+}): Promise<typeof monitor.$inferSelect> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const input = GetMonitorInput.parse(args.input);
+  return getMonitorInWorkspace({
+    tx: ctx.db ?? defaultDb,
+    id: input.id,
+    workspaceId: ctx.workspace.id,
+  });
+}
+
+/** `null` for a stored row that no longer matches the monitor schema. */
+export function parseMonitorRow(row: unknown): Monitor | null {
+  const parsed = selectMonitorSchema.safeParse(row);
+  return parsed.success ? parsed.data : null;
+}
+
+/**
+ * A page of monitors without relations, in id order. Rows that no longer
+ * parse are skipped but still counted in `totalSize`.
+ */
+export async function listMonitorRows(args: {
+  ctx: ServiceContext;
+  input: ListMonitorRowsInput;
+}): Promise<{ monitors: Monitor[]; totalSize: number }> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const input = ListMonitorRowsInput.parse(args.input);
+  const db = ctx.db ?? defaultDb;
+  const where = and(
+    eq(monitor.workspaceId, ctx.workspace.id),
+    isNull(monitor.deletedAt),
+  );
+
+  const [countRow, rows] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(monitor)
+      .where(where)
+      .get(),
+    db
+      .select()
+      .from(monitor)
+      .where(where)
+      .orderBy(asc(monitor.id))
+      .limit(input.limit)
+      .offset(input.offset)
+      .all(),
+  ]);
+
+  const monitors: Monitor[] = [];
+  for (const row of rows) {
+    const parsed = parseMonitorRow(row);
+    if (parsed) monitors.push(parsed);
+  }
+  return { monitors, totalSize: countRow?.count ?? 0 };
+}
+
+/** Throws `NotFoundError` for the first id that is not a live monitor of the workspace. */
+export async function assertMonitorsInWorkspace(args: {
+  ctx: ServiceContext;
+  input: { ids: number[] };
+}): Promise<void> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:read");
+  const missing = await findMissingMonitorId({
+    tx: ctx.db ?? defaultDb,
+    workspaceId: ctx.workspace.id,
+    ids: args.input.ids,
+  });
+  if (missing !== undefined) throw new NotFoundError("monitor", missing);
 }

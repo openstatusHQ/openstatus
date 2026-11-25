@@ -2,10 +2,10 @@
 
 import { api } from "../../../../trpc/rq-client";
 import { ExternalServiceComponents } from "../external-service-components";
+import { StatusSection } from "../service-blocks";
 
 export function ServiceComponents({
   slug,
-  serviceName,
   days,
 }: {
   slug: string;
@@ -20,15 +20,17 @@ export function ServiceComponents({
   if (!data.supported || data.components.length === 0) return null;
 
   return (
-    <>
-      <h2>{serviceName} components</h2>
-      <div className="not-prose">
-        <ExternalServiceComponents
-          components={data.components}
-          days={days}
-          hrefBase={`/status/${slug}`}
-        />
-      </div>
-    </>
+    <StatusSection
+      id="components"
+      title="Components"
+      count={String(data.components.length)}
+      aside="Issues first"
+    >
+      <ExternalServiceComponents
+        components={data.components}
+        days={days}
+        hrefBase={`/status/${slug}`}
+      />
+    </StatusSection>
   );
 }

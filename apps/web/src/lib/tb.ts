@@ -2,12 +2,16 @@ import { OSTinybird } from "@openstatus/tinybird";
 
 import { env } from "../env";
 
-const tb = new OSTinybird(env.TINY_BIRD_API_KEY);
+export const tb = new OSTinybird({
+  token: env.TINY_BIRD_API_KEY,
+  baseUrl: env.TINYBIRD_URL,
+  noop: env.TINYBIRD_NOOP,
+});
 
 // REMINDER: we could extend the limits (WorkspacePlan) by
 // knowing which plan the user is on and disable some periods
 const periods = ["1d", "7d", "14d"] as const;
-const types = ["http", "tcp"] as const;
+const types = ["http", "tcp", "icmp"] as const;
 
 // FIXME: check we we can also use Period from elswhere
 type Period = (typeof periods)[number];
@@ -21,6 +25,7 @@ export function prepareListByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpListDaily,
         tcp: tb.legacy_tcpListDaily,
+        icmp: tb.icmpListDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -28,6 +33,7 @@ export function prepareListByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpListWeekly,
         tcp: tb.legacy_tcpListWeekly,
+        icmp: tb.icmpListWeekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -35,6 +41,7 @@ export function prepareListByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpListBiweekly,
         tcp: tb.legacy_tcpListBiweekly,
+        icmp: tb.icmpListBiweekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -42,6 +49,7 @@ export function prepareListByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpListDaily,
         tcp: tb.legacy_tcpListDaily,
+        icmp: tb.icmpListDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -54,6 +62,7 @@ export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpMetricsDaily,
         tcp: tb.legacy_tcpMetricsDaily,
+        icmp: tb.icmpMetricsDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -61,6 +70,7 @@ export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpMetricsWeekly,
         tcp: tb.legacy_tcpMetricsWeekly,
+        icmp: tb.icmpMetricsWeekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -68,6 +78,7 @@ export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpMetricsBiweekly,
         tcp: tb.legacy_tcpMetricsBiweekly,
+        icmp: tb.icmpMetricsBiweekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -75,6 +86,7 @@ export function prepareMetricsByPeriod(period: Period, type: Type = "http") {
       const getData = {
         http: tb.legacy_httpMetricsDaily,
         tcp: tb.legacy_tcpMetricsDaily,
+        icmp: tb.icmpMetricsDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -90,6 +102,7 @@ export function prepareMetricByRegionByPeriod(
       const getData = {
         http: tb.httpMetricsByRegionDaily,
         tcp: tb.tcpMetricsByRegionDaily,
+        icmp: tb.icmpMetricsByRegionDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -97,6 +110,7 @@ export function prepareMetricByRegionByPeriod(
       const getData = {
         http: tb.httpMetricsByRegionWeekly,
         tcp: tb.tcpMetricsByRegionWeekly,
+        icmp: tb.icmpMetricsByRegionWeekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -104,6 +118,7 @@ export function prepareMetricByRegionByPeriod(
       const getData = {
         http: tb.httpMetricsByRegionBiweekly,
         tcp: tb.tcpMetricsByRegionBiweekly,
+        icmp: tb.icmpMetricsByRegionBiweekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -111,6 +126,7 @@ export function prepareMetricByRegionByPeriod(
       const getData = {
         http: tb.httpMetricsByRegionDaily,
         tcp: tb.tcpMetricsByRegionDaily,
+        icmp: tb.icmpMetricsByRegionDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -126,6 +142,7 @@ export function prepareMetricByIntervalByPeriod(
       const getData = {
         http: tb.httpMetricsByIntervalDaily,
         tcp: tb.tcpMetricsByIntervalDaily,
+        icmp: tb.icmpMetricsByIntervalDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -133,6 +150,7 @@ export function prepareMetricByIntervalByPeriod(
       const getData = {
         http: tb.httpMetricsByIntervalWeekly,
         tcp: tb.tcpMetricsByIntervalWeekly,
+        icmp: tb.icmpMetricsByIntervalWeekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -140,6 +158,7 @@ export function prepareMetricByIntervalByPeriod(
       const getData = {
         http: tb.httpMetricsByIntervalBiweekly,
         tcp: tb.tcpMetricsByIntervalBiweekly,
+        icmp: tb.icmpMetricsByIntervalBiweekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -147,6 +166,7 @@ export function prepareMetricByIntervalByPeriod(
       const getData = {
         http: tb.httpMetricsByIntervalDaily,
         tcp: tb.tcpMetricsByIntervalDaily,
+        icmp: tb.icmpMetricsByIntervalDaily,
       } as const;
       return { getData: getData[type] };
     }
@@ -162,6 +182,7 @@ export function prepareStatusByPeriod(
       const getData = {
         http: tb.httpStatusWeekly,
         tcp: tb.tcpStatusWeekly,
+        icmp: tb.icmpStatusWeekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -169,6 +190,7 @@ export function prepareStatusByPeriod(
       const getData = {
         http: tb.legacy_httpStatus45d,
         tcp: tb.legacy_tcpStatus45d,
+        icmp: tb.icmpStatus45d,
       } as const;
       return { getData: getData[type] };
     }
@@ -176,6 +198,7 @@ export function prepareStatusByPeriod(
       const getData = {
         http: tb.httpStatusWeekly,
         tcp: tb.tcpStatusWeekly,
+        icmp: tb.icmpStatusWeekly,
       } as const;
       return { getData: getData[type] };
     }
@@ -188,6 +211,7 @@ export function prepareGetByPeriod(period: "30d", type: Type = "http") {
       const getData = {
         http: tb.httpGetMonthly,
         tcp: tb.tcpGetMonthly,
+        icmp: tb.icmpGetMonthly,
       } as const;
       return { getData: getData[type] };
     }
@@ -195,6 +219,7 @@ export function prepareGetByPeriod(period: "30d", type: Type = "http") {
       const getData = {
         http: tb.httpGetMonthly,
         tcp: tb.tcpGetMonthly,
+        icmp: tb.icmpGetMonthly,
       } as const;
       return { getData: getData[type] };
     }

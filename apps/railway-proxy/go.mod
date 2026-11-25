@@ -1,6 +1,6 @@
 module github.com/openstatushq/openstatus/apps/railway-proxy
 
-go 1.25.1
+go 1.27.3
 
 require (
 	github.com/gin-gonic/gin v1.11.0

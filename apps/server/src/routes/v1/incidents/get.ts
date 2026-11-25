@@ -1,6 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { and, db, eq } from "@openstatus/db";
-import { incidentTable } from "@openstatus/db/src/schema/incidents";
+import { monitorIncidentTable } from "@openstatus/db/src/schema/monitor_incidents";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 
@@ -35,11 +35,11 @@ export function registerGetIncident(app: typeof incidentsApi) {
 
     const _incident = await db
       .select()
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          eq(incidentTable.workspaceId, workspaceId),
-          eq(incidentTable.id, Number(id)),
+          eq(monitorIncidentTable.workspaceId, workspaceId),
+          eq(monitorIncidentTable.id, Number(id)),
         ),
       )
       .get();

@@ -11,7 +11,10 @@ import {
 } from "@openstatus/ui/components/ui/dropdown-menu";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+
+import { api } from "@/trpc/rq-client";
 
 export function CopyButton({
   className,
@@ -30,7 +33,7 @@ export function CopyButton({
     <Button
       variant="ghost"
       size="lg"
-      className={cn("rounded-none p-4", className)}
+      className={cn("h-auto rounded-none px-3 py-2", className)}
       onClick={() => copy(copyText, { withToast: true })}
       {...props}
     >
@@ -44,16 +47,24 @@ export function CopyDropdownButton({
   ...props
 }: React.ComponentProps<typeof ButtonGroup>) {
   const { copy, isCopied } = useCopyToClipboard();
+  const [isMarkdownCopied, setIsMarkdownCopied] = useState(false);
+  const resetTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const track = api.track.contentCopied.useMutation();
 
-  const handleCopyLink = () => {
-    copy(window.location.href, {
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
+
+  const handleCopyLink = async () => {
+    const ok = await copy(window.location.href, {
       successMessage: "Link copied to clipboard",
       withToast: true,
     });
+    if (ok) track.mutate({ kind: "link", path: window.location.pathname });
   };
 
   const handleCopyMarkdown = async () => {
     try {
+      // Safari only honors clipboard writes inside the click, so the fetch
+      // goes in as a promise instead of awaiting it first.
       const item = new ClipboardItem({
         "text/plain": fetch(window.location.pathname, {
           headers: { Accept: "text/markdown" },
@@ -66,7 +77,11 @@ export function CopyDropdownButton({
       });
 
       await navigator.clipboard.write([item]);
+      setIsMarkdownCopied(true);
+      clearTimeout(resetTimer.current);
+      resetTimer.current = setTimeout(() => setIsMarkdownCopied(false), 3000);
       toast.success("Markdown copied to clipboard");
+      track.mutate({ kind: "markdown", path: window.location.pathname });
     } catch (_error) {
       toast.error("Failed to copy markdown");
     }
@@ -74,21 +89,21 @@ export function CopyDropdownButton({
 
   return (
     <ButtonGroup
-      className={cn("rounded-none border-none p-4", className)}
+      className={cn("rounded-none border-none p-1", className)}
       {...props}
     >
       <Button
         variant="ghost"
-        className="rounded-none p-4"
-        onClick={handleCopyLink}
+        className="h-auto rounded-none px-3 py-2"
+        onClick={handleCopyMarkdown}
       >
-        {isCopied ? "[link copied]" : "[copy link]"}
+        {isMarkdownCopied ? "[markdown copied]" : "[copy markdown]"}
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="group rounded-none"
+            className="group h-auto rounded-none px-3 py-2"
             aria-label="Copy dropdown"
           >
             <span
@@ -108,9 +123,9 @@ export function CopyDropdownButton({
           <DropdownMenuGroup>
             <DropdownMenuItem
               className="rounded-none font-mono"
-              onClick={handleCopyMarkdown}
+              onClick={handleCopyLink}
             >
-              [copy markdown]
+              {isCopied ? "[link copied]" : "[copy link]"}
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

@@ -1,6 +1,14 @@
 import { Code, ConnectError } from "@connectrpc/connect";
-import { type ServiceContext, ServiceError } from "@openstatus/services";
+import {
+  ConcurrentUpdateError,
+  LimitExceededError,
+  type LimitKey,
+  type ServiceContext,
+  ServiceError,
+} from "@openstatus/services";
 import { ZodError } from "zod";
+
+import { tb } from "@/libs/clients";
 
 import type { RpcContext } from "./interceptors";
 
@@ -19,6 +27,7 @@ export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
       scopes: rpcCtx.apiKey.scopes,
     },
     requestId: rpcCtx.requestId,
+    tb,
   };
 }
 
@@ -26,7 +35,8 @@ export function toServiceCtx(rpcCtx: RpcContext): ServiceContext {
  * Map any error thrown by a service call to a `ConnectError`. Preserves the
  * existing Connect error surface — granular reasons carried by the caller's
  * per-handler error helpers (in `errors.ts`) still bypass this mapper since
- * they throw `ConnectError` directly.
+ * they throw `ConnectError` directly. Errors it can't classify propagate
+ * untouched to `errorInterceptor`, which logs and redacts them.
  */
 export function toConnectError(err: unknown): never {
   if (err instanceof ConnectError) throw err;
@@ -35,6 +45,10 @@ export function toConnectError(err: unknown): never {
       `Invalid request: ${err.message}`,
       Code.InvalidArgument,
     );
+  }
+  // A lost race is retryable; other conflicts need the caller to change state.
+  if (err instanceof ConcurrentUpdateError) {
+    throw new ConnectError(err.message, Code.Aborted);
   }
   if (err instanceof ServiceError) {
     switch (err.code) {
@@ -45,7 +59,7 @@ export function toConnectError(err: unknown): never {
       case "UNAUTHORIZED":
         throw new ConnectError(err.message, Code.Unauthenticated);
       case "CONFLICT":
-        throw new ConnectError(err.message, Code.InvalidArgument);
+        throw new ConnectError(err.message, Code.FailedPrecondition);
       case "VALIDATION":
         throw new ConnectError(err.message, Code.InvalidArgument);
       case "LIMIT_EXCEEDED":
@@ -56,6 +70,23 @@ export function toConnectError(err: unknown): never {
         throw new ConnectError(err.message, Code.Internal);
     }
   }
-  const message = err instanceof Error ? err.message : "Unknown error";
-  throw new ConnectError(message, Code.Internal);
+  // Unclassified: rethrow raw so `errorInterceptor` handles it. Only the
+  // interceptor holds the `RpcContext`, so it's the only layer that can put
+  // the request id in both the log line and the client's message.
+  throw err;
+}
+
+/**
+ * The public API reports a reached plan cap as PermissionDenied ("upgrade"),
+ * not the ResourceExhausted that `toConnectError` gives `LIMIT_EXCEEDED`.
+ */
+export function rethrowPlanLimit(
+  err: unknown,
+  limit: LimitKey,
+  message: string,
+): never {
+  if (err instanceof LimitExceededError && err.limit === limit) {
+    throw new ConnectError(message, Code.PermissionDenied);
+  }
+  toConnectError(err);
 }

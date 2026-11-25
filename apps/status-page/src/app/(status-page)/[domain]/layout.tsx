@@ -1,5 +1,5 @@
-import { pageConfigurationSchema } from "@openstatus/db/src/schema";
-import { generateThemeStyles } from "@openstatus/theme-store";
+import { parsePageConfiguration } from "@openstatus/services/page";
+import { generatePageStyles } from "@openstatus/theme-store";
 import { Toaster } from "@openstatus/ui/components/ui/sonner";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -32,22 +32,21 @@ export default async function Layout({
 
   if (!page) return notFound();
 
-  // safeParse + fallback so a stale enum value in stored config (e.g. removed
-  // theme key) doesn't crash the layout.
-  const cfgResult = pageConfigurationSchema.safeParse(
-    page?.configuration ?? {},
-  );
-  const cfg = cfgResult.success
-    ? cfgResult.data
-    : pageConfigurationSchema.parse({});
+  // Falls back to defaults so a stale stored config can't crash the layout.
+  const cfg = parsePageConfiguration(page?.configuration);
 
   return (
     <HydrateClient>
       <style
         id="theme-styles"
+        // custom theme vars (already plan-gated + validated server-side) are
+        // merged over the selected theme: custom-theme > theme
         // oxlint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
-          __html: generateThemeStyles(cfg.theme),
+          __html: generatePageStyles({
+            themeKey: cfg.theme,
+            customTheme: page.customTheme,
+          }),
         }}
       />
       <ThemeProvider
@@ -62,6 +61,8 @@ export default async function Layout({
           defaultShowUptime={cfg.uptime}
           defaultNumberOfDays={cfg.days}
           defaultCommunityTheme={cfg.theme}
+          customTheme={page.customTheme}
+          timezone={page.defaultTimezone}
         >
           {children}
           <FloatingButton

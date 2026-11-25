@@ -1,6 +1,7 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Check, Success, Copy, Delete as DeleteIcon } from "@openstatus/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,7 +27,6 @@ import { SelectTrigger } from "@radix-ui/react-select";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Table } from "@tanstack/react-table";
 import { isTRPCClientError } from "@trpc/client";
-import { Check, CheckCircle2, Copy, Trash2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -65,7 +65,7 @@ export function MonitorDataTableActionBar({
           queryKey: trpc.monitor.list.queryKey(),
         });
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
         // Clear selection once deletion succeeds
         table.toggleAllRowsSelected(false);
@@ -142,7 +142,7 @@ export function MonitorDataTableActionBar({
         >
           <SelectTrigger asChild>
             <DataTableActionBarAction size="icon" tooltip="Update status">
-              <CheckCircle2 />
+              <Success />
             </DataTableActionBarAction>
           </SelectTrigger>
           <SelectContent align="center">
@@ -166,7 +166,7 @@ export function MonitorDataTableActionBar({
               tooltip="Delete monitors"
               isPending={isPending || deleteMonitorsMutation.isPending}
             >
-              <Trash2 />
+              <DeleteIcon />
             </DataTableActionBarAction>
           </AlertDialogTrigger>
           <AlertDialogContent

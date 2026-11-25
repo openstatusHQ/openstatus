@@ -1,18 +1,16 @@
-VERSION 1
-
-TAGS endpoint
-
+TOKEN "endpoint__audit_log__v1_endpoint_read_0873" READ
 
 NODE endpoint
 SQL >
 
-    %
-    SELECT action, id, metadata, timestamp
-    FROM audit_log__v0
-    WHERE
-        id = {{String(monitorId, 'monitor:1', required=True)}}
-        AND timestamp > toUnixTimestamp(now() - INTERVAL {{ Int64(interval, 30) }} day) * 1000
-    ORDER BY timestamp DESC
+%
+SELECT action, id, metadata, timestamp
+FROM audit_log__v0
+WHERE
+    id = {{String(monitorId, 'monitor:1', required=True)}}
+    AND timestamp > toUnixTimestamp(now() - INTERVAL {{ Int64(interval, 30) }} day) * 1000
+ORDER BY timestamp DESC
 
-TYPE ENDPOINT
+TYPE endpoint
+
 

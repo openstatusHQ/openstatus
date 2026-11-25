@@ -1,36 +1,14 @@
 import type { Metadata } from "next";
 
 import { components } from "../../../../content/mdx";
+import { categoriesIndex, sections } from "../../../../content/sections";
 import { getGuides } from "../../../../content/utils";
-import {
-  defaultMetadata,
-  ogMetadata,
-  twitterMetadata,
-} from "../../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../../lib/metadata/shared-metadata";
 import { ContentBoxLink, ContentBoxTitle } from "../../content-box";
 
-const TITLE = "Guides Categories";
-const DESCRIPTION = "Browse all guides categories from openstatus.";
-
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/guides/category",
-  },
-  openGraph: {
-    ...ogMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+export const metadata: Metadata = getListingMetadata(
+  categoriesIndex(sections.guides),
+);
 
 export default function GuidesCategoryIndex() {
   const posts = getGuides();

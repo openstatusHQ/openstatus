@@ -1,0 +1,204 @@
+---
+title: "Health Endpoints"
+publishedAt: "2026-09-17"
+author: "openstatus"
+description: "Build a health endpoint that says what is broken. @openstatus/health runs one probe per dependency and answers ok, degraded, or unhealthy — on Node, Bun, Deno, and edge runtimes."
+category: "Documentation"
+faq:
+  - question: "What is the difference between a health endpoint and an uptime check?"
+    answer: "An uptime check tells you whether your server answered. A health endpoint tells you whether it can still do its job — it runs one probe per dependency (database, cache, queue, third-party API) and reports each one separately. A server whose database is unreachable still returns 200 on its homepage; its health endpoint returns unhealthy."
+  - question: "Do I need openstatus to use @openstatus/health?"
+    answer: "No. The packages are MIT-licensed and have zero dependencies — they work with any monitoring tool, any orchestrator readiness probe, or no monitoring at all. Pointing an openstatus monitor at the endpoint is one option, not a requirement."
+  - question: "Which frameworks are supported?"
+    answer: "Anything that speaks Fetch API Request and Response needs no adapter at all: Next.js route handlers, SvelteKit, Astro, Nitro, Fresh, React Router resource routes, Bun.serve and Deno.serve. Dedicated adapters exist for Hono, Express, Elysia, and TanStack Start, and writing one for another framework is a few lines over createHealthResponder."
+  - question: "Will the probes run on every request?"
+    answer: "No. Reports are cached for five seconds by default and concurrent callers share one round, so a readiness poller hitting the endpoint every second still probes your database once per cache window. Tune it with cacheMs, or set cacheFailuresMs to 0 so recovery is visible on the next tick."
+  - question: "Is it safe to expose the endpoint publicly?"
+    answer: "Set exposeChecks to false and the body is only status and checkedAt — no dependency names, no latencies. Probe errors are masked by default, so a failing check reports 'failed' rather than a driver message. exposeChecks also accepts a function, so one route can be terse for anonymous callers and detailed for trusted ones."
+---
+
+A monitor that polls your homepage for a `200` tells you the process is alive. It does not tell you that your database is gone, that your cache is timing out, or that the queue you depend on stopped accepting writes — all of which happily return `200` right up until the moment they matter.
+
+[`@openstatus/health`](https://github.com/openstatusHQ/health) is the toolkit we extracted from our own services to close that gap. You describe one probe per dependency; it runs them concurrently, caches the result, and renders a JSON report that says `ok`, `degraded`, or `unhealthy` — and which dependency is responsible.
+
+Zero dependencies. Runs on Node 22+, Bun, Deno, and edge runtimes. MIT licensed.
+
+## Install
+
+```bash
+npm install @openstatus/health
+```
+
+Or from JSR:
+
+```bash
+deno add jsr:@openstatus/health
+```
+
+## Quickstart
+
+```ts
+import { createHealthHandler, httpProbe, readEnv } from "@openstatus/health";
+
+const handler = createHealthHandler({
+  path: "/health",
+  probes: [
+    {
+      name: "database",
+      critical: true,
+      run: () => db.run(sql`select 1`),
+    },
+    {
+      name: "redis",
+      skip: () => readEnv("UPSTASH_REDIS_REST_URL") == null,
+      run: () => redis.ping(),
+    },
+    httpProbe({ name: "unkey", url: "https://api.unkey.com/v2/liveness" }),
+  ],
+});
+
+Deno.serve(handler);
+```
+
+`createHealthHandler` returns a plain `(request: Request) => Promise<Response>`, so anything that speaks the Fetch API needs no adapter — Next.js route handlers, SvelteKit, Astro, Nitro, Fresh, React Router resource routes, `Bun.serve`, `Deno.serve`:
+
+```ts
+export const GET = createHealthHandler({ probes });
+```
+
+For frameworks with their own request objects, there is a thin adapter:
+
+```ts
+import { healthRoute } from "@openstatus/health-hono";
+
+app.route("/", healthRoute({ path: "/ping", probes }));
+```
+
+## The response
+
+```json
+{
+  "status": "degraded",
+  "checkedAt": "2026-09-11T12:00:00.000Z",
+  "latencyMs": 41,
+  "checks": [
+    { "name": "database", "status": "ok", "critical": true, "latencyMs": 3 },
+    { "name": "redis", "status": "skipped", "critical": false, "latencyMs": 0 },
+    { "name": "unkey", "status": "timeout", "critical": false, "latencyMs": 5000, "error": "timed out after 5000ms" }
+  ]
+}
+```
+
+One failing dependency does not have to mean the whole service is down. Marking a probe `critical` is how you say the difference:
+
+| Probe results | Report status | Default HTTP status |
+| --- | --- | --- |
+| every probe `ok` or `skipped` | `ok` | `200` |
+| a non-critical probe failed or timed out | `degraded` | `200` |
+| a critical probe failed or timed out | `unhealthy` | `503` |
+
+`HEAD` returns the same status code with no body. Other methods get `405` with an `allow: GET, HEAD` header. Every response carries `content-type: application/json` and `cache-control: no-store`.
+
+## Probes
+
+A probe is an object with a `name` and a `run` function. It is healthy when `run` resolves and failed when it throws:
+
+```ts
+interface Probe {
+  name: string;
+  critical?: boolean;                 // default false
+  timeoutMs?: number;                 // default 5000
+  skip?: () => boolean | Promise<boolean>;
+  run: (signal: AbortSignal, ctx: ProbeContext) => unknown | Promise<unknown>;
+}
+```
+
+The `signal` aborts when `timeoutMs` elapses — pass it to `fetch` and other cancellable calls. A probe that ignores it and settles late is still reported as `timeout`; the late result is discarded and can never surface as an unhandled rejection.
+
+`skip` runs first, inside the same timeout window, and reports the check as `skipped` without calling `run`. It is how you handle a dependency that is not configured in every environment, and it may be async, so feature flags and secret lookups work too.
+
+You can write every probe by hand, or pull in a ready-made one. Each factory takes a client or a URL — never the environment — and validates its options at construction, so a missing URL throws a `ProbeConfigError` naming the probe and the field instead of a bare `Invalid URL` from somewhere inside the library.
+
+## The package family
+
+The core is one package in a family. Adapters mount it on your framework, probes know how to ping one dependency each, and hosting packages say which replica answered.
+
+| | Packages |
+| --- | --- |
+| **Adapters** | `health-hono`, `health-elysia`, `health-express`, `health-next`, `health-tanstack-start` |
+| **Probes** | `health-drizzle`, `health-supabase`, `health-tinybird`, `health-turso`, `health-turso-serverless`, `health-unkey`, `health-upstash` |
+| **Hosting** | `health-fly`, `health-koyeb`, `health-railway`, `health-vercel`, `health-cloudflare` |
+
+Every one of them is published under the `@openstatus` scope on both npm and [JSR](https://jsr.io/@openstatus). The full table, with a quick start for each adapter, is in the [repository README](https://github.com/openstatusHQ/health#packages).
+
+## Options worth knowing
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `cacheMs` | `5000` | Reuse the last `ok` report for this long; concurrent callers share one round. |
+| `cacheFailuresMs` | `cacheMs` | Same, for `degraded` and `unhealthy`. Set `0` so a poller sees recovery on its next tick instead of waiting out the cache. |
+| `staleMs` | `0` | Stale-while-revalidate: keep answering with the last report while one refresh runs in the background. |
+| `timeoutMs` | `5000` | Default per-probe timeout. A hung probe reports `timeout`. |
+| `deadlineMs` | — | Upper bound for the whole round, capping every probe's timeout. Set it below your prober's own timeout. |
+| `exposeChecks` | `true` | `false` returns only `status` and `checkedAt`. A function decides per request. |
+| `extend` | — | `(report, ctx) => object` merged into the body — a request id, a region, a `server` object from a hosting package. |
+| `formatError` | `"generic"` | Probe errors are masked by default. `"message"` surfaces the real one while developing. |
+| `onReport` | — | Called once per uncached round. Log it, emit a metric, page on `unhealthy`. |
+
+<Aside type="caution">
+`deadlineMs` is the one to set deliberately. Kubernetes readiness probes default to a one-second timeout, and Fly's HTTP checks to five — if the whole round can outlast the prober's patience, the prober records a timeout and never reads the report you worked to produce.
+</Aside>
+
+## How we use it
+
+Our API runs on Fly, behind an HTTP check with a five-second timeout. The `/ping` route is four probes and an `extend` that names the machine that answered:
+
+```ts
+export const pingRoute = healthRoute({
+  path: "/ping",
+  deadlineMs: 4_000,
+  probes: [
+    tursoProbe({ client: db.$client }),
+    tinybirdProbe({
+      baseUrl: env.TINYBIRD_URL,
+      skip: () => isTinybirdNoop(env.TINYBIRD_NOOP),
+    }),
+    unkeyProbe(),
+    upstashProbe({
+      url: env.UPSTASH_REDIS_REST_URL,
+      token: env.UPSTASH_REDIS_REST_TOKEN,
+    }),
+  ],
+  extend: (_report, c) => ({
+    server: flyServer(),
+    requestId: c.get("requestId"),
+  }),
+});
+```
+
+The same shape backs the dashboard and the status pages, where `vercelExtend` reports the deployment instead.
+
+## Monitor it with openstatus
+
+A health endpoint is only worth writing if something reads it. Point an [HTTP monitor](/docs/reference/http-monitor) at the URL and add a body assertion:
+
+> **Body** · **Contains** · `"status":"ok"`
+
+That assertion is the point. `degraded` answers `200` by default — deliberately, so a non-critical outage does not take you out of a load balancer — which means a status-code assertion alone will never tell you about it. Asserting on the body catches `degraded` while it is still only degraded, and you hear about the failing cache before it becomes the failing checkout.
+
+<ButtonLink href="https://app.openstatus.dev?ref=health">Monitor your health endpoint</ButtonLink>
+
+## Learn more
+
+- [github.com/openstatusHQ/health](https://github.com/openstatusHQ/health) — source, full package table, and issues
+- [jsr.io/@openstatus](https://jsr.io/@openstatus) — API reference for every package
+- [HTTP monitor reference](/docs/reference/http-monitor) — assertions, regions, and timeouts
+- [Component Registry](/registry) — our other open-source building blocks
+
+## Support
+
+If you hit a problem, have a question, or want a probe or adapter we do not ship yet:
+
+- [Open an issue](https://github.com/openstatusHQ/health/issues)
+- [Join our Discord](https://openstatus.dev/discord)
+- [Send an email](mailto:ping@openstatus.dev)

@@ -1,15 +1,30 @@
-import { GitHubIcon } from "@openstatus/icons";
-import { GoogleIcon } from "@openstatus/icons";
-import { Separator } from "@openstatus/ui/components/ui/separator";
+import { GitHubIcon } from "@openstatus/icons/brand";
+import { GoogleIcon } from "@openstatus/icons/brand";
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { SearchParams } from "nuqs/server";
 
 import { signIn } from "@/lib/auth";
 
+import { EmailForm } from "./_components/email-form";
 import { LoginButton } from "./_components/login-button";
-import MagicLinkForm from "./_components/magic-link-form";
+import { takeRedirectTo } from "./_components/redirect";
+import { RedirectToInput } from "./_components/redirect-to-input";
 import { searchParamsCache } from "./search-params";
+
+const hasWorkOS = Boolean(
+  process.env.AUTH_WORKOS_ID && process.env.AUTH_WORKOS_SECRET,
+);
+
+// Auth.js error codes that land on `/login?error=`; anything else stays silent.
+const ERROR_MESSAGES: Record<string, string> = {
+  AccessDenied:
+    "Your SSO login isn't linked to a workspace yet. Contact your workspace admin.",
+  Verification:
+    "That sign-in link has expired or was already used. Request a new one.",
+  Configuration:
+    "We couldn't complete your sign-in. Try again or contact support.",
+};
 
 export const metadata: Metadata = {
   title: "Sign In",
@@ -28,7 +43,7 @@ export default async function Page(props: {
   searchParams: Promise<SearchParams>;
 }) {
   const searchParams = await props.searchParams;
-  const { redirectTo } = searchParamsCache.parse(searchParams);
+  const { redirectTo, error } = searchParamsCache.parse(searchParams);
 
   return (
     <div className="my-16 grid w-full max-w-lg gap-6">
@@ -38,36 +53,55 @@ export default async function Page(props: {
           Get started now. No credit card required.
         </p>
       </div>
-      <div className="grid gap-4 p-4">
-        {process.env.NODE_ENV === "development" ||
-        process.env.SELF_HOST === "true" ? (
-          <div className="grid gap-4">
-            <MagicLinkForm />
-            <Separator />
-          </div>
-        ) : null}
-        <form
-          action={async () => {
-            "use server";
-            await signIn("github", { redirectTo: redirectTo ?? undefined });
-          }}
-          className="w-full"
-        >
-          <LoginButton type="submit" provider="github">
-            Sign in with GitHub <GitHubIcon className="ml-2 h-4 w-4" />
-          </LoginButton>
-        </form>
-        <form
-          action={async () => {
-            "use server";
-            await signIn("google", { redirectTo: redirectTo ?? undefined });
-          }}
-          className="w-full"
-        >
-          <LoginButton type="submit" provider="google">
-            Sign in with Google <GoogleIcon className="ml-2 h-4 w-4" />
-          </LoginButton>
-        </form>
+      {error && Object.hasOwn(ERROR_MESSAGES, error) ? (
+        <p className="text-destructive mx-auto max-w-md px-8 text-center text-sm text-pretty">
+          {ERROR_MESSAGES[error]}
+        </p>
+      ) : null}
+      <div className="grid gap-3 p-4">
+        <EmailForm redirectTo={redirectTo ?? undefined} sso={hasWorkOS}>
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              await signIn("github", {
+                redirectTo: await takeRedirectTo(formData),
+              });
+            }}
+          >
+            <RedirectToInput redirectTo={redirectTo ?? undefined} />
+            <LoginButton type="submit" provider="github" variant="default">
+              <GitHubIcon className="h-4 w-4" /> Continue with GitHub
+            </LoginButton>
+          </form>
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              await signIn("google", {
+                redirectTo: await takeRedirectTo(formData),
+              });
+            }}
+          >
+            <RedirectToInput redirectTo={redirectTo ?? undefined} />
+            <LoginButton type="submit" provider="google" variant="default">
+              <GoogleIcon className="h-4 w-4" /> Continue with Google
+            </LoginButton>
+          </form>
+          {process.env.AUTH_OIDC_ISSUER ? (
+            <form
+              action={async (formData: FormData) => {
+                "use server";
+                await signIn("oidc", {
+                  redirectTo: await takeRedirectTo(formData),
+                });
+              }}
+            >
+              <RedirectToInput redirectTo={redirectTo ?? undefined} />
+              <LoginButton type="submit" provider="oidc">
+                Continue with {process.env.AUTH_OIDC_NAME ?? "SSO"}
+              </LoginButton>
+            </form>
+          ) : null}
+        </EmailForm>
       </div>
       <p className="text-muted-foreground mx-auto max-w-md px-8 text-center text-xs text-pretty">
         By clicking continue, you agree to our{" "}

@@ -1,55 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { sections } from "../../../content/sections";
 import { getBlogPosts } from "../../../content/utils";
 import { JsonLd } from "../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  defaultMetadata,
-  ogMetadata,
-} from "../../../lib/metadata/shared-metadata";
-import { twitterMetadata } from "../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
 } from "../../../lib/metadata/structured-data";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
-const TITLE = "Blog - Engineering, Product & Monitoring Insights";
-const DESCRIPTION =
-  "Read engineering deep dives, product updates, and monitoring best practices from the openstatus team. Learn about uptime monitoring, incident communication, and building reliable systems.";
-
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/blog",
-  },
-  openGraph: {
-    ...ogMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+export const metadata: Metadata = getListingMetadata(sections.blog);
 
 export default function BlogListPage() {
   const allBlogs = getBlogPosts();
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Blog", url: `${BASE_URL}/blog` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.blog),
     getJsonLDItemList(allBlogs, "/blog"),
   ]);
   return (

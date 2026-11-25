@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -11,7 +12,6 @@ import {
   FormLabel,
 } from "@openstatus/ui/components/ui/form";
 import { Switch } from "@openstatus/ui/components/ui/switch";
-import { Lock } from "lucide-react";
 import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -75,7 +75,7 @@ export function FormVisibility({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="visibility">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Visibility</FormCardTitle>
@@ -121,8 +121,12 @@ export function FormVisibility({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button asChild>
-                <NextLink href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit="monitor-values-visibility"
+                asChild
+              >
+                <NextLink href="/settings/billing?highlight=monitor-values-visibility#plans">
                   <Lock className="size-4" />
                   Upgrade
                 </NextLink>

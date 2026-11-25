@@ -1,9 +1,20 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { COLOR_DECIMALS } from "@openstatus/notification-base";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, type Stub, stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
+import {
+  buildAlertEmbed,
+  buildDegradedEmbed,
+  buildRecoveryEmbed,
+} from "./embeds";
 import {
   sendAlert,
   sendDegraded,
@@ -15,14 +26,14 @@ const ok = (): Promise<Response> =>
   Promise.resolve(new Response(null, { status: 200 }));
 
 describe("Discord Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: MockInstance;
 
   beforeEach(() => {
-    fetchMock = stub(globalThis, "fetch", ok);
+    fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(ok);
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.mockRestore();
   });
 
   const createMockMonitor = () => ({
@@ -62,8 +73,8 @@ describe("Discord Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(
       "https://discord.com/api/webhooks/123456789/abcdefgh",
     );
@@ -94,8 +105,8 @@ describe("Discord Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.embeds).toBeDefined();
     expect(body.embeds[0].title).toContain("is recovered");
@@ -118,8 +129,8 @@ describe("Discord Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.embeds).toBeDefined();
     expect(body.embeds[0].title).toContain("is degraded");
@@ -131,8 +142,8 @@ describe("Discord Notifications", () => {
     const webhookUrl = "https://discord.com/api/webhooks/123456789/abcdefgh";
     await sendTestDiscordMessage(webhookUrl);
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
     const body = JSON.parse(callArgs[1].body);
     expect(body.embeds).toBeDefined();
@@ -140,21 +151,21 @@ describe("Discord Notifications", () => {
   });
 
   test("Send Test Discord Message with empty webhookUrl", async () => {
-    expect(sendTestDiscordMessage("")).rejects.toThrow();
-    assertSpyCalls(fetchMock, 0);
+    await expect(sendTestDiscordMessage("")).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
       createMockNotification(),
     );
-    expect(
+    await expect(
       sendAlert({
         // @ts-expect-error
         monitor,
@@ -165,4 +176,45 @@ describe("Discord Notifications", () => {
       }),
     ).rejects.toThrow();
   });
+});
+
+describe("Discord title limits", () => {
+  for (const [build, suffix] of [
+    [buildAlertEmbed, " is failing"],
+    [buildRecoveryEmbed, " is recovered"],
+    [buildDegradedEmbed, " is degraded"],
+  ] as const) {
+    test(`${build.name} keeps the status and complete characters within 256 characters`, () => {
+      for (const monitorName of [
+        "API Health",
+        "A".repeat(256 - suffix.length),
+        "A".repeat(255),
+        "\u{1F680}".repeat(127),
+        `A${"\u{1F680}".repeat(127)}`,
+      ]) {
+        const data = Object.freeze({
+          monitorName,
+          monitorUrl: "https://example.com/health",
+          monitorJobType: "http",
+          statusCodeFormatted: "503 Service Unavailable",
+          errorMessage: "Connection timeout",
+          timestampFormatted: "Sep 9, 2026 at 00:00 UTC",
+          regionsDisplay: "iad",
+          latencyDisplay: "100ms",
+          dashboardUrl: "https://app.openstatus.dev/monitors/1",
+        });
+        const title = build(data).title;
+        expect(title.length).toBeLessThanOrEqual(256);
+        expect(title.endsWith(suffix)).toBe(true);
+        const name = title.slice(0, -suffix.length);
+        expect(name.isWellFormed()).toBe(true);
+        expect(name.length).toBeGreaterThan(0);
+        expect(monitorName.startsWith(name)).toBe(true);
+        if (monitorName.length <= 256 - suffix.length) {
+          expect(name).toBe(monitorName);
+        }
+        expect(data.monitorName).toBe(monitorName);
+      }
+    });
+  }
 });

@@ -1,0 +1,196 @@
+{{- if and .Values.tinybird.enabled .Values.tinybird.bootstrap.enabled }}
+{{- $name := include "openstatus.component" (dict "ctx" $ "component" "tinybird-bootstrap") }}
+{{- $b := .Values.tinybird.bootstrap }}
+{{- $deployments := list }}
+{{- range $svc, $cfg := .Values.services }}
+{{- if $cfg.enabled }}
+{{- $deployments = append $deployments (include "openstatus.component" (dict "ctx" $ "component" $svc)) }}
+{{- end }}
+{{- end }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+rules:
+  # `create` cannot be scoped by resourceNames; everything else is.
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: [{{ include "openstatus.tinybirdSecretName" . | quote }}]
+    verbs: ["get", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    resourceNames: {{ toJson $deployments }}
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+data:
+  bootstrap.sh: |
+    set -eu
+    pip install --quiet --root-user-action=ignore "tinybird=={{ $b.cliVersion }}"
+    # tb names the local workspace after the project path, so keep it fixed:
+    # the same path always resolves to the same workspace and token.
+    python3 /scripts/fetch.py "$SOURCE_URL" /work
+    cd /work/packages/tinybird
+    tb --local deploy
+    python3 /scripts/publish.py
+  fetch.py: |
+    import io, os, sys, tarfile, urllib.parse, urllib.request
+    url, dest = sys.argv[1], sys.argv[2]
+    token = os.environ.get("SOURCE_TOKEN")
+
+    class SameOriginAuth(urllib.request.HTTPRedirectHandler):
+        # Like curl: never forward the token to another host (GitHub's codeload
+        # redirect is pre-signed and needs none).
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            new = super().redirect_request(req, fp, code, msg, headers, newurl)
+            if new and urllib.parse.urlsplit(newurl).netloc != urllib.parse.urlsplit(req.full_url).netloc:
+                new.remove_header("Authorization")
+            return new
+
+    req = urllib.request.Request(url)
+    if token:
+        if urllib.parse.urlsplit(url).scheme != "https":
+            sys.exit("sourceTokenSecret requires an https sourceUrl")
+        req.add_header("Authorization", "Bearer " + token)
+    body = urllib.request.build_opener(SameOriginAuth).open(req).read()
+    tar = tarfile.open(fileobj=io.BytesIO(body))
+    members = []
+    for m in tar.getmembers():
+        parts = m.name.split("/", 1)
+        if len(parts) == 2 and parts[1].startswith("packages/tinybird/"):
+            m.name = parts[1]
+            members.append(m)
+    tar.extractall(dest, members=members, filter="data")
+  publish.py: |
+    # Guide steps 6-7: read the workspace token with `tb --local info`, store it
+    # under both names the apps read, and restart every app not yet running it.
+    import base64, hashlib, json, os, ssl, subprocess, urllib.error, urllib.request
+
+    info = subprocess.run(["tb", "--local", "info"], capture_output=True, text=True, check=True).stdout
+    section = info.split("Tinybird Local", 1)[1].split("» Project", 1)[0]
+    token = next(l.split(":", 1)[1].strip() for l in section.splitlines() if l.startswith("token:"))
+
+    sa = "/var/run/secrets/kubernetes.io/serviceaccount"
+    ns = open(f"{sa}/namespace").read().strip()
+    auth = {"Authorization": "Bearer " + open(f"{sa}/token").read().strip()}
+    tls = ssl.create_default_context(cafile=f"{sa}/ca.crt")
+    api = "https://kubernetes.default.svc"
+
+    def call(method, path, body=None, ctype="application/json"):
+        req = urllib.request.Request(api + path, method=method, headers={**auth, "Content-Type": ctype},
+                                     data=json.dumps(body).encode() if body is not None else None)
+        try:
+            with urllib.request.urlopen(req, context=tls) as r:
+                return r.status, json.load(r)
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return 404, None
+            raise
+
+    name = os.environ["SECRET_NAME"]
+    enc = base64.b64encode(token.encode()).decode()
+    secret = {"apiVersion": "v1", "kind": "Secret", "type": "Opaque",
+              "metadata": {"name": name, "labels": json.loads(os.environ["LABELS"])},
+              "data": {"TINY_BIRD_API_KEY": enc, "TINYBIRD_TOKEN": enc}}
+    status, current = call("GET", f"/api/v1/namespaces/{ns}/secrets/{name}")
+    if status == 404:
+        call("POST", f"/api/v1/namespaces/{ns}/secrets", secret)
+    elif current.get("data") != secret["data"]:
+        secret["metadata"]["resourceVersion"] = current["metadata"]["resourceVersion"]
+        call("PUT", f"/api/v1/namespaces/{ns}/secrets/{name}", secret)
+
+    # Each Deployment records the token it was restarted for, so a retry after a
+    # partial failure finishes the restarts instead of skipping them.
+    key = "openstatus.dev/tinybird-token-sha256"
+    digest = hashlib.sha256(token.encode()).hexdigest()
+    patch = {"spec": {"template": {"metadata": {"annotations": {key: digest}}}}}
+    for dep in json.loads(os.environ["DEPLOYMENTS"]):
+        _, d = call("GET", f"/apis/apps/v1/namespaces/{ns}/deployments/{dep}")
+        if (d["spec"]["template"]["metadata"].get("annotations") or {}).get(key) != digest:
+            call("PATCH", f"/apis/apps/v1/namespaces/{ns}/deployments/{dep}", patch,
+                 "application/strategic-merge-patch+json")
+            print("restarted", dep)
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: {{ $b.backoffLimit }}
+  template:
+    metadata:
+      labels:
+        {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" "tinybird-bootstrap") | nindent 8 }}
+    spec:
+      {{- include "openstatus.scheduling" . | nindent 6 }}
+      serviceAccountName: {{ $name }}
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: {{ include "openstatus.externalImage" $b.image | quote }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          command: ["sh", "/scripts/bootstrap.sh"]
+          env:
+            - name: TB_LOCAL_HOST
+              value: {{ include "openstatus.component" (dict "ctx" $ "component" "tinybird-local") }}
+            - name: SOURCE_URL
+              value: {{ $b.sourceUrl | quote }}
+            {{- with $b.sourceTokenSecret.name }}
+            - name: SOURCE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ . }}
+                  key: {{ $b.sourceTokenSecret.key }}
+            {{- end }}
+            - name: SECRET_NAME
+              value: {{ include "openstatus.tinybirdSecretName" . }}
+            - name: DEPLOYMENTS
+              value: {{ toJson $deployments | quote }}
+            - name: LABELS
+              value: {{ include "openstatus.labels" . | fromYaml | toJson | quote }}
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ $name }}
+{{- end }}

@@ -1,14 +1,16 @@
-import { db as defaultDb } from "@openstatus/db";
+import { db as defaultDb, sql } from "@openstatus/db";
 import {
   selectInvitationSchema,
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
 import type { Invitation, Workspace } from "../types";
 import {
   GetInvitationByTokenInput,
+  GetInvitationInput,
   type ListInvitationsInput,
 } from "./schemas";
 
@@ -20,6 +22,7 @@ export async function listInvitations(args: {
   ctx: ServiceContext;
   input?: ListInvitationsInput;
 }): Promise<Invitation[]> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
 
@@ -50,6 +53,7 @@ export async function getInvitationByToken(args: {
   ctx: ServiceContext;
   input: GetInvitationByTokenInput;
 }): Promise<InvitationWithWorkspace> {
+  requireScope(args.ctx, "admin");
   const input = GetInvitationByTokenInput.parse(args.input);
   const db = args.ctx.db ?? defaultDb;
 
@@ -58,7 +62,8 @@ export async function getInvitationByToken(args: {
       token: input.token,
       acceptedAt: { isNull: true },
       expiresAt: { gte: new Date() },
-      email: input.email,
+      // Rows created before emails were normalized keep their original casing.
+      RAW: (t) => sql`lower(${t.email}) = ${input.email}`,
     },
     with: { workspace: true },
   });
@@ -68,4 +73,21 @@ export async function getInvitationByToken(args: {
   return selectInvitationSchema
     .extend({ workspace: selectWorkspaceSchema })
     .parse(result);
+}
+
+/** One invitation of the caller's workspace, in any state. */
+export async function getInvitation(args: {
+  ctx: ServiceContext;
+  input: GetInvitationInput;
+}): Promise<Invitation> {
+  const { ctx } = args;
+  requireScope(ctx, "admin");
+  const input = GetInvitationInput.parse(args.input);
+  const db = ctx.db ?? defaultDb;
+
+  const row = await db.query.invitation.findFirst({
+    where: { id: input.id, workspaceId: ctx.workspace.id },
+  });
+  if (!row) throw new NotFoundError("invitation", input.id);
+  return selectInvitationSchema.parse(row);
 }

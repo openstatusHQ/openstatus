@@ -3,6 +3,7 @@ import type {
   AgentToolOutput,
 } from "@openstatus/services/agent-tools";
 
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellDate } from "@/components/data-table/table-cell-date";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
@@ -24,7 +25,7 @@ export function getMonitorSummaryDetails(
         rows: [
           {
             label: "ID",
-            value: <TableCellNumber value={output.monitorId} />,
+            value: <EntityRef kind="monitor" id={output.monitorId} />,
           },
           { label: "Window", value: <TableCellText value={input.timeRange} /> },
           {

@@ -1,0 +1,27 @@
+{
+  "name": "@openstatus/videos",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Remotion compositions over the walkthroughs recorded by scripts/record.mjs --remotion",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "render": "remotion render",
+    "studio": "remotion studio",
+    "test": "vitest run",
+    "thumbnails": "node thumbnails.mjs"
+  },
+  "dependencies": {
+    "@remotion/cli": "catalog:",
+    "geist": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "remotion": "catalog:"
+  },
+  "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
+    "@openstatus/tsconfig": "workspace:*",
+    "@types/react": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

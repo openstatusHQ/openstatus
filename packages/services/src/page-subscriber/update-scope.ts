@@ -7,7 +7,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
-import { type DB, type ServiceContext, withTransaction } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  withTransaction,
+  dbOnlyContext,
+} from "../context";
 import { NotFoundError, ValidationError } from "../errors";
 import { resolveSubscriberByToken } from "./internal";
 import { UpdateSubscriberScopeInput } from "./schemas";
@@ -23,6 +28,9 @@ import { UpdateSubscriberScopeInput } from "./schemas";
  * them via `metadata` to keep the audit row from being dropped by the
  * empty-diff guard in `emitAudit`.
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function updateSubscriberScope(args: {
   input: UpdateSubscriberScopeInput;
   db?: DB;
@@ -44,7 +52,7 @@ export async function updateSubscriberScope(args: {
     throw new ValidationError("Subscription is unsubscribed");
   }
 
-  await withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  await withTransaction(dbOnlyContext(args.db), async (tx) => {
     if (input.componentIds.length > 0) {
       const valid = await tx
         .select({ id: pageComponent.id })

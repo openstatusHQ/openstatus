@@ -1,35 +1,22 @@
 import { Code, ConnectError } from "@connectrpc/connect";
-import { and, db, eq, isNull, sql } from "@openstatus/db";
-import { monitor } from "@openstatus/db/src/schema";
 import { monitorRegionSchema } from "@openstatus/db/src/schema/constants";
 import type { Limits } from "@openstatus/db/src/schema/plan/schema";
 import type { Periodicity, Region } from "@openstatus/proto/monitor/v1";
+import { uniqueRegions } from "@openstatus/utils";
 import { z } from "zod";
 
 import { periodicityToString, regionsToStrings } from "./converters";
 
 /**
- * Check workspace limits for creating a new monitor.
+ * Check the plan limits that apply to a monitor's configuration. Safe on both
+ * create and update — it never looks at how many monitors already exist.
  * Throws ConnectError with PermissionDenied if any limit is exceeded.
  */
-export async function checkMonitorLimits(
-  workspaceId: number,
+export function checkMonitorConfigLimits(
   limits: Limits,
   periodicity: Periodicity | undefined,
   regions: Region[] | undefined,
-): Promise<void> {
-  // Check monitor count limit
-  const countResult = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(monitor)
-    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
-    .get();
-
-  const count = countResult?.count ?? 0;
-  if (count >= limits.monitors) {
-    throw new ConnectError("Upgrade for more monitors", Code.PermissionDenied);
-  }
-
+): void {
   // Check periodicity limit
   if (periodicity) {
     const periodicityStr = periodicityToString(periodicity);
@@ -45,7 +32,7 @@ export async function checkMonitorLimits(
   if (regions && regions.length > 0) {
     const regionStrings = z
       .array(monitorRegionSchema)
-      .parse(regionsToStrings(regions));
+      .parse(uniqueRegions(regionsToStrings(regions)));
 
     // Check max regions limit
     if (regionStrings.length > limits["max-regions"]) {

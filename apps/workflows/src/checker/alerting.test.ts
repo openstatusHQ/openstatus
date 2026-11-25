@@ -5,33 +5,40 @@ import {
   notificationsToMonitors,
 } from "@openstatus/db/src/schema";
 import {
+  createMonitor,
+  createNotification,
+  createTestWorkspace,
+  linkNotificationToMonitor,
+} from "@openstatus/db/src/test/factories";
+import {
   afterAll,
   afterEach,
-  assertSpyCalls,
+  beforeAll,
   beforeEach,
   describe,
   expect,
-  type Stub,
-  stub,
   test,
-} from "@openstatus/test-utils";
+  vi,
+  type MockInstance,
+} from "vitest";
 
-import { checkerAudit } from "../utils/audit-log";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
 import { triggerNotifications } from "./alerting";
 import { providerToFunction } from "./utils";
 
-// Deno has no module mocking, so we stub the methods on the real singletons
-// that alerting.ts reads at call time. Stubbing per-test resolves them to no-op
+// Stub the methods on the real singletons that alerting.ts reads at call time. Stubbing per-test resolves them to no-op
 // to avoid real HTTP / Tinybird calls and gives a fresh call count each test.
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
-type AnyStub = Stub<any>;
+type AnyStub = MockInstance;
 let stubs: AnyStub[] = [];
 
 const stubSend = (
   provider: "email" | "slack" | "discord",
   verb: "sendAlert" | "sendRecovery" | "sendDegraded",
 ): AnyStub => {
-  const s = stub(providerToFunction[provider], verb, () => Promise.resolve());
+  const s = vi
+    .spyOn(providerToFunction[provider], verb)
+    .mockImplementation(() => Promise.resolve());
   stubs.push(s);
   return s;
 };
@@ -46,15 +53,18 @@ let mockDiscordSendAlert: AnyStub;
 let mockDiscordSendRecovery: AnyStub;
 let mockDiscordSendDegraded: AnyStub;
 
-// Seed data has: monitor 1 (workspace 1) linked to notification 1 (email provider)
-// We use unique cronTimestamp per test to avoid unique constraint conflicts
+// Own workspace + monitors: asserting on "how many notifications fired for this
+// monitor" only holds if no other suite can attach one.
+// Unique cronTimestamp per test avoids unique-constraint conflicts.
+let workspaceId: number;
+let emailMonitorId: number;
+let emailNotificationId: number;
+let noNotifMonitorId: number;
 
 beforeEach(() => {
   stubs = [];
   // biome-ignore lint/suspicious/noExplicitAny: avoid Tinybird call
-  stubs.push(
-    stub(checkerAudit, "publishAuditLog", () => Promise.resolve()) as AnyStub,
-  );
+  stubs.push(stubPublishAuditLog());
   mockEmailSendAlert = stubSend("email", "sendAlert");
   mockEmailSendRecovery = stubSend("email", "sendRecovery");
   mockEmailSendDegraded = stubSend("email", "sendDegraded");
@@ -67,24 +77,31 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  for (const s of stubs) s.restore();
+  for (const s of stubs) s.mockRestore();
   stubs = [];
 });
 
-describe("triggerNotifications", () => {
-  afterAll(async () => {
-    // Clean up notification triggers created during tests
-    await db
-      .delete(notificationTrigger)
-      .where(eq(notificationTrigger.monitorId, 1))
-      .run();
-  });
+beforeAll(async () => {
+  const { workspace } = await createTestWorkspace();
+  workspaceId = workspace.id;
+  emailMonitorId = (await createMonitor(workspaceId)).id;
+  noNotifMonitorId = (await createMonitor(workspaceId)).id;
+  emailNotificationId = (
+    await createNotification(workspaceId, {
+      name: "sample test notification",
+      provider: "email",
+      data: JSON.stringify({ email: "ping@openstatus.dev" }),
+    })
+  ).id;
+  await linkNotificationToMonitor(emailNotificationId, emailMonitorId);
+});
 
+await describe("triggerNotifications", async () => {
   test("should send alert notification and return triggered list", async () => {
     const cronTimestamp = 9000001;
 
     const result = await triggerNotifications({
-      monitorId: "1",
+      monitorId: String(emailMonitorId),
       statusCode: 500,
       message: "Internal Server Error",
       notifType: "alert",
@@ -94,10 +111,10 @@ describe("triggerNotifications", () => {
       latency: 1500,
     });
 
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
-      notificationId: 1,
+      notificationId: emailNotificationId,
       provider: "email",
     });
   });
@@ -106,17 +123,17 @@ describe("triggerNotifications", () => {
     const cronTimestamp = 9000002;
 
     const result = await triggerNotifications({
-      monitorId: "1",
+      monitorId: String(emailMonitorId),
       statusCode: 200,
       notifType: "recovery",
       cronTimestamp,
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockEmailSendRecovery, 1);
+    expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
-      notificationId: 1,
+      notificationId: emailNotificationId,
       provider: "email",
     });
   });
@@ -125,7 +142,7 @@ describe("triggerNotifications", () => {
     const cronTimestamp = 9000003;
 
     const result = await triggerNotifications({
-      monitorId: "1",
+      monitorId: String(emailMonitorId),
       statusCode: 200,
       notifType: "degraded",
       cronTimestamp,
@@ -133,10 +150,10 @@ describe("triggerNotifications", () => {
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockEmailSendDegraded, 1);
+    expect(mockEmailSendDegraded).toHaveBeenCalledTimes(1);
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
-      notificationId: 1,
+      notificationId: emailNotificationId,
       provider: "email",
     });
   });
@@ -146,13 +163,13 @@ describe("triggerNotifications", () => {
 
     // Monitor 2 has no notifications linked in seed data
     const result = await triggerNotifications({
-      monitorId: "2",
+      monitorId: String(noNotifMonitorId),
       statusCode: 500,
       notifType: "alert",
       cronTimestamp,
     });
 
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
     expect(result).toHaveLength(0);
   });
 
@@ -160,25 +177,25 @@ describe("triggerNotifications", () => {
     const cronTimestamp = 9000005;
 
     const first = await triggerNotifications({
-      monitorId: "1",
+      monitorId: String(emailMonitorId),
       statusCode: 500,
       notifType: "alert",
       cronTimestamp,
     });
 
     expect(first).toHaveLength(1);
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
 
     // Same cronTimestamp should be skipped due to unique constraint
     const second = await triggerNotifications({
-      monitorId: "1",
+      monitorId: String(emailMonitorId),
       statusCode: 500,
       notifType: "alert",
       cronTimestamp,
     });
 
     // still only the first call — the duplicate was skipped
-    assertSpyCalls(mockEmailSendAlert, 1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
     expect(second).toHaveLength(0);
   });
 });
@@ -186,9 +203,11 @@ describe("triggerNotifications", () => {
 describe("triggerNotifications with multiple providers", () => {
   const testNotificationIds: number[] = [];
 
-  // Monitor 3 (workspace 1) exists in seed but has no notifications.
-  // We link slack and discord notifications to it for this test suite.
-  const testMonitorId = 3;
+  let testMonitorId: number;
+
+  beforeAll(async () => {
+    testMonitorId = (await createMonitor(workspaceId)).id;
+  });
 
   afterAll(async () => {
     // Clean up notification triggers
@@ -220,7 +239,7 @@ describe("triggerNotifications with multiple providers", () => {
         name: "test-slack",
         provider: "slack",
         data: '{"slack":"https://hooks.slack.com/test"}',
-        workspaceId: 1,
+        workspaceId,
       })
       .returning();
 
@@ -231,7 +250,7 @@ describe("triggerNotifications with multiple providers", () => {
         name: "test-discord",
         provider: "discord",
         data: '{"discord":"https://discord.com/api/webhooks/test"}',
-        workspaceId: 1,
+        workspaceId,
       })
       .returning();
 
@@ -257,9 +276,9 @@ describe("triggerNotifications with multiple providers", () => {
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockSlackSendAlert, 1);
-    assertSpyCalls(mockDiscordSendAlert, 1);
-    assertSpyCalls(mockEmailSendAlert, 0);
+    expect(mockSlackSendAlert).toHaveBeenCalledTimes(1);
+    expect(mockDiscordSendAlert).toHaveBeenCalledTimes(1);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
 
     expect(result).toHaveLength(2);
     expect(result).toContainEqual({
@@ -283,8 +302,8 @@ describe("triggerNotifications with multiple providers", () => {
       regions: ["ams"],
     });
 
-    assertSpyCalls(mockSlackSendRecovery, 1);
-    assertSpyCalls(mockDiscordSendRecovery, 1);
+    expect(mockSlackSendRecovery).toHaveBeenCalledTimes(1);
+    expect(mockDiscordSendRecovery).toHaveBeenCalledTimes(1);
 
     expect(result).toHaveLength(2);
     const providers = result.map((r) => r.provider).sort();

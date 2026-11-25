@@ -1,5 +1,4 @@
-import { db, eq } from "@openstatus/db";
-import { viewer } from "@openstatus/db/src/schema";
+import { touchViewer } from "@openstatus/services/viewer";
 import type { DefaultSession } from "next-auth";
 import NextAuth, { AuthError } from "next-auth";
 import { headers } from "next/headers";
@@ -7,6 +6,7 @@ import { headers } from "next/headers";
 import { getValidCustomDomain } from "../domain";
 import { getQueryClient, trpc } from "../trpc/server";
 import { adapter } from "./adapter";
+import { logger } from "./logger";
 import { ResendProvider } from "./providers";
 
 export type { DefaultSession };
@@ -14,6 +14,7 @@ export type { DefaultSession };
 export const { handlers, signIn, signOut, auth } = NextAuth({
   debug: process.env.NODE_ENV === "development",
   adapter,
+  logger,
   providers: [ResendProvider],
   callbacks: {
     async signIn(params) {
@@ -44,11 +45,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (params.account?.provider === "resend") {
         // if the user is new, the id is the verification_token and not the viewer id, so we cannot update the viewer
         if (Number.isNaN(Number(params.user.id))) return true;
-        await db
-          .update(viewer)
-          .set({ updatedAt: new Date() })
-          .where(eq(viewer.id, Number(params.user.id)))
-          .run();
+        await touchViewer({ input: { id: Number(params.user.id) } });
 
         return true;
       }

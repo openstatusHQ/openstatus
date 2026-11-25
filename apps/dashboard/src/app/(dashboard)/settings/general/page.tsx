@@ -10,13 +10,11 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { FormCardGroup } from "@/components/forms/form-card";
-import { FormApiKey } from "@/components/forms/settings/form-api-key";
+import { FormCardPointer } from "@/components/forms/form-card-pointer";
 import { FormMembers } from "@/components/forms/settings/form-members";
 import { FormSlug } from "@/components/forms/settings/form-slug";
 import { FormWorkspace } from "@/components/forms/settings/form-workspace";
 import { useTRPC } from "@/lib/trpc/client";
-
-const BASE_URL = "https://app.openstatus.dev/invite";
 
 export default function Page() {
   const trpc = useTRPC();
@@ -40,7 +38,7 @@ export default function Page() {
   const createInvitationMutation = useMutation(
     trpc.invitation.create.mutationOptions({
       onSuccess: (data) => {
-        sendInvitationMutation.mutate({ id: data.id, baseUrl: BASE_URL });
+        sendInvitationMutation.mutate({ id: data.id });
         queryClient.invalidateQueries({
           queryKey: trpc.invitation.list.queryKey(),
         });
@@ -52,7 +50,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="general">
         <SectionHeader>
           <SectionTitle>General</SectionTitle>
           <SectionDescription>
@@ -81,7 +79,13 @@ export default function Page() {
               workspace.limits.members !== "Unlimited"
             }
           />
-          <FormApiKey />
+          <FormCardPointer
+            id="api-keys"
+            title="API Keys"
+            description="API keys are created and revoked under Developers."
+            href="/developers/api-keys"
+            action="Go to API keys"
+          />
         </FormCardGroup>
       </Section>
     </SectionGroup>

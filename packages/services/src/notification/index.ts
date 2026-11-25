@@ -1,5 +1,29 @@
+export { claimNotificationTrigger } from "./claim-trigger";
 export { createNotification } from "./create";
 export { deleteNotification } from "./delete";
+export { assertProviderAllowed } from "./internal";
+export { getNotificationLimit, type NotificationLimit } from "./limit";
+export {
+  listOutboxRowsWithoutTrigger,
+  listTriggersWithoutOutboxRow,
+  type OutboxShadowKey,
+  pruneNotificationOutbox,
+} from "./outbox-retention";
+export {
+  claimOutboxRows,
+  deadLetterOutboxRows,
+  discardOutboxRows,
+  listExpiredOutboxRows,
+  loadOutboxDeliveryRows,
+  type OutboxRow,
+  releaseOutboxRows,
+  releaseWorkerOutboxClaims,
+  rescheduleOutboxRows,
+  settleDeliveredOutboxRows,
+  settleSkippedOutboxRows,
+} from "./outbox";
+export { loadSmsQuotaBlocked } from "./sms-quota";
+export { listMonitorNotificationTargets } from "./targets";
 export {
   getNotification,
   type ListNotificationsResult,
@@ -9,6 +33,7 @@ export {
 export { updateNotification } from "./update";
 
 export {
+  ClaimNotificationTriggerInput,
   CreateNotificationInput,
   DeleteNotificationInput,
   GetNotificationInput,

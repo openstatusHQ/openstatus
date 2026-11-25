@@ -9,6 +9,7 @@ import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-col
 import { type NotifierProvider, config } from "@/data/notifications.client";
 
 import { TableCellBadge } from "../table-cell-badge";
+import { TableCellEmpty } from "../table-cell-empty";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Notifier = RouterOutputs["notification"]["list"][number];
@@ -55,7 +56,7 @@ export const columns: ColumnDef<Notifier>[] = [
           </div>
         );
       }
-      return <span className="text-muted-foreground">-</span>;
+      return <TableCellEmpty>No monitors</TableCellEmpty>;
     },
     meta: {
       cellClassName: "tabular-nums font-mono",

@@ -1,21 +1,22 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import type { Workspace } from "@openstatus/db/src/schema";
 import {
+  ConcurrentUpdateError,
+  ConflictError,
   ForbiddenError,
+  LimitExceededError,
   NotFoundError,
   type ServiceContext,
   ValidationError,
 } from "@openstatus/services";
 import { createApiKey } from "@openstatus/services/api-key";
-import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   withTestTransaction,
 } from "@openstatus/services/test/helpers";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
-import { toConnectError, toServiceCtx } from "./adapter";
+import { rethrowPlanLimit, toConnectError, toServiceCtx } from "./adapter";
 
 const wsStub = { id: 1, slug: "ws", name: "ws" } as unknown as Workspace;
 
@@ -93,10 +94,36 @@ describe("toConnectError", () => {
     expect((err as ConnectError).code).toBe(Code.InvalidArgument);
   });
 
+  test("ConflictError → ConnectError(FailedPrecondition)", () => {
+    const err = captureThrow(() =>
+      toConnectError(new ConflictError("Incident #1 is closed")),
+    );
+    expect((err as ConnectError).code).toBe(Code.FailedPrecondition);
+  });
+
+  test("ConcurrentUpdateError → ConnectError(Aborted)", () => {
+    const err = captureThrow(() =>
+      toConnectError(
+        new ConcurrentUpdateError("Incident #1 changed concurrently"),
+      ),
+    );
+    expect((err as ConnectError).code).toBe(Code.Aborted);
+  });
+
   test("re-throws an existing ConnectError unchanged", () => {
     const original = new ConnectError("custom", Code.Aborted);
     const err = captureThrow(() => toConnectError(original));
     expect(err).toBe(original);
+  });
+
+  // Unclassified errors propagate raw so `errorInterceptor` — the only
+  // layer holding the request id — can log and redact them in one place.
+  // The redaction itself is covered in `interceptors/__tests__/error.test.ts`.
+  test("rethrows an unclassified error untouched", () => {
+    const drizzleish = new Error("Failed query: insert into ...");
+    const err = captureThrow(() => toConnectError(drizzleish));
+    expect(err).toBe(drizzleish);
+    expect(err).not.toBeInstanceOf(ConnectError);
   });
 });
 
@@ -119,7 +146,7 @@ describe("RPC runtime — read-only key on a write service verb", () => {
   let teamWorkspace: Workspace;
 
   beforeAll(async () => {
-    teamWorkspace = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+    teamWorkspace = (await createWorkspaceFixture("team")).workspace;
   });
 
   test("throws ForbiddenError → ConnectError(PermissionDenied)", async () => {
@@ -151,5 +178,58 @@ describe("RPC runtime — read-only key on a write service verb", () => {
       expect(mapped).toBeInstanceOf(ConnectError);
       expect((mapped as ConnectError).code).toBe(Code.PermissionDenied);
     });
+  });
+});
+
+describe("rethrowPlanLimit", () => {
+  const thrown = (fn: () => never) => {
+    try {
+      fn();
+    } catch (err) {
+      return err;
+    }
+    throw new Error("expected a throw");
+  };
+
+  test("maps the named cap to PermissionDenied with the given message", () => {
+    const err = thrown(() =>
+      rethrowPlanLimit(
+        new LimitExceededError("monitors", 1, 1),
+        "monitors",
+        "Upgrade for more monitors",
+      ),
+    );
+    expect(err).toBeInstanceOf(ConnectError);
+    expect((err as ConnectError).code).toBe(Code.PermissionDenied);
+    expect((err as ConnectError).rawMessage).toBe("Upgrade for more monitors");
+  });
+
+  test("leaves a different cap to toConnectError", () => {
+    const err = thrown(() =>
+      rethrowPlanLimit(
+        new LimitExceededError("synthetic-checks", 30, 30),
+        "monitors",
+        "Upgrade for more monitors",
+      ),
+    );
+    expect((err as ConnectError).code).toBe(Code.ResourceExhausted);
+  });
+
+  test("maps other service errors like toConnectError", () => {
+    const err = thrown(() =>
+      rethrowPlanLimit(
+        new NotFoundError("page", 1),
+        "page-components",
+        "Upgrade for more page components",
+      ),
+    );
+    expect((err as ConnectError).code).toBe(Code.NotFound);
+  });
+
+  test("passes a ConnectError through untouched", () => {
+    const original = new ConnectError("nope", Code.InvalidArgument);
+    expect(thrown(() => rethrowPlanLimit(original, "monitors", "unused"))).toBe(
+      original,
+    );
   });
 });

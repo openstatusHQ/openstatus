@@ -1,8 +1,13 @@
-import { and, eq, inArray, isNull } from "@openstatus/db";
-import { monitor, page } from "@openstatus/db/src/schema";
+import { and, eq } from "@openstatus/db";
+import {
+  page,
+  pageComponent,
+  pageComponentGroup,
+} from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
-import { ForbiddenError } from "../errors";
+import { ForbiddenError, NotFoundError } from "../errors";
+import { findMissingMonitorId } from "../monitor/internal";
 
 /** Assert a page is in the workspace. Throws `ForbiddenError` otherwise. */
 export async function assertPageInWorkspace(args: {
@@ -19,35 +24,62 @@ export async function assertPageInWorkspace(args: {
   if (!row) throw new ForbiddenError("You don't have access to this page.");
 }
 
+/** Load a component by id, scoped to the workspace. */
+export async function getPageComponentInWorkspace(args: {
+  tx: DB;
+  id: number;
+  workspaceId: number;
+}) {
+  const { tx, id, workspaceId } = args;
+  const row = await tx
+    .select()
+    .from(pageComponent)
+    .where(
+      and(eq(pageComponent.id, id), eq(pageComponent.workspaceId, workspaceId)),
+    )
+    .get();
+  if (!row) throw new NotFoundError("page_component", id);
+  return row;
+}
+
 /**
- * Verify the supplied monitor ids all belong to the workspace. Duplicated
- * from `monitor/internal.ts` deliberately; a shared `packages/services/src/
- * internal/` extraction is a natural follow-up once a third consumer
- * appears (tags-to-workspace may be a candidate).
+ * Assert a group exists and sits on `pageId`. Workspace scope alone isn't
+ * enough — a group from a sibling page would otherwise be accepted and the
+ * component would render under a group it isn't on. Reported as not-found
+ * so the check doesn't confirm the group exists on another page.
  */
+export async function assertGroupOnPage(args: {
+  tx: DB;
+  groupId: number;
+  pageId: number;
+  workspaceId: number;
+}): Promise<void> {
+  const { tx, groupId, pageId, workspaceId } = args;
+  const row = await tx
+    .select({ pageId: pageComponentGroup.pageId })
+    .from(pageComponentGroup)
+    .where(
+      and(
+        eq(pageComponentGroup.id, groupId),
+        eq(pageComponentGroup.workspaceId, workspaceId),
+      ),
+    )
+    .get();
+  if (!row || row.pageId !== pageId) {
+    throw new NotFoundError("page_component_group", groupId);
+  }
+}
+
+/** Throws `NotFoundError` for the first id that is not a live monitor of the workspace. */
 export async function validateMonitorIds(args: {
   tx: DB;
   workspaceId: number;
   monitorIds: ReadonlyArray<number>;
 }): Promise<void> {
-  const { tx, workspaceId, monitorIds } = args;
-  if (monitorIds.length === 0) return;
-  const ids = Array.from(new Set(monitorIds));
-  // Exclude soft-deleted monitors — a deleted monitor's id shouldn't be
-  // attachable to a fresh page component. Without this filter the row
-  // count matches on ids pointing at rows that are already tombstoned.
-  const rows = await tx
-    .select({ id: monitor.id })
-    .from(monitor)
-    .where(
-      and(
-        inArray(monitor.id, ids),
-        eq(monitor.workspaceId, workspaceId),
-        isNull(monitor.deletedAt),
-      ),
-    )
-    .all();
-  if (rows.length !== ids.length) {
-    throw new ForbiddenError("Invalid monitor IDs.");
-  }
+  const missing = await findMissingMonitorId({
+    tx: args.tx,
+    workspaceId: args.workspaceId,
+    ids: [...args.monitorIds],
+  });
+  if (missing !== undefined) throw new NotFoundError("monitor", missing);
 }

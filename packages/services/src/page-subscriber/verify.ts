@@ -1,11 +1,16 @@
-import { eq } from "@openstatus/db";
+import { and, eq } from "@openstatus/db";
 import {
   pageSubscriber,
   selectPageSubscriberSchema,
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
-import { type DB, type ServiceContext, withTransaction } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  withTransaction,
+  dbOnlyContext,
+} from "../context";
 import { ValidationError } from "../errors";
 import { resolveSubscriberByToken } from "./internal";
 import { VerifySelfSignupSubscriberInput } from "./schemas";
@@ -16,7 +21,7 @@ export type VerifyResult = {
   pageName: string;
   pageSlug: string;
   customDomain: string | null;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email: string | null;
   webhookUrl?: string | null;
   token: string | null;
@@ -32,6 +37,9 @@ export type VerifyResult = {
  * `acceptedAt` and writes one `page_subscriber.update` audit row with
  * actor `subscriber:{id}`.
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function verifySelfSignupSubscriber(args: {
   input: VerifySelfSignupSubscriberInput;
   db?: DB;
@@ -67,15 +75,22 @@ export async function verifySelfSignupSubscriber(args: {
     throw new ValidationError("Verification token expired");
   }
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const before = selectPageSubscriberSchema.parse(row);
     const updated = await tx
       .update(pageSubscriber)
       .set({ acceptedAt: new Date(), updatedAt: new Date() })
-      .where(eq(pageSubscriber.id, row.id))
+      // Signup may rotate the token after the lookup above.
+      .where(
+        and(
+          eq(pageSubscriber.id, row.id),
+          eq(pageSubscriber.token, input.token),
+        ),
+      )
       .returning()
       .get();
-    const after = selectPageSubscriberSchema.parse(updated ?? row);
+    if (!updated) return null;
+    const after = selectPageSubscriberSchema.parse(updated);
 
     const auditCtx: ServiceContext = {
       workspace: pageData.workspace,
@@ -98,11 +113,11 @@ export async function verifySelfSignupSubscriber(args: {
       pageName: pageData.title,
       pageSlug: pageData.slug,
       customDomain: pageData.customDomain,
-      channelType: updated?.channelType ?? row.channelType,
-      email: updated?.email ?? row.email,
-      webhookUrl: updated?.webhookUrl ?? row.webhookUrl,
-      token: updated?.token ?? row.token,
-      acceptedAt: updated?.acceptedAt ?? new Date(),
+      channelType: updated.channelType,
+      email: updated.email,
+      webhookUrl: updated.webhookUrl,
+      token: updated.token,
+      acceptedAt: updated.acceptedAt,
       componentIds: components,
     };
   });

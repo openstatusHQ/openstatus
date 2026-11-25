@@ -1,15 +1,17 @@
 import { Events } from "@openstatus/analytics";
 import { locales } from "@openstatus/locales";
-import { NotFoundError } from "@openstatus/services";
+import { LimitExceededError, NotFoundError } from "@openstatus/services";
 import {
+  GetUptimeHistoryInput,
+  getUptimeHistory,
+} from "@openstatus/services/frozen-uptime";
+import {
+  assertCustomDomainAvailable,
+  createPage,
   type CreatePageInput,
   // `CreatePageInput` re-exports the drizzle insert schema so routers
   // don't need to import it directly from `@openstatus/db`.
   CreatePageInput as CreatePageInputSchema,
-  UpdatePageAppearanceInput,
-  UpdatePageConfigurationInput,
-  UpdatePageCustomDomainInput,
-  createPage,
   deletePage,
   getPage,
   getPageCustomDomain,
@@ -18,71 +20,29 @@ import {
   newPage,
   pageAccessTypes,
   updatePageAppearance,
+  UpdatePageAppearanceInput,
   updatePageConfiguration,
+  UpdatePageConfigurationInput,
   updatePageCustomDomain,
+  UpdatePageCustomDomainInput,
+  updatePageCustomTheme,
+  UpdatePageCustomThemeInput,
   updatePageGeneral,
   updatePageLinks,
   updatePageLocales,
   updatePagePasswordProtection,
+  updatePageTimezone,
+  UpdatePageTimezoneInput,
 } from "@openstatus/services/page";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { env } from "../env";
+import {
+  addDomainToVercel,
+  removeDomainFromVercelIfUnused,
+} from "../lib/vercel";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
-
-// Vercel domain helpers — transport-layer external integrations that
-// don't belong in the service layer.
-async function addDomainToVercel(domain: string) {
-  const response = await fetch(
-    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains?teamId=${env.TEAM_ID_VERCEL}`,
-    {
-      body: JSON.stringify({ name: domain }),
-      headers: {
-        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-    },
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    console.error("Failed to add domain to Vercel:", { domain, error });
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message:
-        "Failed to add custom domain. Please try again. If it continues, contact support.",
-    });
-  }
-
-  return response.json();
-}
-
-async function removeDomainFromVercel(domain: string) {
-  const response = await fetch(
-    `https://api.vercel.com/v9/projects/${env.PROJECT_ID_VERCEL}/domains/${domain}?teamId=${env.TEAM_ID_VERCEL}`,
-    {
-      headers: {
-        Authorization: `Bearer ${env.VERCEL_AUTH_BEARER_TOKEN}`,
-      },
-      method: "DELETE",
-    },
-  );
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    console.error("Failed to remove domain from Vercel:", { domain, error });
-    throw new TRPCError({
-      code: "INTERNAL_SERVER_ERROR",
-      message:
-        "Failed to remove custom domain. Please try again. If it continues, contact support.",
-    });
-  }
-
-  return response.json();
-}
 
 export const pageRouter = createTRPCRouter({
   create: protectedProcedure
@@ -104,10 +64,27 @@ export const pageRouter = createTRPCRouter({
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
       try {
-        await deletePage({
-          ctx: toServiceCtx(ctx),
+        const sCtx = toServiceCtx(ctx);
+        const customDomain = await getPageCustomDomain({
+          ctx: sCtx,
           input: { id: input.id },
         });
+        await deletePage({
+          ctx: sCtx,
+          input: { id: input.id },
+        });
+        // best-effort: the page is gone either way, a leaked Vercel
+        // attachment is recoverable while a failed delete is not
+        if (customDomain) {
+          try {
+            await removeDomainFromVercelIfUnused(customDomain);
+          } catch (err) {
+            console.error("Failed to release domain from Vercel:", {
+              domain: customDomain,
+              error: err,
+            });
+          }
+        }
       } catch (err) {
         if (err instanceof NotFoundError) return;
         toTRPCError(err);
@@ -147,6 +124,29 @@ export const pageRouter = createTRPCRouter({
         return await getPage({
           ctx: toServiceCtx(ctx),
           input: { id: input.id },
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  getUptimeHistory: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        mode: GetUptimeHistoryInput.shape.mode,
+        months: GetUptimeHistoryInput.shape.months,
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getUptimeHistory({
+          ctx: toServiceCtx(ctx),
+          input: {
+            pageId: input.id,
+            mode: input.mode,
+            months: input.months,
+          },
         });
       } catch (err) {
         toTRPCError(err);
@@ -232,23 +232,36 @@ export const pageRouter = createTRPCRouter({
       // every domain update was wasteful.
       try {
         const sCtx = toServiceCtx(ctx);
+        if (input.customDomain && !sCtx.workspace.limits["custom-domain"]) {
+          throw new LimitExceededError("custom-domain", 0);
+        }
         const oldDomain = await getPageCustomDomain({
           ctx: sCtx,
           input: { id: input.id },
         });
         const newDomain = input.customDomain;
 
-        if (newDomain && !oldDomain) {
+        // unchanged saves must be a no-op — re-adding an existing domain
+        // fails on Vercel; case-insensitive since DNS is and the schema
+        // doesn't lowercase, so a case-only re-save must not re-add either
+        if (newDomain.toLowerCase() === oldDomain.toLowerCase()) return;
+
+        // Before touching Vercel: a conflict after the add/remove below
+        // would leave Vercel out of sync with the row.
+        await assertCustomDomainAvailable({
+          customDomain: newDomain,
+          excludePageId: input.id,
+        });
+
+        if (newDomain) {
           await addDomainToVercel(newDomain);
-        } else if (oldDomain && newDomain && newDomain !== oldDomain) {
-          await addDomainToVercel(newDomain);
-          await removeDomainFromVercel(oldDomain);
-        } else if (oldDomain && newDomain === "") {
-          await removeDomainFromVercel(oldDomain);
-        } else if (newDomain) {
-          await addDomainToVercel(newDomain);
-        } else {
-          return;
+        }
+        if (oldDomain) {
+          // this page's row still holds oldDomain until the update below,
+          // so exclude it — any other holder keeps the domain on Vercel
+          await removeDomainFromVercelIfUnused(oldDomain, {
+            excludePageId: input.id,
+          });
         }
 
         await updatePageCustomDomain({
@@ -311,6 +324,20 @@ export const pageRouter = createTRPCRouter({
       }
     }),
 
+  updateCustomTheme: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(UpdatePageCustomThemeInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageCustomTheme({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
   updateLinks: protectedProcedure
     .meta({ track: Events.UpdatePage })
     .input(
@@ -352,6 +379,20 @@ export const pageRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       try {
         await updatePageLocales({
+          ctx: toServiceCtx(ctx),
+          input,
+        });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  updateTimezone: protectedProcedure
+    .meta({ track: Events.UpdatePage })
+    .input(UpdatePageTimezoneInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        await updatePageTimezone({
           ctx: toServiceCtx(ctx),
           input,
         });

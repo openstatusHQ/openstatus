@@ -7,12 +7,14 @@ import {
   TextBodyAssertion,
   serialize,
 } from "@openstatus/assertions";
-import { and, count, eq, inArray, isNull } from "@openstatus/db";
+import { and, eq, inArray, isNull } from "@openstatus/db";
 import {
   monitor,
+  monitorStatusTable,
   monitorTag,
   notification,
   privateLocation,
+  privateLocationMonitorStatus,
 } from "@openstatus/db/src/schema";
 import {
   freeFlyRegions,
@@ -20,8 +22,16 @@ import {
 } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 
-import type { DB } from "../context";
-import { ForbiddenError, NotFoundError } from "../errors";
+import { auditFingerprint } from "../audit/redact";
+import type { DB, ServiceContext } from "../context";
+import {
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+  ValidationError,
+} from "../errors";
+import { resolveOpenMonitorIncidents } from "../monitor-incident/internal";
+import { toBase64Url } from "../oauth/crypto";
 import type { Workspace } from "../types";
 
 /** Load a monitor by id, scoped to the workspace and excluding soft-deleted. */
@@ -46,17 +56,79 @@ export async function getMonitorInWorkspace(args: {
   return row;
 }
 
-/** Count active (not soft-deleted) monitors in the workspace. */
-export async function countMonitorsInWorkspace(
-  tx: DB,
-  workspaceId: number,
-): Promise<number> {
-  const res = await tx
-    .select({ count: count() })
+/** Like getMonitorInWorkspace, but a monitor deleted since still resolves (it owns its frozen months). */
+export async function getMonitorInWorkspaceIncludingDeleted(args: {
+  tx: DB;
+  id: number;
+  workspaceId: number;
+}) {
+  const row = await args.tx
+    .select({ workspaceId: monitor.workspaceId })
     .from(monitor)
-    .where(and(eq(monitor.workspaceId, workspaceId), isNull(monitor.deletedAt)))
+    .where(
+      and(eq(monitor.id, args.id), eq(monitor.workspaceId, args.workspaceId)),
+    )
     .get();
-  return res?.count ?? 0;
+  if (!row) throw new NotFoundError("monitor", args.id);
+  return row;
+}
+
+/** First of `ids` that is not a live monitor of the workspace, if any. */
+export async function findMissingMonitorId(args: {
+  tx: DB;
+  workspaceId: number;
+  ids: number[];
+}): Promise<number | undefined> {
+  const ids = [...new Set(args.ids)];
+  if (ids.length === 0) return undefined;
+  const rows = await args.tx
+    .select({ id: monitor.id })
+    .from(monitor)
+    .where(
+      and(
+        inArray(monitor.id, ids),
+        eq(monitor.workspaceId, args.workspaceId),
+        isNull(monitor.deletedAt),
+      ),
+    )
+    .all();
+  const found = new Set(rows.map((r) => r.id));
+  return ids.find((id) => !found.has(id));
+}
+
+/**
+ * Run before the update that pauses the monitors: a paused monitor is not
+ * failing and its open outages auto-resolve. Stale per-region failures would
+ * reopen an outage on resume before any check ran, so they reset too.
+ */
+export async function resetMonitorsForPause(args: {
+  tx: DB;
+  ctx: ServiceContext;
+  monitorIds: number[];
+}): Promise<void> {
+  const { tx, ctx, monitorIds } = args;
+  if (monitorIds.length === 0) return;
+  await tx
+    .update(monitor)
+    .set({ status: "active" })
+    .where(
+      and(
+        inArray(monitor.id, monitorIds),
+        eq(monitor.workspaceId, ctx.workspace.id),
+      ),
+    )
+    .run();
+  await tx
+    .update(monitorStatusTable)
+    .set({ status: "active" })
+    .where(inArray(monitorStatusTable.monitorId, monitorIds))
+    .run();
+  await tx
+    .update(privateLocationMonitorStatus)
+    .set({ status: "active" })
+    .where(inArray(privateLocationMonitorStatus.monitorId, monitorIds))
+    .run();
+  await resolveOpenMonitorIncidents({ tx, ctx, monitorIds });
 }
 
 /** Validate that tag ids exist and belong to the workspace. */
@@ -192,4 +264,64 @@ export function pickDefaultRegions(workspace: Workspace): {
     regions,
     periodicity: workspace.plan === "free" ? "30m" : "1m",
   };
+}
+
+/**
+ * Enforce the plan's periodicity, region-count and region-access limits on
+ * a monitor's scheduling. Shared by every path that writes them so a clone
+ * (or a source that predates a downgrade) can't carry out-of-plan values.
+ * A field left `undefined` isn't being written and isn't checked, so a
+ * partial update of a monitor that predates a downgrade still goes through.
+ */
+export function assertSchedulingWithinPlan(
+  limits: Workspace["limits"],
+  scheduling: { periodicity?: string; regions?: ReadonlyArray<string> },
+): void {
+  const { periodicity, regions } = scheduling;
+  if (
+    periodicity !== undefined &&
+    !limits.periodicity.includes(
+      periodicity as (typeof limits)["periodicity"][number],
+    )
+  ) {
+    throw new LimitExceededError("periodicity", limits.periodicity.length);
+  }
+  if (regions === undefined) return;
+  if (limits["max-regions"] < regions.length) {
+    throw new LimitExceededError("max-regions", limits["max-regions"]);
+  }
+  if (
+    regions.length > 0 &&
+    !regions.every((r) =>
+      limits.regions.includes(r as (typeof limits)["regions"][number]),
+    )
+  ) {
+    throw new LimitExceededError("regions", limits.regions.length);
+  }
+}
+
+// The token authenticates pings; keep a fingerprint so a rotation still diffs
+// without storing any of it. Web Crypto keeps this module Edge-safe.
+export async function monitorAuditSnapshot<
+  T extends { heartbeatToken: string | null },
+>(row: T): Promise<T> {
+  if (!row.heartbeatToken) return row;
+  return { ...row, heartbeatToken: await auditFingerprint(row.heartbeatToken) };
+}
+
+// Ping details are private and a heartbeat has no latency to chart, so the
+// public monitor pages never show one.
+export function assertHeartbeatNotPublic(
+  row: { jobType: string },
+  isPublic: boolean | undefined,
+) {
+  if (row.jobType === "heartbeat" && isPublic) {
+    throw new ValidationError("Heartbeat monitors cannot be public");
+  }
+}
+
+export function generateHeartbeatToken(): string {
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return toBase64Url(bytes);
 }

@@ -1,13 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v5"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
@@ -33,28 +34,16 @@ type TCPData struct {
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
 
+	Attempts int `json:"attempts,omitempty"`
+
 	Error uint8 `json:"error"`
 }
 
 func (h Handler) TCPHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "tcp_response__v0"
 
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-
+	if !h.acceptCron(c) {
 		return
-	}
-
-	if h.CloudProvider == "fly" {
-		// if the request has been routed to a wrong region, we forward it to the correct one.
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-
-			return
-		}
 	}
 
 	var req request.TCPCheckerRequest
@@ -65,41 +54,43 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		return
 	}
 
-	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+	setCheckerEvent(c, req.URI, req.WorkspaceID, req.MonitorID, cronTrigger(req.Trigger), "tcp")
 
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+	response, err := h.RunTCPCheck(ctx, req)
+	if respondInvalid(c, err) {
+		return
+	}
+
+	returnData := c.Query("data")
+	if returnData == "true" {
+		c.JSON(http.StatusOK, response)
 
 		return
+	}
+
+	c.JSON(http.StatusOK, nil)
+}
+
+// RunTCPCheck probes and records one cron TCP check. A nil error means the
+// result was recorded, whether the monitor passed or not.
+func (h Handler) RunTCPCheck(ctx context.Context, req request.TCPCheckerRequest) (checker.TCPResponse, error) {
+	dataSourceName := "tcp_response__v0"
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
+	var response checker.TCPResponse
+
+	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
+	if err != nil {
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
-
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
-
-		return
+		return response, InvalidRequestError{Reason: "invalid request"}
 	}
 
-	var trigger = "cron"
-	if req.Trigger != "" {
-		trigger = req.Trigger
-	}
-
-	e, f := c.Get("event")
-	if f {
-		t := e.(map[string]any)
-		t["checker"] = map[string]string{
-			"uri": req.URI,
-			"workspace_id": req.WorkspaceID,
-			"monitor_id":req.MonitorID,
-			"trigger": trigger,
-			"type": "tcp",
-		}
-		c.Set("event", t)
-	}
-
-	var response checker.TCPResponse
+	trigger := cronTrigger(req.Trigger)
 
 	var retry int
 	if req.Retry != 0 {
@@ -108,16 +99,21 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		retry = 3
 	}
 
-	op := func() error {
-		res, err := checker.PingTCP(int(req.Timeout), req.URI)
+	var recordErr error
+
+	var called int
+
+	op := func() (struct{}, error) {
+		called++
+		res, err := checker.PingTCP(ctx, req.Timeout, req.URI)
 
 		if err != nil {
-			return fmt.Errorf("unable to check tcp %s", err)
+			return struct{}{}, fmt.Errorf("unable to check tcp %s", err)
 		}
 
 		timingAsString, err := json.Marshal(res)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		latency := res.TCPDone - res.TCPStart
@@ -135,10 +131,11 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		id, err := uuid.NewV7()
 		if err != nil {
-			return fmt.Errorf("error while generating uuid %w", err)
+			return struct{}{}, fmt.Errorf("error while generating uuid %w", err)
 		}
 
 		data := TCPData{
+			Attempts:      called,
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			Timestamp:     res.TCPStart,
@@ -202,22 +199,25 @@ func (h Handler) TCPHandler(c *gin.Context) {
 
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), uint64(retry))); err != nil {
+	if _, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget)); err != nil {
 
 		id, e := uuid.NewV7()
 		if e != nil {
 			log.Ctx(ctx).Error().Err(e).Msg("failed to send event to tinybird")
-			return
+			return response, e
 		}
 		data := TCPData{
+			Attempts:      called,
 			ID:            id.String(),
 			WorkspaceID:   workspaceId,
 			CronTimestamp: req.CronTimestamp,
+			Timestamp:     time.Now().UTC().UnixMilli(),
 			ErrorMessage:  err.Error(),
 			Region:        h.Region,
 			MonitorID:     monitorId,
@@ -228,6 +228,7 @@ func (h Handler) TCPHandler(c *gin.Context) {
 		}
 		if err := h.TbClient.SendEvent(ctx, data, dataSourceName); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+			recordErr = err
 		}
 		checker.UpdateStatus(ctx, checker.UpdateData{
 			MonitorId:     req.MonitorID,
@@ -237,21 +238,19 @@ func (h Handler) TCPHandler(c *gin.Context) {
 			CronTimestamp: req.CronTimestamp,
 		})
 
+		response.Error = 1
 	}
 
-	returnData := c.Query("data")
-	if returnData == "true" {
-		c.JSON(http.StatusOK, response)
-
-		return
+	if req.OtelConfig.Endpoint != "" {
+		otelOS.RecordTCPMetrics(ctx, req, response, h.Region)
 	}
 
-	c.JSON(http.StatusOK, nil)
+	return response, recordErr
 }
 
 func (h Handler) TCPHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "check_tcp_response__v1"
+	dataSourceName := "check_response_tcp__v0"
 
 	region := c.Param("region")
 	if region == "" {
@@ -286,17 +285,19 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 		return
 	}
 
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	var called int
 
 	var response checker.TCPResponse
 
-	op := func() error {
+	op := func() (struct{}, error) {
 		called++
 		timestamp := time.Now().UTC().UnixMilli()
-		res, err := checker.PingTCP(int(req.Timeout), req.URI)
+		res, err := checker.PingTCP(ctx, req.Timeout, req.URI)
 
 		if err != nil {
-			return fmt.Errorf("unable to check tcp %s", err)
+			return struct{}{}, fmt.Errorf("unable to check tcp %s", err)
 		}
 
 		response = checker.TCPResponse{
@@ -312,7 +313,7 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 
 		timingAsString, err := json.Marshal(res)
 		if err != nil {
-			return fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
+			return struct{}{}, fmt.Errorf("error while parsing timing data %s: %w", req.URI, err)
 		}
 
 		latency := res.TCPDone - res.TCPStart
@@ -336,19 +337,22 @@ func (h Handler) TCPHandlerRegion(c *gin.Context) {
 			}
 		}
 
-		return nil
+		return struct{}{}, nil
 	}
 
-	if err := backoff.Retry(op, backoff.WithMaxRetries(backoff.NewExponentialBackOff(), 3)); err != nil {
-		c.JSON(http.StatusOK, gin.H{"message": "uri not reachable"})
-
-		return
+	_, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(3))
+	if err != nil {
+		response.Error = 1
 	}
 
 	if req.OtelConfig.Endpoint != "" {
-
 		otelOS.RecordTCPMetrics(ctx, req, response, region)
+	}
 
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{"message": "uri not reachable"})
+
+		return
 	}
 
 	c.JSON(http.StatusOK, response)

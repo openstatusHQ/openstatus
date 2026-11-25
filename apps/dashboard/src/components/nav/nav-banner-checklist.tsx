@@ -1,6 +1,14 @@
 "use client";
 
 import {
+  ArrowUpRight,
+  Check,
+  Close,
+  Copy,
+  Pending,
+  Success,
+} from "@openstatus/icons";
+import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
@@ -8,26 +16,29 @@ import {
   SidebarMenuItem,
 } from "@openstatus/ui/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { CircleCheck, CircleDashed, X } from "lucide-react";
 
 import { Link } from "@/components/common/link";
+import { useCopyAgentPrompt } from "@/hooks/use-copy-agent-prompt";
 import { useTRPC } from "@/lib/trpc/client";
 
-export function NavBannerChecklist({
-  handleClose,
-}: {
-  handleClose: () => void;
-}) {
+import { NavBannerUpgradeAction } from "./nav-banner-upgrade-action";
+
+export function useChecklistItems() {
   const trpc = useTRPC();
-  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
+  const { data: pages } = useQuery(trpc.page.list.queryOptions());
 
-  if (!workspace) return null;
+  // Undefined until the counts land — every item would read as unchecked and
+  // the banner would flash "0/5" before correcting itself.
+  if (!usage) return undefined;
 
-  const hasMonitors = (workspace.usage?.monitors ?? 0) > 0;
-  const hasStatusPages = (workspace.usage?.pages ?? 0) > 0;
-  const hastNotifications = (workspace.usage?.notifications ?? 0) > 0;
+  const onlyPage = pages?.length === 1 ? pages[0] : undefined;
 
-  if (hasMonitors && hasStatusPages && hastNotifications) return null;
+  const hasMonitors = usage.monitors > 0;
+  const hasStatusPages = usage.pages > 0;
+  const hasPageComponents = usage.pageComponents > 0;
+  const hasNotifications = usage.notifications > 0;
+  const hasStatusReports = usage.statusReports > 0;
 
   const items = [
     {
@@ -41,21 +52,52 @@ export function NavBannerChecklist({
       href: "/status-pages/create",
     },
     {
+      title: "Add Page Components",
+      checked: hasPageComponents,
+      href: onlyPage
+        ? `/status-pages/${onlyPage.id}/components`
+        : "/status-pages",
+    },
+    {
+      title: "Create Status Report",
+      checked: hasStatusReports,
+      href: onlyPage
+        ? `/status-pages/${onlyPage.id}/status-reports`
+        : "/status-pages",
+    },
+    {
       title: "Create Notification",
-      checked: hastNotifications,
+      checked: hasNotifications,
       href: "/notifications",
     },
   ];
 
+  return items;
+}
+
+export function NavBannerChecklist({
+  items,
+  handleClose,
+}: {
+  items: NonNullable<ReturnType<typeof useChecklistItems>>;
+  handleClose: () => void;
+}) {
+  const trpc = useTRPC();
+  const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  const { copyPrompt, isCopied } = useCopyAgentPrompt("setup", "checklist");
+
   return (
-    <SidebarGroup className="bg-background rounded-lg border group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="flex items-center justify-between pr-1">
-        <span>Getting Started</span>
+    <SidebarGroup className="bg-background rounded-lg border px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel className="flex h-7 items-center justify-between pr-0 pl-0">
+        <span>
+          Getting Started ({items.filter((i) => i.checked).length}/
+          {items.length})
+        </span>
         <SidebarMenuAction
           className="relative top-0 right-0"
           onClick={handleClose}
         >
-          <X className="text-muted-foreground" size={16} />
+          <Close className="text-muted-foreground" size={16} />
         </SidebarMenuAction>
       </SidebarGroupLabel>
       <SidebarMenu>
@@ -66,20 +108,40 @@ export function NavBannerChecklist({
           >
             {item.checked ? (
               <>
-                <CircleCheck className="text-success shrink-0" size={12} />
+                <Success className="text-success size-3 shrink-0" />
                 <span>{item.title}</span>
               </>
             ) : (
               <>
-                <CircleDashed
-                  className="text-muted-foreground/50 shrink-0"
-                  size={12}
-                />
+                <Pending className="text-muted-foreground/50 size-3 shrink-0" />
                 <Link href={item.href}>{item.title}</Link>
               </>
             )}
           </SidebarMenuItem>
         ))}
+        <SidebarMenuItem className="flex items-center gap-2 text-sm">
+          <ArrowUpRight className="text-muted-foreground/50 size-3 shrink-0" />
+          <a
+            href="https://www.openstatus.dev/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Read the Docs
+          </a>
+        </SidebarMenuItem>
+        <SidebarMenuItem className="flex items-center gap-2 text-sm">
+          {isCopied ? (
+            <Check className="text-muted-foreground/50 size-3 shrink-0" />
+          ) : (
+            <Copy className="text-muted-foreground/50 size-3 shrink-0" />
+          )}
+          <button type="button" onClick={copyPrompt}>
+            Copy prompt for your agent
+          </button>
+        </SidebarMenuItem>
+        {workspace?.plan === "free" ? (
+          <NavBannerUpgradeAction trialEligible={workspace.trial.eligible} />
+        ) : null}
       </SidebarMenu>
     </SidebarGroup>
   );

@@ -1,8 +1,8 @@
 "use client";
 
+import { Next } from "@openstatus/icons";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { useMemo } from "react";
 
 import { CreateMonitorForm } from "@/components/forms/onboarding/create-monitor";
@@ -112,7 +112,7 @@ export function Step1({
         <OnboardingActions>
           {isLocked ? (
             <Button onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
+              Continue <Next className="size-3" />
             </Button>
           ) : (
             <>
@@ -167,6 +167,7 @@ function ChecksPreviewPlaceholder(
           isStreaming={false}
           allFailed={false}
           onRetry={() => {}}
+          className="rounded-none border-0"
         />
       </OnboardingPreviewPlaceholderContent>
       <OnboardingPreviewPlaceholderOverlay>

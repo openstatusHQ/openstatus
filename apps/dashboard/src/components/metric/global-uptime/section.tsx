@@ -1,57 +1,57 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
+import type { RouterOutputs } from "@openstatus/api";
+import { formatDistanceToNowStrict } from "date-fns";
 
 import {
-  MetricCard,
-  MetricCardBadge,
-  MetricCardGroup,
-  MetricCardHeader,
-  MetricCardSkeleton,
-  MetricCardTitle,
-  MetricCardValue,
-} from "@/components/metric/metric-card";
-import { type PERIODS, mapMetrics, metricsCards } from "@/data/metrics.client";
+  type MetricStatus,
+  MetricStrip,
+  MetricStripTrend,
+  MetricStripItem,
+  MetricStripLabel,
+  MetricStripRow,
+  MetricStripSkeleton,
+  MetricStripUnit,
+  MetricStripValue,
+} from "@/components/metric/metric-strip";
+import {
+  hasMetricsData,
+  mapMetrics,
+  metricsCards,
+} from "@/data/metrics.client";
 import {
   formatMilliseconds,
   formatNumber,
   formatPercentage,
+  splitUnit,
 } from "@/lib/formatter";
-import { useTRPC } from "@/lib/trpc/client";
 
 type Metric = {
   label: string;
   value: string;
   trend?: number | null;
-  variant: React.ComponentProps<typeof MetricCard>["variant"];
+  status: MetricStatus | undefined;
 };
 
-// TODO: move the fetch to the parent component
+const ROWS = [
+  {
+    label: "Checks",
+    keys: ["uptime", "degraded", "error", "total", "lastTimestamp"],
+  },
+  { label: "Latency", keys: ["p50", "p75", "p90", "p95", "p99"] },
+] as const;
+
+type MetricKey = (typeof ROWS)[number]["keys"][number];
+
 // TODO: missing dynamic degraded
 
 export function GlobalUptimeSection({
-  monitorId,
-  jobType,
-  period = "7d",
-  regions,
+  metrics,
+  isLoading,
 }: {
-  monitorId: string;
-  jobType: "http" | "tcp";
-  period: (typeof PERIODS)[number];
-  regions: string[] | undefined;
+  metrics: RouterOutputs["tinybird"]["metrics"] | undefined;
+  isLoading: boolean;
 }) {
-  const trpc = useTRPC();
-
-  const { data: metrics, isLoading } = useQuery(
-    trpc.tinybird.metrics.queryOptions({
-      monitorId,
-      period,
-      type: jobType,
-      regions,
-    }),
-  );
-
   // Helper to transform the data the same way it used to be in the page
   function defineMetrics() {
     if (!metrics) return null;
@@ -70,13 +70,13 @@ export function GlobalUptimeSection({
             const k = key as keyof typeof acc;
             const v = (() => {
               if (k === "lastTimestamp") {
-                if (!value) return "N/A";
-                return formatDistanceToNow(new Date(value ?? 0), {
+                if (!value) return "—";
+                return formatDistanceToNowStrict(new Date(value ?? 0), {
                   addSuffix: true,
                 });
               }
               if (k === "uptime") {
-                return formatPercentage(value ?? 0);
+                return formatPercentage(value ?? 0, 3);
               }
               if (k.startsWith("p")) {
                 return formatMilliseconds(value ?? 0);
@@ -99,7 +99,7 @@ export function GlobalUptimeSection({
                 k !== "lastTimestamp";
               acc[k] = {
                 label: metricsCards[k].label,
-                variant: metricsCards[k].variant,
+                status: metricsCards[k].status,
                 value: v ?? "0",
                 trend: hasTrend ? trend : null,
                 raw: value ?? 0,
@@ -107,7 +107,7 @@ export function GlobalUptimeSection({
             } else {
               acc[k] = {
                 label: metricsCards[k].label,
-                variant: metricsCards[k].variant,
+                status: metricsCards[k].status,
                 value: v ?? "0",
                 trend: 1,
                 raw: value ?? 0,
@@ -123,72 +123,65 @@ export function GlobalUptimeSection({
       );
   }
 
-  const refinedMetrics: (Metric | null)[] = (
-    [
-      "uptime",
-      "degraded",
-      "error",
-      "total",
-      "lastTimestamp",
-      "p50",
-      "p75",
-      "p90",
-      "p95",
-      "p99",
-    ] as const
-  ).map((key) => {
-    if (!key) return null;
-    const metric =
-      defineMetrics()?.[key as keyof ReturnType<typeof mapMetrics>[number]];
+  const definedMetrics = defineMetrics();
+  // a window with no checks (or a failed fetch) has no uptime or latency
+  const noData = !metrics || !hasMetricsData(metrics);
+
+  function refine(key: MetricKey): Metric & { active?: boolean } {
+    const { label, status } = metricsCards[key];
+    const isAlarm = key === "degraded" || key === "error";
+    if (noData) {
+      return {
+        label,
+        status,
+        value: key === "total" ? "0" : "—",
+        trend: null,
+        active: isAlarm ? false : undefined,
+      };
+    }
+    const metric = definedMetrics?.[key];
     return {
-      label: metricsCards[key].label,
+      label,
+      status,
       value: metric?.value ?? "0",
       trend: metric?.trend ?? null,
-      variant: metricsCards[key].variant,
-    } as Metric;
-  });
-
-  // TODO: rework, might be removed and simply add a condition on the other return
-  if (isLoading) {
-    return (
-      <MetricCardGroup>
-        {refinedMetrics.map((metric) => {
-          if (metric === null)
-            return <div key={metric} className="hidden lg:block" />;
-          return (
-            <MetricCard key={metric.label} variant={metric.variant}>
-              <MetricCardHeader>
-                <MetricCardTitle className="truncate">
-                  {metric.label}
-                </MetricCardTitle>
-              </MetricCardHeader>
-              <MetricCardSkeleton className="h-6 w-12" />
-            </MetricCard>
-          );
-        })}
-      </MetricCardGroup>
-    );
+      active: isAlarm ? (metric?.raw ?? 0) > 0 : undefined,
+    };
   }
 
   return (
-    <MetricCardGroup>
-      {refinedMetrics.map((metric) => {
-        if (metric === null)
-          return <div key={metric} className="hidden lg:block" />;
-        return (
-          <MetricCard key={metric.label} variant={metric.variant}>
-            <MetricCardHeader>
-              <MetricCardTitle className="truncate">
-                {metric.label}
-              </MetricCardTitle>
-            </MetricCardHeader>
-            <div className="flex flex-row flex-wrap items-center gap-1.5">
-              <MetricCardValue>{metric.value}</MetricCardValue>
-              {metric.trend ? <MetricCardBadge value={metric.trend} /> : null}
-            </div>
-          </MetricCard>
-        );
-      })}
-    </MetricCardGroup>
+    <MetricStrip>
+      {ROWS.map((row) => (
+        <MetricStripRow key={row.label} label={row.label}>
+          {row.keys.map((key) => {
+            const metric = refine(key);
+            const { value, unit } =
+              row.label === "Latency"
+                ? splitUnit(metric.value)
+                : { value: metric.value, unit: null };
+            return (
+              <MetricStripItem
+                key={key}
+                status={metric.status}
+                active={isLoading ? undefined : metric.active}
+              >
+                <MetricStripLabel>{metric.label}</MetricStripLabel>
+                {isLoading ? (
+                  <MetricStripSkeleton />
+                ) : (
+                  <MetricStripValue>
+                    {value}
+                    {unit ? <MetricStripUnit>{unit}</MetricStripUnit> : null}
+                    {metric.trend ? (
+                      <MetricStripTrend value={metric.trend} />
+                    ) : null}
+                  </MetricStripValue>
+                )}
+              </MetricStripItem>
+            );
+          })}
+        </MetricStripRow>
+      ))}
+    </MetricStrip>
   );
 }

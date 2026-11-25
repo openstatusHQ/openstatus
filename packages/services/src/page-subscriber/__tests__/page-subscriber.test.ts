@@ -5,46 +5,52 @@ import {
   pageSubscriber,
   pageSubscriberToPageComponent,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
+import {
+  createPage,
+  createPageComponent,
+} from "@openstatus/db/src/test/factories";
 import {
   afterAll,
   afterEach,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+  vi,
+} from "vitest";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
   clearAuditLog,
+  clearAuditLogFor,
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   readAuditLog,
   withTestTransaction,
 } from "../../../test/helpers";
-import { ForbiddenError } from "../../errors";
+import { ForbiddenError, UnauthorizedError } from "../../errors";
 import {
   createPageSubscriber,
   getSubscriberByToken,
   hasPendingSubscriber,
+  listPageSubscribers,
+  unsubscribePageSubscriber,
   unsubscribeSubscriber,
   updateSubscriberScope,
   upsertSelfSignupSubscriber,
   verifySelfSignupSubscriber,
 } from "../index.ts";
 
-// Seeded data we lean on (see packages/db/src/seed.mts):
-//   workspace 1 = team plan, has status-subscribers=true
-//   page 1      = slug "status", workspaceId 1, components 1 & 2
-const PAGE_ID = 1;
-const PAGE_SLUG = "status";
-const COMPONENT_1 = 1;
-const COMPONENT_2 = 2;
+// Built in `beforeAll` — this suite owns its workspace, page and components so
+// its committed rows and audit trail can't be observed or wiped by siblings.
+let WORKSPACE_ID: number;
+let WORKSPACE: Awaited<ReturnType<typeof createWorkspaceFixture>>["workspace"];
+let FREE_WORKSPACE_ID: number;
+let PAGE_ID: number;
+let PAGE_SLUG: string;
+let COMPONENT_1: number;
+let COMPONENT_2: number;
 
 // Each describe block owns its own email so suites are independent.
 const EMAILS = {
@@ -60,17 +66,35 @@ const EMAILS = {
   scopeUnverified: "svc-scope-unverified@example.com",
   scopeUnsubbed: "svc-scope-unsubbed@example.com",
   unsub: "svc-unsub-test@example.com",
+  unsubWorkspaceEmail: "svc-unsub-ws-email-test@example.com",
+  unsubWorkspaceId: "svc-unsub-ws-id-test@example.com",
+  unsubWorkspaceDenied: "svc-unsub-ws-denied-test@example.com",
   hasPending: "svc-has-pending-test@example.com",
+  visitorGate: "svc-visitor-gate-test@example.com",
 };
 
 async function cleanAll() {
   for (const email of Object.values(EMAILS)) {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
   }
-  await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
+  await clearAuditLog(WORKSPACE_ID);
 }
 
-beforeAll(cleanAll);
+beforeAll(async () => {
+  const team = await createWorkspaceFixture("team");
+  WORKSPACE = team.workspace;
+  WORKSPACE_ID = team.workspace.id;
+  FREE_WORKSPACE_ID = (await createWorkspaceFixture("free")).workspace.id;
+
+  const p = await createPage(WORKSPACE_ID);
+  PAGE_ID = p.id;
+  PAGE_SLUG = p.slug;
+  COMPONENT_1 = (await createPageComponent(WORKSPACE_ID, PAGE_ID)).id;
+  COMPONENT_2 = (await createPageComponent(WORKSPACE_ID, PAGE_ID, { order: 1 }))
+    .id;
+
+  await cleanAll();
+});
 afterAll(cleanAll);
 
 // ─── upsertSelfSignupSubscriber ──────────────────────────────────────────────
@@ -80,11 +104,12 @@ describe("upsertSelfSignupSubscriber", () => {
 
   beforeAll(async () => {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
-    await clearAuditLog(SEEDED_WORKSPACE_TEAM_ID);
+    await clearAuditLog(WORKSPACE_ID);
   });
 
   test("creates a new subscription for an unknown email", async () => {
     const result = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
 
@@ -96,7 +121,7 @@ describe("upsertSelfSignupSubscriber", () => {
 
     // Audit row written, attributed to the subscriber (not a workspace user).
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.create",
       entityType: "page_subscriber",
       entityId: result.id,
@@ -109,11 +134,12 @@ describe("upsertSelfSignupSubscriber", () => {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
 
     const result = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh, pageId: PAGE_ID },
     });
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: result.id,
     });
@@ -128,7 +154,10 @@ describe("upsertSelfSignupSubscriber", () => {
   });
 
   test("does not create a duplicate row when called again", async () => {
-    await upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
+    await upsertSelfSignupSubscriber({
+      visitor: null,
+      input: { email, pageId: PAGE_ID },
+    });
     const rows = await db.query.pageSubscriber.findMany({
       where: { email },
     });
@@ -136,38 +165,191 @@ describe("upsertSelfSignupSubscriber", () => {
   });
 
   test("merges new components into an existing pending subscription", async () => {
-    const result = await upsertSelfSignupSubscriber({
-      input: { email, pageId: PAGE_ID, componentIds: [COMPONENT_1] },
+    await withTestTransaction(async (tx) => {
+      const first = await upsertSelfSignupSubscriber({
+        visitor: null,
+        db: tx,
+        input: {
+          email: "scope-merge@example.com",
+          pageId: PAGE_ID,
+          componentIds: [COMPONENT_1],
+        },
+      });
+      const result = await upsertSelfSignupSubscriber({
+        visitor: null,
+        db: tx,
+        input: {
+          email: first.email,
+          pageId: PAGE_ID,
+          componentIds: [COMPONENT_2],
+        },
+      });
+      expect(result.id).toBe(first.id);
+      expect(result.componentIds).toEqual([COMPONENT_1, COMPONENT_2]);
+      const stored = await tx.query.pageSubscriberToPageComponent.findMany({
+        where: { pageSubscriberId: first.id },
+      });
+      expect(stored.map((row) => row.pageComponentId).sort()).toEqual(
+        [COMPONENT_1, COMPONENT_2].sort(),
+      );
+      await expectAuditRow({
+        workspaceId: WORKSPACE_ID,
+        action: "page_subscriber.update",
+        entityType: "page_subscriber",
+        entityId: result.id,
+        actorType: "subscriber",
+        db: tx,
+      });
+      const rows = await readAuditLog({
+        workspaceId: WORKSPACE_ID,
+        entityType: "page_subscriber",
+        entityId: result.id,
+        db: tx,
+      });
+      expect(
+        rows.find((row) => row.action === "page_subscriber.update")?.metadata,
+      ).toEqual({ componentIds: [COMPONENT_1, COMPONENT_2] });
     });
-    expect(result.componentIds).toContain(COMPONENT_1);
-
-    // Component-merge path emits an `update` audit row.
-    await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
-      action: "page_subscriber.update",
-      entityType: "page_subscriber",
-      entityId: result.id,
-      actorType: "subscriber",
-    });
-
-    // Metadata records the merged component-id set so the change isn't
-    // dropped by the empty-diff guard in `emitAudit`.
-    const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
-      entityType: "page_subscriber",
-      entityId: result.id,
-    });
-    const updateRow = rows.find((r) => r.action === "page_subscriber.update");
-    const metadata = updateRow?.metadata as
-      | { componentIds?: number[] }
-      | null
-      | undefined;
-    expect(metadata?.componentIds).toContain(COMPONENT_1);
   });
+
+  for (const scenario of [
+    "entire-page first",
+    "entire-page second",
+    "omitted components second",
+  ] as const) {
+    test(`preserves entire-page coverage when ${scenario}`, async () => {
+      await withTestTransaction(async (tx) => {
+        const first = await upsertSelfSignupSubscriber({
+          visitor: null,
+          db: tx,
+          input: {
+            email: "scope-entire-page@example.com",
+            pageId: PAGE_ID,
+            componentIds: scenario === "entire-page first" ? [] : [COMPONENT_1],
+          },
+        });
+        const result = await upsertSelfSignupSubscriber({
+          visitor: null,
+          db: tx,
+          input: {
+            email: first.email,
+            pageId: PAGE_ID,
+            componentIds:
+              scenario === "entire-page first"
+                ? [COMPONENT_2]
+                : scenario === "entire-page second"
+                  ? []
+                  : undefined,
+          },
+        });
+        expect(result.id).toBe(first.id);
+        if (scenario === "entire-page first") {
+          expect(result.token).toBe(first.token);
+        } else {
+          expect(result.token).not.toBe(first.token);
+        }
+        expect(result.componentIds).toEqual([]);
+        expect(
+          await tx.query.pageSubscriberToPageComponent.findMany({
+            where: { pageSubscriberId: first.id },
+          }),
+        ).toEqual([]);
+
+        if (scenario !== "entire-page first") {
+          const rows = await readAuditLog({
+            workspaceId: WORKSPACE_ID,
+            entityType: "page_subscriber",
+            entityId: result.id,
+            db: tx,
+          });
+          const scopeChange = rows.find(
+            (row) => row.action === "page_subscriber.update",
+          );
+          expect(scopeChange?.actorType).toBe("subscriber");
+          expect(scopeChange?.metadata).toEqual({ componentIds: [] });
+          expect(scopeChange?.after).not.toHaveProperty("token");
+        }
+
+        if (!result.token) throw new Error("Expected a verification token");
+        const verified = await verifySelfSignupSubscriber({
+          input: { token: result.token },
+          db: tx,
+        });
+        expect(verified?.acceptedAt).not.toBeNull();
+        expect(verified?.componentIds).toEqual([]);
+      });
+    });
+  }
+
+  for (const scope of ["entire page", "additional component"] as const) {
+    test(`old verification link cannot confirm expanded scope: ${scope}`, async () => {
+      await withTestTransaction(async (tx) => {
+        const first = await upsertSelfSignupSubscriber({
+          visitor: null,
+          db: tx,
+          input: {
+            email: "scope-verification@example.com",
+            pageId: PAGE_ID,
+            componentIds: [COMPONENT_1],
+          },
+        });
+        if (!first.token) throw new Error("Expected a verification token");
+        await tx
+          .update(pageSubscriber)
+          .set({ expiresAt: new Date("2020-01-01T00:00:00Z") })
+          .where(eq(pageSubscriber.id, first.id));
+        await expect(
+          verifySelfSignupSubscriber({
+            input: { token: first.token },
+            db: tx,
+          }),
+        ).rejects.toThrow("Verification token expired");
+
+        const expanded = await upsertSelfSignupSubscriber({
+          visitor: null,
+          db: tx,
+          input: {
+            email: first.email,
+            pageId: PAGE_ID,
+            componentIds: scope === "entire page" ? [] : [COMPONENT_2],
+          },
+        });
+        expect(
+          await verifySelfSignupSubscriber({
+            input: { token: first.token },
+            db: tx,
+          }),
+        ).toBeNull();
+        expect(
+          (
+            await tx.query.pageSubscriber.findFirst({
+              where: { id: first.id },
+            })
+          )?.acceptedAt,
+        ).toBeNull();
+        expect(expanded.token).not.toBe(first.token);
+        if (!expanded.token)
+          throw new Error("Expected a new verification token");
+        const verified = await verifySelfSignupSubscriber({
+          input: { token: expanded.token },
+          db: tx,
+        });
+        expect(verified?.acceptedAt).toBeInstanceOf(Date);
+        expect(verified?.componentIds.sort((a, b) => a - b)).toEqual(
+          scope === "entire page"
+            ? []
+            : [COMPONENT_1, COMPONENT_2].sort((a, b) => a - b),
+        );
+      });
+    });
+  }
 
   test("refreshes expiresAt for a still-pending subscription", async () => {
     const before = new Date();
-    await upsertSelfSignupSubscriber({ input: { email, pageId: PAGE_ID } });
+    await upsertSelfSignupSubscriber({
+      visitor: null,
+      input: { email, pageId: PAGE_ID },
+    });
     const row = await db.query.pageSubscriber.findFirst({
       where: { email },
     });
@@ -178,6 +360,7 @@ describe("upsertSelfSignupSubscriber", () => {
     const fresh = EMAILS.upsertCase;
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
     const result = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh.toUpperCase(), pageId: PAGE_ID },
     });
     expect(result.email).toBe(fresh);
@@ -187,6 +370,7 @@ describe("upsertSelfSignupSubscriber", () => {
     const fresh = EMAILS.upsertReactivate;
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
     const initial = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh, pageId: PAGE_ID },
     });
     await db
@@ -196,6 +380,7 @@ describe("upsertSelfSignupSubscriber", () => {
       .run();
 
     const result = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh, pageId: PAGE_ID, componentIds: [COMPONENT_1] },
     });
 
@@ -213,6 +398,7 @@ describe("upsertSelfSignupSubscriber", () => {
     const fresh = EMAILS.upsertPendingThenUnsub;
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
     const pending = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh, pageId: PAGE_ID },
     });
     await db
@@ -222,6 +408,7 @@ describe("upsertSelfSignupSubscriber", () => {
       .run();
 
     const result = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh, pageId: PAGE_ID },
     });
 
@@ -239,6 +426,7 @@ describe("upsertSelfSignupSubscriber", () => {
     const fresh = "svc-upsert-already-verified@example.com";
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, fresh));
     const initial = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh, pageId: PAGE_ID },
     });
     await db
@@ -252,19 +440,20 @@ describe("upsertSelfSignupSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(initial.id)),
         ),
       );
 
     const result = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: fresh, pageId: PAGE_ID },
     });
     expect(result.id).toBe(initial.id);
     expect(result.acceptedAt).not.toBeNull();
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: initial.id,
     });
@@ -276,6 +465,7 @@ describe("upsertSelfSignupSubscriber", () => {
   test("throws for component IDs that do not belong to this page", async () => {
     await expect(
       upsertSelfSignupSubscriber({
+        visitor: null,
         input: { email, pageId: PAGE_ID, componentIds: [9999] },
       }),
     ).rejects.toThrow("Some components do not belong to this page");
@@ -284,32 +474,36 @@ describe("upsertSelfSignupSubscriber", () => {
   test("throws for a page ID that does not exist", async () => {
     await expect(
       upsertSelfSignupSubscriber({
+        visitor: null,
         input: { email, pageId: 99999 },
       }),
     ).rejects.toThrow();
   });
 
   test("rejects when the workspace plan disables status-subscribers", async () => {
-    const freePage = await db
-      .insert(page)
-      .values({
-        workspaceId: SEEDED_WORKSPACE_FREE_ID,
-        title: "plan-gate",
-        description: "plan-gate",
-        slug: `plan-gate-${Date.now()}`,
-        customDomain: "",
-      })
-      .returning()
-      .get();
-    try {
+    // Rolled-back tx so the free-workspace page never commits — a
+    // committed page would trip `page.test.ts`'s free-plan
+    // `status-pages` quota assertions when the suites run in parallel.
+    await withTestTransaction(async (tx) => {
+      const freePage = await tx
+        .insert(page)
+        .values({
+          workspaceId: FREE_WORKSPACE_ID,
+          title: "plan-gate",
+          description: "plan-gate",
+          slug: `plan-gate-${Date.now()}`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
       await expect(
         upsertSelfSignupSubscriber({
+          visitor: null,
           input: { email: EMAILS.planGate, pageId: freePage.id },
+          db: tx,
         }),
       ).rejects.toThrow("Upgrade to use status subscribers");
-    } finally {
-      await db.delete(page).where(eq(page.id, freePage.id));
-    }
+    });
   });
 });
 
@@ -323,12 +517,82 @@ describe("verifySelfSignupSubscriber", () => {
   beforeAll(async () => {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     if (!sub.token) throw new Error("Token is undefined");
     pendingToken = sub.token;
     pendingId = sub.id;
   });
+
+  for (const scope of ["entire page", "additional component"] as const) {
+    test(`rejects an in-flight verification when scope expands to ${scope}`, async () => {
+      const first = await upsertSelfSignupSubscriber({
+        visitor: null,
+        input: {
+          email: `verify-race-${crypto.randomUUID()}@example.com`,
+          pageId: PAGE_ID,
+          componentIds: [COMPONENT_1],
+        },
+      });
+      if (!first.token) throw new Error("Expected a verification token");
+      let expanded:
+        | Awaited<ReturnType<typeof upsertSelfSignupSubscriber>>
+        | undefined;
+      const transaction = db.transaction.bind(db);
+      // Commit the competing signup after token lookup, before acceptance starts.
+      const intercept = vi
+        .spyOn(db, "transaction")
+        .mockImplementation(async (fn, config) => {
+          intercept.mockRestore();
+          expanded = await upsertSelfSignupSubscriber({
+            visitor: null,
+            input: {
+              email: first.email,
+              pageId: PAGE_ID,
+              componentIds: scope === "entire page" ? [] : [COMPONENT_2],
+            },
+          });
+          return transaction(fn, config);
+        });
+      try {
+        const result = await verifySelfSignupSubscriber({
+          input: { token: first.token, domain: PAGE_SLUG },
+        });
+        expect(result).toBeNull();
+        if (!expanded?.token) throw new Error("Expected a rotated token");
+        expect(expanded.token).not.toBe(first.token);
+        const stored = await db.query.pageSubscriber.findFirst({
+          where: { id: first.id },
+        });
+        expect(stored?.acceptedAt).toBeNull();
+        expect(stored?.token).toBe(expanded.token);
+        const audit = await readAuditLog({
+          workspaceId: WORKSPACE_ID,
+          entityType: "page_subscriber",
+          entityId: first.id,
+        });
+        expect(audit).toHaveLength(2);
+        expect(audit.some((row) => row.after?.acceptedAt != null)).toBe(false);
+        const verified = await verifySelfSignupSubscriber({
+          input: { token: expanded.token, domain: PAGE_SLUG },
+        });
+        expect(verified?.acceptedAt).toBeInstanceOf(Date);
+        expect(verified?.componentIds.sort((a, b) => a - b)).toEqual(
+          scope === "entire page"
+            ? []
+            : [COMPONENT_1, COMPONENT_2].sort((a, b) => a - b),
+        );
+      } finally {
+        intercept.mockRestore();
+        await db.delete(pageSubscriber).where(eq(pageSubscriber.id, first.id));
+        await clearAuditLogFor({
+          entityType: "page_subscriber",
+          entityIds: [first.id],
+        });
+      }
+    });
+  }
 
   test("returns null for an unknown token", async () => {
     const result = await verifySelfSignupSubscriber({
@@ -352,7 +616,7 @@ describe("verifySelfSignupSubscriber", () => {
     expect(result?.acceptedAt).toBeDefined();
 
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.update",
       entityType: "page_subscriber",
       entityId: pendingId,
@@ -366,7 +630,7 @@ describe("verifySelfSignupSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(pendingId)),
         ),
       );
@@ -378,7 +642,7 @@ describe("verifySelfSignupSubscriber", () => {
     expect(result?.acceptedAt).toBeDefined();
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: pendingId,
     });
@@ -419,6 +683,7 @@ describe("getSubscriberByToken", () => {
   beforeAll(async () => {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     if (!sub.token) throw new Error("Token is undefined");
@@ -456,12 +721,10 @@ describe("getSubscriberByToken", () => {
   });
 
   test("never emits an audit row (read-only)", async () => {
-    await db
-      .delete(auditLog)
-      .where(eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID));
+    await db.delete(auditLog).where(eq(auditLog.workspaceId, WORKSPACE_ID));
     await getSubscriberByToken({ input: { token, domain: PAGE_SLUG } });
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
     });
     expect(rows).toHaveLength(0);
@@ -478,6 +741,7 @@ describe("updateSubscriberScope", () => {
   beforeAll(async () => {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID, componentIds: [COMPONENT_1] },
     });
     if (!sub.token) throw new Error("Token is undefined");
@@ -491,7 +755,7 @@ describe("updateSubscriberScope", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(subscriberId)),
         ),
       );
@@ -510,6 +774,7 @@ describe("updateSubscriberScope", () => {
       .delete(pageSubscriber)
       .where(eq(pageSubscriber.email, EMAILS.scopeUnverified));
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: EMAILS.scopeUnverified, pageId: PAGE_ID },
     });
     if (!sub.token) throw new Error("Token is undefined");
@@ -526,6 +791,7 @@ describe("updateSubscriberScope", () => {
       .delete(pageSubscriber)
       .where(eq(pageSubscriber.email, EMAILS.scopeUnsubbed));
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email: EMAILS.scopeUnsubbed, pageId: PAGE_ID },
     });
     if (!sub.token) throw new Error("Token is undefined");
@@ -552,7 +818,7 @@ describe("updateSubscriberScope", () => {
     expect(rowsAfter.map((r) => r.pageComponentId)).toEqual([COMPONENT_2]);
 
     const auditRows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: subscriberId,
     });
@@ -598,6 +864,7 @@ describe("unsubscribeSubscriber", () => {
   beforeAll(async () => {
     await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     if (!sub.token) throw new Error("Token is undefined");
@@ -624,7 +891,7 @@ describe("unsubscribeSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(subscriberId)),
         ),
       );
@@ -639,7 +906,7 @@ describe("unsubscribeSubscriber", () => {
     expect(row?.unsubscribedAt).toBeDefined();
 
     await expectAuditRow({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       action: "page_subscriber.update",
       entityType: "page_subscriber",
       entityId: subscriberId,
@@ -652,7 +919,7 @@ describe("unsubscribeSubscriber", () => {
       .delete(auditLog)
       .where(
         and(
-          eq(auditLog.workspaceId, SEEDED_WORKSPACE_TEAM_ID),
+          eq(auditLog.workspaceId, WORKSPACE_ID),
           eq(auditLog.entityId, String(subscriberId)),
         ),
       );
@@ -662,7 +929,7 @@ describe("unsubscribeSubscriber", () => {
     ).resolves.toBeUndefined();
 
     const rows = await readAuditLog({
-      workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+      workspaceId: WORKSPACE_ID,
       entityType: "page_subscriber",
       entityId: subscriberId,
     });
@@ -685,6 +952,7 @@ describe("hasPendingSubscriber", () => {
 
   test("returns false when no row exists", async () => {
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -692,9 +960,11 @@ describe("hasPendingSubscriber", () => {
 
   test("returns true for a pending unexpired row", async () => {
     await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(true);
@@ -702,6 +972,7 @@ describe("hasPendingSubscriber", () => {
 
   test("returns false for a pending row whose expiresAt has passed", async () => {
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     await db
@@ -711,6 +982,7 @@ describe("hasPendingSubscriber", () => {
       .run();
 
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -718,6 +990,7 @@ describe("hasPendingSubscriber", () => {
 
   test("returns false for an already-verified (accepted) row", async () => {
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     await db
@@ -727,6 +1000,7 @@ describe("hasPendingSubscriber", () => {
       .run();
 
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -734,6 +1008,7 @@ describe("hasPendingSubscriber", () => {
 
   test("returns false for an unsubscribed row", async () => {
     const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     await db
@@ -743,6 +1018,7 @@ describe("hasPendingSubscriber", () => {
       .run();
 
     const result = await hasPendingSubscriber({
+      visitor: null,
       input: { email, pageId: PAGE_ID },
     });
     expect(result).toBe(false);
@@ -753,8 +1029,8 @@ describe("hasPendingSubscriber", () => {
 
 describe("createPageSubscriber", () => {
   test("rejects read-only actor", async () => {
+    const team = (await createWorkspaceFixture("team")).workspace;
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       const readOnlyCtx = {
         ...makeApiKeyCtx(team, {
           keyId: "k-read",
@@ -774,5 +1050,298 @@ describe("createPageSubscriber", () => {
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
     });
+  });
+});
+
+// ─── unsubscribePageSubscriber ───────────────────────────────────────────────
+
+describe("unsubscribePageSubscriber", () => {
+  function writeCtx() {
+    return makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 });
+  }
+
+  function readCtx() {
+    return makeApiKeyCtx(WORKSPACE, {
+      keyId: "k-read",
+      userId: 1,
+      scopes: ["read"],
+    });
+  }
+
+  async function seed(email: string) {
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    return upsertSelfSignupSubscriber({
+      visitor: null,
+      input: { email, pageId: PAGE_ID },
+    });
+  }
+
+  test("rejects read-only actor", async () => {
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: readCtx(),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "email", value: EMAILS.unsubWorkspaceDenied },
+        },
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  test("unsubscribes by email and emits an apiKey-actor audit row", async () => {
+    const email = EMAILS.unsubWorkspaceEmail;
+    const sub = await seed(email);
+    await clearAuditLog(WORKSPACE_ID);
+
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: writeCtx(),
+        input: { pageId: PAGE_ID, identifier: { type: "email", value: email } },
+      }),
+    ).resolves.toBeUndefined();
+
+    const row = await db.query.pageSubscriber.findFirst({
+      where: { id: sub.id },
+    });
+    expect(row?.unsubscribedAt).toBeDefined();
+
+    await expectAuditRow({
+      workspaceId: WORKSPACE_ID,
+      action: "page_subscriber.update",
+      entityType: "page_subscriber",
+      entityId: sub.id,
+      actorType: "apiKey",
+    });
+  });
+
+  test("matches email case-insensitively", async () => {
+    const email = EMAILS.unsubWorkspaceId;
+    const sub = await seed(email);
+
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: writeCtx(),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "email", value: email.toUpperCase() },
+        },
+      }),
+    ).resolves.toBeUndefined();
+
+    const row = await db.query.pageSubscriber.findFirst({
+      where: { id: sub.id },
+    });
+    expect(row?.unsubscribedAt).toBeDefined();
+  });
+
+  test("throws when the page belongs to another workspace", async () => {
+    const freeWorkspace = { ...WORKSPACE, id: FREE_WORKSPACE_ID };
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: makeApiKeyCtx(freeWorkspace, { keyId: "k-other", userId: 2 }),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "email", value: EMAILS.unsubWorkspaceEmail },
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("throws for an unknown subscriber", async () => {
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: writeCtx(),
+        input: { pageId: PAGE_ID, identifier: { type: "id", value: 999_999 } },
+      }),
+    ).rejects.toThrow();
+  });
+});
+
+describe("unsubscribePageSubscriber by id", () => {
+  test("unsubscribes an existing row addressed by id", async () => {
+    const email = "svc-unsub-ws-byid-test@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
+      input: { email, pageId: PAGE_ID },
+    });
+
+    await expect(
+      unsubscribePageSubscriber({
+        ctx: makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 }),
+        input: {
+          pageId: PAGE_ID,
+          identifier: { type: "id", value: sub.id },
+        },
+      }),
+    ).resolves.toBeUndefined();
+
+    const row = await db.query.pageSubscriber.findFirst({
+      where: { id: sub.id },
+    });
+    expect(row?.unsubscribedAt).toBeDefined();
+
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+  });
+
+  test("an already-unsubscribed email is not found again", async () => {
+    // The email lookup filters on `unsubscribedAt IS NULL`, so a repeat
+    // call must not silently succeed against a stale row.
+    const email = "svc-unsub-ws-stale-test@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    await upsertSelfSignupSubscriber({
+      visitor: null,
+      input: { email, pageId: PAGE_ID },
+    });
+    const ctx = makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 });
+    const input = {
+      pageId: PAGE_ID,
+      identifier: { type: "email" as const, value: email },
+    };
+
+    await expect(
+      unsubscribePageSubscriber({ ctx, input }),
+    ).resolves.toBeUndefined();
+    await expect(unsubscribePageSubscriber({ ctx, input })).rejects.toThrow();
+
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+  });
+
+  test("a repeat unsubscribe by id is a no-op", async () => {
+    const email = "svc-unsub-ws-byid-repeat-test@example.com";
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+    const sub = await upsertSelfSignupSubscriber({
+      visitor: null,
+      input: { email, pageId: PAGE_ID },
+    });
+    const ctx = makeApiKeyCtx(WORKSPACE, { keyId: "k-write", userId: 1 });
+    const input = {
+      pageId: PAGE_ID,
+      identifier: { type: "id" as const, value: sub.id },
+    };
+
+    await unsubscribePageSubscriber({ ctx, input });
+    const first = await db.query.pageSubscriber.findFirst({
+      where: { id: sub.id },
+    });
+    await clearAuditLog(WORKSPACE_ID);
+
+    await expect(
+      unsubscribePageSubscriber({ ctx, input }),
+    ).resolves.toBeUndefined();
+
+    const second = await db.query.pageSubscriber.findFirst({
+      where: { id: sub.id },
+    });
+    expect(second?.unsubscribedAt).toEqual(first?.unsubscribedAt);
+
+    const rows = await readAuditLog({
+      workspaceId: WORKSPACE_ID,
+      entityType: "page_subscriber",
+      entityId: String(sub.id),
+    });
+    expect(rows).toHaveLength(0);
+
+    await db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+  });
+});
+
+describe("self-signup visitor gate", () => {
+  const email = EMAILS.visitorGate;
+  const password = "svc-gate-pw";
+  let gatedPageId: number;
+  let gatedSlug: string;
+
+  beforeAll(async () => {
+    const p = await createPage(WORKSPACE_ID, {
+      accessType: "password",
+      password,
+    });
+    gatedPageId = p.id;
+    gatedSlug = p.slug;
+  });
+
+  test("rejects a visitor without the page password", async () => {
+    await expect(
+      upsertSelfSignupSubscriber({
+        visitor: {},
+        input: { email, pageId: gatedPageId },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+    await expect(
+      hasPendingSubscriber({
+        visitor: { queryPassword: "wrong" },
+        input: { email, pageId: gatedPageId },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+
+    const rows = await db
+      .select()
+      .from(pageSubscriber)
+      .where(eq(pageSubscriber.email, email));
+    expect(rows.length).toBe(0);
+  });
+
+  test("an empty query password does not fall through to a valid cookie", async () => {
+    await expect(
+      upsertSelfSignupSubscriber({
+        visitor: { queryPassword: "", getCookie: () => password },
+        input: { email, pageId: gatedPageId },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+  });
+
+  test("accepts a visitor holding the password cookie", async () => {
+    const seen: string[] = [];
+    const result = await upsertSelfSignupSubscriber({
+      visitor: {
+        getCookie: (name) => {
+          seen.push(name);
+          return password;
+        },
+      },
+      input: { email, pageId: gatedPageId },
+    });
+    expect(result.email).toBe(email);
+    expect(seen).toEqual([`secured-${gatedSlug}`]);
+  });
+});
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(WORKSPACE, {
+          keyId: "k-pages",
+          userId: 1,
+          scopes: ["pages:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createPageSubscriber({
+          ctx,
+          input: {
+            pageId: PAGE_ID,
+            channelType: "email",
+            email: "rejects-other-group@test.dev",
+          },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listPageSubscribers({ ctx, input: { pageId: PAGE_ID } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("pages:read key does not list subscribers", async () => {
+    const ctx = makeApiKeyCtx(WORKSPACE, {
+      keyId: "k-pages-read",
+      userId: 1,
+      scopes: ["pages:read"],
+    });
+    await expect(
+      listPageSubscribers({ ctx, input: { pageId: PAGE_ID } }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

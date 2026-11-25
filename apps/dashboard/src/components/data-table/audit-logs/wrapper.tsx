@@ -1,16 +1,18 @@
 "use client";
 
+import { AuditLog } from "@openstatus/icons";
 import { Skeleton } from "@openstatus/ui/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
 import { BlockWrapper } from "@/components/content/block-wrapper";
 import {
-  EmptyStateContainer,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -46,26 +48,28 @@ export function AuditLogsWrapper({
     );
   }
 
-  if (!auditLogs?.data || auditLogs.data.length === 0) {
-    return (
-      <EmptyStateContainer>
-        <EmptyStateTitle>No audit logs</EmptyStateTitle>
-        <EmptyStateDescription>
-          No audit logs found for this monitor.
-        </EmptyStateDescription>
-      </EmptyStateContainer>
-    );
-  }
-
-  return (
-    <BlockWrapper>
-      <DataTable
-        columns={columns}
-        data={auditLogs.data}
-        paginationComponent={DataTablePaginationSimple}
-      />
-    </BlockWrapper>
+  const rows = auditLogs?.data ?? [];
+  const table = (
+    <DataTable
+      columns={columns}
+      data={rows}
+      paginationComponent={DataTablePaginationSimple}
+      emptyState={
+        <DataTableEmpty>
+          <EmptyStateMedia>
+            <AuditLog />
+          </EmptyStateMedia>
+          <EmptyStateTitle>Nothing yet</EmptyStateTitle>
+          <EmptyStateDescription>
+            Status changes, downtime and sent alerts show up here.
+          </EmptyStateDescription>
+        </DataTableEmpty>
+      }
+    />
   );
+
+  // the collapse overlay would sit on top of the empty state
+  return rows.length ? <BlockWrapper>{table}</BlockWrapper> : table;
 }
 
 export default AuditLogsWrapper;

@@ -9,6 +9,8 @@ import {
   StatusComponentHeaderLeft,
   StatusComponentHeaderRight,
   StatusComponentIcon,
+  StatusComponentLatency,
+  StatusComponentLatencySkeleton,
   StatusComponentStatus,
   StatusComponentTitle,
   StatusComponentUptime,
@@ -24,10 +26,12 @@ import {
 import { Separator } from "@openstatus/ui/components/ui/separator";
 import { cn } from "@openstatus/ui/lib/utils";
 import { skipToken, useQuery } from "@tanstack/react-query";
+import { useExtracted } from "next-intl";
 import { notFound, useParams } from "next/navigation";
 import { useMemo } from "react";
 
 import { Link } from "../../../../../components/common/link";
+import { StatusBlocksProvider } from "../../../../../components/i18n/status-blocks-provider";
 import { useStatusPage } from "../../../../../components/status-page/floating-button";
 import {
   StatusBanner,
@@ -50,6 +54,7 @@ import {
   StatusEventTimelineReportUpdate,
 } from "../../../../../components/status-page/status-events";
 import { StatusFeed } from "../../../../../components/status-page/status-feed";
+import { latencyByMonitorId } from "../../../../../data/metrics.client";
 import { useEmbed } from "../../../../../hooks/use-embed";
 import { usePathnamePrefix } from "../../../../../hooks/use-pathname-prefix";
 import { updatesWithImpactChanges } from "../../../../../lib/report-impacts";
@@ -61,6 +66,7 @@ export function Client() {
   const { cardType, barType, showUptime, numberOfDays } = useStatusPage();
   const embed = useEmbed();
   const trpc = useTRPC();
+  const t = useExtracted();
 
   // NOTE: we cannot use `cardType` and `barType` here because of queryKey changes
   // It wouldn't match the server prefetch keys and we would have to refetch the page here
@@ -82,6 +88,7 @@ export function Client() {
 
   const componentsVisible =
     !embed.mode || embed.sections.includes("components");
+  const bannerVisible = !embed.mode || embed.sections.includes("banner");
 
   const hasCustomConfig = pageInitial?.configuration
     ? pageInitial.configuration.type !== barType ||
@@ -89,14 +96,14 @@ export function Client() {
     : false;
 
   // NOTE: instead, we use the `enabled` flag to only fetch the page if the configuration differs.
-  // Also skip when `components` section is hidden in embed mode — this query only matters there.
   const { data: pageWithCustomConfiguration } = useQuery({
     ...trpc.statusPage.get.queryOptions({
       slug: domain,
       cardType,
       barType,
     }),
-    enabled: !!domain && hasCustomConfig && componentsVisible,
+    enabled:
+      !!domain && hasCustomConfig && (componentsVisible || bannerVisible),
   });
 
   // NOTE: we can prefetch that to avoid loading state
@@ -117,24 +124,55 @@ export function Client() {
     ),
   );
 
+  // Non-blocking latency read for the per-monitor "p75 ms" tracker chip. Reuses
+  // the public monitors query (already registers the multi-latency pipe) so the
+  // tracker rows never wait on it — the chip fills in once resolved.
+  const { data: monitorsLatency, isFetching: isLatencyFetching } = useQuery(
+    trpc.statusPage.getMonitors.queryOptions(
+      componentsVisible && pageInitial && pageInitial.pageComponents.length > 0
+        ? { slug: domain }
+        : skipToken,
+    ),
+  );
+  const latencyMap = useMemo(
+    () => latencyByMonitorId(monitorsLatency, "p75"),
+    [monitorsLatency],
+  );
+  const latencyPending = !monitorsLatency && isLatencyFetching;
+
+  // Only public monitors get a chip: private monitors aren't in `getMonitors`
+  // (value never arrives) and static components have no monitor.
+  const buildLatency = (
+    row: NonNullable<typeof uptimeData>[number] | undefined,
+  ) => {
+    if (!row?.monitor?.public) return undefined;
+    const monitorId = row.monitor.id.toString();
+    return {
+      label: t("last day"),
+      isLoading: latencyPending,
+      value: latencyMap.get(monitorId),
+      href: `${prefix ? `/${prefix}` : ""}/monitors/${monitorId}`,
+    };
+  };
+
+  // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
+  const page = pageWithCustomConfiguration ?? pageInitial;
+
   // NOTE: we need to filter out the incidents as we don't want to show all of them in the banner - a single one is enough
   // REMINDER: we could move that to the server - but we might wanna have the info of all openEvents actually
   const events = useMemo(() => {
     let hasIncident = false;
     return (
-      pageInitial?.openEvents.filter((e) => {
+      page?.openEvents.filter((e) => {
         if (e.type !== "incident") return true;
         if (hasIncident) return false;
         hasIncident = true;
         return true;
       }) ?? []
     );
-  }, [pageInitial]);
+  }, [page]);
 
-  if (!pageInitial) return null;
-
-  // REMINDER: if we are using the custom configuration, we need to use the pageWithCustomConfiguration
-  const page = pageWithCustomConfiguration ?? pageInitial;
+  if (!page) return null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -145,7 +183,9 @@ export function Client() {
         </StatusHeader>
         {events.length > 0 ? (
           <StatusContent className="group-data-[hide-banner=true]/embed:hidden">
+            {/* key remounts the tabs: defaultValue only applies on mount */}
             <StatusBannerTabs
+              key={events.map((e) => `${e.type}-${e.id}`).join()}
               defaultValue={`${events[0].type}-${events[0].id}`}
             >
               <StatusBannerTabsList>
@@ -217,6 +257,14 @@ export function Client() {
                     (maintenance) => maintenance.id === e.id,
                   );
                   if (!maintenance) return null;
+                  // banner shows only the newest update; the block renders a
+                  // single update as the body under the title
+                  const lastUpdate = [
+                    ...(maintenance.maintenanceUpdates ?? []),
+                  ].sort(
+                    (a, b) =>
+                      b.date.getTime() - a.date.getTime() || b.id - a.id,
+                  )[0];
                   return (
                     <StatusBannerTabsContent
                       value={`${e.type}-${e.id}`}
@@ -230,7 +278,12 @@ export function Client() {
                         <StatusBannerContainer status={e.status}>
                           <StatusBannerContent>
                             <StatusEventTimelineMaintenance
-                              maintenance={maintenance}
+                              maintenance={{
+                                ...maintenance,
+                                maintenanceUpdates: lastUpdate
+                                  ? [lastUpdate]
+                                  : [],
+                              }}
                               withDot={false}
                             />
                             {maintenance.maintenancesToPageComponents.length >
@@ -279,9 +332,10 @@ export function Client() {
             {page.trackers.map((tracker) => {
               if (tracker.type === "component") {
                 const component = tracker.component;
-                const { data, uptime } =
-                  uptimeData?.find((u) => u.pageComponentId === component.id) ??
-                  {};
+                const uptimeRow = uptimeData?.find(
+                  (u) => u.pageComponentId === component.id,
+                );
+                const { data, uptime, timeZone } = uptimeRow ?? {};
 
                 return (
                   <ComponentCard
@@ -291,8 +345,10 @@ export function Client() {
                     status={component.status}
                     data={data}
                     uptime={uptime}
+                    timeZone={timeZone}
                     showUptime={showUptime}
                     isLoading={isLoading}
+                    latency={buildLatency(uptimeRow)}
                   />
                 );
               }
@@ -305,10 +361,10 @@ export function Client() {
                   defaultOpen={tracker.defaultOpen}
                 >
                   {tracker.components.map((component) => {
-                    const { data, uptime } =
-                      uptimeData?.find(
-                        (u) => u.pageComponentId === component.id,
-                      ) ?? {};
+                    const uptimeRow = uptimeData?.find(
+                      (u) => u.pageComponentId === component.id,
+                    );
+                    const { data, uptime, timeZone } = uptimeRow ?? {};
 
                     return (
                       <ComponentCard
@@ -318,8 +374,10 @@ export function Client() {
                         status={component.status}
                         data={data}
                         uptime={uptime}
+                        timeZone={timeZone}
                         showUptime={showUptime}
                         isLoading={isLoading}
+                        latency={buildLatency(uptimeRow)}
                       />
                     );
                   })}
@@ -375,16 +433,21 @@ function ComponentCard({
   status,
   data,
   uptime,
+  timeZone,
   showUptime,
   isLoading,
+  latency,
 }: {
   name: string;
   description?: string | null;
   status: "success" | "degraded" | "error" | "info";
   data?: ComponentCardData;
   uptime?: string;
+  /** The zone the bars' days are grouped in. */
+  timeZone?: string;
   showUptime?: boolean;
   isLoading?: boolean;
+  latency?: { label: string; isLoading: boolean; value?: string; href: string };
 }) {
   return (
     <StatusComponent variant={status}>
@@ -392,6 +455,25 @@ function ComponentCard({
         <StatusComponentHeaderLeft>
           <StatusComponentTitle>{name}</StatusComponentTitle>
           <StatusComponentDescription>{description}</StatusComponentDescription>
+          {latency ? (
+            latency.value ? (
+              <Link
+                href={latency.href}
+                variant="unstyled"
+                className="shrink-0 rounded-md focus-visible:ring-inset"
+              >
+                <StatusComponentLatency>
+                  <span className="text-muted-foreground/70">
+                    {latency.label}
+                  </span>
+                  <span className="text-foreground">{latency.value}</span>
+                  <span>p75</span>
+                </StatusComponentLatency>
+              </Link>
+            ) : latency.isLoading ? (
+              <StatusComponentLatencySkeleton className="shrink-0" />
+            ) : null
+          ) : null}
         </StatusComponentHeaderLeft>
         <StatusComponentHeaderRight>
           {showUptime ? (
@@ -408,10 +490,12 @@ function ComponentCard({
           )}
         </StatusComponentHeaderRight>
       </StatusComponentHeader>
-      <StatusComponentBody>
-        {isLoading ? <StatusBarSkeleton /> : <StatusBar data={data ?? []} />}
-        <StatusComponentFooter data={data ?? []} isLoading={isLoading} />
-      </StatusComponentBody>
+      <StatusBlocksProvider timezone={timeZone}>
+        <StatusComponentBody>
+          {isLoading ? <StatusBarSkeleton /> : <StatusBar data={data ?? []} />}
+          <StatusComponentFooter data={data ?? []} isLoading={isLoading} />
+        </StatusComponentBody>
+      </StatusBlocksProvider>
     </StatusComponent>
   );
 }

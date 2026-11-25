@@ -1,7 +1,11 @@
 import { defineConfig } from "oxlint";
 
+const DB_MESSAGE =
+  'Go through @openstatus/services. Database access outside it is a defect; see AGENTS.md "Architecture".';
+
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "unicorn", "oxc"],
+  jsPlugins: ["./tooling/oxlint/plugin.js"],
   categories: {
     correctness: "warn",
   },
@@ -27,77 +31,117 @@ export default defineConfig({
     "react/no-danger": "error",
     "react/exhaustive-deps": "warn",
     "unicorn/prefer-node-protocol": "error",
+    // Database access goes through @openstatus/services; the override below
+    // lists the places allowed to reach the client directly. Type imports
+    // and schema sub-paths (zod schemas, enum constants) stay importable.
+    "no-restricted-imports": [
+      "error",
+      {
+        paths: [
+          {
+            name: "@openstatus/db",
+            allowTypeImports: true,
+            message: DB_MESSAGE,
+          },
+          { name: "drizzle-orm", allowTypeImports: true, message: DB_MESSAGE },
+        ],
+        patterns: [
+          {
+            group: [
+              "@openstatus/db/**",
+              "!@openstatus/db/src/schema",
+              "!@openstatus/db/src/schema/**",
+              // Environment validation only; no client.
+              "!@openstatus/db/env.mjs",
+              "drizzle-orm/**",
+            ],
+            allowTypeImports: true,
+            message: DB_MESSAGE,
+          },
+        ],
+      },
+    ],
   },
   ignorePatterns: [
+    // Deliberately bad code, linted by tooling/oxlint/check-fixtures.mts.
+    "tooling/oxlint/fixtures/**",
     "packages/ui/src/components/*.ts",
     "packages/ui/src/components/*.tsx",
+    // Vendored from the data-table-filters shadcn registry — reformatting or
+    // hand-patching these makes the next `shadcn add` a merge conflict.
+    "packages/ui/src/components/data-table-filters/**",
+    "packages/ui/src/lib/data-table-filters/**",
+    "apps/dashboard/src/lib/react-table.d.ts",
+    "packages/ui/src/react-table.d.ts",
     "apps/dashboard/src/scripts/*.ts",
     "packages/proto/gen/**",
     "**/*_pb.ts",
-    "**/drizzle/meta/**",
+    "**/drizzle/*/snapshot.json",
     "**/.content-collections/**",
     ".devbox/**",
     "**/*.astro",
   ],
   overrides: [
     {
-      // Ban @openstatus/db + drizzle imports in layers migrated onto
-      // @openstatus/services. Scope grows one domain per migration PR.
+      // Allowed to reach the database directly. Each entry carries its reason;
+      // everything else imports @openstatus/services.
       files: [
-        "packages/api/src/router/statusReport.ts",
-        "packages/api/src/router/maintenance.ts",
-        "packages/api/src/router/incident.ts",
-        "packages/api/src/router/monitor.ts",
-        "packages/api/src/router/pageComponent.ts",
-        "packages/api/src/router/page.ts",
-        "packages/api/src/router/workspace.ts",
-        "packages/api/src/router/user.ts",
-        "packages/api/src/router/invitation.ts",
-        "packages/api/src/router/apiKey.ts",
-        "packages/api/src/router/import.ts",
-        "apps/server/src/routes/rpc/handlers/health/**",
-        "apps/server/src/routes/rpc/handlers/status-report/**",
-        "apps/server/src/routes/rpc/handlers/maintenance/**",
-        "apps/server/src/routes/rpc/handlers/notification/**",
-        "apps/server/src/routes/slack/interactions.ts",
-      ],
-      excludeFiles: [
+        // The db package itself, tests, seeds and one-off scripts.
+        "packages/db/**",
         "**/__tests__/**",
         "**/*.test.ts",
-        // Still read db directly: limits.ts queries quotas, converters.ts needs
-        // db enum shapes for proto round-trip. Exempt until they move to services.
-        "apps/server/src/routes/rpc/handlers/notification/limits.ts",
-        "apps/server/src/routes/rpc/handlers/notification/converters.ts",
+        "**/*.test.tsx",
+        "**/test/**",
+        "scripts/**",
+        "apps/*/src/scripts/**",
+        "packages/*/scripts/**",
+        // Legacy REST API, scheduled for removal. Delete this line with it.
+        "apps/server/src/routes/v1/**",
+        // Infrastructure: health probes ping the client, and the Auth.js
+        // adapters own the session tables.
+        "apps/dashboard/src/app/api/health/route.ts",
+        "apps/external-status/src/health.ts",
+        "apps/server/src/routes/health.ts",
+        "apps/status-page/src/app/api/health/route.ts",
+        "apps/workflows/src/health.ts",
+        "apps/dashboard/src/lib/auth/adapter.ts",
+        "apps/status-page/src/lib/auth/adapter.ts",
+        // Delivery library that services dispatches through: services depends
+        // on it, so it cannot import services back.
+        "packages/subscriptions/src/**",
+        // The workflows client wiring, and the documented checker ingest batch
+        // (see packages/services/AGENTS.md).
+        "apps/workflows/src/lib/db.ts",
+        "apps/workflows/src/checker/transition.ts",
       ],
+      rules: { "no-restricted-imports": "off" },
+    },
+    {
+      // Tests legitimately use `any` for spies/fixtures.
+      files: ["**/*.test.ts", "**/__tests__/**"],
       rules: {
+        "typescript/no-explicit-any": "off",
+      },
+    },
+    {
+      // Behaviour-triggered, not filename-triggered: anything opening a
+      // transaction in the services layer is a mutation.
+      files: ["packages/services/src/**/*.ts"],
+      excludeFiles: ["**/__tests__/**", "**/*.test.ts"],
+      rules: {
+        "openstatus/services-mutation-guards": "error",
+        "openstatus/services-audit-on-tx": "error",
+        // Group from the folder; non-group folders are skipped by the rule.
+        "openstatus/services-scope-matches-folder": "error",
+        // The package stays Edge-safe by design.
         "no-restricted-imports": [
           "error",
           {
-            paths: [
+            patterns: [
               {
-                name: "@openstatus/db",
+                group: ["node:*"],
                 message:
-                  "Use @openstatus/services instead (domain has migrated to the service layer).",
-              },
-              {
-                name: "@openstatus/db/src/schema",
-                message: "Use @openstatus/services instead.",
-              },
-              {
-                name: "@openstatus/db/src/schema/plan/utils",
-                message: "Use @openstatus/services instead.",
-              },
-              {
-                name: "@openstatus/db/src/schema/plan/schema",
-                message: "Use @openstatus/services instead.",
-              },
-              {
-                name: "@openstatus/db/src/schema/plan/config",
-                message: "Use @openstatus/services instead.",
-              },
-              {
-                name: "drizzle-orm",
-                message: "Use @openstatus/services instead.",
+                  "@openstatus/services must stay runtime-agnostic — no node built-ins. Hand-roll the helper (see deepEqual) or move the code to a Node-only package.",
               },
             ],
           },
@@ -105,10 +149,39 @@ export default defineConfig({
       },
     },
     {
-      // Tests legitimately use `any` for spies/fixtures.
-      files: ["**/*.test.ts", "**/__tests__/**"],
+      // Verbs require a group scope; "read"/"write" are what credentials hold.
+      files: ["packages/services/src/**/*.ts", "apps/server/src/**/*.ts"],
+      excludeFiles: [
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "packages/services/src/auth/**",
+      ],
       rules: {
-        "typescript/no-explicit-any": "off",
+        "openstatus/services-no-legacy-scope": "error",
+      },
+    },
+    {
+      // Shape-triggered: any exported function taking `ctx: ServiceContext`
+      // checks a scope first, whatever its name or folder.
+      files: ["packages/services/src/**/*.ts"],
+      excludeFiles: [
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "**/internal.ts",
+        // The scope machinery itself: requireScope, transactions, features.
+        "packages/services/src/auth/**",
+        "packages/services/src/context.ts",
+        "packages/services/src/features.ts",
+      ],
+      rules: {
+        "openstatus/services-verbs-require-scope": "error",
+      },
+    },
+    {
+      files: ["apps/dashboard/src/**/*.tsx", "apps/dashboard/src/**/*.ts"],
+      rules: {
+        "openstatus/no-db-barrel-in-client": "error",
+        "openstatus/no-text-link-as-child": "error",
       },
     },
   ],

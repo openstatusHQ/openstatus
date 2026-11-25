@@ -4,6 +4,7 @@ import * as z from "zod";
 
 import { notificationProvider } from "./constants";
 import { notification } from "./notification";
+import { notificationDeadLetter, notificationOutbox } from "./outbox";
 
 export const notificationProviderSchema = z.enum(notificationProvider);
 
@@ -21,7 +22,7 @@ export const selectNotificationSchema = createSelectSchema(notification).extend(
 export const insertNotificationSchema = createInsertSchema(notification).extend(
   {
     data: z.string().prefault("{}"),
-    monitors: z.array(z.number()).optional().prefault([]),
+    monitors: z.array(z.number()).prefault([]),
   },
 );
 
@@ -61,7 +62,9 @@ export const pagerdutyDataSchema = z.object({ pagerduty: z.string() });
 export const opsgenieDataSchema = z.object({
   opsgenie: z.object({
     apiKey: z.string(),
-    region: z.enum(["us", "eu"]),
+    region: z.enum(["us", "eu"], {
+      message: "Please select a region",
+    }),
   }),
 });
 export const telegramDataSchema = z.object({
@@ -187,3 +190,24 @@ export const InsertNotificationWithDataSchema = z.discriminatedUnion(
 export type InsertNotificationWithData = z.infer<
   typeof InsertNotificationWithDataSchema
 >;
+
+export const notificationOutboxPayloadSchema = z.object({
+  regions: z.array(z.string()),
+  statusCode: z.number().optional(),
+  message: z.string().optional(),
+  latency: z.number().optional(),
+});
+
+export type NotificationOutboxPayload = z.infer<
+  typeof notificationOutboxPayloadSchema
+>;
+
+export const selectNotificationOutboxSchema =
+  createSelectSchema(notificationOutbox);
+export const selectNotificationDeadLetterSchema = createSelectSchema(
+  notificationDeadLetter,
+);
+
+export type NotificationOutboxRow = typeof notificationOutbox.$inferSelect;
+export type NotificationDeadLetterRow =
+  typeof notificationDeadLetter.$inferSelect;

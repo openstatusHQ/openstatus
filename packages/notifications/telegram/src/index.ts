@@ -1,5 +1,8 @@
 import { telegramDataSchema } from "@openstatus/db/src/schema";
-import type { NotificationContext } from "@openstatus/notification-base";
+import {
+  type NotificationContext,
+  monitorTarget,
+} from "@openstatus/notification-base";
 
 export const sendAlert = async ({
   monitor,
@@ -12,7 +15,7 @@ export const sendAlert = async ({
   );
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is down with ${
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is down with ${
     statusCode ? `status code ${statusCode}` : `error: ${message}`
   }`;
 
@@ -31,7 +34,7 @@ export const sendRecovery = async ({
   );
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is up again`;
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is up again`;
   await sendMessage({
     chatId: notificationData.telegram.chatId,
     message: body,
@@ -47,7 +50,7 @@ export const sendDegraded = async ({
   );
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is degraded `;
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is degraded `;
 
   await sendMessage({
     chatId: notificationData.telegram.chatId,
@@ -78,8 +81,9 @@ export async function sendMessage({
   if (!process.env.TELEGRAM_BOT_TOKEN) {
     throw new Error("TELEGRAM_BOT_TOKEN is not set");
   }
+  const params = new URLSearchParams({ chat_id: chatId, text: message });
   const res = await fetch(
-    `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${chatId}&text=${message}`,
+    `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage?${params}`,
   );
   if (!res.ok) {
     throw new Error(`Failed to send telegram message: ${res.statusText}`);

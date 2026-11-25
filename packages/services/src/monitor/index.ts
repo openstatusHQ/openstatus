@@ -1,7 +1,14 @@
+export { countActiveMonitors, listActiveMonitorIds } from "./active";
 export { cloneMonitor } from "./clone";
 export { createMonitor } from "./create";
+export { findMonitor } from "./find";
 export { fetchMonitorDailyStats } from "./get-daily-summary";
 export { deleteMonitor, deleteMonitors } from "./delete";
+export {
+  countPausedMonitors,
+  listMonitorRegionStatuses,
+  listMonitorsToCheck,
+} from "./dispatch";
 export {
   getMonitorStatus,
   type GetMonitorStatusResult,
@@ -13,23 +20,60 @@ export {
 } from "./get-monitor-summary";
 export { getResponseLog, type ResponseLogDetail } from "./get-response-log";
 export {
+  getResponseLogFacets,
+  type GetResponseLogFacetsResult,
+  type ResponseLogFacet,
+} from "./get-response-log-facets";
+export { getPrivateLocationIdsByMonitor } from "./private-locations";
+export {
+  csvRegionCountSql,
+  csvRegionMemberSql,
+  type QuorumParams,
+  quorumCountSql,
+  quorumGuardSql,
+  quorumMetSql,
+} from "./quorum";
+export {
   listResponseLogs,
   type ListResponseLogsResult,
   type ResponseLogListItem,
 } from "./list-response-logs";
 export {
+  listResponseLogsInfinite,
+  type ListResponseLogsInfiniteResult,
+} from "./list-response-logs-infinite";
+export {
+  type ResponseLogWindow,
+  selectWindow,
+  toPipeParams,
+  trimToTick,
+} from "./response-logs-cursor";
+export {
   getMonitor,
+  assertMonitorsInWorkspace,
+  getMonitorRow,
   type ListMonitorsResult,
+  listMonitorRows,
   listMonitors,
+  parseMonitorRow,
   type MonitorListItem,
   type MonitorWithRelations,
 } from "./list";
+export {
+  type HeartbeatSweepRow,
+  listHeartbeatSweepCandidates,
+  listStatusDriftCandidates,
+  type StatusDriftRow,
+} from "./sweeps";
 export {
   updateMonitorNotifiers,
   updateMonitorSchedulingRegions,
   updateMonitorTags,
 } from "./relations";
-export { redactSensitiveHeaders } from "./response-logs-internal";
+export {
+  redactSensitiveBody,
+  redactSensitiveHeaders,
+} from "./response-logs-internal";
 export {
   type CheckResult,
   type CheckResultError,
@@ -38,7 +82,29 @@ export {
   streamMonitorPreview,
 } from "./stream-monitor-preview";
 export {
+  firstRegion,
+  RunMonitorCheckInput,
+  runMonitorCheck,
+} from "./run-check";
+export {
+  getHeartbeatState,
+  type HeartbeatState,
+  heartbeatDeadline,
+  type HeartbeatPingLog,
+  listHeartbeatPings,
+  type HeartbeatPingResult,
+  type HeartbeatPingState,
+  listHeartbeatStates,
+  recordHeartbeatPing,
+  regenerateHeartbeatToken,
+  updateMonitorHeartbeat,
+} from "./heartbeat";
+export { setMonitorStatus } from "./set-status";
+export { triggerMonitorRun, type TriggerMonitorResult } from "./trigger";
+export { assertMonitorUrlSafe } from "./url-safety";
+export {
   bulkUpdateMonitors,
+  updateMonitorConfig,
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
   updateMonitorOtel,
@@ -56,14 +122,26 @@ export {
   GetMonitorInput,
   GetMonitorStatusInput,
   GetMonitorSummaryInput,
+  GetPrivateLocationIdsByMonitorInput,
+  GetResponseLogFacetsInput,
   GetResponseLogInput,
+  grpcTlsModes,
   ListMonitorsInput,
+  ListResponseLogsInfiniteInput,
   ListResponseLogsInput,
+  monitorAssertionSchema,
   monitorJobTypes,
+  ListHeartbeatPingsInput,
+  RegenerateHeartbeatTokenInput,
+  SetMonitorStatusInput,
+  UpdateMonitorHeartbeatInput,
   monitorMethods,
   monitorPeriodicity,
+  ResponseLogFilters,
   type MonitorTimeRange,
   monitorTimeRange,
+  TriggerMonitorInput,
+  UpdateMonitorConfigInput,
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
   UpdateMonitorNotifiersInput,

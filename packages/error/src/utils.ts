@@ -20,8 +20,12 @@ export function statusToCode(status: number): ErrorCode {
       return "CONFLICT";
     case 422:
       return "UNPROCESSABLE_ENTITY";
+    case 429:
+      return "TOO_MANY_REQUESTS";
     case 500:
       return "INTERNAL_SERVER_ERROR";
+    case 503:
+      return "SERVICE_UNAVAILABLE";
     default:
       return "INTERNAL_SERVER_ERROR";
   }
@@ -45,8 +49,12 @@ export function codeToStatus(code: ErrorCode) {
       return 409;
     case "UNPROCESSABLE_ENTITY":
       return 422;
+    case "TOO_MANY_REQUESTS":
+      return 429;
     case "INTERNAL_SERVER_ERROR":
       return 500;
+    case "SERVICE_UNAVAILABLE":
+      return 503;
     default:
       return 500;
   }

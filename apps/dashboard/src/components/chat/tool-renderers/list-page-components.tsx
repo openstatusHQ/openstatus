@@ -1,8 +1,10 @@
 import type { AgentToolOutput } from "@openstatus/services/agent-tools";
 
+import { EntityRef } from "@/components/common/entity-ref/entity-ref";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
+import { entityKinds } from "@/data/entity-refs.client";
 
 import type { ResultTableData } from "./result-table";
 
@@ -10,7 +12,7 @@ type Output = AgentToolOutput<"list_page_components">;
 
 export function listPageComponentsTable(
   output: Output,
-): ResultTableData<"name" | "type" | "page" | "monitor" | "id"> {
+): ResultTableData<"name" | "type" | "page" | "monitor" | "group" | "id"> {
   const items = output?.items ?? [];
   return {
     empty: "No page components.",
@@ -19,6 +21,7 @@ export function listPageComponentsTable(
       { key: "type", header: "Type" },
       { key: "page", header: "Page" },
       { key: "monitor", header: "Monitor" },
+      { key: "group", header: "Group" },
       { key: "id", header: "ID" },
     ],
     rows: items.map((c) => ({
@@ -26,7 +29,7 @@ export function listPageComponentsTable(
       cells: {
         name: (
           <TableCellLink
-            href={`/status-pages/${c.pageId}/components`}
+            href={entityKinds.pageComponent.href(c)}
             value={c.name}
           />
         ),
@@ -36,13 +39,14 @@ export function listPageComponentsTable(
             className="text-muted-foreground font-mono"
           />
         ),
-        page: <TableCellNumber value={c.pageId} />,
+        page: <EntityRef kind="page" id={c.pageId} />,
         monitor:
           c.monitorId !== null ? (
-            <TableCellNumber value={c.monitorId} />
+            <EntityRef kind="monitor" id={c.monitorId} />
           ) : (
-            <TableCellText value={null} />
+            <TableCellText value={null} empty="No monitor" />
           ),
+        group: <TableCellText value={c.groupName ?? null} empty="No group" />,
         id: <TableCellNumber value={c.id} />,
       },
     })),

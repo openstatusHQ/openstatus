@@ -4,12 +4,14 @@ import {
   externalService,
   externalServiceComponent,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
+import { defaultTb } from "../../context";
 import {
   getExternalComponentBySlug,
   listExternalComponentsBySlug,
+  listLiveComponentSlugs,
+  listRecentlyFetchedServiceIds,
   upsertExternalComponentsForService,
 } from "../index";
 
@@ -59,6 +61,161 @@ async function seedService(opts: {
 }
 
 describe("upsertExternalComponentsForService", () => {
+  describe("write lock", () => {
+    const component = {
+      upstreamComponentId: "cmp-lock",
+      name: "fra1",
+      position: 1,
+      indicator: "none",
+      status: "operational",
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test("an idle upsert sends no write but still returns every id", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-idle-lock` });
+      const first = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const second = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      expect(second.upserted).toEqual(first.upserted);
+      expect(batch).not.toHaveBeenCalled();
+      expect(transaction).not.toHaveBeenCalled();
+    });
+
+    test("inserts and updates go out in one batch and return both ids", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-one-batch` });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const res = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [
+          { ...component, status: "major_outage" },
+          { ...component, upstreamComponentId: "cmp-lock-2", name: "iad1" },
+        ],
+      });
+
+      expect(res.upserted.map((c) => c.upstreamComponentId).sort()).toEqual([
+        "cmp-lock",
+        "cmp-lock-2",
+      ]);
+      expect(batch).toHaveBeenCalledTimes(1);
+      expect(transaction).not.toHaveBeenCalled();
+      const rows = await db
+        .select({ status: externalServiceComponent.status })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows.map((r) => r.status).sort()).toEqual([
+        "major_outage",
+        "operational",
+      ]);
+    });
+
+    test("updates alone go out in one batch", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-updates` });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [component],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const res = await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        components: [{ ...component, status: "major_outage" }],
+      });
+
+      expect(res.upserted).toHaveLength(1);
+      expect(batch).toHaveBeenCalledTimes(1);
+    });
+
+    test("concurrent first sights of a component store one row", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-race` });
+      const upsert = () =>
+        upsertExternalComponentsForService({
+          externalServiceId: serviceId,
+          components: [component],
+        });
+
+      const results = await Promise.all([upsert(), upsert(), upsert()]);
+
+      const rows = await db
+        .select({ id: externalServiceComponent.id })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows).toHaveLength(1);
+      for (const result of results) {
+        expect(result.upserted).toEqual([
+          { id: rows[0]?.id, upstreamComponentId: "cmp-lock" },
+        ]);
+      }
+    });
+
+    test("a slug race between different components heals on the next upsert", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-slug-race` });
+      const second = { ...component, upstreamComponentId: "cmp-lock-2" };
+      const upsert = (input: typeof component) =>
+        upsertExternalComponentsForService({
+          externalServiceId: serviceId,
+          components: [input],
+        });
+
+      await Promise.all([upsert(component), upsert(second)]);
+      await upsert(component);
+      await upsert(second);
+
+      const rows = await db
+        .select({ slug: externalServiceComponent.slug })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows.map((r) => r.slug).sort()).toEqual(["fra1", "fra1-2"]);
+    });
+
+    test("an older tick does not replace what a newer tick wrote", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-stale` });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:00:00.000Z"),
+        components: [component],
+      });
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T13:00:00.000Z"),
+        components: [{ ...component, status: "major_outage" }],
+      });
+
+      await upsertExternalComponentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:30:00.000Z"),
+        components: [{ ...component, status: "degraded" }],
+      });
+
+      const rows = await db
+        .select({ status: externalServiceComponent.status })
+        .from(externalServiceComponent)
+        .where(eq(externalServiceComponent.externalServiceId, serviceId))
+        .all();
+      expect(rows[0]?.status).toBe("major_outage");
+    });
+  });
+
   test("inserts components and is idempotent on second call (update path)", async () => {
     const serviceId = await seedService({ slug: `${TEST_PREFIX}-upsert` });
     const baseDate = new Date("2024-06-01T12:00:00.000Z");
@@ -388,6 +545,126 @@ describe("listExternalComponentsBySlug", () => {
     });
     expect(service).toBeNull();
     expect(components).toEqual([]);
+  });
+});
+
+describe("listLiveComponentSlugs", () => {
+  const component = (name: string, position: number) => ({
+    upstreamComponentId: name,
+    name,
+    position,
+    indicator: "none",
+    status: "operational",
+  });
+
+  test("lists live, supported components by service slug then position", async () => {
+    const later = await seedService({ slug: `${TEST_PREFIX}-live-b` });
+    const earlier = await seedService({ slug: `${TEST_PREFIX}-live-a` });
+    const custom = await seedService({
+      slug: `${TEST_PREFIX}-live-custom`,
+      apiConfigType: "custom",
+    });
+    const deleted = await seedService({ slug: `${TEST_PREFIX}-live-deleted` });
+    await db
+      .update(externalService)
+      .set({ deletedAt: new Date() })
+      .where(eq(externalService.id, deleted))
+      .run();
+
+    await upsertExternalComponentsForService({
+      externalServiceId: later,
+      components: [component("beta", 1)],
+    });
+    await upsertExternalComponentsForService({
+      externalServiceId: earlier,
+      components: [component("second", 2), component("first", 1)],
+    });
+    for (const id of [custom, deleted]) {
+      await upsertExternalComponentsForService({
+        externalServiceId: id,
+        components: [component("hidden", 1)],
+      });
+    }
+
+    const slugs = await listLiveComponentSlugs({});
+    const ours = slugs.filter((s) => s.serviceSlug.startsWith(TEST_PREFIX));
+    expect(ours).toEqual([
+      { serviceSlug: `${TEST_PREFIX}-live-a`, componentSlug: "first" },
+      { serviceSlug: `${TEST_PREFIX}-live-a`, componentSlug: "second" },
+      { serviceSlug: `${TEST_PREFIX}-live-b`, componentSlug: "beta" },
+    ]);
+  });
+  test("keeps only the given services when externalServiceIds is set", async () => {
+    const kept = await seedService({ slug: `${TEST_PREFIX}-only-a` });
+    const dropped = await seedService({ slug: `${TEST_PREFIX}-only-b` });
+    for (const id of [kept, dropped]) {
+      await upsertExternalComponentsForService({
+        externalServiceId: id,
+        components: [component("api", 1)],
+      });
+    }
+
+    const slugs = await listLiveComponentSlugs({ externalServiceIds: [kept] });
+    expect(slugs).toEqual([
+      { serviceSlug: `${TEST_PREFIX}-only-a`, componentSlug: "api" },
+    ]);
+  });
+});
+
+describe("listRecentlyFetchedServiceIds", () => {
+  const now = new Date("2026-11-24T12:00:00Z");
+  const hoursAgo = (h: number) => now.getTime() - h * 60 * 60 * 1000;
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
+  // safe because the code under test only calls the pipe and reads `data`.
+  function stubLatestPipe(pipe: ReturnType<typeof vi.fn>) {
+    vi.stubEnv("TINY_BIRD_API_KEY", "test");
+    vi.spyOn(defaultTb, "externalStatusLatest", "get").mockReturnValue(
+      pipe as never,
+    );
+  }
+
+  test("keeps component-capable services fetched in the last 24h, by slug or alias", async () => {
+    const fresh = await seedService({ slug: `${TEST_PREFIX}-fresh` });
+    const renamed = await seedService({
+      slug: `${TEST_PREFIX}-renamed`,
+      aliases: [`${TEST_PREFIX}-old-name`],
+    });
+    await seedService({ slug: `${TEST_PREFIX}-stale` });
+    await seedService({ slug: `${TEST_PREFIX}-unseen` });
+    await seedService({
+      slug: `${TEST_PREFIX}-fresh-custom`,
+      apiConfigType: "custom",
+    });
+    stubLatestPipe(
+      vi.fn().mockResolvedValue({
+        data: [
+          { id: `${TEST_PREFIX}-fresh`, last_fetched_at: hoursAgo(1) },
+          { id: `${TEST_PREFIX}-old-name`, last_fetched_at: hoursAgo(2) },
+          { id: `${TEST_PREFIX}-stale`, last_fetched_at: hoursAgo(25) },
+          { id: `${TEST_PREFIX}-fresh-custom`, last_fetched_at: hoursAgo(1) },
+        ],
+      }),
+    );
+
+    const ids = await listRecentlyFetchedServiceIds({ now });
+    expect(new Set(ids)).toEqual(new Set([fresh, renamed]));
+  });
+
+  test("returns null when Tinybird fails", async () => {
+    vi.spyOn(console, "warn").mockImplementation(() => {});
+    stubLatestPipe(vi.fn().mockRejectedValue(new Error("boom")));
+
+    expect(await listRecentlyFetchedServiceIds({ now })).toBeNull();
+  });
+
+  test("returns null without a Tinybird key", async () => {
+    vi.stubEnv("TINY_BIRD_API_KEY", "");
+    expect(await listRecentlyFetchedServiceIds({ now })).toBeNull();
   });
 });
 

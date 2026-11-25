@@ -1,0 +1,25 @@
+VERSION 0
+
+TAGS "grpc"
+
+NODE endpoint
+SQL >
+
+    %
+    SELECT
+        round(minIf(latency, servingStatus IS NOT NULL), 0) as minLatency,
+        round(maxIf(latency, servingStatus IS NOT NULL), 0) as maxLatency,
+        round(quantileIf(0.5)(latency, servingStatus IS NOT NULL), 0) as p50Latency,
+        round(quantileIf(0.75)(latency, servingStatus IS NOT NULL), 0) as p75Latency,
+        round(quantileIf(0.9)(latency, servingStatus IS NOT NULL), 0) as p90Latency,
+        round(quantileIf(0.95)(latency, servingStatus IS NOT NULL), 0) as p95Latency,
+        round(quantileIf(0.99)(latency, servingStatus IS NOT NULL), 0) as p99Latency,
+        max(cronTimestamp) as lastTimestamp,
+        count() as count,
+        monitorId
+    FROM mv__grpc_1d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+    GROUP BY monitorId
+
+
+TYPE ENDPOINT

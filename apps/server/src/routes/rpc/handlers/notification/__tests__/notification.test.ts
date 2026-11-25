@@ -1,10 +1,17 @@
 import { db, eq } from "@openstatus/db";
 import {
+  monitor,
   notification,
   notificationsToMonitors,
+  workspace,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import {
+  createMonitor,
+  createNotification,
+  createTestWorkspace,
+  createWorkspace,
+} from "@openstatus/db/src/test/factories";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import { app } from "../../../../../index";
 
@@ -35,7 +42,14 @@ let testNotificationId: number;
 let testNotificationToDeleteId: number;
 let testNotificationToUpdateId: number;
 
+// A second, free-plan workspace: used both for cross-workspace isolation
+// assertions and for the plan-limit rejections. Private to this suite because
+// sibling suites assert the seeded free workspace owns nothing.
+let OTHER_WORKSPACE_ID: number;
+
 beforeAll(async () => {
+  OTHER_WORKSPACE_ID = (await createTestWorkspace({ plan: "free" })).workspace
+    .id;
   // Clean up any existing test data
   await db
     .delete(notification)
@@ -347,7 +361,7 @@ describe("NotificationService.GetNotification", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),
@@ -437,36 +451,36 @@ describe("NotificationService.ListNotifications", () => {
   });
 
   test("respects offset parameter", async () => {
-    // Get total count first
-    const res1 = await connectRequest(
-      "ListNotifications",
-      {},
-      { "x-openstatus-key": "1" },
-    );
-    const data1 = await res1.json();
-    const totalSize = data1.totalSize;
+    // Isolate in a dedicated workspace so concurrent notification
+    // inserts/deletes on the seeded workspace can't shift the pagination
+    // window mid-test. In dev/test the `x-openstatus-key` header is the
+    // workspace id.
+    const ws = await createWorkspace();
+    const key = String(ws.id);
+    await createNotification(ws.id);
+    await createNotification(ws.id);
 
-    if (totalSize > 1) {
-      // Get first page
-      const res2 = await connectRequest(
+    try {
+      const res1 = await connectRequest(
         "ListNotifications",
         { limit: 1, offset: 0 },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": key },
       );
-      const data2 = await res2.json();
-
-      // Get second page
-      const res3 = await connectRequest(
+      const res2 = await connectRequest(
         "ListNotifications",
         { limit: 1, offset: 1 },
-        { "x-openstatus-key": "1" },
+        { "x-openstatus-key": key },
       );
-      const data3 = await res3.json();
+      const data1 = await res1.json();
+      const data2 = await res2.json();
 
-      // Should have different notifications
-      if (data2.notifications?.length > 0 && data3.notifications?.length > 0) {
-        expect(data2.notifications[0].id).not.toBe(data3.notifications[0].id);
-      }
+      expect(data1.totalSize).toBe(2);
+      expect(data1.notifications).toHaveLength(1);
+      expect(data2.notifications).toHaveLength(1);
+      expect(data1.notifications[0].id).not.toBe(data2.notifications[0].id);
+    } finally {
+      await db.delete(notification).where(eq(notification.workspaceId, ws.id));
+      await db.delete(workspace).where(eq(workspace.id, ws.id));
     }
   });
 
@@ -475,7 +489,7 @@ describe("NotificationService.ListNotifications", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace-list`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),
@@ -597,7 +611,7 @@ describe("NotificationService.UpdateNotification", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace-update`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),
@@ -754,7 +768,7 @@ describe("NotificationService.DeleteNotification", () => {
     const otherRecord = await db
       .insert(notification)
       .values({
-        workspaceId: 2,
+        workspaceId: OTHER_WORKSPACE_ID,
         name: `${TEST_PREFIX}-other-workspace-delete`,
         provider: "email",
         data: JSON.stringify({ email: "other@example.com" }),
@@ -840,7 +854,22 @@ describe("NotificationService.SendTestNotification", () => {
     expect(data.message).toContain("not supported");
   });
 
-  test("returns error for unsupported SMS provider", async () => {
+  test("rejects a plan-gated provider on the free plan before sending", async () => {
+    const res = await connectRequest(
+      "SendTestNotification",
+      {
+        provider: "NOTIFICATION_PROVIDER_PAGERDUTY",
+        data: { pagerduty: { integrationKey: "free-plan-key" } },
+      },
+      { "x-openstatus-key": String(OTHER_WORKSPACE_ID) },
+    );
+
+    expect(res.status).toBe(429);
+    const data = await res.json();
+    expect(data.message).toContain("pagerduty");
+  });
+
+  test("returns limit error for deprecated SMS provider", async () => {
     const res = await connectRequest(
       "SendTestNotification",
       {
@@ -854,10 +883,10 @@ describe("NotificationService.SendTestNotification", () => {
       { "x-openstatus-key": "1" },
     );
 
-    // SMS doesn't support test notifications
-    expect(res.status).toBe(400);
+    // sms is off on every plan, so the gate fires before the provider check
+    expect(res.status).toBe(429);
     const data = await res.json();
-    expect(data.message).toContain("not supported");
+    expect(data.message).toContain("sms");
   });
 
   test("returns error when no data provided", async () => {
@@ -915,5 +944,31 @@ describe("NotificationService.SendTestNotification", () => {
     );
 
     expect(res.status).toBe(400);
+  });
+});
+
+describe("NotificationService monitor errors", () => {
+  test("names the one monitor that is not usable", async () => {
+    const foreign = await createMonitor(OTHER_WORKSPACE_ID);
+    try {
+      const res = await connectRequest(
+        "CreateNotification",
+        {
+          name: `${TEST_PREFIX}-foreign-monitor`,
+          provider: "NOTIFICATION_PROVIDER_DISCORD",
+          data: {
+            discord: { webhookUrl: "https://discord.com/api/webhooks/1/a" },
+          },
+          monitorIds: ["1", String(foreign.id)],
+        },
+        { "x-openstatus-key": "1" },
+      );
+
+      expect(res.status).toBe(404);
+      expect(res.headers.get("error-reason")).toBe("MONITOR_NOT_FOUND");
+      expect(res.headers.get("error-monitor-id")).toBe(String(foreign.id));
+    } finally {
+      await db.delete(monitor).where(eq(monitor.id, foreign.id));
+    }
   });
 });

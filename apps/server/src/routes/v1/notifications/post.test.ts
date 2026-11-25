@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import { notification } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { expect, test } from "vitest";
 
 import { app } from "@/index";
 
@@ -31,6 +30,23 @@ test("create a notification", async () => {
   if (result.success) {
     await db.delete(notification).where(eq(notification.id, result.data.id));
   }
+});
+
+test("create a deprecated sms notification should return a 400", async () => {
+  const res = await app.request("/v1/notification", {
+    method: "POST",
+    headers: {
+      "x-openstatus-key": "1",
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      name: "OpenStatus",
+      provider: "sms",
+      payload: { sms: "+10000000000" },
+    }),
+  });
+
+  expect(res.status).toBe(400);
 });
 
 test("create a notification with invalid monitor ids should return a 400", async () => {

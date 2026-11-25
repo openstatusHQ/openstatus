@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, Globe, Lock } from "@openstatus/icons";
 import { formatRegionCode, groupByContinent } from "@openstatus/regions";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -18,16 +19,19 @@ import {
 } from "@openstatus/ui/components/ui/popover";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Globe, Lock } from "lucide-react";
+import Link from "next/link";
 import { parseAsArrayOf, parseAsString, useQueryState } from "nuqs";
 
 import { IconCloudProvider } from "@/components/common/icon-cloud-provider";
-import { Link } from "@/components/common/link";
 import {
   BillingOverlay,
   BillingOverlayButton,
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
+import {
+  TableCellMetadata,
+  getMetadataEntries,
+} from "@/components/data-table/table-cell-metadata";
 import type { REGIONS } from "@/data/metrics.client";
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -36,7 +40,11 @@ export function CommandRegion({
   privateLocations,
 }: {
   regions: (typeof REGIONS)[number][];
-  privateLocations?: { id: number; name: string }[];
+  privateLocations?: {
+    id: number;
+    name: string;
+    metadata?: Record<string, string> | null;
+  }[];
 }) {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
@@ -53,7 +61,11 @@ export function CommandRegion({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="decoration-border hover:decoration-foreground data-[state=open]:decoration-foreground h-auto rounded-md px-1 py-0 text-[length:inherit] leading-[inherit] font-medium underline underline-offset-3 hover:bg-transparent dark:hover:bg-transparent"
+        >
           {selectedRegions.length === regions.length
             ? "All Regions"
             : `${selectedRegions.length} Regions`}
@@ -151,31 +163,44 @@ export function CommandRegion({
             )}
             {privateLocations && privateLocations.length > 0 ? (
               <CommandGroup heading="Private Locations">
-                {privateLocations.map((location) => (
-                  <CommandItem
-                    key={location.id}
-                    keywords={[location.name]}
-                    value={location.id.toString()}
-                    onSelect={() => {
-                      setSelectedRegions((prev) =>
-                        prev.includes(location.id.toString())
-                          ? prev.filter((r) => r !== location.id.toString())
-                          : [...prev, location.id.toString()],
-                      );
-                    }}
-                  >
-                    <Globe className="size-3" />
-                    <span className="truncate font-mono">{location.name}</span>
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        selectedRegions.includes(location.id.toString())
-                          ? "opacity-100"
-                          : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                ))}
+                {privateLocations.map((location) => {
+                  const metadata = getMetadataEntries(location.metadata);
+                  const keywords = [location.name, ...metadata.flat()];
+
+                  return (
+                    <CommandItem
+                      key={location.id}
+                      keywords={keywords}
+                      value={location.id.toString()}
+                      onSelect={() => {
+                        setSelectedRegions((prev) =>
+                          prev.includes(location.id.toString())
+                            ? prev.filter((r) => r !== location.id.toString())
+                            : [...prev, location.id.toString()],
+                        );
+                      }}
+                    >
+                      <Globe className="size-3 shrink-0" />
+                      <span className="truncate font-mono">
+                        {location.name}
+                      </span>
+                      {metadata.length > 0 ? (
+                        <TableCellMetadata
+                          value={location.metadata}
+                          maxEntries={2}
+                        />
+                      ) : null}
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          selectedRegions.includes(location.id.toString())
+                            ? "opacity-100"
+                            : "opacity-0",
+                        )}
+                      />
+                    </CommandItem>
+                  );
+                })}
               </CommandGroup>
             ) : null}
             <CommandEmpty>No region found.</CommandEmpty>
@@ -183,8 +208,12 @@ export function CommandRegion({
         </Command>
         {limited ? (
           <BillingOverlay className="to-70%">
-            <BillingOverlayButton asChild>
-              <Link href="/settings/billing">
+            <BillingOverlayButton
+              data-track="paywall_viewed"
+              data-limit="max-regions"
+              asChild
+            >
+              <Link href="/settings/billing?highlight=max-regions#plans">
                 <Lock />
                 Upgrade
               </Link>

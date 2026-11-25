@@ -1,9 +1,18 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 
+/**
+ * `NODE_ENV` is read through this alias rather than as a literal
+ * `process.env.NODE_ENV` member access, which some bundlers fold into a
+ * build-time string. The other keys stay as literal member accesses because
+ * Next.js needs them that way to inline `NEXT_PUBLIC_*`.
+ */
+const processEnv: Record<string, string | undefined> = process.env;
+
 export const env = createEnv({
   server: {
     OPENPANEL_CLIENT_SECRET: z.string(),
+    NODE_ENV: z.string().prefault("development"),
   },
   client: {
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID: z.string(),
@@ -11,6 +20,7 @@ export const env = createEnv({
   clientPrefix: "NEXT_PUBLIC_",
   runtimeEnv: {
     OPENPANEL_CLIENT_SECRET: process.env.OPENPANEL_CLIENT_SECRET,
+    NODE_ENV: processEnv.NODE_ENV,
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID:
       process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
   },

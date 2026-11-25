@@ -1,12 +1,4 @@
-import {
-  and,
-  asc,
-  db as defaultDb,
-  desc,
-  eq,
-  inArray,
-  sql,
-} from "@openstatus/db";
+import { and, asc, db as defaultDb, desc, eq, ne, sql } from "@openstatus/db";
 import {
   maintenance,
   page,
@@ -16,21 +8,27 @@ import {
   selectPageComponentGroupSchema,
   selectPageComponentSchema,
   selectPageSchema,
-  selectStatusReportSchema,
   statusReport,
 } from "@openstatus/db/src/schema";
 import { subdomainSafeList } from "@openstatus/db/src/schema/pages/constants";
 
-import { type DB, type ServiceContext, getReadDb } from "../context";
+import { requireScope } from "../auth";
+import {
+  type DB,
+  type ServiceContext,
+  batchReads,
+  getReadDb,
+} from "../context";
 import { NotFoundError } from "../errors";
-import type { Maintenance, Page, PageComponent, StatusReport } from "../types";
+import type { Maintenance, Page, PageComponent } from "../types";
 import { getPageInWorkspace } from "./internal";
 import { GetPageInput, GetSlugAvailableInput, ListPagesInput } from "./schemas";
 
 type PageComponentGroupRow = typeof pageComponentGroup.$inferSelect;
 
 export type PageListItem = Page & {
-  statusReports: StatusReport[];
+  /** Any non-resolved status report on this page — drives the sidebar dot. */
+  hasActiveStatusReport: boolean;
 };
 
 export type PageWithRelations = Page & {
@@ -44,42 +42,42 @@ export async function listPages(args: {
   input: ListPagesInput;
 }): Promise<PageListItem[]> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = ListPagesInput.parse(args.input);
   const db = getReadDb(ctx);
 
-  const pageRows = await db
-    .select()
-    .from(page)
-    .where(eq(page.workspaceId, ctx.workspace.id))
-    .orderBy(input.order === "asc" ? asc(page.createdAt) : desc(page.createdAt))
-    .all();
-  if (pageRows.length === 0) return [];
+  const dir = input.order === "asc" ? asc : desc;
 
-  const pageIds = pageRows.map((p) => p.id);
-
-  const reportRows = await db
-    .select()
-    .from(statusReport)
-    .where(
-      and(
-        eq(statusReport.workspaceId, ctx.workspace.id),
-        inArray(statusReport.pageId, pageIds),
+  // The probe is workspace-scoped, so it doesn't depend on the page ids and
+  // both statements go out together. Distinct page ids of unresolved reports
+  // rather than the reports themselves — the list view only needs the flag,
+  // and the full history is unbounded.
+  const [pageRows, unresolvedRows] = await batchReads(db, [
+    db
+      .select()
+      .from(page)
+      .where(eq(page.workspaceId, ctx.workspace.id))
+      // id tiebreaker: createdAt ties would make offset pagination unstable
+      .orderBy(dir(page.createdAt), dir(page.id)),
+    db
+      .selectDistinct({ pageId: statusReport.pageId })
+      .from(statusReport)
+      .where(
+        and(
+          eq(statusReport.workspaceId, ctx.workspace.id),
+          ne(statusReport.status, "resolved"),
+        ),
       ),
-    )
-    .all();
+  ]);
 
-  const reportsByPage = new Map<number, StatusReport[]>();
-  for (const r of reportRows) {
-    if (r.pageId == null) continue;
-    const arr = reportsByPage.get(r.pageId);
-    const parsed = selectStatusReportSchema.parse(r);
-    if (arr) arr.push(parsed);
-    else reportsByPage.set(r.pageId, [parsed]);
+  const pagesWithActiveReport = new Set<number>();
+  for (const r of unresolvedRows) {
+    if (r.pageId != null) pagesWithActiveReport.add(r.pageId);
   }
 
   return pageRows.map((p) => ({
     ...selectPageSchema.parse(p),
-    statusReports: reportsByPage.get(p.id) ?? [],
+    hasActiveStatusReport: pagesWithActiveReport.has(p.id),
   }));
 }
 
@@ -88,6 +86,7 @@ export async function getPage(args: {
   input: GetPageInput;
 }): Promise<PageWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetPageInput.parse(args.input);
   const db = getReadDb(ctx);
 
@@ -158,6 +157,7 @@ export async function getPageCustomDomain(args: {
   input: GetPageInput;
 }): Promise<string> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetPageInput.parse(args.input);
   const db = getReadDb(ctx);
 
@@ -169,6 +169,46 @@ export async function getPageCustomDomain(args: {
 
   if (!row) throw new NotFoundError("page", input.id);
   return row.customDomain;
+}
+
+/**
+ * Single-row page read in the caller's workspace, raw DB shape like
+ * `getPageBySlug`. Use `getPage` when the relations are needed.
+ */
+export async function getPageRow(args: {
+  ctx: ServiceContext;
+  input: GetPageInput;
+}): Promise<typeof page.$inferSelect> {
+  const { ctx } = args;
+  requireScope(ctx, "pages:read");
+  const input = GetPageInput.parse(args.input);
+
+  return getPageInWorkspace({
+    tx: getReadDb(ctx),
+    id: input.id,
+    workspaceId: ctx.workspace.id,
+  });
+}
+
+/** NotFound rather than Forbidden so a miss is no existence oracle. */
+export async function assertCustomDomainInWorkspace(args: {
+  ctx: ServiceContext;
+  input: { domain: string };
+}): Promise<void> {
+  const { ctx, input } = args;
+  requireScope(ctx, "pages:read");
+  const row = await getReadDb(ctx)
+    .select({ id: page.id })
+    .from(page)
+    .where(
+      and(
+        sql`lower(${page.customDomain}) = ${input.domain.toLowerCase()}`,
+        eq(page.workspaceId, ctx.workspace.id),
+      ),
+    )
+    .get();
+
+  if (!row) throw new NotFoundError("domain");
 }
 
 /**
@@ -194,6 +234,7 @@ export async function getSlugAvailable(args: {
   input: GetSlugAvailableInput;
 }): Promise<boolean> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = GetSlugAvailableInput.parse(args.input);
   const db = getReadDb(ctx);
 

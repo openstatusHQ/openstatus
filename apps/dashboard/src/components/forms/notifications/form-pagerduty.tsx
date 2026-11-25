@@ -31,9 +31,9 @@ import { CheckboxTree } from "@/components/ui/checkbox-tree";
 import { useTRPC } from "@/lib/trpc/client";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("pagerduty"),
-  data: z.string(),
+  data: z.string().trim().min(1, "PagerDuty configuration is required"),
   monitors: z.array(z.number()),
 });
 
@@ -115,8 +115,10 @@ export function FormPagerDuty({
       try {
         const provider = form.getValues("provider");
         const data = form.getValues("data");
-        if (!data) {
-          toast.error("No PagerDuty configuration found");
+        if (!data || data.trim() === "") {
+          toast.error(
+            "Please enter PagerDuty configuration before sending test",
+          );
           return;
         }
         const promise = sendTestMutation.mutateAsync({

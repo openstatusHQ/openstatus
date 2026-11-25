@@ -12,8 +12,10 @@ import {
   type ServiceContext,
   getReadDb,
   withTransaction,
+  dbOnlyContext,
 } from "../context";
 import { NotFoundError, ValidationError } from "../errors";
+import { type PageVisitor, requirePageAccess } from "../page-access";
 import { assertSubscribersAllowed, parseWorkspaceForContext } from "./internal";
 import { UpsertSelfSignupSubscriberInput } from "./schemas";
 
@@ -25,7 +27,7 @@ export type UpsertSelfSignupResult = {
   pageName: string;
   pageSlug: string;
   customDomain: string | null;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email: string;
   token: string | null;
   acceptedAt: Date | null;
@@ -48,14 +50,19 @@ export type UpsertSelfSignupResult = {
  *                                  components-only change)
  *   - already verified row      → no audit (no-op return)
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function upsertSelfSignupSubscriber(args: {
   input: UpsertSelfSignupSubscriberInput;
+  /** `null` only when the caller already authorized the request (workspace API). */
+  visitor: PageVisitor | null;
   db?: DB;
 }): Promise<UpsertSelfSignupResult> {
   const input = UpsertSelfSignupSubscriberInput.parse(args.input);
   const componentIds = input.componentIds ?? [];
 
-  const readDb = getReadDb({ db: args.db } as ServiceContext);
+  const readDb = getReadDb(dbOnlyContext(args.db));
   const pageData = await readDb.query.page.findFirst({
     where: { id: input.pageId },
     with: { workspace: true },
@@ -63,6 +70,7 @@ export async function upsertSelfSignupSubscriber(args: {
   if (!pageData) {
     throw new NotFoundError("page", input.pageId);
   }
+  if (args.visitor) await requirePageAccess(pageData, args.visitor);
   const workspace = parseWorkspaceForContext(pageData.workspace);
   // Plan-gate before any DB writes — same upsell semantics as the
   // dashboard `createPageSubscriber` path. Free-plan pages don't
@@ -71,7 +79,7 @@ export async function upsertSelfSignupSubscriber(args: {
 
   const emailLower = input.email.toLowerCase();
 
-  return withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  return withTransaction(dbOnlyContext(args.db), async (tx) => {
     if (componentIds.length > 0) {
       const valid = await tx
         .select({ id: pageComponent.id })
@@ -118,8 +126,25 @@ export async function upsertSelfSignupSubscriber(args: {
     if (existing) {
       // Pending row — merge components, refresh expiry.
       const currentIds = existing.components.map((c) => c.pageComponentId);
-      const mergedIds = [...new Set([...currentIds, ...componentIds])];
+      // Empty scope means the entire page, so it absorbs component scopes.
+      const mergedIds =
+        currentIds.length === 0 || componentIds.length === 0
+          ? []
+          : [...new Set([...currentIds, ...componentIds])];
       const newIds = mergedIds.filter((id) => !currentIds.includes(id));
+      const scopeChanged =
+        mergedIds.length !== currentIds.length || newIds.length > 0;
+      // A link issued for the previous scope must not authorize wider coverage.
+      const token = scopeChanged ? crypto.randomUUID() : existing.token;
+
+      if (currentIds.length > 0 && mergedIds.length === 0) {
+        await tx
+          .delete(pageSubscriberToPageComponent)
+          .where(
+            eq(pageSubscriberToPageComponent.pageSubscriberId, existing.id),
+          )
+          .run();
+      }
 
       if (newIds.length > 0) {
         await tx
@@ -138,7 +163,7 @@ export async function upsertSelfSignupSubscriber(args: {
       const beforeRow = selectPageSubscriberSchema.parse(existing);
       const updatedRow = await tx
         .update(pageSubscriber)
-        .set({ expiresAt: newExpiresAt, updatedAt: new Date() })
+        .set({ token, expiresAt: newExpiresAt, updatedAt: new Date() })
         .where(eq(pageSubscriber.id, existing.id))
         .returning()
         .get();
@@ -161,7 +186,7 @@ export async function upsertSelfSignupSubscriber(args: {
         entityId: existing.id,
         before: beforeSnap,
         after: afterSnap,
-        ...(newIds.length > 0 ? { metadata: { componentIds: mergedIds } } : {}),
+        ...(scopeChanged ? { metadata: { componentIds: mergedIds } } : {}),
       });
 
       return {
@@ -172,7 +197,7 @@ export async function upsertSelfSignupSubscriber(args: {
         customDomain: pageData.customDomain,
         channelType: existing.channelType,
         email: existing.email ?? emailLower,
-        token: existing.token,
+        token,
         acceptedAt: null,
         componentIds: mergedIds,
       };

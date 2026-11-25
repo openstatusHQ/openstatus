@@ -1,5 +1,5 @@
 import { createRoute, z } from "@hono/zod-openapi";
-import { and, db, eq, isNull } from "@openstatus/db";
+import { and, db, eq, isNull, ne } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
@@ -41,6 +41,7 @@ export function registerGetMonitor(api: typeof monitorsApi) {
           eq(monitor.id, Number(id)),
           eq(monitor.workspaceId, workspaceId),
           isNull(monitor.deletedAt),
+          ne(monitor.jobType, "heartbeat"),
         ),
       )
       .get();

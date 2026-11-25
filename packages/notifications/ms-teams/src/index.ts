@@ -3,7 +3,7 @@ import {
   type NotificationContext,
   buildCommonMessageData,
 } from "@openstatus/notification-base";
-import { assertSafeUrl } from "@openstatus/utils";
+import { safeFetch } from "@openstatus/utils";
 
 import {
   type AdaptiveCard,
@@ -21,9 +21,7 @@ const postCard = async (
     throw new Error("Microsoft Teams webhook URL is required");
   }
 
-  await assertSafeUrl(webhookUrl);
-
-  const res = await fetch(webhookUrl, {
+  const res = await safeFetch(webhookUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({

@@ -1,19 +1,27 @@
 {
   "name": "@openstatus/workflows",
   "scripts": {
-    "check": "deno check --sloppy-imports src/serve.ts",
-    "dev": "NODE_ENV=development deno run -A --watch src/serve.ts",
-    "start": "NODE_ENV=production deno run -A src/serve.ts",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test -A --no-check --sloppy-imports"
+    "check": "tsc --noEmit",
+    "dev": "NODE_ENV=development node --import @oxc-node/core/register --watch src/serve.ts",
+    "start": "NODE_ENV=production node dist/serve.mjs",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key CRON_SECRET=test-secret vitest run",
+    "build": "tsdown"
   },
   "dependencies": {
+    "@google-cloud/pubsub": "catalog:",
     "@google-cloud/tasks": "catalog:",
+    "@hono/node-server": "catalog:",
     "@libsql/client": "catalog:",
     "@logtape/logtape": "catalog:",
     "@logtape/otel": "catalog:",
     "@logtape/sentry": "catalog:",
     "@openstatus/db": "workspace:*",
     "@openstatus/emails": "workspace:*",
+    "@openstatus/health": "catalog:",
+    "@openstatus/health-fly": "catalog:",
+    "@openstatus/health-hono": "catalog:",
+    "@openstatus/health-tinybird": "catalog:",
+    "@openstatus/health-turso": "catalog:",
     "@openstatus/notification-base": "workspace:*",
     "@openstatus/notification-bird-whatsapp": "workspace:*",
     "@openstatus/notification-discord": "workspace:*",
@@ -30,7 +38,6 @@
     "@openstatus/notification-webhook": "workspace:*",
     "@openstatus/regions": "workspace:*",
     "@openstatus/services": "workspace:*",
-    "@openstatus/status-fetcher": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/upstash": "workspace:*",
     "@openstatus/utils": "workspace:*",
@@ -38,7 +45,8 @@
     "@opentelemetry/resources": "catalog:",
     "@opentelemetry/sdk-logs": "catalog:",
     "@opentelemetry/semantic-conventions": "catalog:",
-    "@sentry/deno": "catalog:",
+    "@sentry/node": "catalog:",
+    "@slack/web-api": "catalog:",
     "@upstash/qstash": "catalog:",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
@@ -49,6 +57,10 @@
   "devDependencies": {
     "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "typescript": "catalog:"
+    "@oxc-node/core": "catalog:",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

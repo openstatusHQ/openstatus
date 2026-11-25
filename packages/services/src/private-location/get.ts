@@ -1,0 +1,39 @@
+import { requireScope } from "../auth";
+import { getReadDb, type ServiceContext } from "../context";
+import { NotFoundError } from "../errors";
+import { GetPrivateLocationInput } from "./schemas";
+
+/**
+ * Fetch one private location in the caller's workspace, flattened the same
+ * way `listPrivateLocations` flattens its items.
+ *
+ * Return type is deliberately inferred — see the note in `list.ts`.
+ */
+export async function getPrivateLocation(args: {
+  ctx: ServiceContext;
+  input: GetPrivateLocationInput;
+}) {
+  requireScope(args.ctx, "monitors:read");
+  const input = GetPrivateLocationInput.parse(args.input);
+  const db = getReadDb(args.ctx);
+
+  const row = await db.query.privateLocation.findFirst({
+    where: { id: input.id, workspaceId: args.ctx.workspace.id },
+    with: {
+      privateLocationToMonitors: {
+        with: { monitor: true },
+      },
+    },
+  });
+
+  if (!row) throw new NotFoundError("private_location", input.id);
+
+  return {
+    ...row,
+    monitors: row.privateLocationToMonitors
+      .map((link) => link.monitor)
+      .filter(
+        (m): m is NonNullable<typeof m> => m !== null && m.deletedAt === null,
+      ),
+  };
+}

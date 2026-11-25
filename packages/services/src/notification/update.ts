@@ -8,8 +8,10 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import type { Notification } from "../types";
 import {
+  DEPRECATED_PROVIDERS,
   assertProviderAllowed,
   getNotificationInWorkspace,
   validateMonitorIds,
@@ -22,7 +24,7 @@ export async function updateNotification(args: {
   input: UpdateNotificationInput;
 }): Promise<Notification> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "notifications:write");
   const input = UpdateNotificationInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -35,7 +37,9 @@ export async function updateNotification(args: {
     // Re-check the plan gate against the stored provider. After a plan
     // downgrade a previously allowed channel (e.g. pagerduty) should no
     // longer be editable — matches the create-time gate.
-    assertProviderAllowed(ctx.workspace, existing.provider);
+    if (!DEPRECATED_PROVIDERS.has(existing.provider)) {
+      assertProviderAllowed(ctx.workspace, existing.provider);
+    }
 
     validateNotificationData(existing.provider, input.data);
 
@@ -55,6 +59,7 @@ export async function updateNotification(args: {
       .where(eq(notification.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("notification", existing.id);
 
     await tx
       .delete(notificationsToMonitors)

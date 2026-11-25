@@ -310,3 +310,41 @@ We are investigating a critical issue affecting checkout. The majority of paymen
 ---
 
 Use the [Incident Severity Matrix Builder](/play/severity-matrix) to classify incidents interactively, test your thresholds against real scenarios, and customize the matrix for your team.
+
+## Frequently asked questions
+
+<Details summary="What does SEV0 mean?">
+
+SEV0 indicates a critical incident — typically a complete service outage or confirmed security breach that requires immediate response from senior engineering leadership. It's the highest severity level and triggers the most aggressive communication and escalation protocols.
+
+</Details>
+
+<Details summary="How many severity levels should we use?">
+
+Most teams use 3 or 4 levels. Four levels (SEV0 through SEV3) provide enough granularity to distinguish between a full outage and a minor cosmetic bug without overcomplicating triage during a live incident.
+
+</Details>
+
+<Details summary="What is the difference between severity and priority?">
+
+Severity measures the impact of an incident — how many users are affected and how badly. Priority reflects business urgency and resource allocation. A typo on your pricing page might be low severity but high priority if it's costing you conversions. Your severity matrix should classify based on impact alone; priority is a triage decision.
+
+</Details>
+
+<Details summary="Should security incidents always be SEV0?">
+
+In most cases, yes. Security incidents carry outsized risk even when few users are immediately affected — the blast radius can expand quickly and the reputational impact is disproportionate. Treating all confirmed security incidents as SEV0 ensures you mobilize the right resources immediately.
+
+</Details>
+
+<Details summary="How often should we review our severity matrix?">
+
+Review it quarterly, or after any major incident where the classification felt wrong. If your team consistently debates whether something is a SEV1 or SEV2, your thresholds probably need adjustment.
+
+</Details>
+
+<Details summary="When is a postmortem required?">
+
+SEV0 and SEV1 incidents always require a postmortem. SEV2 requires a team-level postmortem. SEV3 postmortems are optional. The postmortem closes the loop by documenting root cause, timeline, and action items to prevent recurrence.
+
+</Details>

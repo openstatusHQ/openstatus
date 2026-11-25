@@ -3,40 +3,55 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Monitor } from "../types";
 import {
-  countMonitorsInWorkspace,
+  assertHeartbeatNotPublic,
+  assertSchedulingWithinPlan,
+  generateHeartbeatToken,
   headersToDbJson,
+  monitorAuditSnapshot,
   pickDefaultRegions,
   serialiseAssertions,
 } from "./internal";
 import { CreateMonitorInput } from "./schemas";
+import { assertMonitorUrlSafe } from "./url-safety";
 
 export async function createMonitor(args: {
   ctx: ServiceContext;
   input: CreateMonitorInput;
 }): Promise<Monitor> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = CreateMonitorInput.parse(args.input);
 
+  const isHeartbeat = input.jobType === "heartbeat";
+  assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
+  assertHeartbeatNotPublic(input, input.public);
+  // Only caller-supplied values: the plan defaults below are picked from the
+  // plan, and a workspace's stored limits can lag behind newly added regions.
+  if (!isHeartbeat) assertSchedulingWithinPlan(ctx.workspace.limits, input);
+
   return withTransaction(ctx, async (tx) => {
-    const existing = await countMonitorsInWorkspace(tx, ctx.workspace.id);
-    if (existing >= ctx.workspace.limits.monitors) {
-      throw new LimitExceededError("monitors", ctx.workspace.limits.monitors);
-    }
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "monitors",
+    });
 
     const defaults = pickDefaultRegions(ctx.workspace);
-    const regions = input.regions ?? defaults.regions;
-    const periodicity = input.periodicity ?? defaults.periodicity;
+    // Heartbeats are pushed to us: "other" keeps them out of every checker cron.
+    const regions = isHeartbeat ? [] : (input.regions ?? defaults.regions);
+    const periodicity = isHeartbeat
+      ? "other"
+      : (input.periodicity ?? defaults.periodicity);
 
     const row = await tx
       .insert(monitor)
       .values({
         name: input.name,
         jobType: input.jobType,
-        url: input.url,
+        url: isHeartbeat ? "" : input.url,
         method: input.method,
         headers: headersToDbJson(input.headers),
         body: input.body,
@@ -45,6 +60,23 @@ export async function createMonitor(args: {
         periodicity,
         regions: regions.join(","),
         assertions: serialiseAssertions(input.assertions),
+        description: input.description,
+        public: input.public,
+        timeout: input.timeout,
+        degradedAfter: input.degradedAfter,
+        retry: input.retry,
+        followRedirects: input.followRedirects,
+        grpcService: input.grpcService,
+        grpcTls: input.grpcTls,
+        otelEndpoint: input.otelEndpoint,
+        otelHeaders: headersToDbJson(input.otelHeaders),
+        ...(isHeartbeat
+          ? {
+              heartbeatToken: generateHeartbeatToken(),
+              heartbeatPeriod: input.heartbeatPeriod,
+              heartbeatGrace: input.heartbeatGrace,
+            }
+          : {}),
         updatedAt: new Date(),
       })
       .returning()
@@ -54,7 +86,7 @@ export async function createMonitor(args: {
       action: "monitor.create",
       entityType: "monitor",
       entityId: row.id,
-      after: row,
+      after: await monitorAuditSnapshot(row),
       metadata: { jobType: row.jobType, url: row.url },
     });
 

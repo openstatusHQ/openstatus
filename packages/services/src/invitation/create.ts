@@ -3,16 +3,11 @@ import { invitation, selectInvitationSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { env } from "../env";
 import { LimitExceededError } from "../errors";
 import type { Invitation } from "../types";
+import { UNLIMITED_MEMBERS_EFFECTIVE_CAP } from "./constants";
 import { CreateInvitationInput } from "./schemas";
-
-/**
- * "Unlimited" members resolves to this effective cap — matches the legacy
- * behavior in `invitationRouter.create`. Large enough that enterprise plans
- * never brush against it in practice.
- */
-const UNLIMITED_MEMBERS_EFFECTIVE_CAP = 420;
 
 /**
  * Invite a user to the caller's workspace.
@@ -27,7 +22,7 @@ export async function createInvitation(args: {
   input: CreateInvitationInput;
 }): Promise<Invitation> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = CreateInvitationInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
@@ -77,10 +72,10 @@ export async function createInvitation(args: {
 
     // Dev-mode convenience: echo the invite URL so the developer can
     // click it straight from the terminal without checking the DB.
-    // Strict equality on `"development"` so bun:test (which sets
+    // Strict equality on `"development"` so the test runner (which sets
     // `NODE_ENV=test`) and CI (typically `undefined` or `"test"`) don't
     // leak tokens into logs.
-    if (process.env.NODE_ENV === "development") {
+    if (env.NODE_ENV === "development") {
       console.log(
         `>>>> Invitation token: http://localhost:3000/invite?token=${token} <<<< `,
       );

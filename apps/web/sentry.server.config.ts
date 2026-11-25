@@ -2,19 +2,14 @@
 // The config you add here will be used whenever the server handles a request.
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
+import { isExpectedTRPCError } from "@openstatus/api/src/trpc-errors";
+import { sentryPrivacyDefaults } from "@openstatus/utils/src/sentry";
 import * as Sentry from "@sentry/nextjs";
-import { TRPCError } from "@trpc/server";
 
 import { env } from "@/env";
 
-// tRPC error codes that should not be reported to Sentry (expected client errors)
-const IGNORED_TRPC_CODES: TRPCError["code"][] = [
-  "UNAUTHORIZED",
-  "NOT_FOUND",
-  "BAD_REQUEST",
-];
-
 Sentry.init({
+  ...sentryPrivacyDefaults,
   dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Adjust this value in production, or use tracesSampler for greater control
@@ -25,10 +20,7 @@ Sentry.init({
   integrations: [Sentry.captureConsoleIntegration({ levels: ["error"] })],
 
   beforeSend(event, hint) {
-    if (
-      hint.originalException instanceof TRPCError &&
-      IGNORED_TRPC_CODES.includes(hint.originalException.code)
-    ) {
+    if (isExpectedTRPCError(hint.originalException)) {
       return null;
     }
     return event;

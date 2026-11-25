@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/openstatushq/openstatus/apps/checker/checker"
 	"github.com/openstatushq/openstatus/apps/checker/pkg/assertions"
+	otelOS "github.com/openstatushq/openstatus/apps/checker/pkg/otel"
 	"github.com/openstatushq/openstatus/apps/checker/request"
 	"github.com/rs/zerolog/log"
 
@@ -25,6 +27,7 @@ type DNSResponse struct {
 	URI           string `json:"uri"`
 	RequestStatus string `json:"requestStatus,omitempty"`
 	Assertions    string `json:"assertions"`
+	Timing        string `json:"timing"`
 
 	Records map[string][]string `json:"records"`
 
@@ -34,6 +37,8 @@ type DNSResponse struct {
 	Timestamp     int64 `json:"timestamp"`
 	Latency       int64 `json:"latency"`
 	CronTimestamp int64 `json:"cronTimestamp"`
+
+	Attempts int `json:"attempts,omitempty"`
 
 	Error uint8 `json:"error"`
 }
@@ -57,23 +62,9 @@ func (d DNSResponse) tinybirdEvent() (dnsTinybirdEvent, error) {
 
 func (h Handler) DNSHandler(c *gin.Context) {
 	ctx := c.Request.Context()
-	const defaultRetry = 3
-	dataSourceName := "dns_response__v0"
 
-	// Authorization check
-	if c.GetHeader("Authorization") != fmt.Sprintf("Basic %s", h.Secret) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+	if !h.acceptCron(c) {
 		return
-	}
-
-	// Fly region forwarding
-	if h.CloudProvider == "fly" {
-		region := c.GetHeader("fly-prefer-region")
-		if region != "" && region != h.Region {
-			c.Header("fly-replay", fmt.Sprintf("region=%s", region))
-			c.String(http.StatusAccepted, "Forwarding request to %s", region)
-			return
-		}
 	}
 
 	// Parse request
@@ -84,22 +75,35 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return
 	}
 
+	setCheckerEvent(c, req.URI, req.WorkspaceID, req.MonitorID, cronTrigger(req.Trigger), "dns")
+
+	data, err := h.RunDNSCheck(ctx, req)
+	if respondInvalid(c, err) {
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
+}
+
+// RunDNSCheck probes and records one cron DNS check. A nil error means the
+// result was recorded, whether the monitor passed or not.
+func (h Handler) RunDNSCheck(ctx context.Context, req request.DNSCheckerRequest) (DNSResponse, error) {
+	const defaultRetry = 3
+	dataSourceName := "dns_response__v0"
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
+
 	workspaceId, err := strconv.ParseInt(req.WorkspaceID, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid workspace id"})
-		return
+		return DNSResponse{}, InvalidRequestError{Reason: "invalid workspace id"}
 	}
 
 	monitorId, err := strconv.ParseInt(req.MonitorID, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid monitor id"})
-		return
+		return DNSResponse{}, InvalidRequestError{Reason: "invalid monitor id"}
 	}
 
-	trigger := req.Trigger
-	if trigger == "" {
-		trigger = "cron"
-	}
+	trigger := cronTrigger(req.Trigger)
 
 	retry := defaultRetry
 	if req.Retry != 0 {
@@ -109,7 +113,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	id, e := uuid.NewV7()
 	if e != nil {
 		log.Ctx(ctx).Error().Err(e).Msg("failed to generate UUID")
-		return
+		return DNSResponse{}, e
 	}
 
 	statusMap := map[string]string{
@@ -139,13 +143,17 @@ func (h Handler) DNSHandler(c *gin.Context) {
 
 	op := func() (*checker.DnsResponse, error) {
 		called++
+		isSuccessful = true
 		log.Ctx(ctx).Debug().Msgf("performing dns check for %s (attempt %d/%d)", req.URI, called, retry)
+		attemptCtx, cancel := dnsAttemptContext(ctx, req.Timeout)
+		defer cancel()
 		start := time.Now().UTC().UnixMilli()
-		response, err := checker.Dns(ctx, req.URI)
+		response, err := checker.Dns(attemptCtx, req.URI)
 		latency = time.Now().UTC().UnixMilli() - start
 
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
+			// A resolver error is a failed check, not a pass with no records.
+			isSuccessful = false
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
@@ -165,10 +173,11 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		return response, nil
 	}
 
-	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)))
+	result, err := backoff.Retry(ctx, op, backoff.WithBackOff(backoff.NewExponentialBackOff()), backoff.WithMaxTries(uint(retry)), backoff.WithMaxElapsedTime(retryBudget))
 	data.Latency = latency
+	data.Attempts = called
 	if result != nil {
-		data.Records = FormatDNSResult(result)
+		data.Records = checker.FormatDNSRecords(result)
 	}
 
 	if len(req.RawAssertions) > 0 {
@@ -182,7 +191,7 @@ func (h Handler) DNSHandler(c *gin.Context) {
 	// Status update logic
 	switch {
 	case !isSuccessful:
-		log.Ctx(ctx).Debug().Msg("DNS check failed assertions")
+		log.Ctx(ctx).Debug().Msg("DNS check failed")
 		data.RequestStatus = "error"
 		data.Error = 1
 		data.ErrorMessage = err.Error()
@@ -216,31 +225,25 @@ func (h Handler) DNSHandler(c *gin.Context) {
 		data.RequestStatus = "success"
 	}
 
+	var recordErr error
 	if tbEvent, err := data.tinybirdEvent(); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to marshal dns records")
+		recordErr = err
 	} else if err := h.TbClient.SendEvent(ctx, tbEvent, dataSourceName); err != nil {
 		log.Ctx(ctx).Error().Err(err).Msg("failed to send event to tinybird")
+		recordErr = err
 	}
 
-	event, f := c.Get("event")
-	if f {
-		t := event.(map[string]any)
-		t["checker"] = map[string]string{
-			"uri":          req.URI,
-			"workspace_id": req.WorkspaceID,
-			"monitor_id":   req.MonitorID,
-			"trigger":      trigger,
-			"type":         "dns",
-		}
-		c.Set("event", t)
+	if req.OtelConfig.Endpoint != "" {
+		otelOS.RecordDNSMetrics(ctx, req, latency, err != nil || !isSuccessful, h.Region)
 	}
 
-	c.JSON(http.StatusOK, data)
+	return data, recordErr
 }
 
 func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	ctx := c.Request.Context()
-	dataSourceName := "check_dns_response__v0"
+	dataSourceName := "check_response_dns__v0"
 	const defaultRetry = 3
 
 	// Authorization check
@@ -266,6 +269,8 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
+
+	ctx = withMonitorLogger(ctx, req.MonitorID, req.WorkspaceID)
 
 	retry := defaultRetry
 	if req.Retry != 0 {
@@ -306,12 +311,13 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 	op := func() (*checker.DnsResponse, error) {
 		called++
 		log.Ctx(ctx).Debug().Msgf("performing dns check for %s (attempt %d/%d)", req.URI, called, retry)
+		attemptCtx, cancel := dnsAttemptContext(ctx, req.Timeout)
+		defer cancel()
 		start := time.Now().UTC().UnixMilli()
-		response, err := checker.Dns(ctx, req.URI)
+		response, err := checker.Dns(attemptCtx, req.URI)
 		latency = time.Now().UTC().UnixMilli() - start
 
 		if err != nil {
-			log.Ctx(ctx).Error().Err(err).Msg("dns check failed")
 			return nil, err
 		}
 		if len(req.RawAssertions) > 0 {
@@ -342,12 +348,16 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 		}
 	}
 
+	if req.OtelConfig.Endpoint != "" {
+		otelOS.RecordDNSMetrics(ctx, req, latency, err != nil || !isSuccessful, h.Region)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"message": "uri not reachable"})
 		return
 	}
 
-	data.Records = FormatDNSResult(result)
+	data.Records = checker.FormatDNSRecords(result)
 	if req.RequestId != 0 {
 		if tbEvent, err := data.tinybirdEvent(); err != nil {
 			log.Ctx(ctx).Error().Err(err).Msg("failed to marshal dns records")
@@ -358,40 +368,6 @@ func (h Handler) DNSHandlerRegion(c *gin.Context) {
 
 	c.JSON(http.StatusOK, data)
 
-}
-
-func FormatDNSResult(result *checker.DnsResponse) map[string][]string {
-	r := make(map[string][]string)
-	a := make([]string, 0)
-	aaaa := make([]string, 0)
-	mx := make([]string, 0)
-	ns := make([]string, 0)
-	txt := make([]string, 0)
-
-	for _, v := range result.A {
-		a = append(a, v)
-	}
-	r["A"] = a
-
-	for _, v := range result.AAAA {
-		aaaa = append(aaaa, v)
-	}
-	r["AAAA"] = aaaa
-
-	r["CNAME"] = []string{result.CNAME}
-	for _, v := range result.MX {
-		mx = append(mx, v)
-	}
-	r["MX"] = mx
-	for _, v := range result.NS {
-		ns = append(ns, v)
-	}
-	r["NS"] = ns
-	for _, v := range result.TXT {
-		txt = append(txt, v)
-	}
-	r["TXT"] = txt
-	return r
 }
 
 func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.DnsResponse) (bool, error) {
@@ -422,4 +398,13 @@ func EvaluateDNSAssertions(rawAssertions []json.RawMessage, response *checker.Dn
 		}
 	}
 	return true, nil
+}
+
+// dnsAttemptContext bounds one lookup attempt by the monitor timeout
+// (milliseconds), so a stalled resolver cannot outlive the retry budget.
+func dnsAttemptContext(ctx context.Context, timeoutMs int64) (context.Context, context.CancelFunc) {
+	if timeoutMs <= 0 {
+		return context.WithCancel(ctx)
+	}
+	return context.WithTimeout(ctx, time.Duration(timeoutMs)*time.Millisecond)
 }

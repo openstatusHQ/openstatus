@@ -1,7 +1,6 @@
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { spy } from "@std/testing/mock";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
+import type { BetterstackStatusUpdate } from "./api-types";
 import {
   MOCK_INCIDENTS,
   MOCK_MONITORS,
@@ -14,7 +13,7 @@ import {
   MOCK_STATUS_UPDATES_REPORT_002,
   MOCK_STATUS_UPDATES_REPORT_003,
 } from "./fixtures";
-import { createBetterstackProvider } from "./provider";
+import { createBetterstackProvider } from "./index";
 
 const originalFetch = globalThis.fetch;
 
@@ -25,8 +24,10 @@ function makePaginated(data: unknown[]) {
   };
 }
 
-function setupMockFetch() {
-  globalThis.fetch = spy((url: string) => {
+function setupMockFetch(
+  updates: BetterstackStatusUpdate[] = MOCK_STATUS_UPDATES_REPORT_001,
+) {
+  globalThis.fetch = vi.fn((url: string) => {
     const path = new URL(url as string).pathname;
     let body: unknown;
 
@@ -37,7 +38,7 @@ function setupMockFetch() {
     } else if (path.includes("/status-updates")) {
       // Match status updates by report ID in the path
       if (path.includes("/bs_report_001/")) {
-        body = makePaginated(MOCK_STATUS_UPDATES_REPORT_001);
+        body = makePaginated(updates);
       } else if (path.includes("/bs_report_002/")) {
         body = makePaginated(MOCK_STATUS_UPDATES_REPORT_002);
       } else if (path.includes("/bs_report_003/")) {
@@ -88,7 +89,7 @@ describe("BetterstackProvider", () => {
   });
 
   test("validate returns friendly 401 error", async () => {
-    globalThis.fetch = spy(() =>
+    globalThis.fetch = vi.fn(() =>
       Promise.resolve(
         new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
@@ -187,6 +188,122 @@ describe("BetterstackProvider", () => {
     const data = incidentsPhase?.resources[0].data as Record<string, unknown>;
     expect(data.sourceComponentIds).toEqual(["bs_res_001"]);
   });
+
+  test.each([
+    {
+      states: ["resolved", "downtime"],
+      expected: "investigating",
+      impact: "major_outage",
+    },
+    {
+      states: ["downtime", "resolved"],
+      expected: "investigating",
+      impact: "major_outage",
+    },
+    {
+      states: ["resolved", "degraded"],
+      expected: "identified",
+      impact: "degraded_performance",
+    },
+    {
+      states: ["degraded", "resolved"],
+      expected: "identified",
+      impact: "degraded_performance",
+    },
+  ])(
+    "imports partial recovery $states as $expected",
+    async ({ states, expected, impact }) => {
+      setupMockFetch([
+        {
+          ...MOCK_STATUS_UPDATES_REPORT_001[0],
+          attributes: {
+            ...MOCK_STATUS_UPDATES_REPORT_001[0].attributes,
+            affected_resources: states.map((status) => ({
+              status_page_resource_id: status === "resolved" ? "api" : "db",
+              status,
+            })),
+          },
+        },
+      ]);
+      const summary = await createBetterstackProvider().run({
+        apiKey: "test-key",
+        workspaceId: 42,
+      });
+      expect(summary.status).toBe("completed");
+      expect(summary.errors).toEqual([]);
+      const incident = summary.phases.find(
+        (phase) => phase.phase === "incidents",
+      )?.resources[0]?.data;
+      expect(incident).toMatchObject({
+        report: { status: expected },
+        updates: [
+          {
+            status: expected,
+            componentImpacts: expect.arrayContaining([
+              { sourceComponentId: "api", impact: "operational" },
+              { sourceComponentId: "db", impact },
+            ]),
+          },
+        ],
+      });
+    },
+  );
+
+  test.each([false, true])(
+    "imports partial update history (reverse initial order: %s)",
+    async (reverse) => {
+      const initial = [
+        { status_page_resource_id: "api", status: "downtime" },
+        { status_page_resource_id: "db", status: "downtime" },
+      ];
+      setupMockFetch(
+        [
+          reverse ? [...initial].reverse() : initial,
+          [{ status_page_resource_id: "api", status: "resolved" }],
+          [{ status_page_resource_id: "db", status: "degraded" }],
+          [],
+        ]
+          .map((affected_resources, index) => ({
+            ...MOCK_STATUS_UPDATES_REPORT_001[0],
+            id: `update-${index}`,
+            attributes: {
+              ...MOCK_STATUS_UPDATES_REPORT_001[0].attributes,
+              published_at: `2024-06-01T1${index}:00:00Z`,
+              affected_resources,
+            },
+          }))
+          .reverse(),
+      );
+      const summary = await createBetterstackProvider().run({
+        apiKey: "test-key",
+        workspaceId: 42,
+      });
+      expect(summary.status).toBe("completed");
+      expect(summary.errors).toEqual([]);
+      expect(
+        summary.phases.find((phase) => phase.phase === "incidents")
+          ?.resources[0]?.data,
+      ).toMatchObject({
+        report: { status: "identified" },
+        updates: [
+          { status: "investigating" },
+          {
+            status: "investigating",
+            componentImpacts: [
+              { sourceComponentId: "api", impact: "operational" },
+            ],
+          },
+          {
+            status: "identified",
+            componentImpacts: [
+              { sourceComponentId: "db", impact: "degraded_performance" },
+            ],
+          },
+          { status: "identified", componentImpacts: [] },
+        ],
+      });
+    },
+  );
 
   test("maintenances phase maps maintenance reports", async () => {
     const provider = createBetterstackProvider();

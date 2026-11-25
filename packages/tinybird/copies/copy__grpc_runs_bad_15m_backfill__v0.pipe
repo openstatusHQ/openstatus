@@ -1,0 +1,49 @@
+DESCRIPTION >
+    On demand: failing UTC quarter-hours of one month from raw grpc_response__v0, for frozen months written without them.
+
+NODE copy
+SQL >
+
+%
+WITH
+    -- the default copies nothing: a run without month must not write rows
+    toDate({{ Date(month, '1970-01-01') }}) AS monthStart,
+    toInt64(toUnixTimestamp(toDateTime(monthStart, 'UTC'))) * 1000 AS fromMs,
+    toInt64(toUnixTimestamp(toDateTime(addMonths(monthStart, 1), 'UTC'))) * 1000 AS toMs
+SELECT
+    monthStart AS month,
+    monitorId,
+    'runs' AS measure,
+    day,
+    bucket,
+    -- same quorum as endpoint__grpc_runs_45d__v0
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded,
+    countIf(e * 2 >= n) AS error,
+    now() AS copiedAt
+FROM (
+    SELECT
+        toString(monitorId) AS monitorId,
+        toDate(fromUnixTimestamp64Milli(cronTimestamp), 'UTC') AS day,
+        toUInt8(intDiv(cronTimestamp % 86400000, 900000)) AS bucket,
+        cronTimestamp,
+        -- same filters and votes as aggregate__grpc_runs_45d__v0
+        uniqExact(CAST(region, 'String')) AS n,
+        uniqExactIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'error') AS e,
+        uniqExactIf(CAST(region, 'String'), coalesce(nullIf(requestStatus, ''), if(error != 0, 'error', '')) = 'degraded') AS d
+    FROM grpc_response__v0
+    WHERE cronTimestamp >= fromMs
+        AND cronTimestamp < toMs
+        AND coalesce(nullIf(trigger, ''), 'cron') = 'cron'
+        -- private locations carry no shared run key
+        AND NOT match(region, '^[0-9]+$')
+        {% if defined(monitorIds) %}
+        AND monitorId IN {{ Array(monitorIds, 'String') }}
+        {% end %}
+    GROUP BY monitorId, day, bucket, cronTimestamp
+)
+GROUP BY monitorId, day, bucket
+HAVING degraded + error > 0
+
+TYPE COPY
+TARGET_DATASOURCE frozen_bad_15m_backfill__v0
+COPY_MODE append

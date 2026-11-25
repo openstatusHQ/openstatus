@@ -5,6 +5,8 @@ import { Label } from "@openstatus/ui/components/ui/label";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useId } from "react";
 
+import { toComponentSections } from "@/data/page-components.client";
+
 export type CheckboxTreeItem = {
   id: number;
   label: string;
@@ -13,38 +15,31 @@ export type CheckboxTreeItem = {
 
 /**
  * Build a CheckboxTree shape from a flat list of page components plus their
- * optional groups. Components with a `groupId` nest under the matching group;
- * ungrouped components render as top-level leaves.
+ * optional groups, in page order. Components with a `groupId` nest under the
+ * matching group; ungrouped components render as top-level leaves. Group ids
+ * may collide with component ids, so callers treat tree ids as opaque.
  */
 export function toCheckboxTreeItems(
-  components: { id: number; name: string; groupId?: number | null }[],
+  components: {
+    id: number;
+    name: string;
+    groupId?: number | null;
+    order?: number | null;
+    groupOrder?: number | null;
+  }[],
   groups: { id: number; name: string }[] = [],
 ): CheckboxTreeItem[] {
-  const groupIds = new Set(groups.map((g) => g.id));
-  const byGroup = new Map<number, { id: number; label: string }[]>();
-  const ungrouped: CheckboxTreeItem[] = [];
-
-  for (const c of components) {
-    if (c.groupId != null && groupIds.has(c.groupId)) {
-      const bucket = byGroup.get(c.groupId) ?? [];
-      bucket.push({ id: c.id, label: c.name });
-      byGroup.set(c.groupId, bucket);
-    } else {
-      ungrouped.push({ id: c.id, label: c.name });
-    }
-  }
-
-  const groupItems: CheckboxTreeItem[] = groups
-    .filter((g) => (byGroup.get(g.id)?.length ?? 0) > 0)
-    .map((g) => ({
-      id: g.id,
-      label: g.name,
-      children: byGroup.get(g.id),
-    }));
-
-  // Group the group IDs first (synthetic group ids may collide with component
-  // ids in rare cases — callers should treat tree ids as opaque). Then leaves.
-  return [...groupItems, ...ungrouped];
+  return toComponentSections(components, groups).flatMap((section) =>
+    section.group
+      ? [
+          {
+            id: section.group.id,
+            label: section.group.name,
+            children: section.items.map((c) => ({ id: c.id, label: c.name })),
+          },
+        ]
+      : section.items.map((c) => ({ id: c.id, label: c.name })),
+  );
 }
 
 export type CheckboxTreeProps = {

@@ -1,4 +1,15 @@
-import { endOfDay, isSameDay, startOfDay } from "date-fns";
+import { TZDate } from "@date-fns/tz";
+import {
+  differenceInCalendarDays,
+  endOfDay,
+  format,
+  isSameDay,
+  isSameMinute,
+  isSameYear,
+  startOfDay,
+} from "date-fns";
+
+import type { PERIODS } from "@/data/metrics.client";
 
 export function formatMilliseconds(ms: number) {
   if (ms > 1000) {
@@ -15,13 +26,31 @@ export function formatMilliseconds(ms: number) {
   }).format(ms)}`;
 }
 
-export function formatPercentage(value: number) {
+/** Splits "120 ms" into the number and its unit; anything else has no unit. */
+export function splitUnit(formatted: string) {
+  const match = /^(-?[\d.,]+)\s*([a-zA-Z]+)$/.exec(formatted);
+  return match
+    ? { value: match[1], unit: match[2] }
+    : { value: formatted, unit: null };
+}
+
+export function formatPercentage(value: number, fractionDigits = 2) {
   if (Number.isNaN(value)) return "100%";
   return `${Intl.NumberFormat("en-US", {
     style: "percent",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value)}`;
+}
+
+/**
+ * A 0–100 value truncated, never rounded up: 99.9996 must not read as 100.
+ * No "%" sign, chart tooltips render the unit on their own.
+ */
+export function truncatePercentage(pct: number, digits = 3): string {
+  const factor = 10 ** digits;
+  // epsilon: 57 * 100 is 5699.999…, which would floor to 56.99
+  return (Math.floor(pct * factor + 1e-9) / factor).toFixed(digits);
 }
 
 export function formatNumber(value: number) {
@@ -54,6 +83,26 @@ export function formatTime(date: Date) {
   });
 }
 
+// Axis ticks only carry what the range can't imply (tooltip has the full date):
+// time of day on 1d, the date at midnight and for daily buckets, both otherwise.
+export function formatAxisTick(
+  date: Date,
+  period: (typeof PERIODS)[number],
+  interval: number,
+) {
+  const midnight = date.getHours() === 0 && date.getMinutes() === 0;
+  if (interval >= 1440 || (period === "1d" && midnight)) {
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  if (period === "1d") return formatTime(date);
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    ...(date.getMinutes() ? { minute: "numeric" } : {}),
+  });
+}
+
 export function formatDateRange(from?: Date, to?: Date) {
   const sameDay = from && to && isSameDay(from, to);
   const isFromStartDay = from && startOfDay(from).getTime() === from.getTime();
@@ -83,6 +132,17 @@ export function formatDateRange(from?: Date, to?: Date) {
   return "All time";
 }
 
+export function formatDistanceToNowShort(date: Date): string {
+  const seconds = Math.max(0, Math.round((Date.now() - date.getTime()) / 1000));
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.round(hours / 24);
+  return `${days}d ago`;
+}
+
 export function formatDateForInput(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -91,4 +151,71 @@ export function formatDateForInput(date: Date): string {
   const minutes = String(date.getMinutes()).padStart(2, "0");
 
   return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+/** "4h", "2h 10m", "2d 3h", "45m", "12s": the two largest units at most. */
+export function formatDurationShort(ms: number): string {
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  // from a minute up, round to whole minutes so it agrees with the "HH:mm – HH:mm" window beside it
+  const total = seconds < 60 ? seconds : Math.round(seconds / 60) * 60;
+  const days = Math.floor(total / 86_400);
+  const hours = Math.floor((total % 86_400) / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  if (days > 0) return hours ? `${days}d ${hours}h` : `${days}d`;
+  if (hours > 0) return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${seconds}s`;
+}
+
+export function formatClock(date: Date): string {
+  return format(date, "HH:mm");
+}
+
+/**
+ * Row date, read against `now`: earlier today "22:12", later today "Today",
+ * the coming week "Tue 20", otherwise "Oct 04" with the year once it differs.
+ */
+export function formatEventDate(date: Date, now = new Date()): string {
+  if (isSameDay(date, now)) return date <= now ? formatClock(date) : "Today";
+  const days = differenceInCalendarDays(date, now);
+  // zero-padded days keep the mono date column one width
+  if (days > 0 && days < 7) return format(date, "EEE dd");
+  return format(date, isSameYear(date, now) ? "MMM dd" : "MMM dd, yyyy");
+}
+
+/** "14:00" today, else "Oct 14, 14:00": open spans can start or end on another day. */
+export function formatClockOrDay(date: Date, now = new Date()): string {
+  return isSameDay(date, now)
+    ? formatClock(date)
+    : format(date, "MMM d, HH:mm");
+}
+
+/** `date`'s wall clock in `timeZone` as a local Date: date-fns 3 `format` ignores TZDate. */
+export function inTimeZone(date: Date, timeZone: string): Date {
+  const d = new TZDate(date, timeZone);
+  return new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    d.getHours(),
+    d.getMinutes(),
+    d.getSeconds(),
+  );
+}
+
+/**
+ * Under a day "02:00 – 06:00", else "Oct 11 – Oct 15" (with years when they differ); the row's date carries the day.
+ * With `timeZone`, clocks read in that zone while span and equality stay on the instants (DST fall-back repeats a wall hour).
+ */
+export function formatWindow(from: Date, to: Date, timeZone?: string): string {
+  const [f, t] = timeZone
+    ? [inTimeZone(from, timeZone), inTimeZone(to, timeZone)]
+    : [from, to];
+  // "23:33 – 23:33" reads like a typo
+  if (Math.abs(to.getTime() - from.getTime()) < 60_000 && isSameMinute(f, t)) {
+    return formatClock(f);
+  }
+  const short = to.getTime() - from.getTime() < 24 * 60 * 60 * 1000;
+  const pattern = short ? "HH:mm" : isSameYear(f, t) ? "MMM d" : "MMM d, yyyy";
+  return `${format(f, pattern)} – ${format(t, pattern)}`;
 }

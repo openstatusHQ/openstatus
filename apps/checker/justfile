@@ -18,3 +18,6 @@ clean:
 test:
 	echo "Running tests..."
 	go test ./... -v
+
+pubsub-gate monitor workspace:
+    go run ./scripts/pubsub-gate -monitor-id {{monitor}} -workspace-id {{workspace}}

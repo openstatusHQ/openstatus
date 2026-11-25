@@ -7,6 +7,9 @@ export const env = createEnv({
     UNKEY_API_ID: z.string().min(1),
     UNKEY_TOKEN: z.string().min(1),
     TINY_BIRD_API_KEY: z.string().min(1),
+    TINYBIRD_URL: z.string().default("https://api.tinybird.co"),
+    HEARTBEAT_PING_BASE_URL: z.url().optional(),
+    TINYBIRD_NOOP: z.stringbool().catch(false),
     UPSTASH_REDIS_REST_URL: z.string().min(1),
     UPSTASH_REDIS_REST_TOKEN: z.string().min(1),
     FLY_REGION: z.enum(monitorRegions),
@@ -22,7 +25,20 @@ export const env = createEnv({
     SLACK_CLIENT_ID: z.string().optional(),
     SLACK_CLIENT_SECRET: z.string().optional(),
     SLACK_REDIRECT_URI: z.string().optional(),
+    SLACK_FEEDBACK_WEBHOOK_URL: z.url().optional(),
     AI_GATEWAY_API_KEY: z.string().optional(),
+    // Fixed, not derived from the request host, so OAuth metadata is stable
+    // behind proxies. Defaults resolve in `routes/oauth/config.ts`.
+    OAUTH_ISSUER: z.url().optional(),
+    DASHBOARD_URL: z.url().optional(),
+    // Overload guards, per machine. `skipValidation` never runs these schemas,
+    // so defaults live in `libs/middlewares/limits.ts`.
+    API_MAX_IN_FLIGHT: z.coerce.number().optional(),
+    API_RATE_LIMIT_PER_MINUTE: z.coerce.number().optional(),
+    API_RATE_LIMIT_BURST_PER_10S: z.coerce.number().optional(),
+    API_RATE_LIMIT_WRITES_PER_MINUTE: z.coerce.number().optional(),
+    API_RATE_LIMIT_PUBLIC_PER_MINUTE: z.coerce.number().optional(),
+    API_RATE_LIMIT_HEARTBEAT_PER_MINUTE: z.coerce.number().optional(),
   },
 
   /**

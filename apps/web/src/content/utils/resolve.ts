@@ -8,6 +8,7 @@ import {
   getGuides,
   getHomePage,
   getProductPages,
+  getToolingPages,
   getToolsPages,
   getUnrelatedPages,
   getUseCasePages,
@@ -52,8 +53,11 @@ export function resolveContent(pathname: string): ContentResult | null {
 function resolveMdxContent(pathname: string): MDXData | null {
   const segments = pathname.split("/").filter(Boolean);
 
-  // Root path → home.mdx (confirmed: file exists)
-  if (segments.length === 0) {
+  // `/` has no file name to suffix, so its alternate is advertised as /index.md
+  if (
+    segments.length === 0 ||
+    (segments.length === 1 && segments[0] === "index")
+  ) {
     try {
       return getHomePage();
     } catch {
@@ -85,6 +89,8 @@ function resolveMdxContent(pathname: string): MDXData | null {
         return getGuides().find((p) => p.slug === slug) ?? null;
       case "play":
         return getToolsPages().find((p) => p.slug === slug) ?? null;
+      case "tooling":
+        return getToolingPages().find((p) => p.slug === slug) ?? null;
       case "use-case":
         return getUseCasePages().find((p) => p.slug === slug) ?? null;
       default:

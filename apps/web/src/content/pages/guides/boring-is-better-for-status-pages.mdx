@@ -89,6 +89,38 @@ That's not settling for less. That's understanding what matters.
 
 Migrating from your current status page? [Contact us](mailto:ping@openstatus.dev), we'll help you move over.
 
+## Frequently asked questions
+
+<Details summary="Why should status pages be static instead of using JavaScript frameworks?">
+
+JavaScript frameworks add load, parse, and execution time before rendering meaningful content. During an incident when users' connectivity might be degraded, this delay destroys trust. Static HTML renders instantly and works even when JavaScript fails, which is exactly what you need during a crisis.
+
+</Details>
+
+<Details summary="What's wrong with using animated status indicators?">
+
+Animated status indicators that require JavaScript to show if you're down create a critical failure mode - if the script fails, the page shows nothing, which is indistinguishable from being completely offline. Status information should be visible immediately in plain HTML.
+
+</Details>
+
+<Details summary="Should I A/B test my status page?">
+
+No. During an incident, different users seeing different versions of your status page creates confusion and erodes trust. When customers compare notes and realize they're seeing conflicting information, you've turned an operational problem into a credibility crisis.
+
+</Details>
+
+<Details summary="Why avoid external dependencies on status pages?">
+
+External dependencies like graphing services or CDNs create additional failure modes. When those services fail - and they will - your status page loses functionality at the exact moment it matters most. Plain HTML and CSS have decades of battle-testing with no unexpected edge cases.
+
+</Details>
+
+<Details summary="What makes a status page accessible during incidents?">
+
+A good status page works in grayscale for colorblind users, supports keyboard navigation and screen readers, loads instantly, provides RSS/Atom feeds for automated monitoring, and displays text-based updates that remain readable even if CSS fails. Accessibility isn't optional during high-stress moments.
+
+</Details>
+
 ---
 
 Start free. No credit card required. Set up your first status page in under 5 minutes.

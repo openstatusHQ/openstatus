@@ -9,7 +9,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
 import { HTTPMonitorSchema, MonitorSchema, ParamsSchema } from "./schema";
-import { getAssertionNew } from "./utils";
+import { assertSafeMonitorUrl, getAssertionNew } from "./utils";
 
 const putRoute = createRoute({
   method: "put",
@@ -92,6 +92,8 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
       });
     }
 
+    assertSafeMonitorUrl({ jobType: "http", url: input.request.url });
+
     const { request, regions, assertions, openTelemetry, ...rest } = input;
 
     const headers = input.request.headers
@@ -130,6 +132,13 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
       .where(eq(monitor.id, Number(_monitor.id)))
       .returning()
       .get();
+
+    if (!_newMonitor) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
+    }
 
     const otelHeader = _newMonitor.otelHeaders
       ? z

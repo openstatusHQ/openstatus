@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { expect, test } from "vitest";
 
 import { app } from "@/index";
 

@@ -22,7 +22,7 @@ export class ServiceError extends Error {
 export class NotFoundError extends ServiceError {
   constructor(
     public entity: string,
-    id?: string | number,
+    public id?: string | number,
   ) {
     super(
       "NOT_FOUND",
@@ -49,6 +49,12 @@ export class ConflictError extends ServiceError {
   }
 }
 
+/**
+ * A concurrent write won the race: the same request may succeed on a retry.
+ * Still `CONFLICT` for adapters that don't tell the two apart.
+ */
+export class ConcurrentUpdateError extends ConflictError {}
+
 export class ValidationError extends ServiceError {
   constructor(message: string, cause?: unknown) {
     super("VALIDATION", message, cause);
@@ -56,7 +62,12 @@ export class ValidationError extends ServiceError {
 }
 
 export class LimitExceededError extends ServiceError {
-  constructor(limit: string, max: number) {
+  constructor(
+    public limit: string,
+    public max: number,
+    /** Actual usage when the caller counted it — surfaced in client error metadata. */
+    public current?: number,
+  ) {
     super("LIMIT_EXCEEDED", `${limit} limit reached (${max})`);
   }
 }

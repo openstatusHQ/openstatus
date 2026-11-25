@@ -1,9 +1,10 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Lock, Add, Email, ExternalLink } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Lock, Plus } from "lucide-react";
+import NextLink from "next/link";
 import { notFound, useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -15,8 +16,9 @@ import {
   BillingOverlayDescription,
 } from "@/components/content/billing-overlay";
 import {
-  EmptyStateContainer,
+  EmptyStateActions,
   EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
@@ -33,7 +35,9 @@ import { UpgradeDialog } from "@/components/dialogs/upgrade";
 import { FormSheetSubscriber } from "@/components/forms/subscriber/sheet";
 import { toCheckboxTreeItems } from "@/components/ui/checkbox-tree";
 import { DataTable } from "@/components/ui/data-table/data-table";
+import { DataTableEmpty } from "@/components/ui/data-table/data-table-empty";
 import { DataTablePaginationSimple } from "@/components/ui/data-table/data-table-pagination";
+import { getPageUrl } from "@/data/status-pages.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 type Subscriber = RouterOutputs["pageSubscriber"]["list"][number];
@@ -103,63 +107,72 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="subscribers">
         <SectionHeaderRow>
           <SectionHeader>
             <SectionTitle>{page?.title}</SectionTitle>
             <SectionDescription>List of all subscribers.</SectionDescription>
           </SectionHeader>
-          {isLimited ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setOpenDialog(true)}
-            >
-              <Lock className="mr-1 size-3.5" /> Add subscriber
-            </Button>
-          ) : (
-            <FormSheetSubscriber
-              open={openAdd}
-              onOpenChange={setOpenAdd}
-              items={items}
-              onSubmit={async (values) => {
-                if (values.channelType === "email") {
-                  await createAction.mutateAsync({
-                    pageId,
-                    channelType: "email",
-                    email: values.email,
-                    name: values.name || null,
-                    componentIds: values.componentIds,
-                  });
-                } else {
-                  await createAction.mutateAsync({
-                    pageId,
-                    channelType: "webhook",
-                    webhookUrl: values.webhookUrl,
-                    name: values.name || null,
-                    headers: values.headers,
-                    componentIds: values.componentIds,
-                  });
-                }
-              }}
-            >
-              <Button variant="outline" size="sm">
-                <Plus className="mr-1 size-3.5" /> Add subscriber
+          <div>
+            {isLimited ? (
+              <Button
+                data-track="paywall_viewed"
+                data-limit="status-subscribers"
+                variant="outline"
+                size="sm"
+                onClick={() => setOpenDialog(true)}
+              >
+                <Lock /> Add subscriber
               </Button>
-            </FormSheetSubscriber>
-          )}
+            ) : (
+              <FormSheetSubscriber
+                open={openAdd}
+                onOpenChange={setOpenAdd}
+                items={items}
+                onSubmit={async (values) => {
+                  if (values.channelType === "email") {
+                    await createAction.mutateAsync({
+                      pageId,
+                      channelType: "email",
+                      email: values.email,
+                      name: values.name || null,
+                      componentIds: values.componentIds,
+                    });
+                  } else {
+                    await createAction.mutateAsync({
+                      pageId,
+                      channelType: "webhook",
+                      webhookUrl: values.webhookUrl,
+                      name: values.name || null,
+                      headers: values.headers,
+                      componentIds: values.componentIds,
+                    });
+                  }
+                }}
+              >
+                <Button variant="outline" size="sm">
+                  <Add /> Add subscriber
+                </Button>
+              </FormSheetSubscriber>
+            )}
+          </div>
         </SectionHeaderRow>
       </Section>
-      <Section>
+      <Section id="subscribers-table">
         {isLimited ? (
           <BillingOverlayContainer>
             <DataTable
+              paginationComponent={DataTablePaginationSimple}
               columns={columns}
               toolbarComponent={SubscribersDataTableToolbar}
               data={[...EXAMPLES, ...EXAMPLES, ...EXAMPLES]}
             />
             <BillingOverlay>
-              <BillingOverlayButton onClick={() => setOpenDialog(true)}>
+              <BillingOverlayButton
+                data-track="paywall_viewed"
+                data-limit="status-subscribers"
+                onClick={() => setOpenDialog(true)}
+              >
                 <Lock />
                 Upgrade
               </BillingOverlayButton>
@@ -181,22 +194,43 @@ export default function Page() {
               limit="status-subscribers"
             />
           </BillingOverlayContainer>
-        ) : subscribers?.length ? (
+        ) : subscribers ? (
           <DataTable
             columns={columns}
             data={subscribers}
             toolbarComponent={SubscribersDataTableToolbar}
             paginationComponent={DataTablePaginationSimple}
-            defaultColumnFilters={[{ id: "status", value: ["active"] }]}
+            emptyState={
+              <DataTableEmpty>
+                <EmptyStateMedia>
+                  <Email />
+                </EmptyStateMedia>
+                <EmptyStateTitle>No subscribers yet</EmptyStateTitle>
+                <EmptyStateDescription>
+                  Visitors subscribe from the public page and get an email on
+                  every update. You can also add people by hand.
+                </EmptyStateDescription>
+                <EmptyStateActions>
+                  <Button size="sm" onClick={() => setOpenAdd(true)}>
+                    Add subscriber
+                  </Button>
+                  {page ? (
+                    <Button size="sm" variant="outline" asChild>
+                      <NextLink
+                        href={getPageUrl(page)}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        <ExternalLink />
+                        Open public page
+                      </NextLink>
+                    </Button>
+                  ) : null}
+                </EmptyStateActions>
+              </DataTableEmpty>
+            }
           />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No subscribers</EmptyStateTitle>
-            <EmptyStateDescription>
-              Nobody has been subscribed to this status page.
-            </EmptyStateDescription>
-          </EmptyStateContainer>
-        )}
+        ) : null}
       </Section>
     </SectionGroup>
   );

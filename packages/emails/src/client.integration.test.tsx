@@ -1,11 +1,11 @@
-/** @jsxImportSource react */
+/** @jsxRuntime automatic @jsxImportSource react */
 
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import "./test-preload.ts";
 import { render } from "react-email";
+import { describe, expect, test } from "vitest";
 
-import StatusReportEmail from "../emails/status-report";
-import { statusReportSubject } from "./client";
+import PageUpdateEmail from "../emails/page-update";
+import { pageUpdateSubject } from "./client";
 
 describe("Status Report Email - Unsubscribe Link in Body", () => {
   const unsubscribeUrl =
@@ -14,7 +14,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
 
   test("should include unsubscribe link in email body when URL is provided", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -32,7 +32,7 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
 
   test("should not include unsubscribe section when URL is not provided", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -45,12 +45,12 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
     );
 
     // Should not contain the unsubscribe text when no URL provided
-    expect(html).not.toContain("from these notifications");
+    expect(html).not.toContain("Unsubscribe");
   });
 
   test("should render unsubscribe link as clickable", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -66,9 +66,9 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
     expect(html).toContain(`href="${unsubscribeUrl}"`);
   });
 
-  test("should display unsubscribe link with proper styling", async () => {
+  test("should render the unsubscribe link in the footer, outside the card", async () => {
     const html = await render(
-      <StatusReportEmail
+      <PageUpdateEmail
         pageTitle="Test Page"
         reportTitle="Test Report"
         status="investigating"
@@ -80,8 +80,10 @@ describe("Status Report Email - Unsubscribe Link in Body", () => {
       />,
     );
 
-    // Check for muted styling (gray color for footer)
-    expect(html).toContain("#6b7280");
+    expect(html.indexOf("Test message")).toBeLessThan(
+      html.indexOf(unsubscribeUrl),
+    );
+    expect(html).toContain("Manage notifications");
   });
 });
 
@@ -89,31 +91,32 @@ describe("Status Report Email - Subject Line", () => {
   const reportTitle = "API Outage";
 
   test('prepends "RESOLVED:" only when status is "resolved"', () => {
-    expect(statusReportSubject({ status: "resolved", reportTitle })).toBe(
+    expect(pageUpdateSubject({ status: "resolved", reportTitle })).toBe(
       `RESOLVED: ${reportTitle}`,
     );
   });
 
-  test('does not prepend "RESOLVED:" for any non-resolved status', () => {
-    const nonResolved = [
-      "investigating",
-      "identified",
-      "monitoring",
-      "maintenance",
-    ] as const;
+  test("uses the bare report title for ongoing report statuses", () => {
+    const ongoing = ["investigating", "identified", "monitoring"] as const;
 
-    for (const status of nonResolved) {
-      const subject = statusReportSubject({ status, reportTitle });
+    for (const status of ongoing) {
+      const subject = pageUpdateSubject({ status, reportTitle });
       expect(subject).toBe(reportTitle);
       expect(subject).not.toContain("RESOLVED:");
     }
+  });
+
+  test('prepends "Planned Maintenance:" when status is "maintenance"', () => {
+    expect(pageUpdateSubject({ status: "maintenance", reportTitle })).toBe(
+      `Planned Maintenance: ${reportTitle}`,
+    );
   });
 });
 
 describe("Status Report Email - Email Content Validation", () => {
   test("should include all required email fields", async () => {
     const props = {
-      pageTitle: "OpenStatus",
+      pageTitle: "openstatus",
       reportTitle: "API Outage",
       status: "investigating" as const,
       date: "2024-01-15T10:00:00.000Z",
@@ -123,7 +126,7 @@ describe("Status Report Email - Email Content Validation", () => {
       manageUrl: "https://openstatus.openstatus.dev/manage/test",
     };
 
-    const html = await render(<StatusReportEmail {...props} />);
+    const html = await render(<PageUpdateEmail {...props} />);
 
     expect(html).toContain(props.pageTitle);
     expect(html).toContain(props.reportTitle);
@@ -144,7 +147,7 @@ describe("Status Report Email - Email Content Validation", () => {
 
     for (const status of statuses) {
       const html = await render(
-        <StatusReportEmail
+        <PageUpdateEmail
           pageTitle="Test"
           reportTitle="Test Report"
           status={status}
@@ -156,9 +159,7 @@ describe("Status Report Email - Email Content Validation", () => {
         />,
       );
 
-      // Should render without errors and contain the status
-      // Note: status is rendered lowercase in HTML with text-transform: uppercase CSS
-      expect(html).toContain(status);
+      expect(html).toContain(status.toUpperCase());
     }
   });
 });

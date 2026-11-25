@@ -1,4 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  pageCardValues,
+  pageCheckCardValues,
+} from "@openstatus/db/src/schema/pages/constants";
+import { ArrowUpRight } from "@openstatus/icons";
 import { THEMES, THEME_KEYS } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -27,7 +32,7 @@ import {
 } from "@openstatus/ui/components/ui/select";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { ArrowUpRight } from "lucide-react";
+import NextLink from "next/link";
 import { parseAsStringLiteral, useQueryStates } from "nuqs";
 import { useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
@@ -46,6 +51,12 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { UptimeCalculation } from "@/components/status-pages/uptime-calculation";
+import {
+  UPTIME_MODES,
+  configurationLabels,
+  uptimeModeOf,
+} from "@/data/uptime-calculation.client";
 
 const schema = z.object({
   configuration: z.record(
@@ -57,7 +68,7 @@ const schema = z.object({
 const configurationSchema = z
   .object({
     type: z.enum(["manual", "absolute"]),
-    value: z.enum(["duration", "requests", "manual"]).nullish(),
+    value: z.enum(pageCardValues).nullish(),
     uptime: z.boolean().or(z.literal("true").or(z.literal("false"))),
     theme: z.enum(THEME_KEYS as [string, ...string[]]),
     days: z
@@ -100,19 +111,29 @@ export function FormConfiguration({
   const watchConfigurationType = form.watch("configuration.type") as
     | "manual"
     | "absolute";
-  const watchConfigurationValue = form.watch("configuration.value") as
-    | "duration"
-    | "requests";
+  const watchConfigurationValue = form.watch(
+    "configuration.value",
+  ) as (typeof pageCheckCardValues)[number];
   const watchConfigurationUptime = form.watch("configuration.uptime") as
     | "true"
     | "false";
-  const watchConfigurationDays = form.watch("configuration.days") ?? 45;
+  const mode = uptimeModeOf(watchConfigurationType, watchConfigurationValue);
+  const savedMode = uptimeModeOf(
+    String(defaultValues?.configuration.type),
+    String(defaultValues?.configuration.value),
+  );
+  const savedLabel = UPTIME_MODES.find((m) => m.value === savedMode)?.label;
 
   useEffect(() => {
     if (watchConfigurationType === "manual") {
       form.setValue("configuration.value", "manual");
     } else {
-      form.setValue("configuration.value", "duration");
+      // runs on mount too: only replace a value that is invalid for monitor
+      // checks, with the read default of a page without configuration
+      const value = form.getValues("configuration.value");
+      if (!pageCheckCardValues.some((v) => v === value)) {
+        form.setValue("configuration.value", "requests");
+      }
       form.setValue("configuration.type", "absolute");
       if (!watchConfigurationUptime) {
         form.setValue("configuration.uptime", "true");
@@ -147,7 +168,7 @@ export function FormConfiguration({
     <>
       <Form {...form}>
         <form id="redesign" onSubmit={form.handleSubmit(submitAction)}>
-          <FormCard>
+          <FormCard id="components-configuration">
             <FormCardHeader>
               <FormCardTitle>Components Configuration</FormCardTitle>
               <FormCardDescription>
@@ -157,7 +178,7 @@ export function FormConfiguration({
             <FormCardSeparator />
             <FormCardContent
               className={cn(
-                "grid gap-4 sm:grid-cols-2",
+                "grid gap-4 sm:grid-cols-3",
                 !hasMonitorComponents && "pointer-events-none opacity-50",
               )}
             >
@@ -166,25 +187,21 @@ export function FormConfiguration({
                 name="configuration.type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Bar Type</FormLabel>
+                    <FormLabel>Status source</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={String(field.value) ?? "absolute"}
+                      value={String(field.value ?? "absolute")}
                       disabled={!hasMonitorComponents}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full capitalize">
-                          <SelectValue placeholder="Select a type" />
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a source" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {["absolute", "manual"].map((type) => (
-                          <SelectItem
-                            key={type}
-                            value={type}
-                            className="capitalize"
-                          >
-                            {type}
+                        {(["absolute", "manual"] as const).map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {configurationLabels.type[type]}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -198,28 +215,30 @@ export function FormConfiguration({
                 name="configuration.value"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Card Value</FormLabel>
+                    <FormLabel>Card shows</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={String(field.value) ?? "duration"}
+                      value={String(field.value ?? "requests")}
                       disabled={
                         !hasMonitorComponents ||
                         watchConfigurationType === "manual"
                       }
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full capitalize">
-                          <SelectValue placeholder="Select a type" />
+                        <SelectTrigger className="w-full">
+                          {watchConfigurationType === "manual" ? (
+                            <span className="text-muted-foreground">
+                              Not available for reports only
+                            </span>
+                          ) : (
+                            <SelectValue placeholder="Select a value" />
+                          )}
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {["duration", "requests"].map((type) => (
-                          <SelectItem
-                            key={type}
-                            value={type}
-                            className="capitalize"
-                          >
-                            {type}
+                        {pageCheckCardValues.map((value) => (
+                          <SelectItem key={value} value={value}>
+                            {configurationLabels.value[value]}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -228,44 +247,49 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <Note className="col-span-full">
-                {hasMonitorComponents ? (
-                  <ul className="list-inside list-disc">
-                    <li>
-                      <span>Bar Type </span>
-                      <span className="font-medium">
-                        {watchConfigurationType}
-                      </span>
-                      : <span>{message.type[watchConfigurationType]}</span>
-                    </li>
-                    <li>
-                      <span>Card Value </span>
-                      <span className="font-medium">
-                        {watchConfigurationValue}
-                      </span>
-                      :{" "}
-                      <span>
-                        {message.value[watchConfigurationValue] ??
-                          message.value.default}
-                      </span>
-                    </li>
-                  </ul>
-                ) : (
-                  <span>
-                    Add a monitor component to your status page to configure how
-                    its bars and cards display data.
+              {hasMonitorComponents ? null : (
+                <Note className="col-span-full">
+                  Add a monitor component to your status page to configure how
+                  its bars and cards display data.
+                </Note>
+              )}
+              {hasMonitorComponents ? (
+                <div className="col-span-full grid gap-2">
+                  <span className="text-sm font-medium">
+                    How uptime is calculated
                   </span>
-                )}
-              </Note>
+                  <UptimeCalculation
+                    mode={mode}
+                    configured={savedMode}
+                    onModeChange={(next) => {
+                      const manual = next === "manual";
+                      form.setValue(
+                        "configuration.type",
+                        manual ? "manual" : "absolute",
+                        { shouldDirty: true },
+                      );
+                      form.setValue("configuration.value", next, {
+                        shouldDirty: true,
+                      });
+                    }}
+                  >
+                    {mode !== savedMode ? (
+                      <p className="text-muted-foreground">
+                        Visitors keep seeing {savedLabel} until you submit.
+                      </p>
+                    ) : null}
+                  </UptimeCalculation>
+                </div>
+              ) : null}
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent className="grid gap-4 sm:grid-cols-2">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               <FormField
                 control={form.control}
                 name="configuration.uptime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Show Uptime</FormLabel>
+                    <FormLabel>Show uptime percentage</FormLabel>
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={String(field.value) ?? "true"}
@@ -318,30 +342,8 @@ export function FormConfiguration({
                   </FormItem>
                 )}
               />
-              <Note className="col-span-full">
-                <ul className="list-inside list-disc">
-                  <li>
-                    <span>Show Uptime </span>
-                    <span className="font-medium capitalize">
-                      {String(watchConfigurationUptime)}
-                    </span>
-                    : <span>{message.uptime[watchConfigurationUptime]}</span>
-                  </li>
-                  <li>
-                    <span>History </span>
-                    <span className="font-medium">
-                      {String(watchConfigurationDays)} days
-                    </span>
-                    :{" "}
-                    <span>
-                      shows the last {String(watchConfigurationDays)} days of
-                      component history.
-                    </span>
-                  </li>
-                </ul>
-              </Note>
             </FormCardContent>
-            <FormCardFooter>
+            <FormCardFooter className="flex-wrap">
               <FormCardFooterInfo>
                 Learn more about{" "}
                 <Link
@@ -355,7 +357,7 @@ export function FormConfiguration({
               </FormCardFooterInfo>
               <div className="flex items-center gap-2">
                 <Button type="button" variant="ghost" asChild>
-                  <Link
+                  <NextLink
                     href={configLink}
                     rel="noreferrer"
                     target="_blank"
@@ -363,7 +365,7 @@ export function FormConfiguration({
                   >
                     View and configure status page{" "}
                     <ArrowUpRight className="h-4 w-4" />
-                  </Link>
+                  </NextLink>
                 </Button>
                 <Button type="submit" disabled={isPending}>
                   {isPending ? "Submitting..." : "Submit"}
@@ -386,31 +388,11 @@ export function FormConfiguration({
   );
 }
 
-// TODO:
-const message = {
-  type: {
-    manual:
-      "only shares the duration of reports and maintenances you are setting up - nothing else.",
-    absolute:
-      "shares the status of your endpoint for the duration of the different statuses.",
-  },
-  value: {
-    duration: "shares the duration of the different statuses.",
-    requests:
-      "shares the number of requests received (success, degraded, error).",
-    default: "shares only the worse status of the day",
-  },
-  uptime: {
-    true: "shares the uptime percentage and current status of your endpoint.",
-    false: "shares only the current status.",
-  },
-} as const;
-
 // ?type=manual&value=manual&uptime=true&theme=default&days=45
 
 const searchParams = {
   type: parseAsStringLiteral(["manual", "absolute"]),
-  value: parseAsStringLiteral(["duration", "requests", "manual"]),
+  value: parseAsStringLiteral(pageCardValues),
   uptime: parseAsStringLiteral(["true", "false"]),
   theme: parseAsStringLiteral(Object.keys(THEMES)),
   days: parseAsStringLiteral(["30", "45"]),

@@ -28,7 +28,7 @@ export async function updatePageComponentOrder(args: {
   input: UpdatePageComponentOrderInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = UpdatePageComponentOrderInput.parse(args.input);
 
   // Reject duplicate group ids up front — otherwise the diff loop

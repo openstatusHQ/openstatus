@@ -1,25 +1,33 @@
 import {
   type EventProps,
+  Events,
   type IdentifyProps,
   parseInputToProps,
   setupAnalytics,
 } from "@openstatus/analytics";
-import { db } from "@openstatus/db";
 import type { User, Workspace } from "@openstatus/db/src/schema";
+import { LimitExceededError } from "@openstatus/services";
 import { TRPCError, initTRPC } from "@trpc/server";
 import { type NextRequest, after } from "next/server.js";
 import superjson from "superjson";
 import { ZodError, treeifyError } from "zod";
 
-import { resolveActiveWorkspace } from "./auth/resolve-active-workspace";
+import {
+  type ResolveActiveWorkspaceResult,
+  resolveActiveWorkspace,
+  resolveUserWorkspaces,
+} from "./auth/resolve-active-workspace";
 
-// Generic session type that works with both User and Viewer
 type Session = {
   user?: {
     id?: string | null;
     email?: string | null;
   } | null;
 } | null;
+
+// Viewer ids share a numeric space with dashboard user ids, so only the email
+// crosses into the context — a viewer must never be resolvable as a user.
+type Viewer = { email?: string | null };
 
 /**
  * 1. CONTEXT
@@ -32,18 +40,29 @@ type Session = {
  */
 type CreateContextOptions = {
   session: Session | null;
+  viewer?: Viewer | null;
   workspace?: Workspace | null;
+  workspaces?: Workspace[] | null;
   user?: User | null;
   req?: NextRequest;
   metadata?: {
     userAgent?: string;
     location?: string;
   };
+  resolveWorkspace?: () => Promise<ResolveActiveWorkspaceResult>;
 };
 
 type Meta = {
   track?: EventProps;
   trackProps?: string[];
+  /**
+   * Props derived from the raw input and the procedure's result, merged over
+   * `trackProps`. Return `null` to skip the event for this call.
+   */
+  trackResult?: (args: {
+    input: unknown;
+    data: unknown;
+  }) => Record<string, unknown> | null;
 };
 
 /**
@@ -56,10 +75,7 @@ type Meta = {
  * @see https://create.t3.gg/en/usage/trpc#-servertrpccontextts
  */
 export const createInnerTRPCContext = (opts: CreateContextOptions) => {
-  return {
-    ...opts,
-    db,
-  };
+  return { ...opts };
 };
 
 /**
@@ -70,17 +86,38 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
 export const createTRPCContext = async (opts: {
   req: NextRequest;
   serverSideCall?: boolean;
+  /** Dashboard user session. Never pass a status-page viewer session here. */
   auth?: () => Promise<Session>;
+  /** Status-page viewer session; only its email reaches `ctx.viewer`. */
+  viewerAuth?: () => Promise<Session>;
 }) => {
-  // Use provided auth function or return null session
   const session = opts.auth ? await opts.auth() : null;
+  const viewerEmail = opts.viewerAuth
+    ? (await opts.viewerAuth())?.user?.email
+    : null;
+  const viewer = viewerEmail ? { email: viewerEmail } : null;
   const workspace = null;
+  const workspaces = null;
   const user = null;
+
+  // Context is per HTTP request while middleware runs per procedure — a
+  // batched request would otherwise re-run the same user×workspaces query
+  // once per procedure. Zero-arg by design: userId/slug are bound here so
+  // the first call's promise is safe to share across the whole batch.
+  let resolution: Promise<ResolveActiveWorkspaceResult> | undefined;
+  const resolveWorkspace = () =>
+    (resolution ??= resolveActiveWorkspace({
+      userId: Number(session?.user?.id),
+      workspaceSlug: opts.req.cookies.get("workspace-slug")?.value,
+    }));
 
   return createInnerTRPCContext({
     session,
+    viewer,
     workspace,
+    workspaces,
     user,
+    resolveWorkspace,
     req: opts.req,
     metadata: {
       userAgent: opts.req.headers.get("user-agent") ?? undefined,
@@ -131,6 +168,25 @@ export const t = initTRPC
 export const createTRPCRouter = t.router;
 export const mergeRouters = t.mergeRouters;
 
+const timingMiddleware = t.middleware(async (opts) => {
+  const start = performance.now();
+  const result = await opts.next();
+  if (process.env.NODE_ENV !== "test") {
+    const durationMs = Math.round(performance.now() - start);
+    console.info(
+      JSON.stringify({
+        msg: "trpc.timing",
+        path: opts.path,
+        type: opts.type,
+        durationMs,
+        ok: result.ok,
+        region: process.env.VERCEL_REGION,
+      }),
+    );
+  }
+  return result;
+});
+
 /**
  * Public (unauthed) procedure
  *
@@ -138,7 +194,7 @@ export const mergeRouters = t.mergeRouters;
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = t.procedure;
+export const publicProcedure = t.procedure.use(timingMiddleware);
 
 /**
  * Reusable middleware that enforces users are logged in before running the
@@ -163,7 +219,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     ctx.user != null
   ) {
     return opts.next({
-      ctx: { ...ctx, user: ctx.user, workspace: ctx.workspace },
+      ctx: {
+        ...ctx,
+        user: ctx.user,
+        workspace: ctx.workspace,
+        workspaces: ctx.workspaces ?? [ctx.workspace],
+      },
     });
   }
 
@@ -174,10 +235,12 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
    */
   const workspaceSlug = ctx.req?.cookies.get("workspace-slug")?.value;
 
-  const resolved = await resolveActiveWorkspace({
-    userId: Number(ctx.session.user.id),
-    workspaceSlug,
-  });
+  const resolved = await (ctx.resolveWorkspace
+    ? ctx.resolveWorkspace()
+    : resolveActiveWorkspace({
+        userId: Number(ctx.session.user.id),
+        workspaceSlug,
+      }));
 
   if (!resolved.ok) {
     throw new TRPCError({
@@ -189,50 +252,69 @@ const enforceUserIsAuthed = t.middleware(async (opts) => {
     });
   }
 
-  const { user, workspace } = resolved.value;
+  const { user, workspace, workspaces } = resolved.value;
 
   if (workspace.slug !== workspaceSlug) {
     // properly set the workspace slug cookie
     ctx.req?.cookies.set("workspace-slug", workspace.slug);
   }
 
-  const result = await opts.next({ ctx: { ...ctx, user, workspace } });
+  const result = await opts.next({
+    ctx: { ...ctx, user, workspace, workspaces },
+  });
 
   if (process.env.NODE_ENV === "test") {
     return result;
   }
 
-  // REMINDER: We only track the event if the request was successful
+  const identify: IdentifyProps = {
+    userAgent: ctx.metadata?.userAgent,
+    location: ctx.metadata?.location,
+    source: "dashboard",
+    userId: `usr_${user.id}`,
+    email: user.email || undefined,
+    workspaceId: String(workspace.id),
+    workspaceName: workspace.name || workspace.slug,
+    plan: workspace.plan,
+  };
+
   if (!result.ok) {
+    const cause = result.error.cause;
+    if (cause instanceof LimitExceededError) {
+      after(async () => {
+        const analytics = await setupAnalytics(identify);
+        await analytics.track({
+          ...Events.ReachLimit,
+          limit: cause.limit,
+          max: cause.max,
+          current: cause.current,
+          procedure: opts.path,
+        });
+      });
+    }
     return result;
   }
 
   // REMINDER: We only track the event if the request was successful
   // REMINDER: We are not blocking the request
   after(async () => {
-    const { ctx, meta, getRawInput } = opts;
+    const { meta, getRawInput } = opts;
 
     if (meta?.track) {
-      let identify: IdentifyProps = {
-        userAgent: ctx.metadata?.userAgent,
-        location: ctx.metadata?.location,
-      };
-
-      if (user && workspace) {
-        identify = {
-          ...identify,
-          userId: `usr_${user.id}`,
-          email: user.email || undefined,
-          workspaceId: String(workspace.id),
-          plan: workspace.plan,
-        };
-      }
+      const rawInput = await getRawInput();
+      const resultProps = meta.trackResult
+        ? meta.trackResult({ input: rawInput, data: result.data })
+        : {};
+      if (resultProps === null) return;
 
       const analytics = await setupAnalytics(identify);
-      const rawInput = await getRawInput();
       const additionalProps = parseInputToProps(rawInput, meta.trackProps);
 
-      await analytics.track({ ...meta.track, ...additionalProps });
+      await analytics.track({
+        ...additionalProps,
+        ...resultProps,
+        ...meta.track,
+      });
     }
   });
 
@@ -252,6 +334,31 @@ export const formdataMiddleware = t.middleware(async (opts) => {
 });
 
 /**
+ * Signed-in user without an active workspace. `ctx.workspaces` may be empty;
+ * `ctx.workspace` stays null. Only for surfaces that must render for a user
+ * who belongs to no workspace — everything else uses `protectedProcedure`.
+ */
+const enforceUserIsSignedIn = t.middleware(async (opts) => {
+  const { ctx } = opts;
+  if (!ctx.session?.user?.id) {
+    throw new TRPCError({ code: "UNAUTHORIZED" });
+  }
+  const resolved = await resolveUserWorkspaces({
+    userId: Number(ctx.session.user.id),
+  });
+  if (!resolved) {
+    throw new TRPCError({ code: "UNAUTHORIZED", message: "User Not Found" });
+  }
+  return opts.next({
+    ctx: { ...ctx, user: resolved.user, workspaces: resolved.workspaces },
+  });
+});
+
+export const userProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(enforceUserIsSignedIn);
+
+/**
  * Protected (authed) procedure
  *
  * If you want a query or mutation to ONLY be accessible to logged in users, use
@@ -260,4 +367,6 @@ export const formdataMiddleware = t.middleware(async (opts) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
+export const protectedProcedure = t.procedure
+  .use(timingMiddleware)
+  .use(enforceUserIsAuthed);

@@ -13,6 +13,18 @@ export {
   validateWebhookConfig,
 } from "./channels/webhook";
 export type { WebhookFlavor } from "./channels/webhook";
+export {
+  createSlackChannel,
+  sendSlackNotifications,
+  validateSlackConfig,
+} from "./channels/slack";
+export type { SlackChannelDeps, SlackClient } from "./channels/slack";
+export { buildReplyMessage, buildRootMessage } from "./channels/slack-blocks";
+export {
+  createMemoryAnchorStore,
+  createRedisAnchorStore,
+} from "./channels/slack-store";
+export type { SlackAnchorStore } from "./channels/slack-store";
 export { getChannel } from "./channels/index";
 
 // Export dispatcher functions

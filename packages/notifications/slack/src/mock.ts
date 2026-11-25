@@ -33,6 +33,13 @@ const monitor: Monitor = {
   retry: 3,
   followRedirects: false,
   externalName: null,
+  grpcService: null,
+  grpcTls: null,
+  heartbeatToken: null,
+  heartbeatPeriod: null,
+  heartbeatGrace: null,
+  heartbeatCron: null,
+  heartbeatTz: null,
 };
 
 const notification: Notification = {

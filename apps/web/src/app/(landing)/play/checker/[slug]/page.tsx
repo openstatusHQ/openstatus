@@ -19,7 +19,7 @@ import {
   getJsonLDBreadcrumbList,
   getJsonLDWebPage,
 } from "../../../../../lib/metadata/structured-data";
-import { Table } from "./client";
+import { Results } from "./client";
 
 function formatDate(date: Date) {
   return date.toLocaleDateString("en-US", {
@@ -40,6 +40,8 @@ export async function generateMetadata({
   const { slug } = await params;
   const page = getToolsPage("checker-slug");
 
+  // No markdown twin: the `.md` of this URL resolves to the tool's template
+  // page, not to this result, so the alternate is dropped on purpose.
   const metadata = {
     ...getPageMetadata(page, "play"),
     alternates: { canonical: `${BASE_URL}/play/checker/${slug}` },
@@ -52,18 +54,22 @@ export async function generateMetadata({
 
   if (!data) return metadata;
 
-  const regions = data.checks.sort((a, b) => a.latency - b.latency);
+  const regions = [...data.checks].sort((a, b) => a.latency - b.latency);
   const fastestRegion = regions[0];
   const slowestRegion = regions[regions.length - 1];
 
   const TITLE = data.url;
-  const DESCRIPTION = `${formatDate(
-    new Date(data.timestamp),
-  )} | Fastest: ${regionFormatter(fastestRegion.region)} (${latencyFormatter(
-    fastestRegion.latency,
-  )}) | Slowest: ${regionFormatter(slowestRegion.region)} (${latencyFormatter(
-    slowestRegion.latency,
-  )})`;
+  // `checks` is empty when every region failed (only the base hash is stored).
+  const DESCRIPTION =
+    fastestRegion && slowestRegion
+      ? `${formatDate(
+          new Date(data.timestamp),
+        )} | Fastest: ${regionFormatter(fastestRegion.region)} (${latencyFormatter(
+          fastestRegion.latency,
+        )}) | Slowest: ${regionFormatter(slowestRegion.region)} (${latencyFormatter(
+          slowestRegion.latency,
+        )})`
+      : `${formatDate(new Date(data.timestamp))} | No successful checks`;
 
   return {
     ...metadata,
@@ -116,7 +122,7 @@ export default async function Page({
       <JsonLd graph={jsonLDGraph} />
       <h1>{data.url}</h1>
       <p className="text-lg">{formatDate(new Date(data.timestamp))}</p>
-      <Table data={data} />
+      <Results data={data} />
       <CustomMDX source={page.content} />
     </section>
   );

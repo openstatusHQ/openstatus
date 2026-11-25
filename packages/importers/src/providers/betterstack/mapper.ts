@@ -27,7 +27,8 @@ const FREQUENCY_MAP: Record<number, string> = {
   3600: "1h",
 };
 
-const REGION_MAP: Record<string, string> = {
+// Imports write regions unvalidated, so every target must be non-deprecated.
+export const REGION_MAP: Record<string, string> = {
   us: "iad",
   eu: "fra",
   as: "sin",
@@ -40,8 +41,8 @@ const MONITOR_TYPE_MAP: Record<string, string> = {
   expected_status_code: "http",
   tcp: "tcp",
   udp: "udp",
-  ping: "http",
-  ping_icmp: "http",
+  ping: "icmp",
+  ping_icmp: "icmp",
   dns: "dns",
   smtp: "http",
   pop: "http",
@@ -108,6 +109,7 @@ export function mapMonitor(monitor: BetterstackMonitor, workspaceId: number) {
     headers,
     body: attrs.request_body,
     method: mapMethod(attrs.http_method),
+    followRedirects: attrs.follow_redirects,
     timeout: attrs.request_timeout * 1000,
   };
 }
@@ -229,11 +231,23 @@ export function mapReportToStatusReport(
       new Date(b.attributes.published_at).getTime(),
   );
 
+  const resourceStatuses = new Map<string, StatusReportStatus>();
   const mappedUpdates = sortedUpdates.map((u) => {
+    for (const resource of u.attributes.affected_resources) {
+      resourceStatuses.set(
+        resource.status_page_resource_id,
+        mapReportAggregateState(resource.status),
+      );
+    }
+    const statuses = [...resourceStatuses.values()];
+    const priority: StatusReportStatus[] = [
+      "investigating",
+      "identified",
+      "monitoring",
+      "resolved",
+    ];
     const aggregateStatus =
-      u.attributes.affected_resources.length > 0
-        ? mapReportAggregateState(u.attributes.affected_resources[0].status)
-        : "investigating";
+      priority.find((status) => statuses.includes(status)) ?? "investigating";
     return {
       status: aggregateStatus,
       message: u.attributes.message ?? "",

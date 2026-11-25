@@ -11,6 +11,8 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { NotFoundError } from "../errors";
+import { resolveOpenMonitorIncidents } from "../monitor-incident/internal";
+import { monitorAuditSnapshot } from "./internal";
 import { DeleteMonitorInput, DeleteMonitorsInput } from "./schemas";
 
 /**
@@ -23,7 +25,7 @@ export async function deleteMonitor(args: {
   input: DeleteMonitorInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeleteMonitorInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -46,6 +48,7 @@ export async function deleteMonitor(args: {
       .update(monitor)
       .set({ deletedAt: new Date(), active: false })
       .where(eq(monitor.id, existing.id));
+    await resolveOpenMonitorIncidents({ tx, ctx, monitorIds: [existing.id] });
     await tx
       .delete(monitorTagsToMonitors)
       .where(eq(monitorTagsToMonitors.monitorId, existing.id));
@@ -68,7 +71,7 @@ export async function deleteMonitor(args: {
       action: "monitor.delete",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
+      before: await monitorAuditSnapshot(existing),
     });
   });
 }
@@ -82,7 +85,7 @@ export async function deleteMonitors(args: {
   input: DeleteMonitorsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeleteMonitorsInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {
@@ -126,6 +129,7 @@ export async function deleteMonitors(args: {
           eq(monitor.workspaceId, ctx.workspace.id),
         ),
       );
+    await resolveOpenMonitorIncidents({ tx, ctx, monitorIds: ids });
     await tx
       .delete(monitorTagsToMonitors)
       .where(inArray(monitorTagsToMonitors.monitorId, ids));
@@ -152,7 +156,7 @@ export async function deleteMonitors(args: {
         action: "monitor.delete",
         entityType: "monitor",
         entityId: row.id,
-        before: row,
+        before: await monitorAuditSnapshot(row),
       });
     }
   });

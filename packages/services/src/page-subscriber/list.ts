@@ -1,3 +1,7 @@
+import { and, eq, isNull } from "@openstatus/db";
+import { pageSubscriber } from "@openstatus/db/src/schema";
+
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { NotFoundError } from "../errors";
 import { ListPageSubscribersInput } from "./schemas";
@@ -31,7 +35,7 @@ function webhookUrlForList(
 
 export type PageSubscriberListItem = {
   id: number;
-  channelType: "email" | "webhook";
+  channelType: "email" | "webhook" | "slack";
   email: string | null;
   webhookUrl: string | null;
   channelConfig: string | null;
@@ -40,20 +44,23 @@ export type PageSubscriberListItem = {
   acceptedAt: Date | null;
   unsubscribedAt: Date | null;
   createdAt: Date | null;
+  updatedAt?: Date | null;
   components: { id: number; name: string }[];
   isEntirePage: boolean;
   pageId: number;
 };
 
 /**
- * List all subscribers for a page owned by the caller's workspace.
- * Order defaults to `desc` (newest first) — matches the router default.
+ * List subscribers for a page owned by the caller's workspace, newest
+ * first by default. Unsubscribed rows are included unless
+ * `includeUnsubscribed: false`.
  */
 export async function listPageSubscribers(args: {
   ctx: ServiceContext;
   input: ListPageSubscribersInput;
 }): Promise<PageSubscriberListItem[]> {
   const { ctx } = args;
+  requireScope(ctx, "subscribers:read");
   const input = ListPageSubscribersInput.parse(args.input);
   const db = getReadDb(ctx);
 
@@ -65,13 +72,23 @@ export async function listPageSubscribers(args: {
   }
 
   const subscriptions = await db.query.pageSubscriber.findMany({
-    where: { pageId: pageRow.id },
+    where: {
+      pageId: pageRow.id,
+      ...(input.includeUnsubscribed === false && {
+        unsubscribedAt: { isNull: true },
+      }),
+    },
     with: {
       components: {
         with: { pageComponent: true },
       },
     },
-    orderBy: { createdAt: input.order === "asc" ? "asc" : "desc" },
+    orderBy:
+      input.order === "asc"
+        ? { createdAt: "asc", id: "asc" }
+        : { createdAt: "desc", id: "desc" },
+    limit: input.limit,
+    offset: input.offset,
   });
 
   return subscriptions.map((sub) => {
@@ -87,6 +104,7 @@ export async function listPageSubscribers(args: {
       acceptedAt: sub.acceptedAt,
       unsubscribedAt: sub.unsubscribedAt,
       createdAt: sub.createdAt,
+      updatedAt: sub.updatedAt,
       components: sub.components.map((c) => ({
         id: c.pageComponent.id,
         name: c.pageComponent.name,
@@ -95,4 +113,28 @@ export async function listPageSubscribers(args: {
       pageId: sub.pageId,
     };
   });
+}
+
+/** Total for the same filter `listPageSubscribers` applies, for paginated callers. */
+export async function countPageSubscribers(args: {
+  ctx: ServiceContext;
+  input: Pick<ListPageSubscribersInput, "pageId" | "includeUnsubscribed">;
+}): Promise<number> {
+  const { ctx } = args;
+  requireScope(ctx, "subscribers:read");
+  const input = ListPageSubscribersInput.parse(args.input);
+  const db = getReadDb(ctx);
+  const pageRow = await db.query.page.findFirst({
+    where: { workspaceId: ctx.workspace.id, id: input.pageId },
+  });
+  if (!pageRow) throw new NotFoundError("page", input.pageId);
+  return db.$count(
+    pageSubscriber,
+    input.includeUnsubscribed === false
+      ? and(
+          eq(pageSubscriber.pageId, pageRow.id),
+          isNull(pageSubscriber.unsubscribedAt),
+        )
+      : eq(pageSubscriber.pageId, pageRow.id),
+  );
 }

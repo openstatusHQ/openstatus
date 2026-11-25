@@ -8,3 +8,30 @@ export const getReportUrl = (
   reportId: number,
 ): Promise<string | null> =>
   Promise.resolve(`https://example.openstatus.dev/events/report/${reportId}`);
+
+export const getPageDashboardLink = (
+  _workspaceId: number,
+  pageId: number,
+): Promise<{ title: string; url: string } | null> =>
+  Promise.resolve({
+    title: `Page ${pageId}`,
+    url: `https://app.openstatus.dev/status-pages/${pageId}`,
+  });
+
+export const getComponentNames = (
+  _workspaceId: number,
+  ids: number[],
+): Promise<Map<number, string>> =>
+  Promise.resolve(new Map(ids.map((id) => [id, `Component ${id}`])));
+
+export const getStatusReportLink = (
+  _workspaceId: number,
+  statusReportId: number,
+): Promise<{ title: string; url: string | null } | null> =>
+  Promise.resolve({
+    title: `Report ${statusReportId}`,
+    url: `https://example.openstatus.dev/events/report/${statusReportId}`,
+  });
+
+export const getIncidentDashboardUrl = (incidentId: number): string =>
+  `https://app.openstatus.dev/incidents/${incidentId}`;

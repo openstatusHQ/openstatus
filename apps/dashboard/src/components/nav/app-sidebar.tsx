@@ -1,12 +1,15 @@
 "use client";
 
+import { SidebarLeft } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
+import { Kbd, KbdGroup } from "@openstatus/ui/components/ui/kbd";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  SidebarTrigger,
+  SidebarSeparator,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
 import {
@@ -15,74 +18,26 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
-import {
-  Activity,
-  Bell,
-  Bot,
-  Cog,
-  LayoutGrid,
-  MessageSquare,
-  PanelTop,
-} from "lucide-react";
 import * as React from "react";
 
-import { Kbd } from "@/components/common/kbd";
-import { NavMonitors } from "@/components/nav/nav-monitors";
-import { NavOverview } from "@/components/nav/nav-overview";
-import { NavStatusPages } from "@/components/nav/nav-status-pages";
+import { NavGroup, NavGroupDefaultItem } from "@/components/nav/nav-group";
+import { NavMonitorsItem } from "@/components/nav/nav-monitors";
+import { NavSearch } from "@/components/nav/nav-search";
+import { NavStatusPagesItem } from "@/components/nav/nav-status-pages";
 import { NavUser } from "@/components/nav/nav-user";
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
+import { NAV, NAV_GROUPS, type NavItem } from "@/config/nav";
 
 import { NavBanner } from "./nav-banner";
 import { NavHelp } from "./nav-help";
 
 const SIDEBAR_KEYBOARD_SHORTCUT = "[";
 
-// This is sample data.
-const data = {
-  user: {
-    name: "mxkaske",
-    email: "max@openstatus.dev",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  overview: [
-    {
-      name: "Overview",
-      url: "/overview",
-      icon: LayoutGrid,
-    },
-    {
-      name: "Status Pages",
-      url: "/status-pages",
-      icon: PanelTop,
-    },
-    {
-      name: "Monitors",
-      url: "/monitors",
-      icon: Activity,
-    },
-    {
-      name: "Notifications",
-      url: "/notifications",
-      icon: Bell,
-    },
-    {
-      name: "Settings",
-      url: "/settings/general",
-      icon: Cog,
-    },
-    {
-      name: "Assistant",
-      url: "/chat",
-      icon: MessageSquare,
-    },
-    {
-      name: "Slack agent",
-      url: "/agents",
-      icon: Bot,
-    },
-  ],
-};
+// items that peek at their entities on hover; the rest render from config
+const PEEK_ITEMS = new Map<NavItem, React.ComponentType>([
+  [NAV.monitors, NavMonitorsItem],
+  [NAV.statusPages, NavStatusPagesItem],
+]);
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -90,14 +45,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader className="flex h-14 justify-center gap-0 border-b p-0">
         <WorkspaceSwitcher />
       </SidebarHeader>
-      <SidebarContent>
-        <NavOverview items={data.overview} />
-        <NavStatusPages />
-        <NavMonitors />
-        <div className="mt-auto px-2">
+      {/* no gap: NavGroup's py-1 alone keeps groups on the 36px row grid;
+          next to a border a group takes 8px instead, matching its px-2 */}
+      <SidebarContent className="gap-0">
+        <NavGroup className="pt-2">
+          <NavSearch />
+          <NavGroupDefaultItem item={NAV.overview} />
+          <NavGroupDefaultItem item={NAV.chat} />
+        </NavGroup>
+        {NAV_GROUPS.map((group) => (
+          <NavGroup
+            key={group.label ?? group.items[0].href}
+            label={group.label}
+            standalone={!group.label}
+          >
+            {group.items.map((item) => {
+              const Peek = PEEK_ITEMS.get(item);
+              return Peek ? (
+                <Peek key={item.label} />
+              ) : (
+                <NavGroupDefaultItem key={item.label} item={item} />
+              );
+            })}
+          </NavGroup>
+        ))}
+        <div className="mt-auto px-2 pb-1 group-data-[collapsible=icon]:pt-0! group-data-[collapsible=icon]:pb-1! has-[>*]:pt-1 has-[>*]:pb-2">
           <NavBanner />
         </div>
-        <NavHelp />
+        <SidebarSeparator className="mx-0" />
+        <NavGroup className="py-2">
+          <NavGroupDefaultItem item={NAV.settings} />
+          <NavHelp />
+        </NavGroup>
       </SidebarContent>
       <SidebarFooter className="flex h-14 flex-col justify-center gap-0 border-t p-0">
         <NavUser />
@@ -130,18 +109,24 @@ export function AppSidebarTrigger() {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <SidebarTrigger />
+          <Button
+            data-sidebar="trigger"
+            data-slot="sidebar-trigger"
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            onClick={toggleSidebar}
+          >
+            <SidebarLeft />
+            <span className="sr-only">Toggle Sidebar</span>
+          </Button>
         </TooltipTrigger>
-        <TooltipContent side="right">
-          <p className="mr-px inline-flex items-center">
-            Toggle Sidebar{" "}
-            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
-              ⌘
-            </Kbd>
-            <Kbd className="border-muted-foreground bg-primary text-background font-mono">
-              {SIDEBAR_KEYBOARD_SHORTCUT}
-            </Kbd>
-          </p>
+        <TooltipContent side="right" className="flex items-center gap-2">
+          Toggle Sidebar
+          <KbdGroup>
+            <Kbd>⌘</Kbd>
+            <Kbd>{SIDEBAR_KEYBOARD_SHORTCUT}</Kbd>
+          </KbdGroup>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

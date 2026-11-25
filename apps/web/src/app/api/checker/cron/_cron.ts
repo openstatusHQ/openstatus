@@ -1,19 +1,15 @@
 import { CloudTasksClient, type protos } from "@google-cloud/tasks";
-import { and, db, eq, gte, isNotNull, lte, notInArray } from "@openstatus/db";
 import type { MonitorStatus } from "@openstatus/db/src/schema";
 import {
-  maintenance,
-  monitor,
-  monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import {
-  maintenancesToPageComponents,
-  pageComponent,
-} from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
+import {
+  listMonitorRegionStatuses,
+  listMonitorsToCheck,
+} from "@openstatus/services/monitor";
 import {
   type httpPayloadSchema,
   type tpcPayloadSchema,
@@ -57,38 +53,7 @@ export const cron = async ({
 
   const timestamp = Date.now();
 
-  const currentMaintenance = db
-    .select({ id: maintenance.id })
-    .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
-    )
-    .as("currentMaintenance");
-
-  const currentMaintenanceMonitors = db
-    .select({ id: pageComponent.monitorId })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      currentMaintenance,
-      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(isNotNull(pageComponent.monitorId));
-
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(
-      and(
-        eq(monitor.periodicity, periodicity),
-        eq(monitor.active, true),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
-    )
-    .all();
+  const result = await listMonitorsToCheck({ periodicity });
 
   console.log(`Start cron for ${periodicity}`);
 
@@ -104,11 +69,7 @@ export const cron = async ({
   for (const row of monitors.data) {
     // const selectedRegions = row.regions.length > 0 ? row.regions : ["ams"];
 
-    const result = await db
-      .select()
-      .from(monitorStatusTable)
-      .where(eq(monitorStatusTable.monitorId, row.id))
-      .all();
+    const result = await listMonitorRegionStatuses({ monitorIds: [row.id] });
     const monitorStatus = z.array(selectMonitorStatusSchema).safeParse(result);
     if (!monitorStatus.success) {
       console.error(
@@ -262,6 +223,9 @@ const createCronTask = async ({
     scheduleTime: {
       seconds: timestamp / 1000,
     },
+    // The checker answers only after its whole retry loop, which a 5m timeout
+    // can stretch well past Cloud Tasks' 10m default; 30m is the max allowed.
+    dispatchDeadline: { seconds: 30 * 60 },
   };
 
   const request = { parent: parent, task: newTask };

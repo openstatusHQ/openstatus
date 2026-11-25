@@ -83,7 +83,9 @@ function isBlockedHost(hostname: string): boolean {
 
 /**
  * Validates that a URL is safe to fetch (not targeting internal/private infrastructure).
- * Checks protocol, hostname, and resolved IP address.
+ * Checks protocol and hostname/literal IP only; DNS is never resolved, so a
+ * public name that resolves to a private address still passes. Same checks as
+ * `assertSafeUrlSync`, kept async for existing callers.
  * Throws an error if the URL is not safe.
  */
 export async function assertSafeUrl(urlString: string): Promise<void> {
@@ -106,6 +108,58 @@ export async function assertSafeUrl(urlString: string): Promise<void> {
     throw new Error(
       "URL targets a private or internal address, which is not allowed.",
     );
+  }
+}
+
+const MAX_REDIRECTS = 3;
+
+function isSameService(from: URL, to: URL): boolean {
+  return (
+    to.hostname === from.hostname &&
+    to.port === from.port &&
+    (to.protocol === from.protocol ||
+      (from.protocol === "http:" && to.protocol === "https:"))
+  );
+}
+
+function isSafeRedirect(from: URL, to: URL): boolean {
+  return (
+    to.hostname === from.hostname &&
+    to.port === from.port &&
+    (to.protocol === from.protocol ||
+      (from.protocol === "http:" && to.protocol === "https:"))
+  );
+}
+
+/**
+ * `fetch` for customer-supplied URLs. Follows only 307/308 (the redirects that
+ * keep method and body) to the same host and port, never downgrading https,
+ * re-checking every hop; any other 3xx comes back as a non-ok response.
+ * `init.body` must be replayable.
+ */
+export async function safeFetch(
+  url: string,
+  init?: Omit<RequestInit, "redirect">,
+): Promise<Response> {
+  let target = url;
+  for (let hop = 0; ; hop++) {
+    await assertSafeUrl(target);
+    const res = await fetch(target, { ...init, redirect: "manual" });
+
+    const location = res.headers.get("location");
+    if ((res.status !== 307 && res.status !== 308) || !location) return res;
+
+    // Headers are replayed on the next hop, so it must be the same service and
+    // never plaintext: same host and port, protocol unchanged or http → https.
+    if (
+      hop >= MAX_REDIRECTS ||
+      !isSafeRedirect(new URL(target), new URL(location, target))
+    ) {
+      return res;
+    }
+    const next = new URL(location, target);
+    await res.body?.cancel();
+    target = next.href;
   }
 }
 

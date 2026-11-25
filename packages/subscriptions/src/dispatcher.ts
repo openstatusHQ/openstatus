@@ -42,18 +42,25 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
     (i) => i.pageComponent,
   );
 
+  // impacts as of this update: a late dispatch must not show later updates
   const currentImpacts = currentImpactsFromUpdates(
-    update.statusReport.statusReportUpdates.map((u) => ({
-      id: u.id,
-      date: u.date,
-      componentImpacts: u.statusReportUpdateToPageComponents,
-    })),
+    update.statusReport.statusReportUpdates
+      .filter((u) => u.date.getTime() <= update.date.getTime())
+      .map((u) => ({
+        id: u.id,
+        date: u.date,
+        componentImpacts: u.statusReportUpdateToPageComponents,
+      })),
   );
-  const componentsWithImpact = pageComponents.map((c) => ({
-    id: c.id,
-    name: c.name,
-    impact: currentImpacts.get(c.id) ?? "operational",
-  }));
+  // legacy report (no impact rows): channels fall back to bare names
+  const componentsWithImpact =
+    currentImpacts.size > 0
+      ? pageComponents.map((c) => ({
+          id: c.id,
+          name: c.name,
+          impact: currentImpacts.get(c.id) ?? ("operational" as const),
+        }))
+      : undefined;
 
   await dispatchPageUpdate({
     id: update.statusReport.id,
@@ -74,44 +81,48 @@ export async function dispatchStatusReportUpdate(statusReportUpdateId: number) {
 }
 
 /**
- * Dispatch notifications for a maintenance update
+ * Dispatch notifications for a maintenance update (the announcement is the first one)
  */
-export async function dispatchMaintenanceUpdate(maintenanceId: number) {
-  const maintenanceWithComponents = await db.query.maintenance.findFirst({
-    where: { id: maintenanceId },
+export async function dispatchMaintenanceUpdate(maintenanceUpdateId: number) {
+  const update = await db.query.maintenanceUpdate.findFirst({
+    where: { id: maintenanceUpdateId },
     with: {
-      maintenancesToPageComponents: {
-        with: { pageComponent: true },
+      maintenance: {
+        with: {
+          maintenancesToPageComponents: {
+            with: { pageComponent: true },
+          },
+        },
       },
     },
   });
 
-  if (!maintenanceWithComponents) {
-    console.error(`Maintenance ${maintenanceId} not found`);
+  if (!update?.maintenance) {
+    console.error(`Maintenance update ${maintenanceUpdateId} not found`);
     return;
   }
 
-  if (!maintenanceWithComponents.pageId) {
-    console.error(`Maintenance ${maintenanceId} has no page ID`);
+  if (!update.maintenance.pageId) {
+    console.error(`Maintenance ${update.maintenance.id} has no page ID`);
     return;
   }
 
-  const pageComponents =
-    maintenanceWithComponents.maintenancesToPageComponents.map(
-      (i) => i.pageComponent,
-    );
+  const pageComponents = update.maintenance.maintenancesToPageComponents.map(
+    (i) => i.pageComponent,
+  );
 
   await dispatchPageUpdate({
-    id: maintenanceWithComponents.id,
-    pageId: maintenanceWithComponents.pageId,
-    title: maintenanceWithComponents.title,
+    id: update.maintenance.id,
+    pageId: update.maintenance.pageId,
+    title: update.maintenance.title,
     status: "maintenance",
-    message: maintenanceWithComponents.message,
+    message: update.message,
     pageComponentIds: pageComponents.map((c) => c.id),
     pageComponents: pageComponents.map((c) => c.name),
-    date: `${maintenanceWithComponents.from.toISOString()} - ${maintenanceWithComponents.to.toISOString()}`,
-    startsAt: maintenanceWithComponents.from.toISOString(),
-    endsAt: maintenanceWithComponents.to.toISOString(),
+    date: update.date.toISOString(),
+    updateId: update.id,
+    startsAt: update.maintenance.from.toISOString(),
+    endsAt: update.maintenance.to.toISOString(),
     pageComponentsWithId: pageComponents.map((c) => ({
       id: c.id,
       name: c.name,
@@ -150,6 +161,9 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
       acceptedAt: { isNotNull: true },
       unsubscribedAt: { isNull: true },
     },
+    // Deterministic order so the email idempotency fingerprint is stable
+    // across dispatches; id breaks same-second createdAt ties.
+    orderBy: { createdAt: "asc", id: "asc" },
     with: {
       components: true,
     },
@@ -162,9 +176,10 @@ export async function dispatchPageUpdate(pageUpdate: PageUpdate) {
       pageName: pageData.name,
       pageSlug: pageData.slug,
       customDomain: pageData.customDomain,
-      channelType: sub.channelType as "email" | "webhook",
+      channelType: sub.channelType as "email" | "webhook" | "slack",
       email: sub.email ?? undefined,
       webhookUrl: sub.webhookUrl ?? undefined,
+      slackChannelId: sub.slackChannelId ?? undefined,
       channelConfig: sub.channelConfig ?? undefined,
       token: sub.token ?? undefined,
       acceptedAt: sub.acceptedAt ?? undefined,

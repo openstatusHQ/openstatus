@@ -2,6 +2,8 @@ import type { WorkspacePlan } from "../workspaces/validation";
 import { allPlans } from "./config";
 import {
   type Addons,
+  type AddonQuantityKey,
+  addonQuantityConfig,
   type BillingInterval,
   type Limits,
   limitsSchema,
@@ -66,16 +68,42 @@ export function getPriceConfig(
   return resolvePriceConfig(planConfig.price[interval], currency);
 }
 
+export function isAddonQuantityKey(
+  addon: keyof Addons,
+): addon is AddonQuantityKey {
+  return addon in addonQuantityConfig;
+}
+
+export function getAddonQuantityConfig(addon: keyof Addons) {
+  return isAddonQuantityKey(addon) ? addonQuantityConfig[addon] : null;
+}
+
+export function getAddonPackSize(addon: keyof Addons): number {
+  return getAddonQuantityConfig(addon)?.packSize ?? 1;
+}
+
+export function getAddonMaxQuantity(addon: keyof Addons): number | null {
+  return getAddonQuantityConfig(addon)?.maxQuantity ?? null;
+}
+
+// Yearly addon prices in Stripe are the monthly price ×10 — the same "2 months
+// free" as the plans — so they are derived rather than stored per addon.
+export const YEARLY_ADDON_MULTIPLIER = 10;
+
 export function getAddonPriceConfig(
   plan: WorkspacePlan,
   addon: keyof Addons,
   currency?: string,
+  interval: BillingInterval = "monthly",
 ) {
   const addonConfig = allPlans[plan].addons[addon];
   if (!addonConfig) {
     return null;
   }
-  return resolvePriceConfig(addonConfig.price, currency);
+  const price = resolvePriceConfig(addonConfig.price, currency);
+  return interval === "yearly"
+    ? { ...price, value: price.value * YEARLY_ADDON_MULTIPLIER }
+    : price;
 }
 
 export function getPlansForLimit(
@@ -96,9 +124,10 @@ export function getPlansForLimit(
   return availablePlans.filter((plan) => {
     const planLimitValue = allPlans[plan].limits[limit];
 
-    // For boolean limits, only show plans where the feature is enabled
+    // For boolean limits, only show plans where the feature is enabled — either
+    // bundled or purchasable as an addon (e.g. SSO on every paid plan).
     if (typeof currentLimitValue === "boolean") {
-      return planLimitValue === true;
+      return planLimitValue === true || limit in allPlans[plan].addons;
     }
 
     // For numeric limits, show plans with higher values
@@ -157,4 +186,34 @@ export function updateAddonInLimits(
   }
 
   return limitsSchema.parse(newLimits);
+}
+
+const DATA_RETENTION: Record<
+  Limits["data-retention"],
+  { unit: "days" | "months"; amount: number }
+> = {
+  "14 days": { unit: "days", amount: 14 },
+  "3 months": { unit: "months", amount: 3 },
+  "12 months": { unit: "months", amount: 12 },
+  "24 months": { unit: "months", amount: 24 },
+};
+
+export function dataRetentionCutoff(
+  retention: Limits["data-retention"],
+  now: Date = new Date(),
+): Date {
+  const { unit, amount } = DATA_RETENTION[retention];
+  const cutoff = new Date(now);
+  if (unit === "days") {
+    cutoff.setUTCDate(cutoff.getUTCDate() - amount);
+    return cutoff;
+  }
+  const day = cutoff.getUTCDate();
+  cutoff.setUTCDate(1);
+  cutoff.setUTCMonth(cutoff.getUTCMonth() - amount);
+  const lastDay = new Date(
+    Date.UTC(cutoff.getUTCFullYear(), cutoff.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  cutoff.setUTCDate(Math.min(day, lastDay));
+  return cutoff;
 }

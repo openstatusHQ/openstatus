@@ -16,9 +16,10 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.member.list.queryOptions());
-  await queryClient.prefetchQuery(trpc.invitation.list.queryOptions());
-  await queryClient.prefetchQuery(trpc.apiKeyRouter.getAll.queryOptions());
+  await Promise.all([
+    queryClient.prefetchQuery(trpc.member.list.queryOptions()),
+    queryClient.prefetchQuery(trpc.invitation.list.queryOptions()),
+  ]);
 
   return (
     <HydrateClient>

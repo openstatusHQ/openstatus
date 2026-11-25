@@ -60,7 +60,7 @@ export function TableOfContents({ items }: { items: TocItem[] }) {
             <a
               href={`#${item.slug}`}
               className={cn(
-                "ease text-muted-foreground hover:bg-muted hover:text-foreground block py-2 transition-colors duration-150 motion-reduce:transition-none",
+                "ease text-muted-foreground hover:bg-muted hover:text-foreground block py-2 break-words transition-colors duration-150 motion-reduce:transition-none",
                 item.depth === 2 ? "pl-2" : "pl-4",
                 active === item.slug && "bg-muted text-foreground",
               )}

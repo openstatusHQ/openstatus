@@ -1,0 +1,128 @@
+{{- range $svc, $cfg := .Values.services }}
+{{- if $cfg.enabled }}
+{{- range $dep := $cfg.dependsOn }}
+{{- if not (get $.Values.services $dep).enabled }}
+{{- fail (printf "services.%s depends on services.%s, which is disabled" $svc $dep) }}
+{{- end }}
+{{- end }}
+{{- $name := include "openstatus.component" (dict "ctx" $ "component" $svc) }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" $ | nindent 4 }}
+spec:
+  selector:
+    {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" $svc) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $cfg.port }}
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "openstatus.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: {{ $svc }}
+spec:
+  replicas: {{ $cfg.replicas | default 1 }}
+  selector:
+    matchLabels:
+      {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" $svc) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "openstatus.selectorLabels" (dict "ctx" $ "component" $svc) | nindent 8 }}
+      annotations:
+        checksum/env: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+        {{- if not $.Values.secrets.existingSecret }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") $ | sha256sum }}
+        {{- end }}
+    spec:
+      {{- include "openstatus.scheduling" $ | nindent 6 }}
+      {{- if or (eq $svc "workflows") $cfg.dependsOn }}
+      initContainers:
+        {{- if eq $svc "workflows" }}
+        # compose runs the idempotent db-migrate before workflows, and every other
+        # app waits on workflows, so migrations always land first.
+        - name: db-migrate
+          image: {{ include "openstatus.image" (dict "ctx" $ "name" $.Values.dbMigrate.image) }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          envFrom:
+            {{- include "openstatus.envFrom" $ | nindent 12 }}
+        {{- end }}
+        {{- range $dep := $cfg.dependsOn }}
+        {{- $d := get $.Values.services $dep }}
+        # compose `depends_on: condition: service_healthy`
+        - name: wait-for-{{ $dep }}
+          image: {{ include "openstatus.externalImage" $.Values.cron.image | quote }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          command: ["sh", "-c"]
+          args:
+            - {{ printf "until curl -fsS -o /dev/null %s%s; do sleep 2; done" (include "openstatus.url" (dict "ctx" $ "component" $dep "port" $d.port)) $d.healthPath | quote }}
+        {{- end }}
+      {{- end }}
+      containers:
+        - name: {{ $svc }}
+          image: {{ include "openstatus.image" (dict "ctx" $ "name" $cfg.image) }}
+          {{- with $.Values.image.pullPolicy }}
+          imagePullPolicy: {{ . }}
+          {{- end }}
+          envFrom:
+            {{- include "openstatus.envFrom" $ | nindent 12 }}
+          env:
+            {{- if eq $svc "dashboard" }}
+            # Auth.js otherwise builds callback and magic-link URLs from the bind address (0.0.0.0:3000).
+            - name: AUTH_URL
+              value: {{ $.Values.urls.dashboard | quote }}
+            {{- end }}
+            {{- range $k, $v := $cfg.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ $cfg.port }}
+          readinessProbe:
+            httpGet:
+              path: {{ $cfg.healthPath }}
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 10
+          startupProbe:
+            httpGet:
+              path: {{ $cfg.healthPath }}
+              port: http
+            periodSeconds: 5
+            failureThreshold: 36
+          # Process-only: the health endpoints also check the database, and an
+          # outage there should drop readiness, not restart the container.
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            {{- toYaml $cfg.resources | nindent 12 }}
+          {{- if eq $svc "workflows" }}
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          {{- end }}
+      {{- if eq $svc "workflows" }}
+      volumes:
+        # Local libSQL replica cache; rebuilt from the primary on start.
+        - name: data
+          emptyDir: {}
+      {{- end }}
+{{- end }}
+{{- end }}

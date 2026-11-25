@@ -1,4 +1,5 @@
 import { Events } from "@openstatus/analytics";
+import { ForbiddenError, UnauthorizedError } from "@openstatus/services";
 import {
   SAFE_SUBSCRIPTION_MESSAGES,
   createPageSubscriber,
@@ -16,6 +17,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { visitorFromCtx } from "../lib/page-access";
 import { toServiceCtx, toTRPCError } from "../service-adapter";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 
@@ -37,6 +39,9 @@ const supportedWebhookUrlSchema = z.url();
 // subscriptions error message only needs adding in one place.
 function throwFromException(error: unknown, fallback: string): never {
   if (error instanceof TRPCError) throw error;
+  if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
+    toTRPCError(error);
+  }
   console.error("pageSubscriber router error:", error);
   if (error instanceof Error && SAFE_SUBSCRIPTION_MESSAGES.has(error.message)) {
     throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
@@ -61,7 +66,8 @@ export const pageSubscriberRouter = createTRPCRouter({
     .mutation(async (opts) => {
       const isPending = await hasPendingSubscriber({
         input: { email: opts.input.email, pageId: opts.input.pageId },
-      });
+        visitor: visitorFromCtx(opts.ctx),
+      }).catch((error) => throwFromException(error, "Failed to subscribe"));
       if (isPending) {
         throw new TRPCError({
           code: "BAD_REQUEST",
@@ -77,6 +83,7 @@ export const pageSubscriberRouter = createTRPCRouter({
             pageId: opts.input.pageId,
             componentIds: opts.input.componentIds,
           },
+          visitor: visitorFromCtx(opts.ctx),
         });
 
         return {

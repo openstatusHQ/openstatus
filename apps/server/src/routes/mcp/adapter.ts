@@ -1,8 +1,14 @@
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
 import type { Scope, Workspace } from "@openstatus/db/src/schema";
-import { type ServiceContext, ServiceError } from "@openstatus/services";
+import {
+  LimitExceededError,
+  type ServiceContext,
+  ServiceError,
+} from "@openstatus/services";
 import { ZodError } from "zod";
+
+import { tb } from "@/libs/clients";
 
 /**
  * Build a `ServiceContext` for an MCP-originated request.
@@ -31,6 +37,7 @@ export function toServiceCtx(args: {
       scopes: args.apiKey.scopes,
     },
     requestId: args.requestId,
+    tb,
   };
 }
 
@@ -51,6 +58,12 @@ export function mapError(err: unknown): CallToolResult {
     return {
       isError: true,
       content: [{ type: "text", text: `Invalid input: ${err.message}` }],
+    };
+  }
+  if (err instanceof LimitExceededError) {
+    return {
+      isError: true,
+      content: [{ type: "text", text: `${err.message}${limitHint(err)}` }],
     };
   }
   if (err instanceof ServiceError) {
@@ -78,6 +91,16 @@ export function mapError(err: unknown): CallToolResult {
   }
   const message = err instanceof Error ? err.message : "Unknown error";
   throw new McpError(ErrorCode.InternalError, message);
+}
+
+// Count limits that can be raised with an add-on; everything else needs a plan change.
+// Keys of `addonQuantityConfig`: the only limits an add-on lifts.
+const ADD_ON_LIMITS = new Set(["monitors", "status-pages"]);
+
+function limitHint(err: LimitExceededError): string {
+  return ADD_ON_LIMITS.has(err.limit)
+    ? " Add more under Settings > Billing (add-on)."
+    : " Upgrade the plan under Settings > Billing.";
 }
 
 function serviceErrorToMcpCode(

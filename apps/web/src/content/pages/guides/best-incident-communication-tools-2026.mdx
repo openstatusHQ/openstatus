@@ -129,3 +129,35 @@ For everyone else — and that's the majority of teams — **openstatus** is the
 ## Need Help or Have Questions?
 
 If you need help along the way, feel free to join our [Discord community](https://www.openstatus.dev/discord), check our [documentation](https://www.openstatus.dev/docs) for more information, or reach out to us via [email](mailto:ping@openstatus.dev).
+
+## Frequently asked questions
+
+<Details summary="What is incident communication?">
+
+Incident communication covers everything from internal coordination (who's working on the problem, what's the current status, where's the war room) to external messaging (status page updates, subscriber notifications, postmortems). A good incident communication tool covers both sides — your engineers and your users — and ties them together so updates don't drift between channels.
+
+</Details>
+
+<Details summary="What's the difference between an incident management platform and a status page?">
+
+Incident management platforms like incident.io and Rootly are Slack-first tools focused on internal coordination: creating war rooms, assigning roles, tracking timelines, and automating workflows. Status pages like openstatus, Atlassian Statuspage, and Instatus are externally-facing communication tools for your users. openstatus bridges both with a status page, a Slack agent for internal coordination, and built-in monitoring.
+
+</Details>
+
+<Details summary="Which incident communication tool is best for small teams?">
+
+openstatus is typically the best choice for small teams. It includes a status page, monitoring, a Slack agent, and unlimited team members at $30/month. incident.io and Rootly are per-seat priced and aimed at larger orgs. Atlassian Statuspage and Instatus cover the external side only and require a separate tool for internal coordination.
+
+</Details>
+
+<Details summary="Can I use these tools together?">
+
+Yes, and many teams do. A common stack is incident.io or Rootly for internal coordination, plus Atlassian Statuspage or openstatus for external communication. The downside is two products, two bills, and updates that can drift between them. Tools that cover both sides — like openstatus — reduce that overhead.
+
+</Details>
+
+<Details summary="Do any of these tools include monitoring?">
+
+Only openstatus includes built-in synthetic monitoring. incident.io, Rootly, Atlassian Statuspage, and Instatus all expect you to bring monitoring from another tool (Datadog, New Relic, Pingdom, etc.) and ingest the alerts.
+
+</Details>

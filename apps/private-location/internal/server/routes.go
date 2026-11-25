@@ -14,6 +14,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/logs"
 	"github.com/openstatushq/openstatus/apps/private-location/internal/tinybird"
+	"github.com/openstatushq/openstatus/apps/private-location/internal/workflows"
 	v1 "github.com/openstatushq/openstatus/apps/private-location/proto/private_location/v1"
 )
 
@@ -129,8 +130,9 @@ func GetEvent(ctx context.Context) *EventHolder {
 }
 
 type privateLocationHandler struct {
-	db       *sqlx.DB
-	TbClient tinybird.Client
+	db              *sqlx.DB
+	TbClient        tinybird.Client
+	WorkflowsClient workflows.Client
 }
 
 func NewPrivateLocationServer(db *sqlx.DB, tbClient tinybird.Client) *privateLocationHandler {
@@ -148,15 +150,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Get("/health", s.healthHandler)
 
-	tinyBirdToken := os.Getenv("TINYBIRD_TOKEN")
-
-	httpClient := &http.Client{
-		Timeout: 45 * time.Second,
-	}
-
-	tinybirdClient := tinybird.NewClient(httpClient, tinyBirdToken)
-
-	privateLocationServer := NewPrivateLocationServer(s.db, tinybirdClient)
+	privateLocationServer := NewPrivateLocationServer(s.db, s.tbClient)
+	privateLocationServer.WorkflowsClient = workflows.NewClient(s.httpClient, os.Getenv("CRON_SECRET"))
 	path, handler := v1.NewPrivateLocationServiceHandler(privateLocationServer)
 
 	r.Group(func(r chi.Router) {

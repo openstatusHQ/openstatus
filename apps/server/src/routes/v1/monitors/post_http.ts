@@ -9,7 +9,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
 import { HTTPMonitorSchema, MonitorSchema } from "./schema";
-import { getAssertionNew } from "./utils";
+import { assertSafeMonitorUrl, getAssertionNew } from "./utils";
 
 const postRoute = createRoute({
   method: "post",
@@ -84,6 +84,8 @@ export function registerPostMonitorHTTP(api: typeof monitorsApi) {
         });
       }
     }
+
+    assertSafeMonitorUrl({ jobType: "http", url: input.request.url });
 
     const { request, regions, assertions, openTelemetry, ...rest } = input;
 

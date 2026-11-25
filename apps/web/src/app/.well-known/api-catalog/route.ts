@@ -6,7 +6,7 @@ const linkset = {
       anchor: "https://api.openstatus.dev",
       "service-desc": [
         {
-          href: "https://api.openstatus.dev/openapi",
+          href: "https://api.openstatus.dev/openapi.json",
           type: "application/json",
           title: "Openstatus API — OpenAPI description",
         },

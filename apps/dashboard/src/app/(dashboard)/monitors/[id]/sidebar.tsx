@@ -1,16 +1,56 @@
 "use client";
 
+import type { RouterOutputs } from "@openstatus/api";
 import { deserialize } from "@openstatus/assertions";
+import { Logs } from "@openstatus/icons";
 import { Badge } from "@openstatus/ui/components/ui/badge";
+import { heartbeatExpectation } from "@openstatus/utils";
 import { useQuery } from "@tanstack/react-query";
-import { Logs } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import { SidebarRight } from "@/components/nav/sidebar-right";
-import { monitorTypes } from "@/data/monitors.client";
-import { formatMilliseconds } from "@/lib/formatter";
+import {
+  type HeartbeatHealth,
+  getHeartbeatHealth,
+  heartbeatHealthConfig,
+} from "@/data/heartbeat.client";
+import { getMonitorHealth, monitorTypes } from "@/data/monitors.client";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { useNow } from "@/hooks/use-now";
+import { formatClockOrDay, formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
+
+type Monitor = NonNullable<RouterOutputs["monitor"]["get"]>;
+
+const healthText = {
+  success: "text-success",
+  warning: "text-warning",
+  destructive: "text-destructive",
+} satisfies Record<
+  NonNullable<(typeof heartbeatHealthConfig)[HeartbeatHealth]["status"]>,
+  string
+>;
+
+// own component: the clock re-renders this word, not the sidebar
+function HeartbeatStatus({ monitor }: { monitor: Monitor }) {
+  const trpc = useTRPC();
+  const { data: heartbeat } = useQuery(
+    trpc.monitor.heartbeat.queryOptions({ id: monitor.id }),
+  );
+  const now = useNow(10_000);
+  // the server has no clock to share: "late" only shows once hydrated
+  const hydrated = useHydrated();
+  if (!heartbeat) return "—";
+  const health = getHeartbeatHealth(
+    monitor,
+    heartbeat,
+    hydrated ? now : new Date(0),
+  );
+  const { label, status } = heartbeatHealthConfig[health];
+  return <span className={status && healthText[status]}>{label}</span>;
+}
 
 export function Sidebar() {
   const router = useRouter();
@@ -20,10 +60,15 @@ export function Sidebar() {
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
 
+  const until = monitor?.maintenance?.until;
+  useMaintenanceTick(until ? [{ from: until, to: until }] : []);
+
   if (!monitor) return null;
 
   const assertions = monitor.assertions ? deserialize(monitor.assertions) : [];
   const type = monitorTypes.find((type) => type.id === monitor.jobType);
+  const isHeartbeat = monitor.jobType === "heartbeat";
+  const inMaintenance = getMonitorHealth(monitor) === "maintenance";
 
   return (
     <SidebarRight
@@ -38,14 +83,34 @@ export function Sidebar() {
             },
             {
               label: "Status",
-              // FIXME: dynamic
-              value: <span className="text-success">Normal</span>,
+              value:
+                inMaintenance && monitor.maintenance ? (
+                  <span className="text-info">
+                    Maintenance until{" "}
+                    {formatClockOrDay(monitor.maintenance.until)}
+                  </span>
+                ) : isHeartbeat ? (
+                  <HeartbeatStatus monitor={monitor} />
+                ) : (
+                  <span
+                    className={
+                      monitor.status === "error"
+                        ? "text-destructive"
+                        : monitor.status === "degraded"
+                          ? "text-warning"
+                          : "text-success"
+                    }
+                  >
+                    {monitor.status.charAt(0).toUpperCase() +
+                      monitor.status.slice(1)}
+                  </span>
+                ),
             },
             {
               label: "Type",
               value: type ? (
                 <span className="flex items-center gap-1">
-                  <span className="uppercase">{type.label}</span>
+                  <span>{type.label}</span>
                   <type.icon className="text-muted-foreground h-2.5 w-2.5" />
                 </span>
               ) : (
@@ -53,16 +118,40 @@ export function Sidebar() {
               ),
             },
             {
-              label: "Endpoint",
-              value: monitor.url.replace(/^https?:\/\//, ""),
+              label: isHeartbeat ? "Schedule" : "Endpoint",
+              value: isHeartbeat
+                ? heartbeatExpectation(monitor)
+                : monitor.url.replace(/^https?:\/\//, ""),
             },
-            {
-              label: "Regions",
-              value:
-                monitor.regions.length > 6
-                  ? `${monitor.regions.length} regions`
-                  : monitor.regions.join(", "),
-            },
+            ...(isHeartbeat
+              ? []
+              : [
+                  {
+                    label: "Regions",
+                    value: (() => {
+                      const allRegions = [
+                        ...monitor.regions,
+                        ...(monitor.privateLocations?.map((location) =>
+                          location.id.toString(),
+                        ) ?? []),
+                      ];
+                      // Sort regions: numeric sort for private location IDs, alphabetic for region codes
+                      const sortedRegions = allRegions.sort((a, b) => {
+                        const aNum = Number(a);
+                        const bNum = Number(b);
+                        // If both are numeric, sort numerically
+                        if (!isNaN(aNum) && !isNaN(bNum)) {
+                          return aNum - bNum;
+                        }
+                        // Otherwise, sort alphabetically
+                        return a.localeCompare(b);
+                      });
+                      return sortedRegions.length > 6
+                        ? `${sortedRegions.length} regions`
+                        : sortedRegions.join(", ");
+                    })(),
+                  },
+                ]),
             {
               label: "Tags",
               value: (
@@ -87,19 +176,24 @@ export function Sidebar() {
         },
         {
           label: "Configuration",
-          items: [
-            { label: "Periodicity", value: monitor.periodicity },
-            {
-              label: "Timeout",
-              value: formatMilliseconds(monitor.timeout),
-            },
-            { label: "Public", value: String(monitor.public) },
-            { label: "Active", value: String(monitor.active) },
-            {
-              label: "Follow redirects",
-              value: String(monitor.followRedirects),
-            },
-          ],
+          items: isHeartbeat
+            ? [
+                { label: "Public", value: String(monitor.public) },
+                { label: "Active", value: String(monitor.active) },
+              ]
+            : [
+                { label: "Periodicity", value: monitor.periodicity },
+                {
+                  label: "Timeout",
+                  value: formatMilliseconds(monitor.timeout),
+                },
+                { label: "Public", value: String(monitor.public) },
+                { label: "Active", value: String(monitor.active) },
+                {
+                  label: "Follow redirects",
+                  value: String(monitor.followRedirects),
+                },
+              ],
         },
         {
           label: "Notifications",

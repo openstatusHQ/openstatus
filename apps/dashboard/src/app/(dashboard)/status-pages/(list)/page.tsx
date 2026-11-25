@@ -1,12 +1,10 @@
-import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
+import { HydrateClient } from "@/lib/trpc/server";
 
 import { Client } from "./client";
 
-export default async function Page() {
-  const queryClient = getQueryClient();
-
-  await queryClient.prefetchQuery(trpc.page.list.queryOptions());
-
+// `page.list` is prefetched by the root layout for the sidebar — the client
+// cache already holds it on every route.
+export default function Page() {
   return (
     <HydrateClient>
       <Client />

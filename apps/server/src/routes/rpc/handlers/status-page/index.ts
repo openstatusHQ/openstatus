@@ -1,32 +1,8 @@
 import { Code, ConnectError, type ServiceImpl } from "@connectrpc/connect";
-import {
-  and,
-  count,
-  db,
-  desc,
-  eq,
-  gte,
-  inArray,
-  isNull,
-  lte,
-  sql,
-} from "@openstatus/db";
-import {
-  maintenance,
-  maintenancesToPageComponents,
-  monitor,
-  page,
-  pageComponent,
-  pageComponentGroup,
-  pageSubscriber,
-  statusReport,
-  statusReportUpdate,
-  statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
-} from "@openstatus/db/src/schema";
 import type {
   ComponentDayBucket,
   ComponentEvent,
+  CustomTheme,
   GetPageComponentDailySummaryResponse,
   PageComponentDailySummary,
   StatusPageService,
@@ -37,7 +13,7 @@ import {
 } from "@openstatus/proto/status_page/v1";
 import {
   ConflictError,
-  LimitExceededError,
+  InternalServiceError,
   NotFoundError,
   ServiceError,
   withTransaction,
@@ -47,32 +23,56 @@ import {
   deletePage,
   getPage,
   getPageBySlug,
+  getPageOverallStatus,
+  getPageRow,
+  getStatusPageContent,
+  type PageStatus,
+  type StatusPageContent,
   listPages,
+  parsePageConfiguration,
   updatePageAppearance,
   updatePageCustomDomain,
+  updatePageCustomTheme,
   updatePageGeneral,
   updatePageLinks,
   updatePageLocales,
   updatePagePasswordProtection,
 } from "@openstatus/services/page";
 import {
+  createPageComponent,
   deletePageComponent,
+  getPageComponent,
   getPageComponentDailySummary,
+  updatePageComponent,
 } from "@openstatus/services/page-component";
 import {
+  createPageComponentGroup,
+  deletePageComponentGroup,
+  updatePageComponentGroup,
+} from "@openstatus/services/page-component-group";
+import {
   createPageSubscriber,
-  upsertSelfSignupSubscriber,
+  countPageSubscribers,
+  listPageSubscribers,
+  unsubscribePageSubscriber,
+  sendSubscriberVerification,
+  subscribeEmailInWorkspace,
 } from "@openstatus/services/page-subscriber";
-import { getChannel } from "@openstatus/subscriptions";
-import { THEME_KEYS, type ThemeKey } from "@openstatus/theme-store";
+import {
+  THEME_KEYS,
+  type ThemeKey,
+  validateCustomTheme,
+} from "@openstatus/theme-store";
 
-import { toConnectError, toServiceCtx } from "../../adapter";
+import { rethrowPlanLimit, toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
+import { parseId } from "../../parse";
 import { dbImpactToProto } from "../status-report/converters";
 import {
   dayStatusToProto,
   dbComponentToProto,
   dbComponentTypeToProto,
+  dbConfigurationToProto,
   dbGroupToProto,
   dbPageToProto,
   dbPageToProtoSummary,
@@ -86,16 +86,12 @@ import {
 } from "./converters";
 import {
   authEmailDomainsRequiredError,
-  componentGroupCreateFailedError,
   componentGroupNotFoundError,
-  componentGroupUpdateFailedError,
   identifierRequiredError,
   invalidCustomDomainError,
   invalidIconUrlError,
   monitorNotFoundError,
-  pageComponentCreateFailedError,
   pageComponentNotFoundError,
-  pageComponentUpdateFailedError,
   passwordRequiredError,
   slugAlreadyExistsError,
   statusPageAccessDeniedError,
@@ -107,10 +103,10 @@ import {
 } from "./errors";
 import {
   checkCustomDomainLimit,
+  checkCustomThemeLimit,
   checkEmailDomainProtectionLimit,
   checkIpRestrictionLimit,
   checkNoIndexLimit,
-  checkPageComponentLimits,
   checkPasswordProtectionLimit,
   checkStatusSubscribersLimit,
 } from "./limits";
@@ -119,8 +115,8 @@ import {
  * Normalize a service `Page` back into the converter's raw-db shape.
  *
  * The service parses `authEmailDomains` / `allowedIpRanges` into arrays
- * via `selectPageSchema`; the converters (shared with the 13 still-on-db
- * methods below) expect the comma-joined string form the DB stores.
+ * via `selectPageSchema`; the converters expect the comma-joined string form
+ * the DB stores.
  */
 function serviceToConverterPage<
   P extends {
@@ -142,15 +138,12 @@ function serviceToConverterPage<
   };
 }
 
-/**
- * Helper to get a status page by ID with workspace scope.
- */
-async function getPageById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(page)
-    .where(and(eq(page.id, id), eq(page.workspaceId, workspaceId)))
-    .get();
+function parseEntityId(value: string, label: string): number {
+  return parseId(
+    value,
+    () =>
+      new ConnectError(`Invalid ${label}: "${value}"`, Code.InvalidArgument),
+  );
 }
 
 /**
@@ -244,44 +237,118 @@ function validateAllowedIpRanges(ranges: string): string[] {
   return normalized;
 }
 
-/**
- * Helper to get a component by ID with workspace scope.
- */
-async function getComponentById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(pageComponent)
-    .where(
-      and(eq(pageComponent.id, id), eq(pageComponent.workspaceId, workspaceId)),
-    )
-    .get();
+// Proto map values arrive unvalidated; check var names / safe values at the
+// handler so callers get a readable InvalidArgument instead of the service's
+// raw zod message.
+function validateProtoCustomTheme(customTheme: CustomTheme): {
+  light: Record<string, string>;
+  dark: Record<string, string>;
+} {
+  const input = {
+    light: { ...customTheme.light },
+    dark: { ...customTheme.dark },
+  };
+  const result = validateCustomTheme(input);
+  if (!result.valid) {
+    throw new ConnectError(result.errors.join(" "), Code.InvalidArgument);
+  }
+  return input;
 }
 
-/**
- * Helper to get a component group by ID with workspace scope.
- */
-async function getGroupById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(pageComponentGroup)
-    .where(
-      and(
-        eq(pageComponentGroup.id, id),
-        eq(pageComponentGroup.workspaceId, workspaceId),
-      ),
-    )
-    .get();
+type ResolvedPage = Awaited<ReturnType<typeof getPageRow>>;
+
+async function getWorkspacePage(
+  rpcCtx: ReturnType<typeof getRpcContext>,
+  id: string,
+): Promise<ResolvedPage> {
+  try {
+    return await getPageRow({
+      ctx: toServiceCtx(rpcCtx),
+      input: { id: parseEntityId(id, "page id") },
+    });
+  } catch (err) {
+    if (err instanceof NotFoundError) throw statusPageNotFoundError(id);
+    toConnectError(err);
+  }
 }
 
-/**
- * Helper to get a monitor by ID with workspace scope.
- */
-async function getMonitorById(id: number, workspaceId: number) {
-  return db
-    .select()
-    .from(monitor)
-    .where(and(eq(monitor.id, id), eq(monitor.workspaceId, workspaceId)))
-    .get();
+/** Group misses are reported as not-found whether absent or on another page. */
+function rethrowGroupNotFound(err: unknown, groupId: string | undefined) {
+  if (
+    groupId &&
+    err instanceof NotFoundError &&
+    err.entity === "page_component_group"
+  ) {
+    throw componentGroupNotFoundError(groupId);
+  }
+}
+
+async function fetchStatusPageContent(
+  pageData: ResolvedPage,
+  prefetched?: StatusPageContent,
+) {
+  const content =
+    prefetched ?? (await getStatusPageContent({ pageId: pageData.id }));
+
+  const { dbStatusToProto, dbUpdateToProto } =
+    await import("../status-report/converters");
+
+  const statusReports = content.statusReports.map((report) => ({
+    $typeName: "openstatus.status_report.v1.StatusReport" as const,
+    id: String(report.id),
+    status: dbStatusToProto(report.status),
+    title: report.title,
+    pageComponentIds: report.pageComponentIds.map(String),
+    updates: report.updates.map((u) =>
+      dbUpdateToProto({ ...u, componentImpacts: u.componentImpacts }),
+    ),
+    createdAt: report.createdAt?.toISOString() ?? "",
+    updatedAt: report.updatedAt?.toISOString() ?? "",
+  }));
+
+  const maintenancesProto = content.maintenances.map((m) => ({
+    $typeName: "openstatus.maintenance.v1.MaintenanceSummary" as const,
+    id: String(m.id),
+    title: m.title,
+    message: m.message,
+    from: m.from.toISOString(),
+    to: m.to.toISOString(),
+    pageId: String(pageData.id),
+    pageComponentIds: m.pageComponentIds.map(String),
+    createdAt: m.createdAt?.toISOString() ?? "",
+    updatedAt: m.updatedAt?.toISOString() ?? "",
+  }));
+
+  return {
+    components: content.components.map(dbComponentToProto),
+    groups: content.groups.map(dbGroupToProto),
+    statusReports,
+    maintenances: maintenancesProto,
+  };
+}
+
+const pageStatusToProto: Record<PageStatus, OverallStatus> = {
+  operational: OverallStatus.OPERATIONAL,
+  degraded: OverallStatus.DEGRADED,
+  maintenance: OverallStatus.MAINTENANCE,
+};
+
+async function computeOverallStatus(
+  pageData: ResolvedPage,
+  prefetched?: { id: number }[],
+) {
+  const result = await getPageOverallStatus({
+    pageId: pageData.id,
+    componentIds: prefetched?.map((c) => c.id),
+  });
+  return {
+    overallStatus: pageStatusToProto[result.status],
+    componentStatuses: result.components.map((c) => ({
+      $typeName: "openstatus.status_page.v1.ComponentStatus" as const,
+      componentId: String(c.id),
+      status: pageStatusToProto[c.status],
+    })),
+  };
 }
 
 /**
@@ -397,6 +464,12 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
         checkNoIndexLimit(limits);
       }
 
+      let customTheme: ReturnType<typeof validateProtoCustomTheme> | undefined;
+      if (req.customTheme !== undefined) {
+        checkCustomThemeLimit(limits);
+        customTheme = validateProtoCustomTheme(req.customTheme);
+      }
+
       // `published` relies on DB default (false). The service's
       // CreatePageInput type doesn't surface the column, and its behavior
       // matches the legacy `published: false` write on create.
@@ -425,25 +498,11 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           defaultLocale,
           locales,
           allowIndex,
+          customTheme,
         },
-      }).catch((err) => {
-        // Same handler-layer remap as the `i18n` pre-check above —
-        // preserve `PermissionDenied` (403) for "plan quota reached"
-        // on `status-pages`. The service throws `LimitExceededError`
-        // which the Connect adapter maps to `ResourceExhausted`
-        // (429), but the gRPC contract here is 403 for "upgrade
-        // required".
-        if (
-          err instanceof LimitExceededError &&
-          err.message.startsWith("status-pages")
-        ) {
-          throw new ConnectError(
-            "Upgrade for more status pages.",
-            Code.PermissionDenied,
-          );
-        }
-        throw err;
-      });
+      }).catch((err) =>
+        rethrowPlanLimit(err, "status-pages", "Upgrade for more status pages."),
+      );
 
       return { statusPage: dbPageToProto(serviceToConverterPage(created)) };
     } catch (err) {
@@ -460,7 +519,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       try {
         const pageData = await getPage({
           ctx: toServiceCtx(rpcCtx),
-          input: { id: Number(id) },
+          input: { id: parseEntityId(id, "page id") },
         });
         return {
           statusPage: dbPageToProto(serviceToConverterPage(pageData)),
@@ -509,7 +568,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
       const id = req.id?.trim();
       if (!id) throw statusPageIdRequiredError();
-      const pageId = Number(id);
+      const pageId = parseEntityId(id, "page id");
 
       // i18n — keep at handler to preserve PermissionDenied.
       if (!limits.i18n) {
@@ -597,30 +656,35 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       }
       if (req.icon !== undefined && req.icon) validateIconUrl(req.icon);
 
-      // Locale merge + cross-field validation.
+      // Locale merge + cross-field validation. `default_locale` is an enum and
+      // `locales` is `repeated`, so an omitted field decodes to UNSPECIFIED /
+      // `[]` — treat both as "not provided" and keep what is stored, or
+      // updating a title would silently reset the page's languages. Same
+      // presence test the theme / access-type fields below use. Trade-off:
+      // locales can't be cleared over this RPC until the proto carries
+      // explicit presence.
+      const reqDefaultLocale =
+        req.defaultLocale !== undefined && req.defaultLocale !== 0
+          ? req.defaultLocale
+          : undefined;
       const nextDefaultLocale =
-        req.defaultLocale !== undefined
-          ? protoLocaleToDb(req.defaultLocale)
+        reqDefaultLocale !== undefined
+          ? protoLocaleToDb(reqDefaultLocale)
           : existing.defaultLocale;
       const validLocales = req.locales.filter((l) => l !== 0);
       const nextLocales =
         validLocales.length > 0
           ? [...new Set(validLocales.map(protoLocaleToDb))]
-          : null;
+          : existing.locales;
       if (nextLocales && !nextLocales.includes(nextDefaultLocale)) {
         throw new ConnectError(
           "Default locale must be included in the locales list",
           Code.InvalidArgument,
         );
       }
-      // `UpdateStatusPage` syncs locales on every call when the
-      // workspace has i18n — proto can't distinguish "field omitted"
-      // from "field = []", so the wire contract is "empty locales
-      // means clear". Gating on `req.locales.length > 0` meant omit
-      // and empty both became no-ops, leaving stale locales on the
-      // page. Skip the call only on plans without i18n, where the
-      // service would throw `LimitExceededError` regardless.
-      const localesChanged = limits.i18n === true;
+      const localesChanged =
+        limits.i18n === true &&
+        (reqDefaultLocale !== undefined || validLocales.length > 0);
 
       const generalChanged =
         (req.title !== undefined && req.title !== "") ||
@@ -638,6 +702,16 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       const customDomainForUpdate =
         req.customDomain !== undefined ? req.customDomain : undefined;
       const accessChanged = hasAccessType || hasAllowIndex;
+
+      // Omitted = keep; empty message = clear (the service maps an empty
+      // var set to null).
+      let customThemeForUpdate:
+        | ReturnType<typeof validateProtoCustomTheme>
+        | undefined;
+      if (req.customTheme !== undefined) {
+        checkCustomThemeLimit(limits);
+        customThemeForUpdate = validateProtoCustomTheme(req.customTheme);
+      }
 
       // Wrap all per-section updates in a single transaction so partial
       // failures don't leave the page in a half-updated state. Each
@@ -734,6 +808,13 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           });
         }
 
+        if (customThemeForUpdate !== undefined) {
+          await updatePageCustomTheme({
+            ctx: txCtx,
+            input: { id: pageId, customTheme: customThemeForUpdate },
+          });
+        }
+
         if (localesChanged) {
           await updatePageLocales({
             ctx: txCtx,
@@ -776,7 +857,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       try {
         await deletePage({
           ctx: toServiceCtx(rpcCtx),
-          input: { id: Number(id) },
+          input: { id: parseEntityId(id, "page id") },
         });
       } catch (err) {
         if (err instanceof NotFoundError) throw statusPageNotFoundError(id);
@@ -795,105 +876,66 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async addMonitorComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
+    const pageData = await getWorkspacePage(rpcCtx, req.pageId);
+    const monitorId = parseEntityId(req.monitorId, "monitor id");
+    const groupId = req.groupId ? parseEntityId(req.groupId, "group id") : null;
 
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
+    try {
+      const created = await createPageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          pageId: pageData.id,
+          type: "monitor",
+          monitorId,
+          name: req.name,
+          description: req.description ?? null,
+          order: req.order ?? 0,
+          groupId,
+        },
+      });
 
-    // Check workspace limits for page components
-    await checkPageComponentLimits(pageData.id, limits);
-
-    // Verify monitor exists and belongs to workspace
-    const monitorData = await getMonitorById(
-      Number(req.monitorId),
-      workspaceId,
-    );
-    if (!monitorData) {
-      throw monitorNotFoundError(req.monitorId);
-    }
-
-    // Validate group exists if provided
-    if (req.groupId) {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
+      return { component: dbComponentToProto(created) };
+    } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "monitor") {
+        throw monitorNotFoundError(req.monitorId);
       }
+      rethrowGroupNotFound(err, req.groupId);
+      rethrowPlanLimit(
+        err,
+        "page-components",
+        "Upgrade for more page components",
+      );
     }
-
-    // Create the component
-    const newComponent = await db
-      .insert(pageComponent)
-      .values({
-        workspaceId,
-        pageId: pageData.id,
-        type: "monitor",
-        monitorId: monitorData.id,
-        name: req.name ?? monitorData.name,
-        description: req.description ?? null,
-        order: req.order ?? 0,
-        groupId: req.groupId ? Number(req.groupId) : null,
-      })
-      .returning()
-      .get();
-
-    if (!newComponent) {
-      throw pageComponentCreateFailedError();
-    }
-
-    return {
-      component: dbComponentToProto(newComponent),
-    };
   },
 
   async addStaticComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
+    const pageData = await getWorkspacePage(rpcCtx, req.pageId);
+    const groupId = req.groupId ? parseEntityId(req.groupId, "group id") : null;
 
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
+    try {
+      const created = await createPageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          pageId: pageData.id,
+          type: "static",
+          monitorId: null,
+          name: req.name,
+          description: req.description ?? null,
+          order: req.order ?? 0,
+          groupId,
+        },
+      });
+
+      return { component: dbComponentToProto(created) };
+    } catch (err) {
+      rethrowGroupNotFound(err, req.groupId);
+      rethrowPlanLimit(
+        err,
+        "page-components",
+        "Upgrade for more page components",
+      );
     }
-
-    // Check workspace limits for page components
-    await checkPageComponentLimits(pageData.id, limits);
-
-    // Validate group exists if provided
-    if (req.groupId) {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
-      }
-    }
-
-    // Create the component
-    const newComponent = await db
-      .insert(pageComponent)
-      .values({
-        workspaceId,
-        pageId: pageData.id,
-        type: "static",
-        monitorId: null,
-        name: req.name,
-        description: req.description ?? null,
-        order: req.order ?? 0,
-        groupId: req.groupId ? Number(req.groupId) : null,
-      })
-      .returning()
-      .get();
-
-    if (!newComponent) {
-      throw pageComponentCreateFailedError();
-    }
-
-    return {
-      component: dbComponentToProto(newComponent),
-    };
   },
 
   async removeComponent(req, ctx) {
@@ -906,7 +948,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     }
 
     try {
-      await deletePageComponent({ ctx: sCtx, input: { id: Number(id) } });
+      await deletePageComponent({
+        ctx: sCtx,
+        input: { id: parseEntityId(id, "component id") },
+      });
     } catch (err) {
       if (err instanceof NotFoundError) {
         throw pageComponentNotFoundError(id);
@@ -919,62 +964,60 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async updateComponent(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     const id = req.id?.trim();
     if (!id) {
       throw pageComponentNotFoundError(req.id);
     }
 
-    const component = await getComponentById(Number(id), workspaceId);
-    if (!component) {
-      throw pageComponentNotFoundError(id);
-    }
+    try {
+      const updated = await updatePageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          id: parseEntityId(id, "component id"),
+          name:
+            req.name !== undefined && req.name !== "" ? req.name : undefined,
+          description:
+            req.description !== undefined ? req.description || null : undefined,
+          order: req.order,
+          // Empty string means remove from group
+          groupId:
+            req.groupId !== undefined
+              ? req.groupId === ""
+                ? null
+                : parseEntityId(req.groupId, "group id")
+              : undefined,
+          groupOrder: req.groupOrder,
+        },
+      });
 
-    // Validate group exists if provided
-    if (req.groupId !== undefined && req.groupId !== "") {
-      const group = await getGroupById(Number(req.groupId), workspaceId);
-      if (!group) {
-        throw componentGroupNotFoundError(req.groupId);
+      return { component: dbComponentToProto(updated) };
+    } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "page_component") {
+        throw pageComponentNotFoundError(id);
       }
+      rethrowGroupNotFound(err, req.groupId);
+      toConnectError(err);
     }
+  },
 
-    // Build update values
-    const updateValues: Record<string, unknown> = {
-      updatedAt: new Date(),
-    };
+  async getPageComponent(req, ctx) {
+    const id = req.id?.trim();
+    if (!id) throw pageComponentNotFoundError(req.id);
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const component = await getPageComponent({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: parseEntityId(id, "component id") },
+      });
 
-    if (req.name !== undefined && req.name !== "") {
-      updateValues.name = req.name;
+      return { component: dbComponentToProto(component) };
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw pageComponentNotFoundError(id);
+      }
+      toConnectError(err);
     }
-    if (req.description !== undefined) {
-      updateValues.description = req.description || null;
-    }
-    if (req.order !== undefined) {
-      updateValues.order = req.order;
-    }
-    if (req.groupId !== undefined) {
-      // Empty string means remove from group
-      updateValues.groupId = req.groupId === "" ? null : Number(req.groupId);
-    }
-    if (req.groupOrder !== undefined) {
-      updateValues.groupOrder = req.groupOrder;
-    }
-
-    const updatedComponent = await db
-      .update(pageComponent)
-      .set(updateValues)
-      .where(eq(pageComponent.id, component.id))
-      .returning()
-      .get();
-
-    if (!updatedComponent) {
-      throw pageComponentUpdateFailedError(req.id);
-    }
-
-    return {
-      component: dbComponentToProto(updatedComponent),
-    };
   },
 
   // ==========================================================================
@@ -983,98 +1026,69 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async createComponentGroup(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    const pageData = await getWorkspacePage(rpcCtx, req.pageId);
 
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
+    try {
+      const created = await createPageComponentGroup({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          pageId: pageData.id,
+          name: req.name,
+          defaultOpen: req.defaultOpen ?? false,
+        },
+      });
+
+      return { group: dbGroupToProto(created) };
+    } catch (err) {
+      toConnectError(err);
     }
-
-    // Create the group
-    const newGroup = await db
-      .insert(pageComponentGroup)
-      .values({
-        workspaceId,
-        pageId: pageData.id,
-        name: req.name,
-        defaultOpen: req.defaultOpen ?? false,
-      })
-      .returning()
-      .get();
-
-    if (!newGroup) {
-      throw componentGroupCreateFailedError();
-    }
-
-    return {
-      group: dbGroupToProto(newGroup),
-    };
   },
 
   async deleteComponentGroup(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     const id = req.id?.trim();
     if (!id) {
       throw componentGroupNotFoundError(req.id);
     }
 
-    const group = await getGroupById(Number(id), workspaceId);
-    if (!group) {
-      throw componentGroupNotFoundError(id);
+    try {
+      await deletePageComponentGroup({
+        ctx: toServiceCtx(rpcCtx),
+        input: { id: parseEntityId(id, "group id") },
+      });
+    } catch (err) {
+      rethrowGroupNotFound(err, id);
+      toConnectError(err);
     }
-
-    // Delete the group (components will have groupId set to null due to FK constraint)
-    await db
-      .delete(pageComponentGroup)
-      .where(eq(pageComponentGroup.id, group.id));
 
     return { success: true };
   },
 
   async updateComponentGroup(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
 
     const id = req.id?.trim();
     if (!id) {
       throw componentGroupNotFoundError(req.id);
     }
 
-    const group = await getGroupById(Number(id), workspaceId);
-    if (!group) {
-      throw componentGroupNotFoundError(id);
+    try {
+      const updated = await updatePageComponentGroup({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          id: parseEntityId(id, "group id"),
+          name:
+            req.name !== undefined && req.name !== "" ? req.name : undefined,
+          defaultOpen: req.defaultOpen,
+        },
+      });
+
+      return { group: dbGroupToProto(updated) };
+    } catch (err) {
+      rethrowGroupNotFound(err, id);
+      toConnectError(err);
     }
-
-    // Build update values
-    const updateValues: Record<string, unknown> = {
-      updatedAt: new Date(),
-    };
-
-    if (req.name !== undefined && req.name !== "") {
-      updateValues.name = req.name;
-    }
-
-    if (req.defaultOpen !== undefined) {
-      updateValues.defaultOpen = req.defaultOpen;
-    }
-
-    const updatedGroup = await db
-      .update(pageComponentGroup)
-      .set(updateValues)
-      .where(eq(pageComponentGroup.id, group.id))
-      .returning()
-      .get();
-
-    if (!updatedGroup) {
-      throw componentGroupUpdateFailedError(req.id);
-    }
-
-    return {
-      group: dbGroupToProto(updatedGroup),
-    };
   },
 
   // ==========================================================================
@@ -1083,59 +1097,32 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async subscribeToPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-    const limits = rpcCtx.workspace.limits;
+    checkStatusSubscribersLimit(rpcCtx.workspace.limits);
 
-    checkStatusSubscribersLimit(limits);
-
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
-
-    const result = await upsertSelfSignupSubscriber({
-      input: {
-        email: req.email,
-        pageId: pageData.id,
-      },
-    });
-
-    const row = await db
-      .select()
-      .from(pageSubscriber)
-      .where(eq(pageSubscriber.id, result.id))
-      .get();
-
-    if (!row) {
-      throw subscriberCreateFailedError();
-    }
-
-    if (!result.acceptedAt) {
-      const verifyUrl = pageData.customDomain
-        ? `https://${pageData.customDomain}/verify/${result.token}`
-        : `https://${pageData.slug}.openstatus.dev/verify/${result.token}`;
-
-      const channel = getChannel("email");
-      if (channel?.sendVerification) {
-        try {
-          await channel.sendVerification(
-            {
-              id: result.id,
-              pageId: pageData.id,
-              pageName: pageData.title,
-              pageSlug: pageData.slug,
-              customDomain: pageData.customDomain,
-              componentIds: [],
-              channelType: "email",
-              email: result.email,
-              token: result.token ?? undefined,
-            },
-            verifyUrl,
-          );
-        } catch (err) {
-          console.error("Failed to send verification email:", err);
-        }
+    let result: Awaited<ReturnType<typeof subscribeEmailInWorkspace>>;
+    try {
+      result = await subscribeEmailInWorkspace({
+        ctx: toServiceCtx(rpcCtx),
+        input: {
+          email: req.email,
+          pageId: parseEntityId(req.pageId, "page id"),
+        },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "page") {
+        throw statusPageNotFoundError(req.pageId);
       }
+      if (err instanceof InternalServiceError) {
+        throw subscriberCreateFailedError();
+      }
+      toConnectError(err);
+    }
+    const { subscriber, row } = result;
+
+    try {
+      await sendSubscriberVerification({ subscriber });
+    } catch (err) {
+      console.error("Failed to send verification email:", err);
     }
 
     return {
@@ -1147,8 +1134,10 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
     const rpcCtx = getRpcContext(ctx);
     const sCtx = toServiceCtx(rpcCtx);
 
-    const pageId = Number(req.pageId);
-    const componentIds = (req.componentIds ?? []).map((id) => Number(id));
+    const pageId = parseEntityId(req.pageId, "page id");
+    const componentIds = (req.componentIds ?? []).map((id) =>
+      parseEntityId(id, "component id"),
+    );
     const name = req.name ?? null;
 
     if (
@@ -1210,110 +1199,70 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
   async unsubscribeFromPage(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
+    const pageId = parseEntityId(req.pageId, "page id");
 
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
+    if (req.identifier.case !== "email" && req.identifier.case !== "id") {
+      throw identifierRequiredError();
     }
 
-    // Find subscriber based on identifier type
-    if (req.identifier.case === "email") {
-      const subscriber = await db
-        .select()
-        .from(pageSubscriber)
-        .where(
-          and(
-            eq(pageSubscriber.pageId, pageData.id),
-            sql`LOWER(${pageSubscriber.email}) = ${req.identifier.value.toLowerCase()}`,
-            eq(pageSubscriber.channelType, "email"),
-            isNull(pageSubscriber.unsubscribedAt),
-          ),
-        )
-        .get();
+    const identifier =
+      req.identifier.case === "email"
+        ? { type: "email" as const, value: req.identifier.value }
+        : {
+            type: "id" as const,
+            value: parseEntityId(req.identifier.value, "subscriber id"),
+          };
 
-      if (!subscriber) {
+    try {
+      await unsubscribePageSubscriber({
+        ctx: toServiceCtx(rpcCtx),
+        input: { pageId, identifier },
+      });
+    } catch (err) {
+      if (err instanceof NotFoundError && err.entity === "page") {
+        throw statusPageNotFoundError(req.pageId);
+      }
+      if (err instanceof NotFoundError) {
         throw subscriberNotFoundError(req.identifier.value);
       }
-
-      await db
-        .update(pageSubscriber)
-        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
-        .where(eq(pageSubscriber.id, subscriber.id));
-
-      return { success: true };
+      toConnectError(err);
     }
 
-    if (req.identifier.case === "id") {
-      const subscriber = await db
-        .select()
-        .from(pageSubscriber)
-        .where(
-          and(
-            eq(pageSubscriber.pageId, pageData.id),
-            eq(pageSubscriber.id, Number(req.identifier.value)),
-          ),
-        )
-        .get();
-
-      if (!subscriber) {
-        throw subscriberNotFoundError(req.identifier.value);
-      }
-
-      await db
-        .update(pageSubscriber)
-        .set({ unsubscribedAt: new Date(), updatedAt: new Date() })
-        .where(eq(pageSubscriber.id, subscriber.id));
-
-      return { success: true };
-    }
-
-    throw identifierRequiredError();
+    return { success: true };
   },
 
   async listSubscribers(req, ctx) {
     const rpcCtx = getRpcContext(ctx);
-    const workspaceId = rpcCtx.workspace.id;
-
-    // Verify page exists and belongs to workspace
-    const pageData = await getPageById(Number(req.pageId), workspaceId);
-    if (!pageData) {
-      throw statusPageNotFoundError(req.pageId);
-    }
-
     const limit = Math.min(Math.max(req.limit ?? 50, 1), 100);
     const offset = req.offset ?? 0;
 
-    // Build conditions
-    const conditions = [eq(pageSubscriber.pageId, pageData.id)];
-    if (!req.includeUnsubscribed) {
-      conditions.push(isNull(pageSubscriber.unsubscribedAt));
+    try {
+      const sCtx = toServiceCtx(rpcCtx);
+      const filter = {
+        pageId: parseEntityId(req.pageId, "page id"),
+        includeUnsubscribed: req.includeUnsubscribed ?? false,
+      };
+      const [rows, totalSize] = await Promise.all([
+        listPageSubscribers({ ctx: sCtx, input: { ...filter, limit, offset } }),
+        countPageSubscribers({ ctx: sCtx, input: filter }),
+      ]);
+
+      return {
+        subscribers: rows.map((row) =>
+          dbSubscriberToProto({
+            ...row,
+            updatedAt: row.updatedAt ?? null,
+            componentIds: row.components.map((c) => c.id),
+          }),
+        ),
+        totalSize,
+      };
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        throw statusPageNotFoundError(req.pageId);
+      }
+      toConnectError(err);
     }
-
-    // Get total count
-    const countResult = await db
-      .select({ count: count() })
-      .from(pageSubscriber)
-      .where(and(...conditions))
-      .get();
-
-    const totalCount = countResult?.count ?? 0;
-
-    // Get subscribers
-    const subscribers = await db
-      .select()
-      .from(pageSubscriber)
-      .where(and(...conditions))
-      .orderBy(desc(pageSubscriber.createdAt))
-      .limit(limit)
-      .offset(offset)
-      .all();
-
-    return {
-      subscribers: subscribers.map(dbSubscriberToProto),
-      totalSize: totalCount,
-    };
   },
 
   // ==========================================================================
@@ -1323,16 +1272,13 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
   async getStatusPageContent(req, ctx) {
     // Note: This endpoint may be used publicly, so we need to handle
     // the case where we look up by slug without workspace scope
-    type PageData = Awaited<ReturnType<typeof getPageById>>;
-    let pageData: PageData;
+    let pageData: ResolvedPage | undefined;
     let identifierValue: string;
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
       identifierValue = req.identifier.value;
-      pageData = await getPageById(Number(identifierValue), workspaceId);
+      pageData = await getWorkspacePage(getRpcContext(ctx), identifierValue);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug({ input: { slug: identifierValue } });
@@ -1352,160 +1298,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       validatePublicAccess(pageData, identifierValue);
     }
 
-    // Get components
-    const components = await db
-      .select()
-      .from(pageComponent)
-      .where(eq(pageComponent.pageId, pageData.id))
-      .orderBy(pageComponent.order)
-      .all();
-
-    // Get groups
-    const groups = await db
-      .select()
-      .from(pageComponentGroup)
-      .where(eq(pageComponentGroup.pageId, pageData.id))
-      .all();
-
-    // Get active status reports (not resolved)
-    const activeReports = await db
-      .select()
-      .from(statusReport)
-      .where(
-        and(
-          eq(statusReport.pageId, pageData.id),
-          inArray(statusReport.status, [
-            "investigating",
-            "identified",
-            "monitoring",
-          ]),
-        ),
-      )
-      .orderBy(desc(statusReport.createdAt))
-      .all();
-
-    // Get status report updates for active reports
-    const reportIds = activeReports.map((r) => r.id);
-    const reportUpdates =
-      reportIds.length > 0
-        ? await db
-            .select()
-            .from(statusReportUpdate)
-            .where(inArray(statusReportUpdate.statusReportId, reportIds))
-            .orderBy(desc(statusReportUpdate.date))
-            .all()
-        : [];
-
-    // Get page component IDs for each report
-    const reportComponents =
-      reportIds.length > 0
-        ? await db
-            .select()
-            .from(statusReportsToPageComponents)
-            .where(
-              inArray(statusReportsToPageComponents.statusReportId, reportIds),
-            )
-            .all()
-        : [];
-
-    // Get impact rows for the reports' updates, grouped per update id
-    const updateIds = reportUpdates.map((u) => u.id);
-    const updateImpacts =
-      updateIds.length > 0
-        ? await db
-            .select()
-            .from(statusReportUpdateToPageComponents)
-            .where(
-              inArray(
-                statusReportUpdateToPageComponents.statusReportUpdateId,
-                updateIds,
-              ),
-            )
-            .all()
-        : [];
-    const impactsByUpdate = new Map<number, typeof updateImpacts>();
-    for (const row of updateImpacts) {
-      const arr = impactsByUpdate.get(row.statusReportUpdateId);
-      if (arr) arr.push(row);
-      else impactsByUpdate.set(row.statusReportUpdateId, [row]);
-    }
-
-    // Import the converters from status-report service
-    const { dbStatusToProto, dbUpdateToProto } =
-      await import("../status-report/converters");
-
-    // Convert reports to proto format
-    const statusReports = activeReports.map((report) => {
-      const updates = reportUpdates.filter(
-        (u) => u.statusReportId === report.id,
-      );
-      const componentIds = reportComponents
-        .filter((rc) => rc.statusReportId === report.id)
-        .map((rc) => String(rc.pageComponentId));
-
-      return {
-        $typeName: "openstatus.status_report.v1.StatusReport" as const,
-        id: String(report.id),
-        status: dbStatusToProto(report.status),
-        title: report.title,
-        pageComponentIds: componentIds,
-        updates: updates.map((u) =>
-          dbUpdateToProto({
-            ...u,
-            componentImpacts: (impactsByUpdate.get(u.id) ?? []).map((row) => ({
-              pageComponentId: row.pageComponentId,
-              impact: row.impact,
-            })),
-          }),
-        ),
-        createdAt: report.createdAt?.toISOString() ?? "",
-        updatedAt: report.updatedAt?.toISOString() ?? "",
-      };
-    });
-
-    // Get maintenances for the page (upcoming and recent)
-    const pageMaintenances = await db
-      .select()
-      .from(maintenance)
-      .where(eq(maintenance.pageId, pageData.id))
-      .orderBy(desc(maintenance.from))
-      .all();
-
-    // Get component associations for maintenances
-    const maintenanceIds = pageMaintenances.map((m) => m.id);
-    const maintenanceComponents =
-      maintenanceIds.length > 0
-        ? await db
-            .select()
-            .from(maintenancesToPageComponents)
-            .where(
-              inArray(
-                maintenancesToPageComponents.maintenanceId,
-                maintenanceIds,
-              ),
-            )
-            .all()
-        : [];
-
-    // Convert maintenances to proto format
-    const maintenancesProto = pageMaintenances.map((m) => {
-      const componentIds = maintenanceComponents
-        .filter((mc) => mc.maintenanceId === m.id)
-        .map((mc) => String(mc.pageComponentId));
-
-      return {
-        $typeName: "openstatus.maintenance.v1.MaintenanceSummary" as const,
-        id: String(m.id),
-        title: m.title,
-        message: m.message,
-        from: m.from.toISOString(),
-        to: m.to.toISOString(),
-        pageId: String(pageData.id),
-        pageComponentIds: componentIds,
-        createdAt: m.createdAt?.toISOString() ?? "",
-        updatedAt: m.updatedAt?.toISOString() ?? "",
-      };
-    });
+    const content = await fetchStatusPageContent(pageData);
 
     const statusPage = dbPageToProto(pageData);
     if (isPublicAccess) {
@@ -1516,24 +1309,18 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
 
     return {
       statusPage,
-      components: components.map(dbComponentToProto),
-      groups: groups.map(dbGroupToProto),
-      statusReports,
-      maintenances: maintenancesProto,
+      ...content,
     };
   },
 
   async getOverallStatus(req, ctx) {
-    type PageData = Awaited<ReturnType<typeof getPageById>>;
-    let pageData: PageData;
+    let pageData: ResolvedPage | undefined;
     let identifierValue: string;
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
-      const rpcCtx = getRpcContext(ctx);
-      const workspaceId = rpcCtx.workspace.id;
       identifierValue = req.identifier.value;
-      pageData = await getPageById(Number(identifierValue), workspaceId);
+      pageData = await getWorkspacePage(getRpcContext(ctx), identifierValue);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug({ input: { slug: identifierValue } });
@@ -1553,134 +1340,42 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
       validatePublicAccess(pageData, identifierValue);
     }
 
-    // Get components
-    const components = await db
-      .select()
-      .from(pageComponent)
-      .where(eq(pageComponent.pageId, pageData.id))
-      .all();
+    return computeOverallStatus(pageData);
+  },
 
-    const componentIds = components.map((c) => c.id);
-    const now = new Date();
-
-    // Check for active status reports (degraded state)
-    let hasActiveStatusReport = false;
-    const componentReportStatus = new Map<number, boolean>();
-
-    if (componentIds.length > 0) {
-      const activeReports = await db
-        .select({
-          componentId: statusReportsToPageComponents.pageComponentId,
-        })
-        .from(statusReportsToPageComponents)
-        .innerJoin(
-          statusReport,
-          eq(statusReportsToPageComponents.statusReportId, statusReport.id),
-        )
-        .where(
-          and(
-            inArray(
-              statusReportsToPageComponents.pageComponentId,
-              componentIds,
-            ),
-            inArray(statusReport.status, [
-              "investigating",
-              "identified",
-              "monitoring",
-            ]),
-          ),
-        )
-        .all();
-
-      hasActiveStatusReport = activeReports.length > 0;
-
-      // Track which components have active reports
-      for (const report of activeReports) {
-        componentReportStatus.set(report.componentId, true);
-      }
-    }
-
-    // Check for active maintenances (info state - current time between from and to)
-    let hasActiveMaintenance = false;
-    const componentMaintenanceStatus = new Map<number, boolean>();
-
-    const activeMaintenances = await db
-      .select()
-      .from(maintenance)
-      .where(
-        and(
-          eq(maintenance.pageId, pageData.id),
-          lte(maintenance.from, now),
-          gte(maintenance.to, now),
-        ),
-      )
-      .all();
-
-    hasActiveMaintenance = activeMaintenances.length > 0;
-
-    // Get component associations for active maintenances
-    if (activeMaintenances.length > 0) {
-      const maintenanceIds = activeMaintenances.map((m) => m.id);
-      const maintenanceComponentAssocs = await db
-        .select()
-        .from(maintenancesToPageComponents)
-        .where(
-          inArray(maintenancesToPageComponents.maintenanceId, maintenanceIds),
-        )
-        .all();
-
-      // Track which components are under maintenance
-      for (const assoc of maintenanceComponentAssocs) {
-        componentMaintenanceStatus.set(assoc.pageComponentId, true);
-      }
-    }
-
-    // Determine overall status based on priority: degraded > maintenance > operational
-    // Note: In the existing codebase, status reports indicate "degraded" state
-    // and maintenances indicate "info/maintenance" state
-    const overallStatus = hasActiveStatusReport
-      ? OverallStatus.DEGRADED
-      : hasActiveMaintenance
-        ? OverallStatus.MAINTENANCE
-        : OverallStatus.OPERATIONAL;
-
-    // Build component statuses based on their individual state
-    const componentStatuses = components.map((c) => {
-      const hasReport = componentReportStatus.get(c.id) ?? false;
-      const hasMaintenance = componentMaintenanceStatus.get(c.id) ?? false;
-
-      const status = hasReport
-        ? OverallStatus.DEGRADED
-        : hasMaintenance
-          ? OverallStatus.MAINTENANCE
-          : OverallStatus.OPERATIONAL;
+  async getStatusPageOverview(req, ctx) {
+    try {
+      const rpcCtx = getRpcContext(ctx);
+      const pageData = await getWorkspacePage(rpcCtx, req.id);
+      const pageContent = await getStatusPageContent({ pageId: pageData.id });
+      const [content, status] = await Promise.all([
+        fetchStatusPageContent(pageData, pageContent),
+        computeOverallStatus(pageData, pageContent.components),
+      ]);
 
       return {
-        $typeName: "openstatus.status_page.v1.ComponentStatus" as const,
-        componentId: String(c.id),
-        status,
+        statusPage: dbPageToProto(pageData),
+        configuration: dbConfigurationToProto(
+          parsePageConfiguration(pageData.configuration),
+        ),
+        ...content,
+        overallStatus: status.overallStatus,
+        componentStatuses: status.componentStatuses,
       };
-    });
-
-    return {
-      overallStatus,
-      componentStatuses,
-    };
+    } catch (err) {
+      toConnectError(err);
+    }
   },
 
   async getPageComponentDailySummary(req, ctx) {
-    type PageData = Awaited<ReturnType<typeof getPageById>>;
+    let pageData: ResolvedPage | undefined;
     const rpcCtx = getRpcContext(ctx);
-    let pageData: PageData;
     let identifierValue: string;
     let isPublicAccess = false;
 
     if (req.identifier.case === "id") {
       identifierValue = req.identifier.value;
-      pageData = await getPageById(
-        Number(identifierValue),
-        rpcCtx.workspace.id,
-      );
+      pageData = await getWorkspacePage(rpcCtx, identifierValue);
     } else if (req.identifier.case === "slug") {
       identifierValue = req.identifier.value;
       pageData = await getPageBySlug({ input: { slug: identifierValue } });
@@ -1722,32 +1417,26 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
               ? String(component.monitorId)
               : undefined,
           name: component.name,
-          buckets: component.buckets.map(
-            (bucket): ComponentDayBucket => ({
-              $typeName: "openstatus.status_page.v1.ComponentDayBucket",
-              day: bucket.day,
-              count: BigInt(bucket.count),
-              ok: BigInt(bucket.ok),
-              degraded: BigInt(bucket.degraded),
-              error: BigInt(bucket.error),
-              status: dayStatusToProto(bucket.status),
-              impact: bucket.impact
-                ? dbImpactToProto(bucket.impact)
-                : undefined,
-            }),
-          ),
-          events: component.events.map(
-            (event): ComponentEvent => ({
-              $typeName: "openstatus.status_page.v1.ComponentEvent",
-              id: String(event.id),
-              name: event.name,
-              type: eventTypeToProto(event.type),
-              status: eventStatusToProto(event.status),
-              from: event.from.toISOString(),
-              to: event.to ? event.to.toISOString() : undefined,
-              impact: event.impact ? dbImpactToProto(event.impact) : undefined,
-            }),
-          ),
+          buckets: component.buckets.map((bucket): ComponentDayBucket => ({
+            $typeName: "openstatus.status_page.v1.ComponentDayBucket",
+            day: bucket.day,
+            count: BigInt(bucket.count),
+            ok: BigInt(bucket.ok),
+            degraded: BigInt(bucket.degraded),
+            error: BigInt(bucket.error),
+            status: dayStatusToProto(bucket.status),
+            impact: bucket.impact ? dbImpactToProto(bucket.impact) : undefined,
+          })),
+          events: component.events.map((event): ComponentEvent => ({
+            $typeName: "openstatus.status_page.v1.ComponentEvent",
+            id: String(event.id),
+            name: event.name,
+            type: eventTypeToProto(event.type),
+            status: eventStatusToProto(event.status),
+            from: event.from.toISOString(),
+            to: event.to ? event.to.toISOString() : undefined,
+            impact: event.impact ? dbImpactToProto(event.impact) : undefined,
+          })),
         }),
       );
 

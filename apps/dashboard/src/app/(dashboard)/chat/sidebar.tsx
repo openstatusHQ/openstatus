@@ -1,5 +1,6 @@
 "use client";
 
+import { Add } from "@openstatus/icons";
 import {
   skipToken,
   useMutation,
@@ -7,7 +8,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useChatSessionContext } from "@/components/chat/chat-session-context";
@@ -86,7 +86,7 @@ export function Sidebar() {
         onClick: () => router.push("/chat"),
         children: (
           <>
-            <Plus />
+            <Add />
             <span>New chat</span>
           </>
         ),

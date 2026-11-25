@@ -3,6 +3,29 @@ on:
   push:
     branches:
       - main
+    paths:
+      - ".github/workflows/deploy.yml"
+      - "apps/server/**"
+      - "packages/analytics/**"
+      - "packages/assertions/**"
+      - "packages/db/**"
+      - "packages/emails/**"
+      - "packages/error/**"
+      - "packages/importers/**"
+      - "packages/locales/**"
+      - "packages/notifications/**"
+      - "packages/proto/**"
+      - "packages/regions/**"
+      - "packages/services/**"
+      - "packages/subscriptions/**"
+      - "packages/theme-store/**"
+      - "packages/tinybird/**"
+      - "packages/tracker/**"
+      - "packages/tsconfig/**"
+      - "packages/upstash/**"
+      - "packages/utils/**"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
 jobs:
   deploy:
     name: Deploy API

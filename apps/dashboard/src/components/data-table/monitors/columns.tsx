@@ -4,15 +4,17 @@ import type { RouterOutputs } from "@openstatus/api";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
 import type { ColumnDef } from "@tanstack/react-table";
-import { formatDistanceToNow } from "date-fns";
 
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { getMonitorHealth } from "@/data/monitors.client";
+import { formatDistanceToNowShort } from "@/lib/formatter";
 
 import { TableCellSkeleton } from "../dable-cell-skeleton";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellEmpty } from "../table-cell-empty";
+import { TableCellIndicator } from "../table-cell-indicator";
 import { TableCellNumber } from "../table-cell-number";
-import { TableCellUnavailable } from "../table-cell-unavailable";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type Monitor = RouterOutputs["monitor"]["list"][number] & {
@@ -25,6 +27,7 @@ type Monitor = RouterOutputs["monitor"]["list"][number] & {
 export const columns: ColumnDef<Monitor>[] = [
   {
     id: "select",
+    meta: { ghost: false },
     header: ({ table }) => (
       <Checkbox
         checked={
@@ -46,6 +49,41 @@ export const columns: ColumnDef<Monitor>[] = [
     enableHiding: false,
   },
   {
+    id: "status",
+    accessorFn: (row) => getMonitorHealth(row),
+    header: () => <span className="sr-only">Status</span>,
+    cell: ({ row }) => {
+      const value = String(row.getValue("status"));
+
+      switch (value) {
+        case "active":
+          return <TableCellIndicator variant="success" label={value} />;
+        case "degraded":
+          return <TableCellIndicator variant="warning" label={value} />;
+        case "error":
+          return <TableCellIndicator variant="destructive" label={value} />;
+        case "maintenance":
+          return <TableCellIndicator variant="info" label={value} />;
+        default:
+          return <TableCellIndicator variant="muted" label={value} />;
+      }
+    },
+    filterFn: (row, id, value) => {
+      const statuses: string[] = Array.isArray(value) ? value : [value];
+      // the accessor folds paused monitors into "inactive", so a paused
+      // monitor never matches its last known status
+      return statuses.includes(String(row.getValue(id)));
+    },
+    enableSorting: false,
+    enableHiding: false,
+    enableGlobalFilter: false,
+    meta: {
+      headerClassName: "pr-0",
+      cellClassName: "w-8 pr-0",
+      ghost: false,
+    },
+  },
+  {
     accessorKey: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
@@ -54,13 +92,14 @@ export const columns: ColumnDef<Monitor>[] = [
       return (
         <TableCellLink
           value={row.getValue("name")}
+          empty="No name"
           href={`/monitors/${row.original.id}/overview`}
         />
       );
     },
     enableHiding: false,
     meta: {
-      cellClassName: "max-w-[150px] min-w-max",
+      cellClassName: "max-w-[200px] min-w-max",
     },
   },
   {
@@ -84,43 +123,6 @@ export const columns: ColumnDef<Monitor>[] = [
     enableHiding: true,
   },
   {
-    id: "status",
-    accessorFn: (row) => {
-      console.log(row);
-      return row.active ? row.status : "inactive";
-    },
-    header: "Status",
-    cell: ({ row }) => {
-      const value = String(row.getValue("status"));
-
-      switch (value) {
-        case "active":
-          return <div className="text-success font-mono">{value}</div>;
-        case "degraded":
-          return <div className="text-warning font-mono">{value}</div>;
-        case "error":
-          return <div className="text-destructive font-mono">{value}</div>;
-        default:
-          return <div className="text-muted-foreground font-mono">{value}</div>;
-      }
-    },
-    filterFn: (row, _, value) => {
-      if (Array.isArray(value)) {
-        if (value.includes("inactive")) {
-          return !row.original.active;
-        }
-        if (value.includes("active")) {
-          return !!row.original.active && row.original.status === "active";
-        }
-        return value.includes(row.original.status);
-      }
-      return row.original.status === value;
-    },
-    enableSorting: false,
-    enableHiding: false,
-    enableGlobalFilter: false,
-  },
-  {
     accessorKey: "active",
     enableHiding: true,
     enableGlobalFilter: false,
@@ -132,7 +134,7 @@ export const columns: ColumnDef<Monitor>[] = [
       const value = row.getValue("tags");
       if (!Array.isArray(value)) return null;
       if (value.length === 0) {
-        return <div className="text-muted-foreground">-</div>;
+        return <TableCellEmpty>No tags</TableCellEmpty>;
       }
       return (
         <div className="group/badges flex flex-wrap -space-x-2">
@@ -166,11 +168,13 @@ export const columns: ColumnDef<Monitor>[] = [
   },
   {
     id: "lastIncident",
-    header: "Last Incident",
+    header: "Last Outage",
     accessorFn: (row) => row.incidents?.[0]?.createdAt,
     cell: ({ row }) => {
       const value = row.getValue("lastIncident");
-      return <TableCellDate value={value} formatStr="LLL dd, y" />;
+      return (
+        <TableCellDate value={value} formatStr="LLL dd, y" empty="No outages" />
+      );
     },
     enableHiding: false,
     enableGlobalFilter: false,
@@ -204,9 +208,10 @@ export const columns: ColumnDef<Monitor>[] = [
         <TableCellDate
           value={
             typeof value === "number"
-              ? formatDistanceToNow(new Date(value), { addSuffix: true })
+              ? formatDistanceToNowShort(new Date(value))
               : value
           }
+          empty="Never"
         />
       );
     },
@@ -225,9 +230,11 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p50");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    // fixed width: the skeleton is narrower than the values, so an auto width jumps on load
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
   },
   {
@@ -242,9 +249,10 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p90");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
     enableGlobalFilter: false,
   },
@@ -260,9 +268,10 @@ export const columns: ColumnDef<Monitor>[] = [
     cell: ({ row }) => {
       const value = row.getValue("p95");
       if (value === undefined) return <TableCellSkeleton />;
-      if (!value) return <TableCellUnavailable />;
+      if (!value) return <TableCellEmpty>—</TableCellEmpty>;
       return <TableCellNumber value={value} unit="ms" />;
     },
+    meta: { headerClassName: "w-24" },
     enableHiding: false,
     enableGlobalFilter: false,
   },

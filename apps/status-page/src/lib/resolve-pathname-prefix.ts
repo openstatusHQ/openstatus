@@ -1,8 +1,15 @@
+import {
+  THEME_EXPLORER_PAGE_SLUG,
+  isCanonicalThemeExplorerHost,
+} from "./theme-explorer-host";
+
 /**
  * Computes the prefix used for client-side navigation links.
  *
  * - Hostname routing (subdomain / custom domain): locale only (empty for default)
  * - Pathname routing: always `{slug}/{locale}`
+ * - The theme explorer host is subdomain-shaped but owns no page, so its own
+ *   demo page at `/status/{locale}` is pathname routed
  */
 export function resolvePathnamePrefix({
   hostname,
@@ -30,12 +37,21 @@ export function resolvePathnamePrefix({
     hostnames[0] !== "www" &&
     !hostname.endsWith(".vercel.app");
 
-  if (isCustomDomain || isSubdomain) {
+  const firstSegment = pathname.split("/")[1] || "";
+
+  // The theme explorer host is subdomain-shaped but owns no page of its own —
+  // its demo page is served from `/status/{locale}`, so links there keep the
+  // slug prefix instead of dropping it like a real subdomain page would. Only
+  // the canonical host serves that page, so it alone opts in.
+  const isThemeExplorerPage =
+    isCanonicalThemeExplorerHost(hostname) &&
+    firstSegment.toLowerCase() === THEME_EXPLORER_PAGE_SLUG;
+
+  if (!isThemeExplorerPage && (isCustomDomain || isSubdomain)) {
     // Subdomain or custom domain — no slug prefix needed
     return locale !== defaultLocale ? locale : "";
   }
 
   // Pathname routing — always {slug}/{locale}
-  const slug = pathname.split("/")[1] || "";
-  return `${slug}/${locale}`;
+  return `${firstSegment}/${locale}`;
 }

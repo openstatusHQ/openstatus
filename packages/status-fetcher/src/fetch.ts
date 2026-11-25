@@ -3,11 +3,29 @@ import type { z } from "zod";
 
 import type { JsonValue } from "./types";
 
+// "parse": body is not JSON (html, challenge page); "schema": valid JSON our
+// zod schema rejects — the split separates "page moved" from "our schema is stale".
+export type FetchErrorKind =
+  | "http"
+  | "parse"
+  | "schema"
+  | "network"
+  | "timeout";
+
+const KIND_LABELS: Record<FetchErrorKind, string> = {
+  http: "fetch failed",
+  parse: "non-JSON body",
+  schema: "schema mismatch",
+  network: "network error",
+  timeout: "timeout",
+};
+
 type FetchErrorInit = {
   url: string;
   fetcherName?: string;
   entryId?: string;
   httpStatus?: number;
+  kind?: FetchErrorKind;
   cause?: Error;
 };
 
@@ -16,30 +34,36 @@ export class FetchError extends Error {
   readonly fetcherName?: string;
   readonly entryId?: string;
   readonly httpStatus?: number;
+  readonly kind?: FetchErrorKind;
 
   constructor(init: FetchErrorInit) {
     const ctx =
       [init.fetcherName, init.entryId && `(${init.entryId})`]
         .filter(Boolean)
         .join(" ") || "FetchError";
-    const status = init.httpStatus ? `HTTP ${init.httpStatus}` : "fetch failed";
+    const status = init.httpStatus
+      ? `HTTP ${init.httpStatus}`
+      : init.kind
+        ? KIND_LABELS[init.kind]
+        : "fetch failed";
     super(`[${ctx}] ${status}: ${init.url}`, { cause: init.cause });
     this.name = "FetchError";
     this.url = init.url;
     this.fetcherName = init.fetcherName;
     this.entryId = init.entryId;
     this.httpStatus = init.httpStatus;
+    this.kind = init.kind;
   }
 }
 
-const DEFAULT_TIMEOUT: Duration.DurationInput = "30000 millis";
+const DEFAULT_TIMEOUT: Duration.Input = "30000 millis";
 
 export type FetchBaseOptions = {
   url: string;
   init?: Omit<RequestInit, "signal" | "headers"> & {
     headers?: Record<string, string>;
   };
-  timeout?: Duration.DurationInput;
+  timeout?: Duration.Input;
   fetcherName?: string;
   entryId?: string;
 };
@@ -59,7 +83,7 @@ const retryPolicy = {
 
 const buildFetchError = (
   opts: FetchBaseOptions,
-  extras: { httpStatus?: number; cause?: Error },
+  extras: { httpStatus?: number; kind?: FetchErrorKind; cause?: Error },
 ): FetchError =>
   new FetchError({
     url: opts.url,
@@ -69,9 +93,10 @@ const buildFetchError = (
   });
 
 const failWith =
-  (opts: FetchBaseOptions) =>
+  (opts: FetchBaseOptions, kind: FetchErrorKind) =>
   (cause: unknown): FetchError =>
     buildFetchError(opts, {
+      kind,
       cause: cause instanceof Error ? cause : new Error(String(cause)),
     });
 
@@ -86,24 +111,34 @@ const doFetch = (
         headers: { ...defaultHeaders, ...opts.init?.headers },
         signal,
       }),
-    catch: failWith(opts),
+    catch: failWith(opts, "network"),
   }).pipe(
-    Effect.timeoutFail({
+    Effect.timeoutOrElse({
       duration: opts.timeout ?? DEFAULT_TIMEOUT,
-      onTimeout: () =>
-        buildFetchError(opts, {
-          cause: new Error(
-            `timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
-          ),
-        }),
+      orElse: () =>
+        Effect.fail(
+          buildFetchError(opts, {
+            kind: "timeout",
+            cause: new Error(
+              `timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
+            ),
+          }),
+        ),
     }),
     Effect.flatMap((response) =>
       response.ok
         ? Effect.succeed(response)
-        : Effect.fail(buildFetchError(opts, { httpStatus: response.status })),
+        : Effect.fail(
+            buildFetchError(opts, {
+              httpStatus: response.status,
+              kind: "http",
+            }),
+          ),
     ),
   );
 
+// The body read gets its own timeout: `doFetch`'s only covers up to headers,
+// so a stalled body stream would otherwise hang callers forever.
 const fetchBody = <T>(
   opts: FetchBaseOptions,
   defaultHeaders: Record<string, string>,
@@ -111,7 +146,22 @@ const fetchBody = <T>(
 ): Effect.Effect<T, FetchError> =>
   doFetch(opts, defaultHeaders).pipe(
     Effect.retry(retryPolicy),
-    Effect.flatMap(read),
+    Effect.flatMap((response) =>
+      read(response).pipe(
+        Effect.timeoutOrElse({
+          duration: opts.timeout ?? DEFAULT_TIMEOUT,
+          orElse: () =>
+            Effect.fail(
+              buildFetchError(opts, {
+                kind: "timeout",
+                cause: new Error(
+                  `body read timeout after ${String(opts.timeout ?? DEFAULT_TIMEOUT)}`,
+                ),
+              }),
+            ),
+        }),
+      ),
+    ),
   );
 
 const JSON_HEADERS = {
@@ -130,12 +180,12 @@ export const fetchJson = <T>(
   fetchBody(opts, JSON_HEADERS, (response) =>
     Effect.tryPromise({
       try: () => response.json(),
-      catch: failWith(opts),
+      catch: failWith(opts, "parse"),
     }).pipe(
       Effect.flatMap((json) =>
         Effect.try({
           try: () => opts.schema.parse(json),
-          catch: failWith(opts),
+          catch: failWith(opts, "schema"),
         }),
       ),
     ),
@@ -149,12 +199,12 @@ export const fetchJsonWithRaw = <T>(
   fetchBody(opts, JSON_HEADERS, (response) =>
     Effect.tryPromise({
       try: () => response.json() as Promise<JsonValue>,
-      catch: failWith(opts),
+      catch: failWith(opts, "parse"),
     }).pipe(
       Effect.flatMap((raw) =>
         Effect.try({
           try: () => ({ parsed: opts.schema.parse(raw), raw }),
-          catch: failWith(opts),
+          catch: failWith(opts, "schema"),
         }),
       ),
     ),
@@ -164,5 +214,21 @@ export const fetchText = (
   opts: FetchBaseOptions,
 ): Effect.Effect<string, FetchError> =>
   fetchBody(opts, TEXT_HEADERS, (response) =>
-    Effect.tryPromise({ try: () => response.text(), catch: failWith(opts) }),
+    Effect.tryPromise({
+      try: () => response.text(),
+      catch: failWith(opts, "network"),
+    }),
+  );
+
+export const fetchTextWithUrl = (
+  opts: FetchBaseOptions,
+): Effect.Effect<{ text: string; finalUrl: string }, FetchError> =>
+  fetchBody(opts, TEXT_HEADERS, (response) =>
+    Effect.tryPromise({
+      try: async () => ({
+        text: await response.text(),
+        finalUrl: response.url,
+      }),
+      catch: failWith(opts, "network"),
+    }),
   );

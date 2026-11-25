@@ -1,6 +1,6 @@
 "use client";
 
-import { Laptop, Moon, Sun } from "lucide-react";
+import { System, Dark, Light } from "@openstatus/icons";
 import { useTheme } from "next-themes";
 import type * as React from "react";
 import { useEffect, useState } from "react";
@@ -22,19 +22,19 @@ export function ThemeToggle({
     return (
       <div
         className={cn(
-          "bg-border [&>*]:bg-background flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
+          "bg-border [&>*]:bg-background flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:px-3 [&>*]:py-2",
           className,
         )}
         {...props}
       >
         <div>
-          <Sun className="h-6 w-6" />
+          <Light className="h-6 w-6" />
         </div>
         <div>
-          <Moon className="h-6 w-6" />
+          <Dark className="h-6 w-6" />
         </div>
         <div>
-          <Laptop className="h-6 w-6" />
+          <System className="h-6 w-6" />
         </div>
       </div>
     );
@@ -43,7 +43,7 @@ export function ThemeToggle({
   return (
     <div
       className={cn(
-        "bg-border [&>*]:bg-background [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted flex items-center gap-px [&>*]:flex [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:p-4",
+        "bg-border [&>*]:bg-background [&>*]:hover:bg-muted [&>*]:data-[active=true]:bg-muted flex items-center gap-px [&>*]:flex [&>*]:min-w-0 [&>*]:flex-1 [&>*]:items-center [&>*]:justify-center [&>*]:px-3 [&>*]:py-2",
         className,
       )}
       {...props}
@@ -53,21 +53,21 @@ export function ThemeToggle({
         data-active={theme === "light"}
         onClick={() => setTheme("light")}
       >
-        [light]
+        <span className="min-w-0 truncate">[light]</span>
       </button>
       <button
         type="button"
         data-active={theme === "dark"}
         onClick={() => setTheme("dark")}
       >
-        [dark]
+        <span className="min-w-0 truncate">[dark]</span>
       </button>
       <button
         type="button"
         data-active={theme === "system"}
         onClick={() => setTheme("system")}
       >
-        [system]
+        <span className="min-w-0 truncate">[system]</span>
       </button>
     </div>
   );

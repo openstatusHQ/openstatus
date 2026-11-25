@@ -1,0 +1,187 @@
+import { db, eq } from "@openstatus/db";
+import {
+  monitorIncidentTable,
+  monitor,
+  notificationOutbox,
+  notificationTrigger,
+} from "@openstatus/db/src/schema";
+import {
+  createMonitor,
+  createNotification,
+  createTestWorkspace,
+  linkNotificationToMonitor,
+} from "@openstatus/db/src/test/factories";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
+
+import { env } from "../env";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
+import { checkerRoute } from "./index";
+import { providerToFunction } from "./utils";
+
+// biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
+type AnyStub = MockInstance;
+let stubs: AnyStub[] = [];
+
+let workspaceId: number;
+let monitorId: number;
+let notificationId: number;
+
+const cronSecret = env().CRON_SECRET;
+
+beforeAll(async () => {
+  const { workspace } = await createTestWorkspace();
+  workspaceId = workspace.id;
+  const monitorRow = await createMonitor(workspaceId, {
+    regions: "ams",
+    status: "active",
+    active: true,
+  });
+  monitorId = monitorRow.id;
+  const notif = await createNotification(workspaceId, { provider: "email" });
+  notificationId = notif.id;
+  await linkNotificationToMonitor(notificationId, monitorId);
+});
+
+afterAll(async () => {
+  await db.delete(monitor).where(eq(monitor.workspaceId, workspaceId)).run();
+});
+
+beforeEach(() => {
+  stubs = [];
+});
+
+afterEach(async () => {
+  for (const s of stubs) s.mockRestore();
+  stubs = [];
+  await db
+    .delete(notificationTrigger)
+    .where(eq(notificationTrigger.monitorId, monitorId))
+    .run();
+  await db
+    .delete(notificationOutbox)
+    .where(eq(notificationOutbox.monitorId, monitorId))
+    .run();
+  await db
+    .delete(monitorIncidentTable)
+    .where(eq(monitorIncidentTable.monitorId, monitorId))
+    .run();
+  await db
+    .update(monitor)
+    .set({ status: "active" })
+    .where(eq(monitor.id, monitorId))
+    .run();
+});
+
+function post(payload: Record<string, unknown>) {
+  return checkerRoute.request("/updateStatus", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${cronSecret}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+describe("updateStatus guards", () => {
+  const payload = () => ({
+    monitorId: String(monitorId),
+    region: "ams",
+    status: "error",
+    cronTimestamp: Date.now(),
+    statusCode: 500,
+  });
+
+  async function monitorStatus() {
+    const row = await db
+      .select({ status: monitor.status })
+      .from(monitor)
+      .where(eq(monitor.id, monitorId))
+      .get();
+    return row?.status;
+  }
+
+  test("rejects a request without the cron secret", async () => {
+    const res = await checkerRoute.request("/updateStatus", {
+      method: "POST",
+      headers: {
+        Authorization: "Basic wrong",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload()),
+    });
+
+    expect(res.status).toBe(401);
+    expect(await monitorStatus()).toBe("active");
+  });
+
+  test("rejects a payload with an unknown region", async () => {
+    const res = await post({ ...payload(), region: "nowhere" });
+
+    expect(res.status).toBe(422);
+    expect(await monitorStatus()).toBe("active");
+  });
+
+  test("ignores a check older than the stale cutoff", async () => {
+    stubs.push(stubPublishAuditLog());
+    const sendAlert = vi
+      .spyOn(providerToFunction.email, "sendAlert")
+      .mockImplementation(() => Promise.resolve());
+    stubs.push(sendAlert as AnyStub);
+
+    const res = await post({
+      ...payload(),
+      cronTimestamp: Date.now() - env().STALE_CHECK_MS - 1000,
+    });
+
+    expect(res.status).toBe(200);
+    expect(await monitorStatus()).toBe("active");
+    expect(sendAlert).not.toHaveBeenCalled();
+  });
+});
+
+describe("updateStatus audit failures", () => {
+  test("a failing audit log does not cost the notification", async () => {
+    // Tinybird is down: every audit publish rejects, including the status one
+    // that runs after the transition batch has committed.
+    stubs.push(
+      stubPublishAuditLog(() =>
+        Promise.reject(new Error("tinybird unavailable")),
+      ),
+    );
+    const sendAlert = vi
+      .spyOn(providerToFunction.email, "sendAlert")
+      .mockImplementation(() => Promise.resolve());
+    stubs.push(sendAlert as AnyStub);
+
+    const res = await post({
+      monitorId: String(monitorId),
+      region: "ams",
+      status: "error",
+      cronTimestamp: Date.now(),
+      statusCode: 500,
+    });
+
+    // Retrying this transition is useless — the region status is already
+    // written, so the retry takes the fast path and sends nothing.
+    expect(res.status).toBe(200);
+    expect(sendAlert).toHaveBeenCalledTimes(1);
+
+    const rows = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, monitorId))
+      .all();
+    expect(rows[0]?.status).toBe("error");
+  });
+});

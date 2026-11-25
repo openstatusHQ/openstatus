@@ -3,12 +3,12 @@ import {
   externalService,
   externalServiceIncident,
 } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import {
   type UpsertExternalIncidentInput,
   listExternalIncidentsByComponent,
+  listExternalIncidentsByServiceId,
   listExternalIncidentsBySlug,
   pruneStaleRawPayloads,
   upsertExternalIncidentsForService,
@@ -396,6 +396,119 @@ describe("upsertExternalIncidentsForService", () => {
     });
     expect(res.upserted).toBe(0);
   });
+
+  describe("write lock", () => {
+    const incident: UpsertExternalIncidentInput = {
+      providerIncidentId: "inc-lock",
+      name: "Outage",
+      status: "investigating",
+      createdAt: new Date("2024-06-01T12:00:00.000Z"),
+      resolvedAt: null,
+      raw: {},
+    };
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    test("an idle upsert sends no write and opens no transaction", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-idle-lock` });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [incident],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const res = await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [incident],
+      });
+
+      expect(res.upserted).toBe(0);
+      expect(batch).not.toHaveBeenCalled();
+      expect(transaction).not.toHaveBeenCalled();
+    });
+
+    test("inserts and updates go out in one batch", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-one-batch` });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [incident],
+      });
+
+      const batch = vi.spyOn(db, "batch");
+      const transaction = vi.spyOn(db, "transaction");
+      const res = await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        incidents: [
+          { ...incident, status: "resolved" },
+          { ...incident, providerIncidentId: "inc-lock-2" },
+        ],
+      });
+
+      expect(res.upserted).toBe(2);
+      expect(batch).toHaveBeenCalledTimes(1);
+      expect(transaction).not.toHaveBeenCalled();
+      const rows = await db
+        .select({ status: externalServiceIncident.status })
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, serviceId))
+        .all();
+      expect(rows.map((r) => r.status).sort()).toEqual([
+        "investigating",
+        "resolved",
+      ]);
+    });
+
+    test("concurrent first sights of an incident store one row", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-race` });
+      const upsert = () =>
+        upsertExternalIncidentsForService({
+          externalServiceId: serviceId,
+          incidents: [incident],
+        });
+
+      const results = await Promise.all([upsert(), upsert(), upsert()]);
+
+      const rows = await db
+        .select({ id: externalServiceIncident.id })
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, serviceId))
+        .all();
+      expect(rows).toHaveLength(1);
+      // Only writes that happened count, whichever callers lost the race.
+      expect(results.reduce((total, r) => total + r.upserted, 0)).toBe(1);
+    });
+
+    test("an older tick does not replace what a newer tick wrote", async () => {
+      const serviceId = await seedService({ slug: `${TEST_PREFIX}-stale` });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:00:00.000Z"),
+        incidents: [incident],
+      });
+      await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T13:00:00.000Z"),
+        incidents: [{ ...incident, status: "resolved" }],
+      });
+
+      const res = await upsertExternalIncidentsForService({
+        externalServiceId: serviceId,
+        now: new Date("2024-06-01T12:30:00.000Z"),
+        incidents: [{ ...incident, status: "monitoring" }],
+      });
+
+      expect(res.upserted).toBe(0);
+      const rows = await db
+        .select({ status: externalServiceIncident.status })
+        .from(externalServiceIncident)
+        .where(eq(externalServiceIncident.externalServiceId, serviceId))
+        .all();
+      expect(rows[0]?.status).toBe("resolved");
+    });
+  });
 });
 
 describe("listExternalIncidentsBySlug", () => {
@@ -592,5 +705,75 @@ describe("pruneStaleRawPayloads", () => {
     expect(byId.get("recent-resolved")?.rawPayloadPurgedAt).toBeNull();
     expect(byId.get("ongoing-old")?.rawPayload).not.toBeNull();
     expect(byId.get("ongoing-old")?.rawPayloadPurgedAt).toBeNull();
+  });
+});
+
+describe("listExternalIncidentsByServiceId since-window", () => {
+  test("keeps ongoing and resolved-in-window, drops resolved-before", async () => {
+    const serviceId = await seedService({ slug: `${TEST_PREFIX}-since` });
+    const now = new Date("2026-06-15T00:00:00.000Z");
+    const since = new Date("2026-06-01T00:00:00.000Z");
+
+    await upsertExternalIncidentsForService({
+      externalServiceId: serviceId,
+      now,
+      incidents: [
+        {
+          providerIncidentId: "ongoing-old",
+          name: "Ongoing since May",
+          status: "investigating",
+          impact: "major",
+          shortlink: "https://stspg.io/ongoing",
+          startedAt: new Date("2026-05-01T00:00:00.000Z"),
+          createdAt: new Date("2026-05-01T00:00:00.000Z"),
+          resolvedAt: null,
+          affectedComponentIds: ["cmp-a"],
+          raw: { id: "ongoing-old" },
+        },
+        {
+          providerIncidentId: "resolved-before",
+          name: "Resolved before window",
+          status: "resolved",
+          impact: "minor",
+          startedAt: new Date("2026-05-01T00:00:00.000Z"),
+          createdAt: new Date("2026-05-01T00:00:00.000Z"),
+          resolvedAt: new Date("2026-05-20T00:00:00.000Z"),
+          affectedComponentIds: [],
+          raw: { id: "resolved-before" },
+        },
+        {
+          providerIncidentId: "resolved-after",
+          name: "Resolved inside window",
+          status: "resolved",
+          impact: "critical",
+          startedAt: new Date("2026-05-25T00:00:00.000Z"),
+          createdAt: new Date("2026-05-25T00:00:00.000Z"),
+          resolvedAt: new Date("2026-06-10T00:00:00.000Z"),
+          affectedComponentIds: ["cmp-b"],
+          raw: { id: "resolved-after" },
+        },
+      ],
+    });
+
+    const windowed = await listExternalIncidentsByServiceId({
+      externalServiceId: serviceId,
+      since,
+    });
+    const ids = new Set(windowed.map((r) => r.providerIncidentId));
+    expect(ids.has("ongoing-old")).toBe(true);
+    expect(ids.has("resolved-after")).toBe(true);
+    expect(ids.has("resolved-before")).toBe(false);
+
+    // affectedComponentIds is returned for server-side per-component bucketing
+    const ongoing = windowed.find(
+      (r) => r.providerIncidentId === "ongoing-old",
+    );
+    expect(ongoing?.affectedComponentIds).toEqual(["cmp-a"]);
+
+    // no `since` returns everything (within the default limit)
+    const all = await listExternalIncidentsByServiceId({
+      externalServiceId: serviceId,
+    });
+    expect(all.length).toBe(3);
   });
 });

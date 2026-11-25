@@ -1,11 +1,11 @@
-import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { getPublicStatusPageIndexing } from "@openstatus/services/public-status-page";
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
 
 import { getBaseUrl } from "../lib/base-url";
 import { stripHostPort } from "../lib/domain";
 import { resolveRoute } from "../lib/resolve-route";
+import { isCanonicalThemeExplorerHost } from "../lib/theme-explorer-host";
 
 // trpc/db lookup needs Node, matching the sitemap and other content routes.
 export const runtime = "nodejs";
@@ -25,16 +25,31 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     ? resolveRoute({ host, urlHost: host, pathname: "/" })
     : null;
   const row = route
-    ? await db
-        .select({ slug: page.slug, customDomain: page.customDomain })
-        .from(page)
-        .where(
-          sql`lower(${page.slug}) = ${route.prefix} OR lower(${page.customDomain}) = ${route.prefix}`,
-        )
-        .get()
-    : undefined;
+    ? await getPublicStatusPageIndexing({ input: { slug: route.prefix } })
+    : null;
+
+  // The page owner opted out of indexing: disallow everything and omit the
+  // sitemap so crawlers have nothing to follow.
+  if (row && !row.allowIndex) {
+    return {
+      rules: [
+        {
+          userAgent: "*",
+          disallow: "/",
+        },
+      ],
+    };
+  }
+
+  // No page for this host: `/` falls through to the theme explorer, which only
+  // belongs in the index on its own host. Matches the `robots` the explorer
+  // itself emits — every other host that renders it is noindex.
+  if (!row && !isCanonicalThemeExplorerHost(host)) {
+    return { rules: [{ userAgent: "*", disallow: "/" }] };
+  }
+
   const sitemap = row
-    ? `${getBaseUrl({ slug: row.slug, customDomain: row.customDomain ?? undefined })}/sitemap.xml`
+    ? `${getBaseUrl({ slug: row.slug, customDomain: row.customDomain || undefined })}/sitemap.xml`
     : undefined;
 
   return {

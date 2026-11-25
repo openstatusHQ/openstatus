@@ -1,5 +1,8 @@
 import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
+import type { GrpcTlsMode } from "@openstatus/db/src/schema/monitors/validation";
 import {
+  GRPCTlsMode,
+  HeartbeatPingKind,
   HTTPMethod,
   MonitorStatus,
   Periodicity,
@@ -93,6 +96,61 @@ const DB_TO_MONITOR_STATUS: Record<string, MonitorStatus> = {
 
 export function stringToMonitorStatus(value: string): MonitorStatus {
   return DB_TO_MONITOR_STATUS[value] ?? MonitorStatus.UNSPECIFIED;
+}
+
+// ============================================================
+// Heartbeat Ping Kind Conversions
+// ============================================================
+
+const DB_TO_HEARTBEAT_PING_KIND: Record<string, HeartbeatPingKind> = {
+  success: HeartbeatPingKind.SUCCESS,
+  fail: HeartbeatPingKind.FAIL,
+};
+
+export function stringToHeartbeatPingKind(
+  value: string | null,
+): HeartbeatPingKind {
+  return (
+    (value && DB_TO_HEARTBEAT_PING_KIND[value]) || HeartbeatPingKind.UNSPECIFIED
+  );
+}
+
+export function heartbeatPingKindToString(
+  kind: HeartbeatPingKind,
+): "success" | "fail" | null {
+  switch (kind) {
+    case HeartbeatPingKind.SUCCESS:
+      return "success";
+    case HeartbeatPingKind.FAIL:
+      return "fail";
+    default:
+      return null;
+  }
+}
+
+// ============================================================
+// gRPC TLS Mode Conversions
+// ============================================================
+
+const DB_TO_GRPC_TLS_MODE: Record<string, GRPCTlsMode> = {
+  plaintext: GRPCTlsMode.GRPC_TLS_MODE_PLAINTEXT,
+  tls: GRPCTlsMode.GRPC_TLS_MODE_TLS,
+  tls_insecure: GRPCTlsMode.GRPC_TLS_MODE_TLS_INSECURE,
+};
+
+const GRPC_TLS_MODE_TO_DB: Record<GRPCTlsMode, GrpcTlsMode> = {
+  [GRPCTlsMode.GRPC_TLS_MODE_PLAINTEXT]: "plaintext",
+  [GRPCTlsMode.GRPC_TLS_MODE_TLS]: "tls",
+  [GRPCTlsMode.GRPC_TLS_MODE_TLS_INSECURE]: "tls_insecure",
+  [GRPCTlsMode.GRPC_TLS_MODE_UNSPECIFIED]: "tls",
+};
+
+export function stringToGrpcTlsMode(value: string | null): GRPCTlsMode {
+  return DB_TO_GRPC_TLS_MODE[value ?? ""] ?? GRPCTlsMode.GRPC_TLS_MODE_TLS;
+}
+
+export function grpcTlsModeToString(value: GRPCTlsMode): GrpcTlsMode {
+  return GRPC_TLS_MODE_TO_DB[value] ?? "tls";
 }
 
 // ============================================================

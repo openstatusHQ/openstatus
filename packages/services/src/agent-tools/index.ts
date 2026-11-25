@@ -1,62 +1,149 @@
-import type { z } from "zod";
+import { z } from "zod";
 
+import type { ServiceContext } from "../context";
+import { ForbiddenError, NotFoundError } from "../errors";
+import { isFeatureEnabled } from "../features";
+import type { Workspace } from "../types";
 import { getAuditLogTool, listAuditLogsTool } from "./audit";
+import { getContentPageTool, searchContentTool } from "./content";
 import { getDocPageTool, searchDocsTool } from "./docs";
-import { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 import {
+  addIncidentNoteTool,
+  approvePostmortemTool,
+  declareIncidentTool,
+  draftPostmortemTool,
+  getIncidentTool,
+  getPostmortemTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  setIncidentStatusTool,
+  updateIncidentTool,
+} from "./incident";
+import {
+  addMaintenanceUpdateTool,
+  createMaintenanceTool,
+  deleteMaintenanceUpdateTool,
+  getMaintenanceTool,
+  listMaintenancesTool,
+  updateMaintenanceTool,
+  updateMaintenanceUpdateTool,
+} from "./maintenance";
+import {
+  createMonitorTool,
   getMonitorStatusTool,
   getMonitorSummaryTool,
   getMonitorTool,
   getResponseLogTool,
   listMonitorsTool,
   listResponseLogsTool,
+  updateMonitorTool,
 } from "./monitor";
 import { listNotificationsTool } from "./notification";
-import { listStatusPagesTool } from "./page";
-import { listPageComponentsTool } from "./page-component";
+import {
+  createStatusPageTool,
+  listStatusPagesTool,
+  updateStatusPageTool,
+} from "./page";
+import {
+  addPageComponentTool,
+  listPageComponentsTool,
+  updatePageComponentTool,
+} from "./page-component";
+import {
+  createComponentGroupTool,
+  updateComponentGroupTool,
+} from "./page-component-group";
+import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
+  getStatusReportTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "./status-report";
-import type { AnyAgentTool } from "./types";
+import type { AgentToolRegistry, AnyAgentTool, ApprovalBefore } from "./types";
+import { getWorkspaceTool } from "./workspace";
 
 export { getAuditLogTool, listAuditLogsTool } from "./audit";
+export { getContentPageTool, searchContentTool } from "./content";
 export { getDocPageTool, searchDocsTool } from "./docs";
-export { createMaintenanceTool, listMaintenancesTool } from "./maintenance";
 export {
+  addIncidentNoteTool,
+  approvePostmortemTool,
+  declareIncidentTool,
+  draftPostmortemTool,
+  getIncidentTool,
+  getPostmortemTool,
+  listIncidentsTool,
+  resolveIncidentTool,
+  setIncidentStatusTool,
+  updateIncidentTool,
+} from "./incident";
+export {
+  addMaintenanceUpdateTool,
+  createMaintenanceTool,
+  deleteMaintenanceUpdateTool,
+  getMaintenanceTool,
+  listMaintenancesTool,
+  updateMaintenanceTool,
+  updateMaintenanceUpdateTool,
+} from "./maintenance";
+export {
+  createMonitorTool,
   getMonitorStatusTool,
   getMonitorSummaryTool,
   getMonitorTool,
   getResponseLogTool,
   listMonitorsTool,
   listResponseLogsTool,
+  updateMonitorTool,
 } from "./monitor";
 export { listNotificationsTool } from "./notification";
-export { listStatusPagesTool } from "./page";
-export { listPageComponentsTool } from "./page-component";
+export {
+  createStatusPageTool,
+  listStatusPagesTool,
+  updateStatusPageTool,
+} from "./page";
+export {
+  addPageComponentTool,
+  listPageComponentsTool,
+  updatePageComponentTool,
+} from "./page-component";
+export {
+  createComponentGroupTool,
+  updateComponentGroupTool,
+} from "./page-component-group";
+export { listPrivateLocationsTool } from "./private-location";
+export { getWorkspaceTool } from "./workspace";
 export {
   addStatusReportUpdateTool,
   createStatusReportTool,
+  deleteStatusReportUpdateTool,
+  getStatusReportTool,
   listStatusReportsTool,
   resolveStatusReportTool,
   updateStatusReportTool,
+  updateStatusReportUpdateTool,
 } from "./status-report";
 export type {
   AgentTool,
   AgentToolRegistry,
   AnyAgentTool,
+  ApprovalBefore,
   ApprovalMeta,
   ExtraFlag,
   InferAgentToolInput,
   InferAgentToolOutput,
   SummaryLine,
+  SummaryLineRef,
 } from "./types";
 export {
   type AgentSystemPromptOptions,
   buildAgentSystemPrompt,
+  buildMcpServerInstructions,
 } from "./prompt";
 
 /**
@@ -71,25 +158,55 @@ export {
  */
 export const agentTools = {
   list_status_pages: listStatusPagesTool,
+  create_status_page: createStatusPageTool,
+  update_status_page: updateStatusPageTool,
   list_page_components: listPageComponentsTool,
+  add_page_component: addPageComponentTool,
+  update_page_component: updatePageComponentTool,
+  create_component_group: createComponentGroupTool,
+  update_component_group: updateComponentGroupTool,
   list_status_reports: listStatusReportsTool,
+  get_status_report: getStatusReportTool,
   create_status_report: createStatusReportTool,
   add_status_report_update: addStatusReportUpdateTool,
   update_status_report: updateStatusReportTool,
   resolve_status_report: resolveStatusReportTool,
+  update_status_report_update: updateStatusReportUpdateTool,
+  delete_status_report_update: deleteStatusReportUpdateTool,
+  list_incidents: listIncidentsTool,
+  get_incident: getIncidentTool,
+  declare_incident: declareIncidentTool,
+  update_incident: updateIncidentTool,
+  resolve_incident: resolveIncidentTool,
+  set_incident_status: setIncidentStatusTool,
+  add_incident_note: addIncidentNoteTool,
+  get_postmortem: getPostmortemTool,
+  draft_postmortem: draftPostmortemTool,
+  approve_postmortem: approvePostmortemTool,
   list_maintenances: listMaintenancesTool,
+  get_maintenance: getMaintenanceTool,
   create_maintenance: createMaintenanceTool,
+  update_maintenance: updateMaintenanceTool,
+  add_maintenance_update: addMaintenanceUpdateTool,
+  update_maintenance_update: updateMaintenanceUpdateTool,
+  delete_maintenance_update: deleteMaintenanceUpdateTool,
   list_monitors: listMonitorsTool,
+  create_monitor: createMonitorTool,
+  update_monitor: updateMonitorTool,
   get_monitor: getMonitorTool,
   get_monitor_status: getMonitorStatusTool,
   get_monitor_summary: getMonitorSummaryTool,
   list_response_logs: listResponseLogsTool,
   get_response_log: getResponseLogTool,
   list_notifications: listNotificationsTool,
+  list_private_locations: listPrivateLocationsTool,
+  get_workspace: getWorkspaceTool,
   list_audit_logs: listAuditLogsTool,
   get_audit_log: getAuditLogTool,
   search_docs: searchDocsTool,
   get_doc_page: getDocPageTool,
+  search_content: searchContentTool,
+  get_content_page: getContentPageTool,
 } satisfies Record<string, AnyAgentTool>;
 
 // Multi-flag confirmation UX should be a modal, not 2^N buttons. Fail
@@ -106,6 +223,14 @@ for (const tool of Object.values(agentTools) as AnyAgentTool[]) {
       `agent-tools: "${tool.name}" declares extraFlags but no applyFlags.`,
     );
   }
+}
+
+/** Whether a tool is offered in this workspace (feature-gated tools are hidden). */
+export function isAgentToolAvailable(
+  tool: AnyAgentTool,
+  workspace: Pick<Workspace, "id">,
+): boolean {
+  return !tool.feature || isFeatureEnabled(workspace, tool.feature);
 }
 
 /**
@@ -126,3 +251,42 @@ export type AgentToolInput<N extends AgentToolName> = z.infer<
 export type AgentToolOutput<N extends AgentToolName> = z.infer<
   (typeof agentTools)[N]["outputSchema"]
 >;
+
+export const LoadApprovalBeforeInput = z.object({
+  toolName: z.string(),
+  /** The pending call's integer input fields; the tool's `idField` is one. */
+  ids: z.record(z.string(), z.number().int()),
+});
+export type LoadApprovalBeforeInput = z.infer<typeof LoadApprovalBeforeInput>;
+
+/**
+ * The "before" side of a write tool's approval card. `null` when the tool
+ * has no `loadBefore`, is not offered in this workspace, the id is missing,
+ * or the entity is gone — the card then shows the proposed values only, and
+ * Apply surfaces the real error.
+ */
+// oxlint-disable-next-line openstatus/services-verbs-require-scope -- dispatches to the tool's loadBefore, and each one checks its group's read scope first
+export async function loadApprovalBefore(args: {
+  ctx: ServiceContext;
+  input: LoadApprovalBeforeInput;
+}): Promise<ApprovalBefore | null> {
+  const { ctx } = args;
+  const { toolName, ids } = LoadApprovalBeforeInput.parse(args.input);
+  const tool = Object.hasOwn(agentTools, toolName)
+    ? (agentTools as AgentToolRegistry)[toolName]
+    : undefined;
+  const loadBefore = tool?.approval?.loadBefore;
+  if (!tool || !loadBefore || !isAgentToolAvailable(tool, ctx.workspace)) {
+    return null;
+  }
+  const id = ids[loadBefore.idField];
+  if (id === undefined) return null;
+  try {
+    return await loadBefore.load({ ctx, id });
+  } catch (err) {
+    if (err instanceof NotFoundError || err instanceof ForbiddenError) {
+      return null;
+    }
+    throw err;
+  }
+}

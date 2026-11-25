@@ -1,6 +1,14 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import {
+  ApiKey,
+  Lock,
+  Unlock,
+  Restricted,
+  ShieldUser,
+} from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -19,7 +27,7 @@ import {
 import { Switch } from "@openstatus/ui/components/ui/switch";
 import { cn } from "@openstatus/ui/lib/utils";
 import { isTRPCClientError } from "@trpc/client";
-import { Key, Lock, LockOpen, ShieldAlert, ShieldUser } from "lucide-react";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { type Resolver, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -82,6 +90,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
+const ACCESS_TYPE_LIMIT = {
+  public: undefined,
+  password: "password-protection",
+  "email-domain": "email-domain-protection",
+  "ip-restriction": "ip-restriction",
+} satisfies Record<z.infer<typeof accessTypeSchema>, keyof Limits | undefined>;
+
 export function FormPageAccess({
   lockedMap,
   allowIndexLocked,
@@ -134,7 +149,7 @@ export function FormPageAccess({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="page-access">
           <FormCardHeader>
             <FormCardTitle>Page Access</FormCardTitle>
             <FormCardDescription>
@@ -157,8 +172,8 @@ export function FormPageAccess({
                       className="grid grid-cols-2 gap-4 sm:grid-cols-4"
                     >
                       {[
-                        { value: "public", icon: LockOpen, label: "Public" },
-                        { value: "password", icon: Key, label: "Password" },
+                        { value: "public", icon: Unlock, label: "Public" },
+                        { value: "password", icon: ApiKey, label: "Password" },
                         {
                           value: "email-domain",
                           icon: ShieldUser,
@@ -166,7 +181,7 @@ export function FormPageAccess({
                         },
                         {
                           value: "ip-restriction",
-                          icon: ShieldAlert,
+                          icon: Restricted,
                           label: "IP Restriction",
                         },
                       ].map((type) => {
@@ -205,14 +220,14 @@ export function FormPageAccess({
             <FormCardSeparator />
           ) : null}
           {watchAccessType === "password" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="password"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -228,14 +243,14 @@ export function FormPageAccess({
             </FormCardContent>
           ) : null}
           {watchAccessType === "email-domain" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="authEmailDomains"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Email Domains</FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -252,14 +267,14 @@ export function FormPageAccess({
             </FormCardContent>
           ) : null}
           {watchAccessType === "ip-restriction" ? (
-            <FormCardContent className="grid gap-4">
+            <FormCardContent className="grid gap-4 sm:grid-cols-3">
               {locked ? <FormCardContentUpgrade /> : null}
               <FormField
                 control={form.control}
                 name="allowedIpRanges"
                 disabled={locked}
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="sm:col-span-2">
                     <FormLabel>Allowed IP Ranges</FormLabel>
                     <FormControl>
                       <Input
@@ -319,11 +334,18 @@ export function FormPageAccess({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
-                <Link href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit={ACCESS_TYPE_LIMIT[watchAccessType]}
+                type="button"
+                asChild
+              >
+                <NextLink
+                  href={`/settings/billing?highlight=${ACCESS_TYPE_LIMIT[watchAccessType]}#plans`}
+                >
                   <Lock />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <Button type="submit" disabled={isPending}>

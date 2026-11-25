@@ -1,7 +1,7 @@
 import { createRoute, z } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { serialize } from "@openstatus/assertions";
-import { and, db, eq, isNull } from "@openstatus/db";
+import { and, db, eq, isNull, ne } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
@@ -9,7 +9,7 @@ import { trackMiddleware } from "@/libs/middlewares";
 
 import type { monitorsApi } from "./index";
 import { MonitorSchema, ParamsSchema } from "./schema";
-import { getAssertions } from "./utils";
+import { assertSafeMonitorUrl, getAssertions } from "./utils";
 
 const putRoute = createRoute({
   method: "put",
@@ -80,6 +80,7 @@ export function registerPutMonitor(api: typeof monitorsApi) {
         and(
           eq(monitor.id, Number(id)),
           isNull(monitor.deletedAt),
+          ne(monitor.jobType, "heartbeat"),
           eq(monitor.workspaceId, workspaceId),
         ),
       )
@@ -100,6 +101,10 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       });
     }
 
+    if (input.url !== undefined) {
+      assertSafeMonitorUrl({ jobType: _monitor.jobType, url: input.url });
+    }
+
     const { headers, regions, assertions, ...rest } = input;
 
     const assert = assertions ? getAssertions(assertions) : [];
@@ -118,6 +123,13 @@ export function registerPutMonitor(api: typeof monitorsApi) {
       .where(eq(monitor.id, Number(_monitor.id)))
       .returning()
       .get();
+
+    if (!_newMonitor) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
+    }
 
     const otelHeader = _newMonitor.otelHeaders
       ? z

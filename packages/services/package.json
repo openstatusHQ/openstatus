@@ -13,17 +13,13 @@
       "import": "./src/status-report/index.ts",
       "types": "./src/status-report/index.ts"
     },
-    "./status-report/utils": {
-      "import": "./src/status-report/utils.ts",
-      "types": "./src/status-report/utils.ts"
-    },
     "./maintenance": {
       "import": "./src/maintenance/index.ts",
       "types": "./src/maintenance/index.ts"
     },
-    "./incident": {
-      "import": "./src/incident/index.ts",
-      "types": "./src/incident/index.ts"
+    "./monitor-incident": {
+      "import": "./src/monitor-incident/index.ts",
+      "types": "./src/monitor-incident/index.ts"
     },
     "./monitor": {
       "import": "./src/monitor/index.ts",
@@ -37,6 +33,10 @@
       "import": "./src/page-component/index.ts",
       "types": "./src/page-component/index.ts"
     },
+    "./page-component-group": {
+      "import": "./src/page-component-group/index.ts",
+      "types": "./src/page-component-group/index.ts"
+    },
     "./page": {
       "import": "./src/page/index.ts",
       "types": "./src/page/index.ts"
@@ -44,6 +44,10 @@
     "./status-timeline": {
       "import": "./src/status-timeline/index.ts",
       "types": "./src/status-timeline/index.ts"
+    },
+    "./frozen-uptime": {
+      "import": "./src/frozen-uptime/index.ts",
+      "types": "./src/frozen-uptime/index.ts"
     },
     "./workspace": {
       "import": "./src/workspace/index.ts",
@@ -53,13 +57,25 @@
       "import": "./src/user/index.ts",
       "types": "./src/user/index.ts"
     },
+    "./viewer": {
+      "import": "./src/viewer/index.ts",
+      "types": "./src/viewer/index.ts"
+    },
     "./invitation": {
       "import": "./src/invitation/index.ts",
       "types": "./src/invitation/index.ts"
     },
+    "./feedback": {
+      "import": "./src/feedback/index.ts",
+      "types": "./src/feedback/index.ts"
+    },
     "./api-key": {
       "import": "./src/api-key/index.ts",
       "types": "./src/api-key/index.ts"
+    },
+    "./oauth": {
+      "import": "./src/oauth/index.ts",
+      "types": "./src/oauth/index.ts"
     },
     "./chat-session": {
       "import": "./src/chat-session/index.ts",
@@ -73,6 +89,10 @@
       "import": "./src/import/index.ts",
       "types": "./src/import/index.ts"
     },
+    "./incident": {
+      "import": "./src/incident/index.ts",
+      "types": "./src/incident/index.ts"
+    },
     "./audit": {
       "import": "./src/audit/index.ts",
       "types": "./src/audit/index.ts"
@@ -84,6 +104,14 @@
     "./member": {
       "import": "./src/member/index.ts",
       "types": "./src/member/index.ts"
+    },
+    "./sso": {
+      "import": "./src/sso/index.ts",
+      "types": "./src/sso/index.ts"
+    },
+    "./maintenance-window": {
+      "import": "./src/maintenance-window/index.ts",
+      "types": "./src/maintenance-window/index.ts"
     },
     "./monitor-tag": {
       "import": "./src/monitor-tag/index.ts",
@@ -97,9 +125,25 @@
       "import": "./src/private-location/index.ts",
       "types": "./src/private-location/index.ts"
     },
+    "./slack-user": {
+      "import": "./src/slack-user/index.ts",
+      "types": "./src/slack-user/index.ts"
+    },
+    "./page-access": {
+      "import": "./src/page-access/index.ts",
+      "types": "./src/page-access/index.ts"
+    },
+    "./page-access/cookie-key": {
+      "import": "./src/page-access/cookie-key.ts",
+      "types": "./src/page-access/cookie-key.ts"
+    },
     "./page-subscriber": {
       "import": "./src/page-subscriber/index.ts",
       "types": "./src/page-subscriber/index.ts"
+    },
+    "./public-status-page": {
+      "import": "./src/public-status-page/index.ts",
+      "types": "./src/public-status-page/index.ts"
     },
     "./external-service": {
       "import": "./src/external-service/index.ts",
@@ -117,6 +161,10 @@
       "import": "./src/external-service-report/index.ts",
       "types": "./src/external-service-report/index.ts"
     },
+    "./external-service-status/effective": {
+      "import": "./src/external-service-status/effective.ts",
+      "types": "./src/external-service-status/effective.ts"
+    },
     "./test/helpers": {
       "import": "./test/helpers.ts",
       "types": "./test/helpers.ts"
@@ -127,11 +175,12 @@
     }
   },
   "scripts": {
-    "check": "deno check --sloppy-imports .",
-    "test": "NODE_ENV=test RESEND_API_KEY=test-key deno test --parallel -A --no-check --sloppy-imports",
+    "check": "tsc --noEmit",
+    "test": "NODE_ENV=test RESEND_API_KEY=test-key vitest run",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
+    "@date-fns/tz": "catalog:",
     "@openstatus/assertions": "workspace:*",
     "@openstatus/db": "workspace:*",
     "@openstatus/importers": "workspace:*",
@@ -141,13 +190,16 @@
     "@openstatus/theme-store": "workspace:*",
     "@openstatus/tinybird": "workspace:*",
     "@openstatus/utils": "workspace:*",
+    "@workos-inc/node": "catalog:",
     "effect": "catalog:",
+    "ip-cidr": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
-    "@std/expect": "jsr:^1.0.19",
-    "@std/testing": "jsr:^1.0.19",
-    "typescript": "catalog:"
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

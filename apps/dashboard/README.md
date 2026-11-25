@@ -1,0 +1,92 @@
+# OpenStatus Dashboard
+
+## Manual Setup
+
+### Requirements
+
+- [Node.js](https://nodejs.org/en/) >= 26.2 — runtime (`devbox.json` pins the exact version)
+- [pnpm](https://pnpm.io/) >= 8 — monorepo package manager (see root `package.json` for pinned version)
+- [Bun](https://bun.sh/) — optional, used by the utility scripts in `src/scripts`
+- [Turso CLI](https://docs.turso.tech/quickstart) — starts the local libSQL server via `pnpm --filter '@openstatus/db' dev`
+
+### Environment
+
+Two `.env` files are involved:
+
+- `apps/dashboard/.env` — copy manually now (this step)
+- `packages/db/.env` — copied automatically by `pnpm dx` in step 3 below
+
+```sh
+cp apps/dashboard/.env.example apps/dashboard/.env
+```
+
+The defaults in `.env.example` are dummy values that work for local dev — no real API keys needed.
+Fill them in before deployment to enable optional functionality (Resend for real magic-link emails, Stripe, Tinybird analytics, Sentry, GitHub/Google OAuth, etc.).
+Magic-link login works everywhere; in dev the link is printed to the terminal instead of emailed.
+
+### Startup
+
+1. Install dependencies
+
+```sh
+pnpm install
+```
+
+2. Start the libSQL server (keep this terminal running)
+
+```sh
+pnpm --filter '@openstatus/db' dev
+```
+
+3. In a second terminal, set up the dev database
+
+```sh
+pnpm -w dx
+```
+
+This chains three turbo tasks (`env → migrate → seed`):
+
+- `env` copies `packages/db/.env.example` → `packages/db/.env`
+- `migrate` runs Drizzle migrations against the libSQL server
+- `seed` inserts a default workspace, user (`ping@openstatus.dev`), monitors, and a status page
+
+4. Stop the terminal from step 2
+
+`pnpm -w dev:dashboard` starts its own libSQL on port `8080` — leaving the step-2 server running causes a port conflict.
+
+5. Start the dashboard from the repo root
+
+```sh
+pnpm -w dev:dashboard
+```
+
+Turbo runs the dashboard (`apps/dashboard`) and `@openstatus/db` together.
+
+6. Open [http://localhost:3001](http://localhost:3001)
+
+## Logging in
+
+The dashboard uses NextAuth with GitHub, Google, SSO and a Resend magic-link provider.
+
+In `NODE_ENV=development`, `src/lib/auth/providers.ts` **prints the magic link to the dashboard's terminal stdout** instead of emailing it; the dummy `RESEND_API_KEY` from `.env.example` is enough and no OAuth credentials are required. Everywhere else the link is emailed through Resend. A self-hosted deployment (`SELF_HOST=true`) whose Resend send fails still tells the user to check their inbox but prints the link to the server log instead, so look there when running without a real key.
+
+To log in:
+
+1. Open [http://localhost:3001/login](http://localhost:3001/login)
+2. Enter `ping@openstatus.dev` (the seeded user, bound to workspace 1) in the magic-link form
+3. Watch the dashboard terminal — the magic link is logged there. Open it in your browser.
+
+## Troubleshooting
+
+- **Port 8080 already in use** — a leftover libSQL server from step 2. Kill that terminal and re-run `pnpm -w dev:dashboard`.
+- **Magic link doesn't arrive** — it isn't emailed in dev. Look in the dashboard terminal stdout for `>>> Magic Link: ...`.
+- **Reset the dev DB** — stop the libSQL server, delete `openstatus-dev.db` at the repo root, restart libSQL, re-run `pnpm -w dx`.
+- **No Turso CLI on the machine** (a cloud sandbox) — `node scripts/dev-stack.mjs up` does steps 2 to 5 with sqld fetched from npm; `down` stops them. Its database is `.screenshots/stack/openstatus-dev.db`: `up --reseed` resets the fixtures, or delete the directory while the stack is down.
+
+## Related services (optional for dashboard development)
+
+The dashboard's tRPC API runs on its own Next.js edge routes, so basic CRUD works without the other apps. You may also want to run:
+
+- `apps/server` (Hono) — for API-key features and operations that go through the public HTTP API
+- `apps/checker` (Go) — actually executes scheduled monitor checks; without it, monitors are listed but never probed
+- Tinybird — uptime / latency time-series graphs; without it, those charts stay empty

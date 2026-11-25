@@ -1,5 +1,5 @@
 import type { NotificationContext } from "@openstatus/notification-base";
-import { assertSafeUrl } from "@openstatus/utils";
+import { safeFetch } from "@openstatus/utils";
 
 import { GrafanaOncallPayload, GrafanaOncallSchema } from "./schema";
 
@@ -22,8 +22,7 @@ export const sendAlert = async ({
     link_to_upstream_details: `https://www.openstatus.dev/app/${monitor.id}/overview`,
   });
 
-  await assertSafeUrl(config.webhookUrl);
-  const res = await fetch(config.webhookUrl, {
+  const res = await safeFetch(config.webhookUrl, {
     method: "POST",
     body: JSON.stringify(event),
     headers: {
@@ -57,8 +56,7 @@ export const sendDegraded = async ({
     link_to_upstream_details: `https://www.openstatus.dev/app/${monitor.id}/overview`,
   });
 
-  await assertSafeUrl(config.webhookUrl);
-  const res = await fetch(config.webhookUrl, {
+  const res = await safeFetch(config.webhookUrl, {
     method: "POST",
     body: JSON.stringify(event),
     headers: {
@@ -92,8 +90,7 @@ export const sendRecovery = async ({
     link_to_upstream_details: `https://www.openstatus.dev/app/${monitor.id}/overview`,
   });
 
-  await assertSafeUrl(config.webhookUrl);
-  const res = await fetch(config.webhookUrl, {
+  const res = await safeFetch(config.webhookUrl, {
     method: "POST",
     body: JSON.stringify(event),
     headers: {
@@ -120,9 +117,8 @@ export const sendTest = async (props: { webhookUrl: string }) => {
     link_to_upstream_details: "https://www.openstatus.dev",
   });
 
-  await assertSafeUrl(webhookUrl);
   try {
-    const res = await fetch(webhookUrl, {
+    const res = await safeFetch(webhookUrl, {
       method: "POST",
       body: JSON.stringify(event),
       headers: {

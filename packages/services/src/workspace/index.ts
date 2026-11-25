@@ -1,14 +1,44 @@
 export {
   getWorkspace,
-  getWorkspaceWithUsage,
+  getWorkspaceByStripeId,
+  getWorkspaceForMember,
+  getWorkspaceRowById,
+  getWorkspaceUsage,
+  listOwnedWorkspaces,
+  listWorkspaceOwners,
   listWorkspaces,
   type WorkspaceUsage,
-  type WorkspaceWithUsage,
 } from "./list";
-export { updateWorkspaceName } from "./update";
 export {
+  type DowngradePreview,
+  type DowngradeTrim,
+  downgradeWorkspaceToFree,
+  previewWorkspaceDowngrade,
+} from "./downgrade";
+export {
+  getTrialDaysLeft,
+  isTrialEligibleWorkspace,
+  listOwnedTrialWorkspaces,
+  markWorkspaceTrialed,
+} from "./trial";
+export {
+  updateWorkspaceLimits,
+  updateWorkspaceName,
+  updateWorkspacePlan,
+  updateWorkspaceStripeId,
+} from "./update";
+export {
+  DowngradeWorkspaceInput,
+  GetWorkspaceByStripeIdInput,
+  GetWorkspaceForMemberInput,
   GetWorkspaceInput,
-  GetWorkspaceWithUsageInput,
+  GetWorkspaceUsageInput,
+  ListWorkspaceOwnersInput,
   ListWorkspacesInput,
+  OwnedWorkspacesInput,
+  UpdateWorkspaceLimitsInput,
   UpdateWorkspaceNameInput,
+  UpdateWorkspacePlanInput,
+  UpdateWorkspaceStripeIdInput,
 } from "./schemas";
+export { systemContext } from "./system-context";

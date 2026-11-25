@@ -1,14 +1,22 @@
-import type { LucideIcon } from "lucide-react";
-import { Cog, Hammer, LayoutTemplate, Megaphone, Users } from "lucide-react";
+import type { IconType } from "@openstatus/icons";
+import {
+  Settings,
+  Maintenance,
+  Calendar,
+  Components,
+  Report,
+  Team,
+} from "@openstatus/icons";
 
 export const STATUS_PAGE_TABS: {
   value: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconType;
 }[] = [
-  { value: "status-reports", label: "Status Reports", icon: Megaphone },
-  { value: "maintenances", label: "Maintenances", icon: Hammer },
-  { value: "subscribers", label: "Subscribers", icon: Users },
-  { value: "components", label: "Components", icon: LayoutTemplate },
-  { value: "edit", label: "Settings", icon: Cog },
+  { value: "status-reports", label: "Status Reports", icon: Report },
+  { value: "maintenances", label: "Maintenances", icon: Maintenance },
+  { value: "subscribers", label: "Subscribers", icon: Team },
+  { value: "components", label: "Components", icon: Components },
+  { value: "history", label: "History", icon: Calendar },
+  { value: "edit", label: "Settings", icon: Settings },
 ];

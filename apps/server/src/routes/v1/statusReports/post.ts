@@ -29,7 +29,7 @@ const postRoute = createRoute({
             id: true,
             statusReportUpdateIds: true,
           }).extend({
-            date: z.coerce.date().optional().prefault(new Date()).openapi({
+            date: z.coerce.date().prefault(new Date()).openapi({
               description:
                 "The date of the report in ISO8601 format, defaults to now",
             }),
@@ -58,6 +58,7 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
   return api.openapi(postRoute, async (c) => {
     const input = c.req.valid("json");
     const workspaceId = c.get("workspace").id;
+    const actorUserId = c.get("apiKey").createdById ?? null;
     const limits = c.get("workspace").limits;
 
     if (input.monitorIds?.length) {
@@ -105,6 +106,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
             title: input.title,
             pageId: input.pageId,
             workspaceId: workspaceId,
+            createdBy: actorUserId,
+            updatedBy: actorUserId,
           })
           .returning()
           .get();
@@ -116,6 +119,8 @@ export function registerPostStatusReport(api: typeof statusReportsApi) {
             message: input.message,
             date: input.date,
             statusReportId: _newStatusReport.id,
+            createdBy: actorUserId,
+            updatedBy: actorUserId,
           })
           .returning()
           .get();

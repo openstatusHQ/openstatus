@@ -1,7 +1,8 @@
-import { insertPageSchema } from "@openstatus/db/src/schema";
+import { insertPageSchema, timeZoneSchema } from "@openstatus/db/src/schema";
 import { pageAccessTypes } from "@openstatus/db/src/schema/pages/constants";
 import {
   customDomainSchema,
+  customThemeWriteSchema,
   pageConfigurationSchema,
   slugSchema,
 } from "@openstatus/db/src/schema/pages/validation";
@@ -36,15 +37,20 @@ export type CreatePageInput = {
   forceTheme?: "light" | "dark" | "system";
   defaultLocale?: (typeof locales)[number];
   locales?: (typeof locales)[number][] | null;
+  defaultTimezone?: string;
   homepageUrl?: string | null;
   contactUrl?: string | null;
   configuration?: Record<string, unknown> | null;
   monitors?: Array<{ monitorId: number }>;
+  customTheme?: {
+    light?: Record<string, string>;
+    dark?: Record<string, string>;
+  } | null;
 };
 
 /** Minimal create — the onboarding / `new` path with no monitors. */
 export const NewPageInput = z.object({
-  title: z.string(),
+  title: z.string().trim().min(1),
   // Canonical `slugSchema` from db validation — regex + min(3).
   // Plain `z.string().toLowerCase()` here let malformed slugs through
   // that `insertPageSchema` would reject, so `create` and `new` had
@@ -76,7 +82,7 @@ export type GetSlugAvailableInput = z.infer<typeof GetSlugAvailableInput>;
 
 export const UpdatePageGeneralInput = z.object({
   id: z.number().int(),
-  title: z.string(),
+  title: z.string().trim().min(1),
   slug: slugSchema,
   description: z.string().nullish(),
   icon: z.string().nullish(),
@@ -140,6 +146,14 @@ export type UpdatePageAppearanceInput = z.infer<
   typeof UpdatePageAppearanceInput
 >;
 
+export const UpdatePageCustomThemeInput = z.object({
+  id: z.number().int(),
+  customTheme: customThemeWriteSchema,
+});
+export type UpdatePageCustomThemeInput = z.input<
+  typeof UpdatePageCustomThemeInput
+>;
+
 export const UpdatePageLinksInput = z.object({
   id: z.number().int(),
   homepageUrl: z.string().nullish(),
@@ -162,17 +176,31 @@ export const UpdatePageLocalesInput = z
   );
 export type UpdatePageLocalesInput = z.infer<typeof UpdatePageLocalesInput>;
 
-// Reuse the canonical `pageConfigurationSchema` — the read path runs
-// stored configuration through it, so anything the update accepts that
-// doesn't round-trip here would surface as an opaque parse error at
-// status-page render time rather than at write time. The prior
-// `z.record(z.string(), z.union([z.string(), z.boolean()]))` happily
-// persisted any key/value and broke the read parser on values outside
-// the defined enums.
+export const UpdatePageTimezoneInput = z.object({
+  id: z.number().int(),
+  defaultTimezone: timeZoneSchema,
+});
+export type UpdatePageTimezoneInput = z.input<typeof UpdatePageTimezoneInput>;
+
+// Match undefined before the read validators can fill in defaults.
 export const UpdatePageConfigurationInput = z.object({
   id: z.number().int(),
-  configuration: pageConfigurationSchema.nullish(),
+  configuration: z
+    .object({
+      value: z.undefined().or(pageConfigurationSchema.shape.value),
+      type: z.undefined().or(pageConfigurationSchema.shape.type),
+      uptime: z.undefined().or(pageConfigurationSchema.shape.uptime),
+      theme: z.undefined().or(pageConfigurationSchema.shape.theme),
+      days: z.undefined().or(pageConfigurationSchema.shape.days),
+    })
+    .nullish(),
 });
 export type UpdatePageConfigurationInput = z.infer<
   typeof UpdatePageConfigurationInput
 >;
+
+/** Legacy rows may hold an invalid configuration; they read as the defaults. */
+export function parsePageConfiguration(value: unknown) {
+  const parsed = pageConfigurationSchema.safeParse(value ?? {});
+  return parsed.success ? parsed.data : pageConfigurationSchema.parse({});
+}

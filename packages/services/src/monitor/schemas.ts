@@ -7,45 +7,139 @@ import {
 } from "@openstatus/assertions";
 import { monitorPeriodicity } from "@openstatus/db/src/schema/constants";
 import {
+  grpcTlsModes,
   monitorJobTypes,
   monitorMethods,
+  monitorStatus,
 } from "@openstatus/db/src/schema/monitors/constants";
+import {
+  HEARTBEAT_GRACE_RANGE,
+  HEARTBEAT_PERIOD_RANGE,
+  headerPairSchema,
+  uniqueRegions,
+} from "@openstatus/utils";
 import { z } from "zod";
 
-export { monitorJobTypes, monitorMethods, monitorPeriodicity };
+export { grpcTlsModes, monitorJobTypes, monitorMethods, monitorPeriodicity };
 
-const headerPair = z.object({ key: z.string(), value: z.string() });
-const assertion = z.discriminatedUnion("type", [
+const headerPair = headerPairSchema;
+// deduped, not rejected: existing API clients may send a region twice
+const regions = z.array(z.string()).transform((r) => uniqueRegions(r));
+export const monitorAssertionSchema = z.discriminatedUnion("type", [
   statusAssertion,
   headerAssertion,
   textBodyAssertion,
   jsonBodyAssertion,
   recordAssertion,
 ]);
+const assertion = monitorAssertionSchema;
+
+// Bounds mirror `insertMonitorSchema` and the RPC API's proto contract
+// (0–300_000 ms), so no verb rejects a value another surface accepts.
+const timeoutMs = z.coerce.number().gte(0).lte(300_000);
+
+const heartbeatPeriod = z
+  .number()
+  .int()
+  .gte(HEARTBEAT_PERIOD_RANGE.min)
+  .lte(HEARTBEAT_PERIOD_RANGE.max);
+const heartbeatGrace = z
+  .number()
+  .int()
+  .gte(HEARTBEAT_GRACE_RANGE.min)
+  .lte(HEARTBEAT_GRACE_RANGE.max);
 
 /**
  * Create a new monitor. Regions and periodicity are optional — when unset,
  * the service picks sensible plan-based defaults (4 free regions / 6 paid
  * + `30m`/`1m` respectively).
  */
-export const CreateMonitorInput = z.object({
-  name: z.string().min(1),
-  jobType: z.enum(monitorJobTypes),
-  url: z.string(),
-  method: z.enum(monitorMethods),
-  headers: z.array(headerPair).default([]),
-  body: z.string().optional(),
-  assertions: z.array(assertion).default([]),
-  active: z.boolean().default(false),
-  periodicity: z.enum(monitorPeriodicity).optional(),
-  regions: z.array(z.string()).optional(),
-});
+export const CreateMonitorInput = z
+  .object({
+    name: z.string().trim().min(1),
+    jobType: z.enum(monitorJobTypes),
+    url: z.string(),
+    method: z.enum(monitorMethods),
+    headers: z.array(headerPair).default([]),
+    body: z.string().optional(),
+    assertions: z.array(assertion).default([]),
+    active: z.boolean().default(false),
+    periodicity: z.enum(monitorPeriodicity).optional(),
+    regions: regions.optional(),
+    // Config fields below are omitted by the dashboard create form and set
+    // by the public API. Each stays `undefined` when unset so the insert
+    // falls through to the column default rather than overwriting it.
+    description: z.string().optional(),
+    public: z.boolean().optional(),
+    timeout: timeoutMs.optional(),
+    degradedAfter: timeoutMs.nullish(),
+    retry: z.number().int().min(0).optional(),
+    followRedirects: z.boolean().optional(),
+    grpcService: z.string().optional(),
+    grpcTls: z.enum(grpcTlsModes).optional(),
+    otelEndpoint: z.string().optional(),
+    otelHeaders: z.array(headerPair).optional(),
+    heartbeatPeriod: heartbeatPeriod.optional(),
+    heartbeatGrace: heartbeatGrace.optional(),
+  })
+  .superRefine((input, ctx) => {
+    if (input.jobType !== "heartbeat") return;
+    if (input.heartbeatPeriod === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["heartbeatPeriod"],
+        message: "Required for heartbeat monitors",
+      });
+    }
+    if (input.heartbeatGrace === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["heartbeatGrace"],
+        message: "Required for heartbeat monitors",
+      });
+    }
+  });
 export type CreateMonitorInput = z.infer<typeof CreateMonitorInput>;
+
+/**
+ * Whole-object monitor patch backing the public API's update surface.
+ * Every field is optional and `undefined` means "leave as-is", so one
+ * request produces one UPDATE and one audit row — the granular verbs
+ * below stay for the dashboard's per-section forms.
+ *
+ * `jobType` is absent by design: callers address a monitor through a
+ * type-specific method that has already asserted the stored type.
+ */
+export const UpdateMonitorConfigInput = z.object({
+  id: z.number().int(),
+  name: z.string().trim().min(1).optional(),
+  url: z.string().optional(),
+  method: z.enum(monitorMethods).optional(),
+  headers: z.array(headerPair).optional(),
+  body: z.string().optional(),
+  assertions: z.array(assertion).optional(),
+  active: z.boolean().optional(),
+  periodicity: z.enum(monitorPeriodicity).optional(),
+  regions: regions.optional(),
+  description: z.string().optional(),
+  public: z.boolean().optional(),
+  timeout: timeoutMs.optional(),
+  degradedAfter: timeoutMs.nullish(),
+  retry: z.number().int().min(0).optional(),
+  followRedirects: z.boolean().optional(),
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
+  otelEndpoint: z.string().optional(),
+  otelHeaders: z.array(headerPair).optional(),
+  heartbeatPeriod: heartbeatPeriod.optional(),
+  heartbeatGrace: heartbeatGrace.optional(),
+});
+export type UpdateMonitorConfigInput = z.infer<typeof UpdateMonitorConfigInput>;
 
 /** Update the "general" monitor payload — name / endpoint / headers / assertions. */
 export const UpdateMonitorGeneralInput = z.object({
   id: z.number().int(),
-  name: z.string().min(1),
+  name: z.string().trim().min(1),
   jobType: z.enum(monitorJobTypes),
   url: z.string(),
   method: z.enum(monitorMethods),
@@ -53,10 +147,47 @@ export const UpdateMonitorGeneralInput = z.object({
   body: z.string().optional(),
   assertions: z.array(assertion).default([]),
   active: z.boolean().default(true),
+  // gRPC-only fields. `undefined` leaves the stored value untouched so a
+  // caller that omits them (e.g. an HTTP monitor) never clears the column.
+  grpcService: z.string().optional(),
+  grpcTls: z.enum(grpcTlsModes).optional(),
+  // Heartbeat-only fields, same contract as the gRPC ones above.
+  heartbeatPeriod: heartbeatPeriod.optional(),
+  heartbeatGrace: heartbeatGrace.optional(),
 });
 export type UpdateMonitorGeneralInput = z.infer<
   typeof UpdateMonitorGeneralInput
 >;
+
+export const UpdateMonitorHeartbeatInput = z.object({
+  id: z.number().int(),
+  heartbeatPeriod,
+  heartbeatGrace,
+});
+export type UpdateMonitorHeartbeatInput = z.infer<
+  typeof UpdateMonitorHeartbeatInput
+>;
+
+export const RegenerateHeartbeatTokenInput = z.object({
+  id: z.number().int(),
+});
+export type RegenerateHeartbeatTokenInput = z.infer<
+  typeof RegenerateHeartbeatTokenInput
+>;
+
+export const ListHeartbeatPingsInput = z.object({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+  kinds: z
+    .array(z.enum(["success", "fail"]))
+    .max(2)
+    .optional(),
+  /** `timestamp` of the last row of the previous page, exclusive. */
+  cursor: z.number().int().optional(),
+  limit: z.number().int().min(1).max(100).default(50),
+});
+export type ListHeartbeatPingsInput = z.input<typeof ListHeartbeatPingsInput>;
 
 export const UpdateMonitorRetryInput = z.object({
   id: z.number().int(),
@@ -85,12 +216,10 @@ export const UpdateMonitorPublicInput = z.object({
 });
 export type UpdateMonitorPublicInput = z.infer<typeof UpdateMonitorPublicInput>;
 
-// Bounds mirror `insertMonitorSchema` (0–60_000 ms) — the persisted checker
-// timeout is hard-capped at 60 s and rejects negatives.
 export const UpdateMonitorResponseTimeInput = z.object({
   id: z.number().int(),
-  timeout: z.coerce.number().gte(0).lte(60_000),
-  degradedAfter: z.coerce.number().gte(0).lte(60_000).nullish(),
+  timeout: timeoutMs,
+  degradedAfter: timeoutMs.nullish(),
 });
 export type UpdateMonitorResponseTimeInput = z.infer<
   typeof UpdateMonitorResponseTimeInput
@@ -98,7 +227,7 @@ export type UpdateMonitorResponseTimeInput = z.infer<
 
 export const UpdateMonitorSchedulingRegionsInput = z.object({
   id: z.number().int(),
-  regions: z.array(z.string()),
+  regions,
   periodicity: z.enum(monitorPeriodicity),
   privateLocations: z.array(z.number().int()).default([]),
 });
@@ -128,6 +257,12 @@ export const BulkUpdateMonitorsInput = z.object({
 });
 export type BulkUpdateMonitorsInput = z.infer<typeof BulkUpdateMonitorsInput>;
 
+export const SetMonitorStatusInput = z.object({
+  id: z.number().int(),
+  status: z.enum(monitorStatus),
+});
+export type SetMonitorStatusInput = z.infer<typeof SetMonitorStatusInput>;
+
 export const DeleteMonitorInput = z.object({ id: z.number().int() });
 export type DeleteMonitorInput = z.infer<typeof DeleteMonitorInput>;
 
@@ -135,6 +270,9 @@ export const DeleteMonitorsInput = z.object({
   ids: z.array(z.number().int()).min(1),
 });
 export type DeleteMonitorsInput = z.infer<typeof DeleteMonitorsInput>;
+
+export const TriggerMonitorInput = z.object({ id: z.number().int() });
+export type TriggerMonitorInput = z.infer<typeof TriggerMonitorInput>;
 
 export const CloneMonitorInput = z.object({ id: z.number().int() });
 export type CloneMonitorInput = z.infer<typeof CloneMonitorInput>;
@@ -148,6 +286,12 @@ export const ListMonitorsInput = z.object({
   order: z.enum(["asc", "desc"]).default("desc"),
 });
 export type ListMonitorsInput = z.infer<typeof ListMonitorsInput>;
+
+export const ListMonitorRowsInput = ListMonitorsInput.pick({
+  limit: true,
+  offset: true,
+});
+export type ListMonitorRowsInput = z.input<typeof ListMonitorRowsInput>;
 
 export const monitorTimeRange = ["1d", "7d", "14d"] as const;
 export type MonitorTimeRange = (typeof monitorTimeRange)[number];
@@ -178,3 +322,56 @@ export const GetResponseLogInput = z.object({
   logId: z.string().min(1),
 });
 export type GetResponseLogInput = z.infer<typeof GetResponseLogInput>;
+
+/**
+ * Filters the v2 response-log pipes evaluate server-side. Every array is bounded:
+ * they are templated straight into the pipes' `IN (...)` lists and serialised
+ * into the request URL, so an unbounded one is caller-controlled work.
+ */
+export const ResponseLogFilters = z.object({
+  regions: z.array(z.string().max(64)).max(128).optional(),
+  status: z
+    .array(z.enum(["success", "error", "degraded"]))
+    .max(3)
+    .optional(),
+  trigger: z
+    .array(z.enum(["cron", "api"]))
+    .max(2)
+    .optional(),
+  // The pipes cast this list to `Int16`, matching the column: a value outside
+  // that range makes Tinybird fail the query rather than match nothing.
+  statusCodes: z.array(z.number().int().min(0).max(32_767)).max(100).optional(),
+  attempts: z.array(z.number().int().min(0).max(32_767)).max(32).optional(),
+  latencyMin: z.number().int().min(0).optional(),
+  latencyMax: z.number().int().min(0).optional(),
+});
+export type ResponseLogFilters = z.infer<typeof ResponseLogFilters>;
+
+export const ListResponseLogsInfiniteInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+  /** `cronTimestamp` boundary of the previous page, exclusive. */
+  cursor: z.number().int().optional(),
+  direction: z.enum(["next", "prev"]).default("next"),
+  limit: z.number().int().min(1).max(100).default(50),
+});
+export type ListResponseLogsInfiniteInput = z.infer<
+  typeof ListResponseLogsInfiniteInput
+>;
+
+export const GetResponseLogFacetsInput = ResponseLogFilters.extend({
+  monitorId: z.number().int(),
+  fromTimestamp: z.number().int().optional(),
+  toTimestamp: z.number().int().optional(),
+});
+export type GetResponseLogFacetsInput = z.infer<
+  typeof GetResponseLogFacetsInput
+>;
+
+export const GetPrivateLocationIdsByMonitorInput = z.object({
+  monitorIds: z.array(z.number().int()),
+});
+export type GetPrivateLocationIdsByMonitorInput = z.infer<
+  typeof GetPrivateLocationIdsByMonitorInput
+>;

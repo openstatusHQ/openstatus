@@ -1,16 +1,12 @@
 import { getLogger } from "@logtape/logtape";
-import { db, eq } from "@openstatus/db";
-import {
-  type Scope,
-  selectWorkspaceSchema,
-  workspace,
-} from "@openstatus/db/src/schema";
-import { apiKey } from "@openstatus/db/src/schema/api-keys";
-import {
-  shouldUpdateLastUsed,
-  verifyApiKeyHash,
-} from "@openstatus/db/src/utils/api-key";
+import { type Scope, selectWorkspaceSchema } from "@openstatus/db/src/schema";
 import { retryRead } from "@openstatus/services";
+import {
+  authenticateApiKey,
+  updateApiKeyLastUsed,
+} from "@openstatus/services/api-key";
+import { isAccessToken, verifyAccessToken } from "@openstatus/services/oauth";
+import { getWorkspaceRowById } from "@openstatus/services/workspace";
 import { UnkeyCore } from "@unkey/api/core";
 import { keysVerifyKey } from "@unkey/api/funcs/keysVerifyKey";
 import type { Context, Next } from "hono";
@@ -19,12 +15,12 @@ import { env } from "@/env";
 import { OpenStatusApiError } from "@/libs/errors";
 import type { Variables } from "@/types";
 
+import { MISSING_CREDENTIALS_MESSAGE, extractCredential } from "./credentials";
+
 const logger = getLogger("api-server");
 
 export async function lookupWorkspace(workspaceId: number) {
-  const _workspace = await retryRead(() =>
-    db.select().from(workspace).where(eq(workspace.id, workspaceId)).get(),
-  );
+  const _workspace = await retryRead(() => getWorkspaceRowById(workspaceId));
 
   if (!_workspace) {
     throw new OpenStatusApiError({
@@ -49,14 +45,14 @@ export async function authMiddleware(
   c: Context<{ Variables: Variables }, "/*">,
   next: Next,
 ) {
-  const key = c.req.header("x-openstatus-key");
-  if (!key)
+  const credential = extractCredential(c.req.raw.headers);
+  if (!credential)
     throw new OpenStatusApiError({
       code: "UNAUTHORIZED",
-      message: "Missing 'x-openstatus-key' header",
+      message: MISSING_CREDENTIALS_MESSAGE,
     });
 
-  const { error, result } = await validateKey(key);
+  const { error, result } = await validateKey(credential.token);
 
   if (error) {
     throw new OpenStatusApiError({
@@ -146,6 +142,29 @@ export async function validateKey(key: string): Promise<{
   };
   error?: { message: string };
 }> {
+  // Before the production gate so the OAuth flow works locally. `keyId`
+  // carries the grant id so audit rows attribute to the grant, and
+  // `createdById` is the consenting user.
+  if (isAccessToken(key)) {
+    const grant = await verifyAccessToken(key);
+    if (!grant) {
+      return {
+        result: { valid: false },
+        error: { message: "Invalid or expired access token" },
+      };
+    }
+    return {
+      result: {
+        valid: true,
+        ownerId: String(grant.workspaceId),
+        authMethod: "oauth",
+        keyId: `oat_${grant.grantId}`,
+        createdById: grant.userId,
+        scopes: grant.scopes,
+      },
+    };
+  }
+
   if (env.NODE_ENV === "production") {
     /**
      * Both custom and Unkey API keys use the `os_` prefix for seamless transition.
@@ -153,33 +172,27 @@ export async function validateKey(key: string): Promise<{
      */
     if (key.startsWith("os_")) {
       // 1. Try custom DB first
-      const prefix = key.slice(0, 11); // "os_" (3 chars) + 8 hex chars = 11 total
-      const customKey = await retryRead(() =>
-        db.select().from(apiKey).where(eq(apiKey.prefix, prefix)).get(),
-      );
+      const custom = await authenticateApiKey(key);
 
-      if (customKey) {
-        if (!(await verifyApiKeyHash(key, customKey.hashedToken))) {
-          return {
-            result: { valid: false },
-            error: { message: "Invalid API Key" },
-          };
-        }
-        if (customKey.expiresAt && customKey.expiresAt < new Date()) {
-          return {
-            result: { valid: false },
-            error: { message: "API Key expired" },
-          };
-        }
-
+      if (custom.status === "invalid") {
+        return {
+          result: { valid: false },
+          error: { message: "Invalid API Key" },
+        };
+      }
+      if (custom.status === "expired") {
+        return {
+          result: { valid: false },
+          error: { message: "API Key expired" },
+        };
+      }
+      if (custom.status === "valid") {
+        const customKey = custom.key;
         // Best-effort: a failed bookkeeping write must never fail auth.
-        if (shouldUpdateLastUsed(customKey.lastUsedAt)) {
-          await db
-            .update(apiKey)
-            .set({ lastUsedAt: new Date() })
-            .where(eq(apiKey.id, customKey.id))
-            .catch(() => {});
-        }
+        await updateApiKeyLastUsed({
+          id: customKey.id,
+          lastUsedAt: customKey.lastUsedAt,
+        }).catch(() => {});
         return {
           result: {
             valid: true,

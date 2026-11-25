@@ -1,5 +1,6 @@
 import type { ImportProvider } from "@openstatus/importers";
 import { createBetterstackProvider } from "@openstatus/importers/betterstack";
+import { createChecklyProvider } from "@openstatus/importers/checkly";
 import { createInstatusProvider } from "@openstatus/importers/instatus";
 import { createStatuspageProvider } from "@openstatus/importers/statuspage";
 
@@ -18,6 +19,8 @@ export function createProvider(name: ImportProviderName): ImportProvider {
       return createInstatusProvider();
     case "statuspage":
       return createStatuspageProvider();
+    case "checkly":
+      return createChecklyProvider();
     default: {
       const exhaustive: never = name;
       throw new Error(`Unknown import provider: ${String(exhaustive)}`);
@@ -33,6 +36,8 @@ export type ProviderConfig = {
   statuspagePageId?: string;
   betterstackStatusPageId?: string;
   instatusPageId?: string;
+  checklyAccountId?: string;
+  checklyStatusPageId?: string;
 };
 
 /**
@@ -54,6 +59,12 @@ export function buildProviderConfig(config: ProviderConfig) {
       return { ...rest, instatusPageId: config.instatusPageId };
     case "statuspage":
       return { ...rest, statuspagePageId: config.statuspagePageId };
+    case "checkly":
+      return {
+        ...rest,
+        checklyAccountId: config.checklyAccountId,
+        checklyStatusPageId: config.checklyStatusPageId,
+      };
     default: {
       const exhaustive: never = provider;
       throw new Error(`Unknown import provider: ${String(exhaustive)}`);

@@ -83,3 +83,33 @@ Stripe consistently provides context about the source of information and sets cl
 - Include workaround instructions if available
 - Link to status dashboard or real-time monitoring
 - Add contact information for urgent support needs
+
+## Related
+
+This template is one of several in the [incident communication guide](/guides/incident-communication), which covers update cadence by severity, what to avoid saying, and the other scenario templates.
+
+## Frequently asked questions
+
+<Details summary="How often should I update users during an API disruption?">
+
+Provide updates every 30-60 minutes during active incidents, even if there's no significant change. Users appreciate knowing you're still working on the issue. Once resolved, a final summary is essential.
+
+</Details>
+
+<Details summary="Should I name the third-party provider causing the issue?">
+
+Yes, if you can. Being specific helps users understand the scope and that you're transparent about dependencies. Companies like Vercel, Stripe, and GitHub regularly name their providers during incidents. Just remain professional and factual.
+
+</Details>
+
+<Details summary="What metrics should I include in API disruption updates?">
+
+Include error rates (e.g., '5% of requests failing'), affected endpoints, and timeframes when you have them. Avoid oversharing internal metrics that might confuse users. Focus on impact-oriented data that helps them assess how they're affected.
+
+</Details>
+
+<Details summary="When should I use this template instead of other incident templates?">
+
+Use this template specifically for API-related issues, third-party provider failures, or integration connectivity problems. Use Database Performance for database-specific issues, Deployment Rollback for deployment failures, or Network Connectivity for regional/CDN issues.
+
+</Details>

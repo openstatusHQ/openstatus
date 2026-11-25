@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package private_location.v1;
 
+import "private_location/v1/otel.proto";
+
 option go_package = "github.com/openstatushq/openstatus/packages/proto/private_location/v1;v1";
 
 
@@ -14,5 +16,7 @@ message TCPMonitor {
     optional int64 degraded_at = 4;
     string periodicity = 5;
     int64 retry = 6;
+
+    OtelConfig otel_config = 20;
 
 }

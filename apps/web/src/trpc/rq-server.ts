@@ -1,7 +1,6 @@
 import "server-only";
 import { type AppRouter, appRouter, t } from "@openstatus/api";
 import type { Context } from "@openstatus/api/src/trpc";
-import { db } from "@openstatus/db";
 import { createHydrationHelpers } from "@trpc/react-query/rsc";
 import { cache } from "react";
 
@@ -11,7 +10,6 @@ const createContextCached = cache(
   async (..._args: unknown[]): Promise<Context> => {
     return {
       req: undefined,
-      db,
       session: null,
     };
   },

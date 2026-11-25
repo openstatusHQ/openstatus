@@ -1,54 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { sections } from "../../../content/sections";
 import { getChangelogPosts } from "../../../content/utils";
 import { JsonLd } from "../../../lib/metadata/json-ld";
-import {
-  BASE_URL,
-  defaultMetadata,
-  ogMetadata,
-} from "../../../lib/metadata/shared-metadata";
-import { twitterMetadata } from "../../../lib/metadata/shared-metadata";
+import { getListingMetadata } from "../../../lib/metadata/shared-metadata";
 import {
   createJsonLDGraph,
-  getJsonLDBreadcrumbList,
   getJsonLDItemList,
   getJsonLDOrganization,
+  getJsonLDSectionBreadcrumb,
 } from "../../../lib/metadata/structured-data";
 import { ContentCategory } from "../content-category";
 import { ContentList } from "../content-list";
 
-const TITLE = "Changelog";
-const DESCRIPTION = "All the latest changes and updates to openstatus.";
-
-export const metadata: Metadata = {
-  ...defaultMetadata,
-  title: TITLE,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: "/changelog",
-  },
-  openGraph: {
-    ...ogMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-  },
-  twitter: {
-    ...twitterMetadata,
-    title: TITLE,
-    description: DESCRIPTION,
-    images: [`/api/og?title=${TITLE}&description=${DESCRIPTION}`],
-  },
-};
+export const metadata: Metadata = getListingMetadata(sections.changelog);
 
 export default function ChangelogListPage() {
   const allChangelogs = getChangelogPosts();
   const jsonLDGraph = createJsonLDGraph([
     getJsonLDOrganization(),
-    getJsonLDBreadcrumbList([
-      { name: "Home", url: BASE_URL },
-      { name: "Changelog", url: `${BASE_URL}/changelog` },
-    ]),
+    getJsonLDSectionBreadcrumb(sections.changelog),
     getJsonLDItemList(allChangelogs, "/changelog"),
   ]);
   return (

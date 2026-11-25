@@ -39,7 +39,7 @@ const settings = [
 export default function Page() {
   return (
     <SectionGroup>
-      <Section>
+      <Section id="settings">
         <SectionHeader>
           <SectionTitle>Settings</SectionTitle>
           <SectionDescription>

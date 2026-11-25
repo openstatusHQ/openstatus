@@ -1,6 +1,9 @@
 import { ntfyDataSchema } from "@openstatus/db/src/schema";
-import type { NotificationContext } from "@openstatus/notification-base";
-import { assertSafeUrl } from "@openstatus/utils";
+import {
+  type NotificationContext,
+  monitorTarget,
+} from "@openstatus/notification-base";
+import { safeFetch } from "@openstatus/utils";
 
 export const sendAlert = async ({
   monitor,
@@ -11,7 +14,7 @@ export const sendAlert = async ({
   const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is down with ${
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is down with ${
     statusCode ? `status code ${statusCode}` : `error: ${message}`
   }`;
 
@@ -23,8 +26,7 @@ export const sendAlert = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  await assertSafeUrl(url);
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: "post",
     body,
     headers: {
@@ -32,7 +34,9 @@ export const sendAlert = async ({
     },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send alert notification: ${res.statusText}`);
+    throw new Error(
+      `Failed to send alert notification: ${res.status} ${res.statusText}`,
+    );
   }
 };
 
@@ -43,7 +47,7 @@ export const sendRecovery = async ({
   const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is up again`;
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is up again`;
   const authorization = notificationData.ntfy.token
     ? { Authorization: `Bearer ${notificationData.ntfy.token}` }
     : undefined;
@@ -52,8 +56,7 @@ export const sendRecovery = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  await assertSafeUrl(url);
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: "post",
     body,
     headers: {
@@ -61,7 +64,9 @@ export const sendRecovery = async ({
     },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send recovery notification: ${res.statusText}`);
+    throw new Error(
+      `Failed to send recovery notification: ${res.status} ${res.statusText}`,
+    );
   }
 };
 
@@ -72,7 +77,7 @@ export const sendDegraded = async ({
   const notificationData = ntfyDataSchema.parse(JSON.parse(notification.data));
   const { name } = monitor;
 
-  const body = `Your monitor ${name} / ${monitor.url} is degraded `;
+  const body = `Your monitor ${name} / ${monitorTarget(monitor)} is degraded `;
 
   const authorization = notificationData.ntfy.token
     ? { Authorization: `Bearer ${notificationData.ntfy.token}` }
@@ -82,8 +87,7 @@ export const sendDegraded = async ({
     ? `${notificationData.ntfy.serverUrl}/${notificationData.ntfy.topic}`
     : `https://ntfy.sh/${notificationData.ntfy.topic}`;
 
-  await assertSafeUrl(url);
-  const res = await fetch(url, {
+  const res = await safeFetch(url, {
     method: "post",
     body,
     headers: {
@@ -91,7 +95,9 @@ export const sendDegraded = async ({
     },
   });
   if (!res.ok) {
-    throw new Error(`Failed to send degraded notification: ${res.statusText}`);
+    throw new Error(
+      `Failed to send degraded notification: ${res.status} ${res.statusText}`,
+    );
   }
 };
 
@@ -108,15 +114,17 @@ export const sendTest = async ({
     ? { Authorization: `Bearer ${token}` }
     : undefined;
   const url = serverUrl ? `${serverUrl}/${topic}` : `https://ntfy.sh/${topic}`;
-  await assertSafeUrl(url);
   try {
-    await fetch(url, {
+    const res = await safeFetch(url, {
       method: "post",
       body: "This is a test message from OpenStatus",
       headers: {
         ...authorization,
       },
     });
+    if (!res.ok) {
+      throw new Error(`Failed to send test: ${res.status} ${res.statusText}`);
+    }
   } catch (err) {
     console.log(err);
     return false;

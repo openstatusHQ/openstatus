@@ -8,4 +8,5 @@ export const MONITOR_DEFAULTS = {
   active: false,
   public: false,
   description: "",
+  grpcTls: "tls",
 } as const;

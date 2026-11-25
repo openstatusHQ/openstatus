@@ -1,11 +1,10 @@
-import type { Incident } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import type { MonitorIncident } from "@openstatus/db/src/schema";
+import { describe, expect, it } from "vitest";
 
 import { getIncidentDuration } from "./incident";
 
 // Helper to create a partial incident object for testing
-function createIncident(overrides: Partial<Incident>): Incident {
+function createIncident(overrides: Partial<MonitorIncident>): MonitorIncident {
   return {
     id: 1,
     monitorId: 1,
@@ -16,7 +15,7 @@ function createIncident(overrides: Partial<Incident>): Incident {
     acknowledgedAt: null,
     acknowledgedBy: null,
     ...overrides,
-  } as Incident;
+  } as MonitorIncident;
 }
 
 describe("getIncidentDuration", () => {

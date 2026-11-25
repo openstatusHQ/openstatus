@@ -4,6 +4,17 @@ import type { UniqueIdentifier } from "@dnd-kit/core";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { RouterOutputs } from "@openstatus/api";
 import {
+  Check,
+  Show,
+  Hide,
+  DragHandle,
+  Linked,
+  Unlinked,
+  Plug,
+  Delete,
+  Info,
+} from "@openstatus/icons";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -50,23 +61,14 @@ import {
   TooltipTrigger,
 } from "@openstatus/ui/components/ui/tooltip";
 import { isTRPCClientError } from "@trpc/client";
-import {
-  Check,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Link2,
-  Link2Off,
-  Plug,
-  Plus,
-  Trash2,
-} from "lucide-react";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { Link } from "@/components/common/link";
+import { MonitorStatusDot } from "@/components/common/monitor-status-dot";
+import { Note } from "@/components/common/note";
 import {
   EmptyStateContainer,
   EmptyStateTitle,
@@ -82,7 +84,6 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
-import { STATUS } from "@/components/nav/nav-monitors";
 import {
   Sortable,
   SortableContent,
@@ -106,7 +107,7 @@ const componentSchema = z.object({
   id: z.number(),
   monitorId: z.number().nullish(),
   order: z.number(),
-  name: z.string().min(1, { message: "Name is required" }),
+  name: z.string().trim().min(1, { message: "Name is required" }),
   description: z.string().optional(),
   type: z.enum(["monitor", "static"]),
 });
@@ -117,7 +118,7 @@ const schema = z.object({
     z.object({
       id: z.number(),
       order: z.number(),
-      name: z.string(),
+      name: z.string().trim().min(1, { message: "Name is required" }),
       defaultOpen: z.boolean(),
       components: z.array(componentSchema).min(1, {
         message: "At least one component is required",
@@ -290,6 +291,14 @@ export function FormComponents({
   const watchComponents = form.watch("components");
   const watchGroups = form.watch("groups");
   const [openUpgradeDialog, setOpenUpgradeDialog] = useState(false);
+  const linkedMonitorIds = new Set(
+    [...watchComponents, ...watchGroups.flatMap((g) => g.components)].map(
+      (c) => c.monitorId,
+    ),
+  );
+  const hasInactiveMonitors = monitors.some(
+    (m) => !m.active && linkedMonitorIds.has(m.id),
+  );
   const [data, setData] = useState<(PageComponent | ComponentGroup)[]>(
     getSortedItems(
       allPageComponents,
@@ -499,16 +508,15 @@ export function FormComponents({
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-          <FormCard>
+          <FormCard id="components">
             <FormCardHeader>
               <FormCardTitle>Components</FormCardTitle>
               <FormCardDescription>
                 Manage your page components
               </FormCardDescription>
             </FormCardHeader>
-            <FormCardContent className="flex flex-row gap-2">
+            <FormCardContent className="flex flex-col gap-2 sm:flex-row">
               <Button variant="outline" type="button" onClick={handleAddGroup}>
-                <Plus />
                 Add Component Group
               </Button>
               <FormField
@@ -520,7 +528,6 @@ export function FormComponents({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="w-full">
-                          <Plus />
                           Add Component
                         </Button>
                       </DropdownMenuTrigger>
@@ -542,12 +549,12 @@ export function FormComponents({
                               ]);
                             }}
                           >
-                            <Link2Off className="text-muted-foreground" />
+                            <Unlinked className="text-muted-foreground" />
                             Add Static Component
                           </DropdownMenuItem>
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-                              <Link2 className="text-muted-foreground" />
+                              <Linked className="text-muted-foreground" />
                               Add Monitor Component
                             </DropdownMenuSubTrigger>
                             <DropdownMenuSubContent className="p-0">
@@ -632,7 +639,15 @@ export function FormComponents({
               />
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent>
+            <FormCardContent className="grid gap-4">
+              {hasInactiveMonitors ? (
+                <Note color="warning">
+                  <Info />
+                  You have inactive monitors linked. They don't collect data, so
+                  activate them, use static components, or set the status source
+                  to Reports only.
+                </Note>
+              ) : null}
               <Sortable
                 value={data}
                 onValueChange={onValueChange}
@@ -691,7 +706,7 @@ export function FormComponents({
             <FormCardFooter>
               <FormCardFooterInfo>
                 Learn more about{" "}
-                <Link href="https://www.openstatus.dev/docs/reference/status-page/#page-components">
+                <Link href="https://www.openstatus.dev/docs/reference/page-components">
                   page components
                 </Link>
                 .
@@ -738,15 +753,15 @@ function ComponentRow({
       className={cn("rounded-md", className)}
       {...props}
     >
-      <div className="grid h-9 grid-cols-4 gap-2">
-        <div className="flex flex-row items-center gap-1 self-center">
-          <SortableItemHandle>
-            <GripVertical
-              size={16}
-              aria-hidden="true"
-              className="text-muted-foreground"
-            />
-          </SortableItemHandle>
+      <div className="grid min-h-9 grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2 sm:grid-cols-[auto_repeat(4,minmax(0,1fr))]">
+        <SortableItemHandle className="row-span-2 self-center sm:row-span-1">
+          <DragHandle
+            size={16}
+            aria-hidden="true"
+            className="text-muted-foreground"
+          />
+        </SortableItemHandle>
+        <div className="flex items-center self-center">
           {fieldNamePrefix ? (
             <FormField
               key={`${component.id}-name-${fieldNamePrefix}`}
@@ -807,14 +822,14 @@ function ComponentRow({
             <Link
               href={`/monitors/${component.monitorId}/overview`}
               onClick={(e) => e.stopPropagation()}
-              className="flex w-full items-center gap-2 truncate py-1.5 text-sm"
+              className="flex w-full min-w-0 items-center gap-2 py-1.5 text-sm"
             >
-              <Link2 className="size-4 shrink-0" />{" "}
+              <Linked className="size-4 shrink-0" />{" "}
               <span className="truncate">{component.monitor.name}</span>
             </Link>
           ) : (
-            <span className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Link2Off className="size-4 shrink-0" />{" "}
+            <span className="text-muted-foreground flex min-w-0 items-center gap-2 text-sm">
+              <Unlinked className="size-4 shrink-0" />{" "}
               <span className="truncate">Static Component</span>
             </span>
           )}
@@ -827,14 +842,14 @@ function ComponentRow({
                   {component.monitor.public ? (
                     <Tooltip>
                       <TooltipTrigger>
-                        <Eye className="text-muted-foreground size-4" />
+                        <Show className="text-muted-foreground size-4" />
                       </TooltipTrigger>
                       <TooltipContent>Public</TooltipContent>
                     </Tooltip>
                   ) : (
                     <Tooltip>
                       <TooltipTrigger>
-                        <EyeOff className="text-muted-foreground size-4" />
+                        <Hide className="text-muted-foreground size-4" />
                       </TooltipTrigger>
                       <TooltipContent>Private</TooltipContent>
                     </Tooltip>
@@ -843,16 +858,12 @@ function ComponentRow({
               </div>
             ) : null}
             {component.monitor && component.type === "monitor" ? (
-              <div
-                className={cn(
-                  "size-2 rounded-full",
-                  STATUS[
-                    component.monitor.active
-                      ? component.monitor.status
-                      : "inactive"
-                  ],
-                )}
-              />
+              <TooltipProvider delayDuration={0}>
+                <MonitorStatusDot
+                  monitor={component.monitor}
+                  label={component.monitor.active ? "Active" : "Inactive"}
+                />
+              </TooltipProvider>
             ) : null}
           </div>
           <AlertDialog>
@@ -863,7 +874,7 @@ function ComponentRow({
                 size="icon"
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive dark:hover:bg-destructive/20 [&_svg]:text-destructive [&_svg]:size-4"
               >
-                <Trash2 />
+                <Delete />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -998,15 +1009,15 @@ function ComponentGroupRow({
 
   return (
     <SortableItem value={group.id} className="bg-muted rounded-md border">
-      <div className="grid grid-cols-4 gap-2 px-2 pt-2">
-        <div className="flex flex-row items-center gap-1 self-center">
-          <SortableItemHandle>
-            <GripVertical
-              size={16}
-              aria-hidden="true"
-              className="text-muted-foreground"
-            />
-          </SortableItemHandle>
+      <div className="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-2 px-2 pt-2 sm:grid-cols-[auto_repeat(4,minmax(0,1fr))]">
+        <SortableItemHandle className="row-span-2 self-center sm:row-span-1">
+          <DragHandle
+            size={16}
+            aria-hidden="true"
+            className="text-muted-foreground"
+          />
+        </SortableItemHandle>
+        <div className="flex items-center self-center">
           <FormField
             key={`${group.id}-name-${groupIndex}`}
             control={form.control}
@@ -1031,13 +1042,12 @@ function ComponentGroupRow({
           control={form.control}
           name={`groups.${groupIndex}.components` as const}
           render={({ field }) => (
-            <FormItem className="flex flex-col">
+            <FormItem className="flex min-w-0 flex-col">
               <FormLabel className="sr-only">Components</FormLabel>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full">
-                    <Plus />
-                    Add Component
+                  <Button variant="outline" className="w-full min-w-0">
+                    <span className="truncate">Add Component</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
@@ -1061,12 +1071,12 @@ function ComponentGroupRow({
                         ]);
                       }}
                     >
-                      <Link2Off className="text-muted-foreground" />
+                      <Unlinked className="text-muted-foreground" />
                       Add Static Component
                     </DropdownMenuItem>
                     <DropdownMenuSub>
                       <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-                        <Link2 className="text-muted-foreground" />
+                        <Linked className="text-muted-foreground" />
                         Add Monitor Component
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent className="p-0">
@@ -1153,7 +1163,7 @@ function ComponentGroupRow({
           control={form.control}
           name={`groups.${groupIndex}.defaultOpen` as const}
           render={({ field }) => (
-            <FormItem className="flex items-center gap-2 self-center">
+            <FormItem className="flex min-w-0 items-center gap-2 self-center">
               <FormControl>
                 <Checkbox
                   className="bg-background"
@@ -1161,8 +1171,8 @@ function ComponentGroupRow({
                   onCheckedChange={field.onChange}
                 />
               </FormControl>
-              <FormLabel className="text-muted-foreground !mt-0 text-sm font-normal">
-                Open by default
+              <FormLabel className="text-muted-foreground !mt-0 min-w-0 text-sm font-normal">
+                <span className="truncate">Open by default</span>
               </FormLabel>
             </FormItem>
           )}
@@ -1180,7 +1190,7 @@ function ComponentGroupRow({
                   ? { onClick: () => onDeleteGroup(group.id) }
                   : {})}
               >
-                <Trash2 />
+                <Delete />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

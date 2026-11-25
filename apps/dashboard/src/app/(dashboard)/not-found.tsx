@@ -1,13 +1,13 @@
-import { Activity, Cog, LayoutGrid, PanelTop } from "lucide-react";
+import { Incident, Monitor, Overview, StatusPage } from "@openstatus/icons";
 import Link from "next/link";
 
 import { WorkspaceSwitcher } from "@/components/nav/workspace-switcher";
 
 const quickLinks = [
-  { name: "Overview", href: "/overview", icon: LayoutGrid },
-  { name: "Monitors", href: "/monitors", icon: Activity },
-  { name: "Status Pages", href: "/status-pages", icon: PanelTop },
-  { name: "Settings", href: "/settings/general", icon: Cog },
+  { name: "Overview", href: "/overview", icon: Overview },
+  { name: "Incidents", href: "/incidents", icon: Incident },
+  { name: "Status Pages", href: "/status-pages", icon: StatusPage },
+  { name: "Monitors", href: "/monitors", icon: Monitor },
 ];
 
 export default function NotFound() {

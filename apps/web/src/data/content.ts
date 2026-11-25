@@ -73,10 +73,6 @@ const resourcesHeaderSection = {
   label: "Resources",
   items: [
     {
-      label: "Docs",
-      href: "/docs",
-    },
-    {
       label: "Customers",
       href: "/customers",
     },
@@ -134,6 +130,10 @@ const companySection = {
       label: "Subprocessors",
       href: "/subprocessors",
     },
+    {
+      label: "Contact",
+      href: "/contact",
+    },
   ],
 };
 
@@ -173,7 +173,7 @@ const toolsSection = {
   label: "Tools",
   items: [
     ...getToolsPages()
-      .filter((page) => !["severity-matrix"].includes(page.slug))
+      .filter((page) => !["severity-matrix", "cdn-checker"].includes(page.slug))
       .map((page) => ({
         label: page.metadata.title,
         href: `/play/${page.slug}`,
@@ -181,6 +181,10 @@ const toolsSection = {
     {
       label: "Shadcn Component Registry",
       href: "/registry",
+    },
+    {
+      label: "Health Endpoints",
+      href: "/health",
     },
     {
       label: "Theme Explorer",

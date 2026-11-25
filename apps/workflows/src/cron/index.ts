@@ -1,14 +1,13 @@
 import { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/node";
 import { Effect, Schedule } from "effect";
 import { Hono } from "hono";
 
 import { env } from "../env";
+import type { Env } from "../index";
 import { reportBackgroundError, runSentryCron } from "../lib/sentry";
 import { sendCheckerTasks } from "./checker";
 import { sendFollowUpEmails } from "./emails";
-import { handleExternalIncidentsPruneCron } from "./external-incidents-prune";
-import { handleExternalStatusCron } from "./external-status";
 import {
   LaunchMonitorWorkflow,
   Step3Days,
@@ -16,8 +15,21 @@ import {
   StepPaused,
   workflowStepSchema,
 } from "./monitor";
+import { handleOAuthPruneCron } from "./oauth-prune";
+import {
+  handleOutboxDrainCron,
+  handleOutboxRetentionCron,
+  handleOutboxShadowCron,
+} from "./outbox";
+import { handlePrivateLocationHealthCron } from "./private-location-health";
+import { handleStatusDriftCron } from "./status-drift";
+import {
+  handleUptimeBackfillBuckets,
+  handleUptimeFreezeCron,
+  handleUptimeRefreeze,
+} from "./uptime-freeze";
 
-const app = new Hono({ strict: false });
+const app = new Hono<Env>({ strict: false });
 
 app.use("*", async (c, next) => {
   if (c.req.header("authorization") !== env().CRON_SECRET) {
@@ -73,7 +85,7 @@ app.get("/checker/:period", async (c) => {
           void cronCompleted();
         }),
       ),
-      Effect.catchAll((e) =>
+      Effect.catch((e) =>
         Effect.sync(() => {
           console.error(e);
           void reportBackgroundError(e.message);
@@ -85,20 +97,37 @@ app.get("/checker/:period", async (c) => {
   return c.json({ success: periodicity }, 200);
 });
 
-app.get("/external-status", async (c) => {
-  return handleExternalStatusCron(c);
+app.get("/oauth-prune", async (c) => {
+  return handleOAuthPruneCron(c);
 });
 
-app.get("/external-incidents-prune", async (c) => {
-  return handleExternalIncidentsPruneCron(c);
+app.get("/uptime-freeze", async (c) => {
+  return handleUptimeFreezeCron(c);
+});
+
+app.get("/uptime-freeze/refreeze", async (c) => {
+  return handleUptimeRefreeze(c);
+});
+
+app.get("/uptime-freeze/backfill-buckets", async (c) => {
+  return handleUptimeBackfillBuckets(c);
+});
+
+app.get("/private-location-health", async (c) => {
+  return handlePrivateLocationHealthCron(c);
 });
 
 app.get("/emails/follow-up", async (c) => {
+  const { cronCompleted, cronFailed } = runSentryCron("emails-follow-up");
+
   try {
     await sendFollowUpEmails();
+    void cronCompleted();
     return c.json({ success: true }, 200);
   } catch (e) {
-    console.error(e);
+    const errorName = e instanceof Error ? e.name : typeof e;
+    void reportBackgroundError(`emails-follow-up failed: ${errorName}`);
+    void cronFailed();
     return c.text("Internal Server Error", 500);
   }
 });
@@ -145,6 +174,28 @@ app.get("/monitors/:step", async (c) => {
   }
 
   return c.json({ success: true }, 200);
+});
+
+app.get("/outbox/drain", async (c) => {
+  const summary = await handleOutboxDrainCron();
+  return c.json({ success: true, ...summary }, 200);
+});
+
+app.get("/outbox/retention", async (c) => {
+  const summary = await handleOutboxRetentionCron();
+  return c.json({ success: true, ...summary }, 200);
+});
+
+app.get("/outbox/shadow", async (c) => {
+  const result = await handleOutboxShadowCron();
+  return c.json({ success: true, ...result }, 200);
+});
+
+app.get("/status-drift", async (c) => {
+  const result = await handleStatusDriftCron();
+  const event = c.get("event");
+  if (event) event.status_drift = result;
+  return c.json({ success: true, ...result }, 200);
 });
 
 export { app as cronRouter };

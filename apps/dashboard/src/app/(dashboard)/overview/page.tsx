@@ -1,214 +1,478 @@
 "use client";
 
+import { Agent, Clock, Maintenance, Success } from "@openstatus/icons";
+import { Button } from "@openstatus/ui/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { formatDistanceToNowStrict } from "date-fns";
-import { Bot, List, Search } from "lucide-react";
+import { format } from "date-fns";
 import Link from "next/link";
+import { useState } from "react";
 
-import { Note, NoteButton } from "@/components/common/note";
+import { AgentPromptButton } from "@/components/common/agent-prompt-button";
+import { NoteButton } from "@/components/common/note";
+import { NoteDismissible } from "@/components/common/note-dismissible";
 import {
-  EmptyStateContainer,
+  Activity,
+  ActivityHeader,
+  type ActivityMark,
+  ActivityPeriod,
+  ActivityTitle,
+} from "@/components/content/activity";
+import {
+  ActivityCalendar,
+  ActivityCalendarCell,
+  ActivityCalendarGrid,
+  ActivityCalendarLegend,
+  ActivityCalendarLegendItem,
+  ActivityCalendarLegendSeparator,
+  type ActivityLink,
+} from "@/components/content/activity-calendar";
+import {
+  EmptyStateActions,
+  EmptyStateDescription,
+  EmptyStateMedia,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
 import {
+  EventGroup,
+  EventGroupCount,
+  EventGroupEmpty,
+  EventGroupHeader,
+  EventGroupHint,
+  EventGroupTitle,
+} from "@/components/content/event-group";
+import { EventList, EventListMore } from "@/components/content/event-list";
+import {
+  Section,
   SectionDescription,
   SectionGroup,
   SectionHeader,
+  SectionHeaderRow,
   SectionTitle,
 } from "@/components/content/section";
-import { Section } from "@/components/content/section";
-import { columns as incidentsColumns } from "@/components/data-table/incidents/columns";
-import { columns as maintenancesColumns } from "@/components/data-table/maintenances/columns";
+import { useMaintenanceTick } from "@/components/maintenances/use-maintenance-status";
 import {
-  MetricCard,
-  MetricCardGroup,
-  MetricCardHeader,
-  MetricCardTitle,
-  MetricCardValue,
-} from "@/components/metric/metric-card";
-import { DataTable } from "@/components/ui/data-table/data-table";
+  type ActivitySpan,
+  activityDayLines,
+  activityPeriod,
+  activityRange,
+  groupByDay,
+  spansOnDay,
+} from "@/data/activity.client";
+import { downtimeActivity } from "@/data/incidents.client";
+import { maintenanceActivity } from "@/data/maintenances.client";
+import {
+  incidentActivity,
+  incidentSpan,
+} from "@/data/managed-incidents.client";
+import {
+  type OverviewEvent,
+  buildOverviewData,
+  eventKey,
+  getResolvedAt,
+  getStartedAt,
+} from "@/data/overview-events.client";
+import { reportActivity, reportSpan } from "@/data/status-reports.client";
+import { useHydrated } from "@/hooks/use-hydrated";
+import { usePaged } from "@/hooks/use-paged";
+import { formatDurationShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
-import { cn } from "@/lib/utils";
 
-import { DataTableStatusReports } from "./data-table-status-reports";
+import { CreateEventButtonGroup } from "./create-event-button-group";
+import { OverviewEventRow } from "./overview-event-row";
 
-// FIXME: the page is server side
-// whenever I change the maintenances, the page is not updated
-// we need to move the queryClient to the layout and prefetch the data there
+type Downtime = Extract<OverviewEvent, { type: "incident" }>;
+type Maintenance = Extract<OverviewEvent, { type: "maintenance" }>;
+type DayEntry = ActivityMark & { lead: string; name: string };
+
+// failures outrank planned work, anything real outranks a hatched mark
+function rank(mark: ActivityMark) {
+  if (mark.hatched) return 0;
+  return mark.scale === "failure" ? 4 + mark.level : mark.level;
+}
+
+/**
+ * One entry per incident or report, one for the day's downtime and one for
+ * its maintenance (both by total time that day), strongest first.
+ */
+function dayEntries(items: OverviewEvent[], date: Date, now: Date): DayEntry[] {
+  const entries: DayEntry[] = [];
+  const downtime = items.filter((e): e is Downtime => e.type === "incident");
+  const maintenance = items.filter(
+    (e): e is Maintenance => e.type === "maintenance",
+  );
+  for (const event of items) {
+    if (event.type === "managedIncident") {
+      const { label, ...mark } = incidentActivity(event.incident);
+      entries.push({
+        ...mark,
+        lead: `${label} · ${event.incident.title}`,
+        name: label,
+      });
+    } else if (event.type === "report") {
+      const { label, ...mark } = reportActivity(event.report);
+      entries.push({
+        ...mark,
+        lead: `${label} · ${event.report.title}`,
+        name: label,
+      });
+    }
+  }
+  if (downtime.length > 0) {
+    const down = spansOnDay(date, downtime.map(spanOf), now);
+    const monitors = new Set(downtime.map((e) => e.incident.monitor.name));
+    entries.push({
+      ...downtimeActivity(down),
+      lead: `${formatDurationShort(down)} down · ${
+        monitors.size === 1 ? [...monitors][0] : `${monitors.size} monitors`
+      }`,
+      name: "Outage",
+    });
+  }
+  if (maintenance.length > 0) {
+    const planned = spansOnDay(date, maintenance.map(spanOf), now);
+    entries.push({
+      ...maintenanceActivity(planned),
+      // one legend swatch here; the duration is in the tooltip
+      level: 2,
+      lead: `${formatDurationShort(planned)} · ${
+        maintenance.length === 1
+          ? maintenance[0].maintenance.title
+          : `${maintenance.length} maintenances`
+      }`,
+      name: "Maintenance",
+    });
+  }
+  return entries.sort((a, b) => rank(b) - rank(a));
+}
+
+/** Same type labels as the list rows below the calendar. */
+function linkOf(event: OverviewEvent): ActivityLink {
+  switch (event.type) {
+    case "incident":
+      return {
+        href: `/monitors/${event.incident.monitor.id}/outages`,
+        title: event.incident.monitor.name,
+        kind: "Outage",
+      };
+    case "managedIncident":
+      return {
+        href: `/incidents/${event.incident.id}`,
+        title: event.incident.title,
+        kind: "Incident",
+      };
+    case "report":
+      return {
+        href: `/status-pages/${event.report.pageId}/status-reports/${event.report.id}`,
+        title: event.report.title,
+        kind: "Report",
+      };
+    case "maintenance":
+      return {
+        href: `/status-pages/${event.maintenance.pageId}/maintenances/${event.maintenance.id}`,
+        title: event.maintenance.title,
+        kind: "Maintenance",
+      };
+  }
+}
+
+/** A day's links, one per href; downtime carries that monitor's time down that day. */
+function dayLinks(items: OverviewEvent[], date: Date, now: Date) {
+  const links = new Map<string, ActivityLink>();
+  const downtime = new Map<string, ActivitySpan[]>();
+  for (const event of items) {
+    const link = linkOf(event);
+    links.set(link.href, link);
+    if (event.type === "incident") {
+      downtime.set(link.href, [
+        ...(downtime.get(link.href) ?? []),
+        spanOf(event),
+      ]);
+    }
+  }
+  for (const [href, spans] of downtime) {
+    const link = links.get(href);
+    if (link) link.meta = formatDurationShort(spansOnDay(date, spans, now));
+  }
+  return [...links.values()];
+}
+
+function spanOf(event: OverviewEvent): ActivitySpan {
+  if (event.type === "report") return reportSpan(event.report);
+  if (event.type === "managedIncident") return incidentSpan(event.incident);
+  return { start: getStartedAt(event), end: getResolvedAt(event) };
+}
 
 export default function Page() {
   const trpc = useTRPC();
+  const hydrated = useHydrated();
+  const [showOlder, setShowOlder] = useState(false);
 
-  const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
-  const { data: incidents } = useQuery(
-    trpc.incident.list.queryOptions({
-      period: "7d",
-    }),
-  );
+  // no period — an incident open for weeks must still surface here
+  const { data: monitorIncidents } = useQuery({
+    ...trpc.monitorIncident.list.queryOptions(),
+    // downtime of deleted monitors would surface under a monitor that no longer exists
+    select: (incidents) =>
+      incidents.filter((i) => i.monitor && i.monitor.deletedAt === null),
+  });
   const { data: statusReports } = useQuery(
-    trpc.statusReport.list.queryOptions({
-      period: "7d",
-    }),
+    trpc.statusReport.list.queryOptions({}),
   );
-  const { data: maintenances } = useQuery(
-    trpc.maintenance.list.queryOptions({
-      period: "7d",
-    }),
+  const { data: maintenances } = useQuery(trpc.maintenance.list.queryOptions());
+  const { data: openIncidents, isPending: openIncidentsPending } = useQuery(
+    trpc.incident.list.queryOptions({ status: ["open", "mitigated"] }),
+  );
+  const { data: endedIncidents, isPending: endedIncidentsPending } = useQuery(
+    trpc.incident.list.queryOptions({ status: ["resolved", "canceled"] }),
   );
 
-  if (!monitors || !pages || !incidents || !statusReports || !maintenances)
+  // a window starting or ending moves it between Scheduled, Open and Resolved
+  useMaintenanceTick(maintenances ?? []);
+  const now = new Date();
+  const data =
+    monitorIncidents &&
+    statusReports &&
+    maintenances &&
+    // wait for the incident queries; a failed one still renders (see below)
+    !openIncidentsPending &&
+    !endedIncidentsPending
+      ? buildOverviewData(
+          {
+            monitorIncidents,
+            statusReports,
+            maintenances,
+            // undefined on a failed query; the rest still renders
+            managedIncidents: openIncidents,
+            endedIncidents,
+          },
+          now,
+        )
+      : null;
+  const older = usePaged(
+    data ? data.allResolved.slice(data.recentlyResolved.length) : [],
+  );
+
+  if (!data || !pages || !statusReports || !maintenances || !monitorIncidents)
     return null;
 
-  const lastIncident = incidents.length > 0 ? incidents[0] : null;
-  const lastStatusReport = statusReports.length > 0 ? statusReports[0] : null;
-  const lastMaintenance = maintenances.length > 0 ? maintenances[0] : null;
+  const {
+    calendarEvents,
+    needsAttention,
+    upcomingMaintenances,
+    recentlyResolved,
+    allResolved,
+  } = data;
 
-  const incidentDistance = lastIncident
-    ? formatDistanceToNowStrict(lastIncident.startedAt, {
-        addSuffix: true,
-      })
-    : "None";
-
-  const statusReportDistance = lastStatusReport?.createdAt
-    ? formatDistanceToNowStrict(lastStatusReport.createdAt, {
-        addSuffix: true,
-      })
-    : "None";
-
-  const maintenanceDistance = lastMaintenance?.createdAt
-    ? formatDistanceToNowStrict(lastMaintenance.createdAt, {
-        addSuffix: true,
-      })
-    : "None";
-
-  const metrics = [
-    {
-      title: "Monitors",
-      value: monitors.length,
-      href: "/monitors",
-      variant: "default" as const,
-      icon: List,
+  // looks ahead as far as the last scheduled window ends, capped
+  const until = maintenances
+    .map((m) => m.to)
+    .reduce<Date | undefined>(
+      (max, to) => (!max || to > max ? to : max),
+      undefined,
+    );
+  const range = activityRange(now, until);
+  const days = groupByDay(range, calendarEvents, spanOf, now).map(
+    ({ date, items }) => {
+      if (items.length === 0) return { date };
+      const [lead, ...others] = dayEntries(items, date, now);
+      // dashed only when the day holds nothing but maintenance still ahead
+      const upcoming = items.every(
+        (e) => e.type === "maintenance" && e.maintenance.from > now,
+      );
+      return {
+        date,
+        scale: lead.scale,
+        level: lead.level,
+        hatched: lead.hatched,
+        upcoming,
+        lines: [
+          ...activityDayLines(
+            lead.lead,
+            others.map((e) => e.name),
+          ),
+          ...(upcoming ? ["Upcoming"] : []),
+        ],
+        links: dayLinks(items, date, now),
+      };
     },
-    {
-      title: "Status Pages",
-      value: pages.length,
-      href: "/status-pages",
-      variant: "default" as const,
-      icon: List,
-    },
-    {
-      title:
-        lastIncident?.resolvedAt === undefined && lastIncident
-          ? "Active Incident"
-          : "Recent Incident",
-      value: incidentDistance,
-      disabled: !lastIncident?.monitorId,
-      href: `/monitors/${lastIncident?.monitorId}/incidents`,
-      variant:
-        lastIncident?.resolvedAt === undefined && lastIncident
-          ? ("warning" as const)
-          : ("default" as const),
-      icon: Search,
-    },
-    {
-      title: "Last Report",
-      value: statusReportDistance,
-      disabled: !lastStatusReport?.pageId,
-      href: `/status-pages/${lastStatusReport?.pageId}/status-reports`,
-      variant: "default" as const,
-      icon: Search,
-    },
-    {
-      title: "Last Maintenance",
-      value: maintenanceDistance,
-      disabled: !lastMaintenance?.pageId,
-      href: `/status-pages/${lastMaintenance?.pageId}/maintenances`,
-      variant: "default" as const,
-      icon: Search,
-    },
-  ];
+  );
+  const anyUpcoming = days.some((day) => day.upcoming);
+  const attention = needsAttention.length;
 
   return (
     <SectionGroup>
-      <Note>
-        <Bot />
+      <NoteDismissible cookieKey="note_overview_maintenance_windows">
+        <Maintenance />
+        Schedule maintenance windows to pause checks or mute alerts during
+        planned work.
+        <NoteButton variant="default" asChild>
+          <Link
+            href="https://www.openstatus.dev/changelog/maintenance-windows"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Learn more
+          </Link>
+        </NoteButton>
+      </NoteDismissible>
+      <NoteDismissible cookieKey="note_overview_slack_agent">
+        <Agent />
         Use our Slack agent to manage your status pages and incidents.
         <NoteButton variant="default" asChild>
           <Link href="/agents">Learn more</Link>
         </NoteButton>
-      </Note>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Overview</SectionTitle>
-          <SectionDescription>
-            Welcome to your OpenStatus dashboard.
-          </SectionDescription>
-        </SectionHeader>
-        <MetricCardGroup>
-          {metrics.map((metric) => (
-            <Link
-              href={metric.href}
-              key={metric.title}
-              className={cn(metric.disabled && "pointer-events-none")}
-              aria-disabled={metric.disabled}
-            >
-              <MetricCard variant={metric.variant}>
-                <MetricCardHeader className="flex items-center justify-between gap-2">
-                  <MetricCardTitle className="truncate">
-                    {metric.title}
-                  </MetricCardTitle>
-                  <metric.icon className="size-4" />
-                </MetricCardHeader>
-                <MetricCardValue>{metric.value}</MetricCardValue>
-              </MetricCard>
-            </Link>
+      </NoteDismissible>
+      <Section id="overview">
+        <SectionHeaderRow>
+          <SectionHeader>
+            <SectionTitle>Overview</SectionTitle>
+            <SectionDescription>
+              {hydrated ? `${format(now, "EEEE, MMM d")} · ` : null}
+              {attention === 0
+                ? "Nothing needs your attention"
+                : `${attention} ${attention === 1 ? "event needs" : "events need"} your attention`}
+            </SectionDescription>
+          </SectionHeader>
+          {/* one action slot: creating events needs a page; until then, point at the agent */}
+          {pages.length > 0 ? (
+            <CreateEventButtonGroup />
+          ) : (
+            <AgentPromptButton source="overview">
+              Onboard your agent
+            </AgentPromptButton>
+          )}
+        </SectionHeaderRow>
+      </Section>
+      <Activity>
+        <ActivityHeader>
+          <ActivityTitle>Activity</ActivityTitle>
+          <ActivityPeriod>{activityPeriod(range, now)}</ActivityPeriod>
+        </ActivityHeader>
+        <ActivityCalendar>
+          <ActivityCalendarGrid days={days} today={now} />
+          <ActivityCalendarLegend>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell />
+              None
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell level={1} />
+              Low
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell level={2} />
+              Mid
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell level={3} />
+              High
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendSeparator />
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell hatched />
+              Unrated
+            </ActivityCalendarLegendItem>
+            <ActivityCalendarLegendItem>
+              <ActivityCalendarCell scale="planned" level={2} />
+              Maintenance
+            </ActivityCalendarLegendItem>
+            {anyUpcoming ? (
+              <ActivityCalendarLegendItem>
+                <ActivityCalendarCell upcoming />
+                Upcoming
+              </ActivityCalendarLegendItem>
+            ) : null}
+          </ActivityCalendarLegend>
+        </ActivityCalendar>
+      </Activity>
+      <EventGroup>
+        <EventGroupHeader>
+          <EventGroupTitle>
+            Open
+            <EventGroupCount>{needsAttention.length}</EventGroupCount>
+          </EventGroupTitle>
+          <EventGroupHint>Stays here until resolved</EventGroupHint>
+        </EventGroupHeader>
+        <EventList>
+          {needsAttention.map((event) => (
+            <OverviewEventRow key={eventKey(event)} event={event} />
           ))}
-        </MetricCardGroup>
-      </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Incidents</SectionTitle>
-          <SectionDescription>
-            Incidents over the last 7 days.
-          </SectionDescription>
-        </SectionHeader>
-        {incidents.length > 0 ? (
-          <DataTable columns={incidentsColumns} data={incidents} />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No incidents found</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
-      </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Reports</SectionTitle>
-          <SectionDescription>Reports over the last 7 days.</SectionDescription>
-        </SectionHeader>
-        {statusReports.length > 0 ? (
-          <DataTableStatusReports statusReports={statusReports} />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No reports found</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
-      </Section>
-      <Section>
-        <SectionHeader>
-          <SectionTitle>Maintenance</SectionTitle>
-          <SectionDescription>
-            Maintenance over the last 7 days.
-          </SectionDescription>
-        </SectionHeader>
-        {maintenances.length > 0 ? (
-          <DataTable columns={maintenancesColumns} data={maintenances} />
-        ) : (
-          <EmptyStateContainer>
-            <EmptyStateTitle>No maintenances found</EmptyStateTitle>
-          </EmptyStateContainer>
-        )}
-      </Section>
+        </EventList>
+        <EventGroupEmpty>
+          <EmptyStateMedia variant="success">
+            <Success />
+          </EmptyStateMedia>
+          <EmptyStateTitle>All clear</EmptyStateTitle>
+          <EmptyStateDescription>
+            {openIncidents
+              ? "Failing monitors, open incidents and reports show up here."
+              : "Incidents could not be loaded. Failing monitors and open reports still show up here."}
+          </EmptyStateDescription>
+        </EventGroupEmpty>
+      </EventGroup>
+      <EventGroup>
+        <EventGroupHeader>
+          <EventGroupTitle>
+            Scheduled
+            <EventGroupCount>{upcomingMaintenances.length}</EventGroupCount>
+          </EventGroupTitle>
+        </EventGroupHeader>
+        <EventList>
+          {upcomingMaintenances.map((event) => (
+            <OverviewEventRow key={eventKey(event)} event={event} />
+          ))}
+        </EventList>
+      </EventGroup>
+      <EventGroup>
+        <EventGroupHeader>
+          <EventGroupTitle>
+            Resolved
+            <EventGroupCount>
+              {showOlder ? allResolved.length : recentlyResolved.length}
+            </EventGroupCount>
+          </EventGroupTitle>
+          <EventGroupHint>
+            {showOlder ? "All time" : "Last 7 days"}
+          </EventGroupHint>
+        </EventGroupHeader>
+        <EventList>
+          {[...recentlyResolved, ...(showOlder ? older.visible : [])].map(
+            (event) => (
+              <OverviewEventRow key={eventKey(event)} event={event} />
+            ),
+          )}
+          {!showOlder && allResolved.length > recentlyResolved.length ? (
+            <EventListMore onClick={() => setShowOlder(true)}>
+              Show older
+            </EventListMore>
+          ) : null}
+          {showOlder && older.hasMore ? (
+            <EventListMore onClick={older.showMore}>Show more</EventListMore>
+          ) : null}
+        </EventList>
+        <EventGroupEmpty>
+          <EmptyStateMedia>
+            <Clock />
+          </EmptyStateMedia>
+          <EmptyStateTitle>Quiet week</EmptyStateTitle>
+          <EmptyStateDescription>
+            {endedIncidents
+              ? "Nothing ended in the last 7 days."
+              : "Incidents could not be loaded. Resolved reports and completed maintenances still show up here."}
+          </EmptyStateDescription>
+          {allResolved.length > 0 ? (
+            <EmptyStateActions>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowOlder(true)}
+              >
+                Show older
+              </Button>
+            </EmptyStateActions>
+          ) : null}
+        </EventGroupEmpty>
+      </EventGroup>
     </SectionGroup>
   );
 }

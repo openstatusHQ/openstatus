@@ -24,7 +24,7 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="edit-monitor">
         <SectionHeader>
           <SectionTitle>{monitor.name}</SectionTitle>
           <SectionDescription>Customize your monitor.</SectionDescription>

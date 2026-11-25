@@ -1,7 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@openstatus/tsconfig/base.json",
-  "exclude": ["dist"],
+  "exclude": [
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**",
+    "**/*.mock.ts",
+    "**/test-preload.ts"
+  ],
   "compilerOptions": {
     "outDir": "dist",
     "target": "es2021",
@@ -13,7 +20,7 @@
     "noEmit": true,
     "esModuleInterop": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "noUncheckedIndexedAccess": true
   },

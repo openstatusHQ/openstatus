@@ -308,8 +308,14 @@ export class HeaderAssertion implements Assertion {
         message: "Invalid request type for header assertion",
       };
     }
+
+    const key = this.schema.key.toLowerCase();
+    const value = Object.entries(req.header).find(
+      ([name]) => name.toLowerCase() === key,
+    )?.[1];
+
     const { success, message } = evaluateString(
-      req.header[this.schema.key] ?? "",
+      value ?? "",
       this.schema.compare,
       this.schema.target,
     );
@@ -361,7 +367,9 @@ export class JsonBodyAssertion implements Assertion {
     }
     try {
       const json = JSON.parse(req.body);
-      const value = JSONPath({ path: this.schema.path, json });
+      // jsonpath-plus returns the match array; evaluateString only uses
+      // `includes`/`===`, which arrays support, so this keeps prior behaviour.
+      const value = JSONPath({ path: this.schema.path, json }) as string;
       const { success, message } = evaluateString(
         value,
         this.schema.compare,

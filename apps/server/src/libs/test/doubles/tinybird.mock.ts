@@ -4,6 +4,7 @@
 export * from "@openstatus/tinybird-real";
 
 import {
+  heartbeatPingMock,
   tinybirdMockCalls as calls,
   tinybirdMockData as data,
 } from "./state.ts";
@@ -15,6 +16,21 @@ export class OSTinybird {
     return empty;
   }
   get legacy_tcpStatus45d() {
+    return empty;
+  }
+  get httpStatus15m() {
+    return empty;
+  }
+  get tcpStatus15m() {
+    return empty;
+  }
+  get dnsStatus15m() {
+    return empty;
+  }
+  get icmpStatus15m() {
+    return empty;
+  }
+  get grpcStatus15m() {
     return empty;
   }
   get httpListBiweekly() {
@@ -55,5 +71,20 @@ export class OSTinybird {
   }
   get dnsMetricsBiweekly() {
     return empty;
+  }
+  get heartbeatStatus45d() {
+    return empty;
+  }
+  get heartbeatStatus15m() {
+    return empty;
+  }
+  get heartbeatList() {
+    return (params: (typeof heartbeatPingMock.calls)[number]) => {
+      heartbeatPingMock.calls.push(params);
+      return Promise.resolve({ data: heartbeatPingMock.rows });
+    };
+  }
+  get publishHeartbeatPing() {
+    return () => Promise.resolve({ successful_rows: 0, quarantined_rows: 0 });
   }
 }

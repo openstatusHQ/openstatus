@@ -24,13 +24,27 @@ export async function validateEmailConfig(config: unknown) {
   return { valid: email.success, error: email.error?.message };
 }
 
-// Stable per status-report update / maintenance so Resend dedupes the email
-// retry path. Status reports key off the specific update; maintenance has no
-// update row, so fall back to its id + status.
+// Stable per entity update so Resend dedupes the email retry path.
 function idempotencyKeyFor(pageUpdate: PageUpdate): string {
-  return pageUpdate.updateId != null
-    ? `status-report-update:${pageUpdate.updateId}`
-    : `page-update:${pageUpdate.id}:${pageUpdate.status}`;
+  if (pageUpdate.updateId == null) {
+    return `page-update:${pageUpdate.id}:${pageUpdate.status}`;
+  }
+  return pageUpdate.status === "maintenance"
+    ? `maintenance-update:${pageUpdate.updateId}`
+    : `status-report-update:${pageUpdate.updateId}`;
+}
+
+// FNV-1a, Edge-safe (no node:crypto). Resend 409s when a key is reused within
+// 24h with a different body (e.g. the subscriber list changed between two
+// dispatches of the same update), so the key must vary with the payload while
+// staying identical across retries of the same send.
+function fingerprint(input: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
 }
 
 function hasEmailAndToken(
@@ -71,8 +85,26 @@ export async function sendEmailNotifications(
 
   const firstSub = validSubscriptions[0];
 
+  const payloadHash = fingerprint(
+    JSON.stringify([
+      validSubscriptions.map((sub) => [sub.email, sub.token]),
+      firstSub.pageName,
+      firstSub.pageSlug,
+      firstSub.customDomain ?? null,
+      pageUpdate.title,
+      pageUpdate.status,
+      pageUpdate.message,
+      pageUpdate.date,
+      // the maintenance window is rendered instead of `date` below
+      pageUpdate.startsAt ?? null,
+      pageUpdate.endsAt ?? null,
+      pageUpdate.pageComponents,
+      pageUpdate.componentsWithImpact?.map((c) => c.impact),
+    ]),
+  );
+
   const client = getEmailClient();
-  await client.sendStatusReportUpdate({
+  await client.sendPageUpdate({
     subscribers: validSubscriptions.map((sub) => ({
       email: sub.email,
       token: sub.token,
@@ -84,7 +116,11 @@ export async function sendEmailNotifications(
     status: pageUpdate.status,
     message: pageUpdate.message,
     date: pageUpdate.date,
+    // the template formats the maintenance window as its own row
+    startsAt: pageUpdate.startsAt,
+    endsAt: pageUpdate.endsAt,
     pageComponents: pageUpdate.pageComponents,
-    idempotencyKey: idempotencyKeyFor(pageUpdate),
+    componentImpacts: pageUpdate.componentsWithImpact,
+    idempotencyKey: `${idempotencyKeyFor(pageUpdate)}:${payloadHash}`,
   });
 }

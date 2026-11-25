@@ -10,7 +10,7 @@ import {
   monitorRegions,
 } from "@openstatus/db/src/schema/constants";
 import { AVAILABLE_REGIONS } from "@openstatus/regions";
-import { assertSafeUrlSync } from "@openstatus/utils";
+import { assertSafeUrlSync, uniqueRegions } from "@openstatus/utils";
 import { ZodError } from "zod";
 
 const statusAssertion = z
@@ -108,17 +108,7 @@ export const MonitorSchema = z
     }),
     regions: z
       .preprocess(
-        (val) => {
-          let parsedRegions: Array<unknown> = [];
-          if (!val) return parsedRegions;
-          if (Array.isArray(val)) {
-            parsedRegions = val;
-          }
-          if (String(val).length > 0) {
-            parsedRegions = String(val).split(",");
-          }
-          return parsedRegions;
-        },
+        (val) => (val ? uniqueRegions(String(val)) : []),
         z.array(z.enum(monitorRegions)),
       )
       .superRefine((regions, ctx) => {
@@ -238,17 +228,22 @@ export const MonitorSchema = z
     followRedirects: z.boolean().prefault(true).openapi({
       description: "If the monitor should follow redirects",
     }),
-    jobType: z.enum(monitorJobTypes).optional().prefault("http").openapi({
-      description: "The type of the monitor",
-    }),
+    // heartbeats are hidden from v1, which cannot represent them
+    jobType: z
+      .enum(monitorJobTypes)
+      .exclude(["heartbeat"])
+      .prefault("http")
+      .openapi({
+        description: "The type of the monitor",
+      }),
     openTelemetry: z
       .object({
-        endpoint: z.url().optional().prefault("http://localhost:4317").openapi({
+        endpoint: z.url().prefault("http://localhost:4317").openapi({
           description: "The endpoint of the OpenTelemetry collector",
         }),
         headers: z
           .record(z.string(), z.string())
-          .optional()
+
           .prefault({})
           .openapi({
             description: "The headers to send to the OpenTelemetry collector",
@@ -306,6 +301,7 @@ export const TCPTriggerResult = z.object({
   errorMessage: z.string().optional().nullable(),
 });
 
+// Only the two types the v1 API can run — see `assertLegacyRunnableJobType`.
 export const TriggerResult = z.discriminatedUnion("jobType", [
   HTTPTriggerResult,
   TCPTriggerResult,
@@ -376,17 +372,7 @@ const baseRequest = z.object({
   }),
   regions: z
     .preprocess(
-      (val) => {
-        let parsedRegions: Array<unknown> = [];
-        if (!val) return parsedRegions;
-        if (Array.isArray(val)) {
-          parsedRegions = val;
-        }
-        if (String(val).length > 0) {
-          parsedRegions = String(val).split(",");
-        }
-        return parsedRegions;
-      },
+      (val) => (val ? uniqueRegions(String(val)) : []),
       z.array(z.enum(monitorRegions)),
     )
     .superRefine((regions, ctx) => {

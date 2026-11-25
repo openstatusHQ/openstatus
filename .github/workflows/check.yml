@@ -24,16 +24,24 @@ jobs:
       - name: ⎔ Setup node
         uses: actions/setup-node@v6
         with:
-          node-version: 24
+          node-version: 26.8.1
           cache: "pnpm"
-
-      - name: 🦕 Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: v2.x
 
       - name: 📥 Download deps
         run: pnpm install
+
+      # Blocking, unlike autofix.ci, which only commits formatting back.
+      - name: 🔬 Lint
+        run: pnpm lint
+
+      - name: 🔗 Doc references
+        run: pnpm check:docs
+
+      - name: 🧷 Lint rule fixtures
+        run: pnpm check:lint-rules
+
+      - name: 🔐 Scope tables
+        run: pnpm check:scopes
 
       - name: 🔍 Check
         run: pnpm check

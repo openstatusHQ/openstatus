@@ -9,16 +9,14 @@ import {
   getProductPages,
   getToolingPages,
   getUnrelatedPages,
+  isIndexable,
 } from "../../../content/utils";
 
 export const runtime = "nodejs";
 export const revalidate = 3600;
 
-const BASE = "https://www.openstatus.dev";
-
 function renderPage(page: MDXData): string {
-  const md = convertMdxToMarkdown(page);
-  return `<!-- ${BASE}${page.href} -->\n\n${md}`;
+  return convertMdxToMarkdown(page);
 }
 
 export function GET() {
@@ -26,7 +24,7 @@ export function GET() {
     getHomePage(),
     ...getProductPages(),
     ...getToolingPages(),
-    ...getUnrelatedPages().filter((p) => p.slug !== "not-found"),
+    ...getUnrelatedPages().filter(isIndexable),
   ];
 
   const chunks = pages.map(renderPage);

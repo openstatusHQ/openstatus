@@ -4,7 +4,7 @@ import {
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
 
-import { type DB, type ServiceContext, getReadDb } from "../context";
+import { type DB, getReadDb, dbOnlyContext } from "../context";
 import { ForbiddenError, NotFoundError, ValidationError } from "../errors";
 
 /**
@@ -79,7 +79,7 @@ export async function resolveSubscriberByToken(args: {
   token: string;
   domain?: string;
 }): Promise<ResolvedSubscriber | null> {
-  const readDb = getReadDb({ db: args.db } as ServiceContext);
+  const readDb = getReadDb(dbOnlyContext(args.db));
   const subscription = await readDb.query.pageSubscriber.findFirst({
     where: { token: args.token },
     with: {

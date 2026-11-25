@@ -8,10 +8,13 @@ import { importRouter } from "./router/import";
 import { incidentRouter } from "./router/incident";
 import { invitationRouter } from "./router/invitation";
 import { maintenanceRouter } from "./router/maintenance";
+import { maintenanceWindowRouter } from "./router/maintenanceWindow";
 import { memberRouter } from "./router/member";
 import { monitorRouter } from "./router/monitor";
+import { monitorIncidentRouter } from "./router/monitorIncident";
 import { monitorTagRouter } from "./router/monitorTag";
 import { notificationRouter } from "./router/notification";
+import { oauthRouter } from "./router/oauth";
 import { pageRouter } from "./router/page";
 import { pageComponentRouter } from "./router/pageComponent";
 import { pageSubscriberRouter } from "./router/pageSubscriber";
@@ -19,6 +22,7 @@ import { privateLocationRouter } from "./router/privateLocation";
 import { statusPageRouter } from "./router/statusPage";
 import { statusReportRouter } from "./router/statusReport";
 import { tinybirdRouter } from "./router/tinybird";
+import { trackRouter } from "./router/track";
 import { userRouter } from "./router/user";
 import { workspaceRouter } from "./router/workspace";
 import { createTRPCRouter } from "./trpc";
@@ -35,17 +39,21 @@ export const edgeRouter = createTRPCRouter({
   user: userRouter,
   notification: notificationRouter,
   invitation: invitationRouter,
+  monitorIncident: monitorIncidentRouter,
   incident: incidentRouter,
   pageSubscriber: pageSubscriberRouter,
   tinybird: tinybirdRouter,
   monitorTag: monitorTagRouter,
   maintenance: maintenanceRouter,
+  maintenanceWindow: maintenanceWindowRouter,
   member: memberRouter,
   checker: checkerRouter,
   feedback: feedbackRouter,
+  track: trackRouter,
   statusPage: statusPageRouter,
   privateLocation: privateLocationRouter,
   import: importRouter,
   auditLog: auditLogRouter,
   chatSession: chatSessionRouter,
+  oauth: oauthRouter,
 });

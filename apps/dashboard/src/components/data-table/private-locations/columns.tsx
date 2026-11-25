@@ -5,12 +5,21 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
 import { DataTableColumnHeader } from "@/components/ui/data-table/data-table-column-header";
+import { cn } from "@/lib/utils";
 
 import { TableCellBadge } from "../table-cell-badge";
 import { TableCellDate } from "../table-cell-date";
+import { TableCellEmpty } from "../table-cell-empty";
+import { TableCellMetadata } from "../table-cell-metadata";
+import { TableCellText } from "../table-cell-text";
 import { DataTableRowActions } from "./data-table-row-actions";
 
 type PrivateLocation = RouterOutputs["privateLocation"]["list"][number];
+
+const statusClassName: Record<string, string> = {
+  active: "text-success",
+  error: "text-destructive",
+};
 
 export const columns: ColumnDef<PrivateLocation>[] = [
   {
@@ -21,6 +30,31 @@ export const columns: ColumnDef<PrivateLocation>[] = [
     enableHiding: false,
   },
   {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Status" />
+    ),
+    enableHiding: false,
+    cell: ({ row }) => {
+      const value = String(row.getValue("status"));
+      return (
+        <TableCellText
+          value={value}
+          className={cn("font-mono", statusClassName[value])}
+        />
+      );
+    },
+  },
+  {
+    accessorKey: "metadata",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Metadata" />
+    ),
+    enableSorting: false,
+    enableHiding: true,
+    cell: ({ row }) => <TableCellMetadata value={row.original.metadata} />,
+  },
+  {
     accessorKey: "lastSeenAt",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Last Seen At" />
@@ -28,7 +62,7 @@ export const columns: ColumnDef<PrivateLocation>[] = [
     enableHiding: false,
     cell: ({ row }) => {
       const value = row.getValue("lastSeenAt");
-      return <TableCellDate value={value} />;
+      return <TableCellDate value={value} empty="Never" />;
     },
   },
   {
@@ -50,7 +84,7 @@ export const columns: ColumnDef<PrivateLocation>[] = [
           </div>
         );
       }
-      return <span className="text-muted-foreground">-</span>;
+      return <TableCellEmpty>No monitors</TableCellEmpty>;
     },
     meta: {
       cellClassName: "tabular-nums font-mono",

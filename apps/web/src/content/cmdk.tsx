@@ -1,6 +1,11 @@
 "use client";
 
 import {
+  Loading,
+  Search as SearchIcon,
+  Close as XIcon,
+} from "@openstatus/icons";
+import {
   Command,
   CommandEmpty,
   CommandGroup,
@@ -19,7 +24,6 @@ import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { Command as CommandPrimitive } from "cmdk";
-import { Loader2, Search, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -341,9 +345,9 @@ export function CmdK({
               cmdk-input-wrapper=""
             >
               {loading || fetching ? (
-                <Loader2 className="h-4 w-4 shrink-0 animate-spin opacity-50" />
+                <Loading className="h-4 w-4 shrink-0 animate-spin opacity-50" />
               ) : (
-                <Search className="h-4 w-4 shrink-0 opacity-50" />
+                <SearchIcon className="h-4 w-4 shrink-0 opacity-50" />
               )}
               {page ? (
                 <span className="bg-muted text-muted-foreground inline-flex shrink-0 items-center gap-1 border px-1.5 py-0.5 text-xs">
@@ -354,7 +358,7 @@ export function CmdK({
                     className="opacity-60 hover:opacity-100"
                     onClick={() => setPages([])}
                   >
-                    <X className="h-3 w-3" />
+                    <XIcon className="h-3 w-3" />
                   </button>
                 </span>
               ) : scope === "all" ? (

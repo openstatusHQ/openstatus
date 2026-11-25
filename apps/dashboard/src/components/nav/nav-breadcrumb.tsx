@@ -1,5 +1,6 @@
 "use client";
 
+import type { IconType } from "@openstatus/icons";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,7 +9,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@openstatus/ui/components/ui/breadcrumb";
-import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react";
 
@@ -18,12 +18,12 @@ interface NavBreadcrumbProps {
         type: "link";
         label: string;
         href: string;
-        icon?: LucideIcon;
+        icon?: IconType;
       }
     | {
         type: "page";
         label: string;
-        icon?: LucideIcon;
+        icon?: IconType;
       }
   )[];
 }

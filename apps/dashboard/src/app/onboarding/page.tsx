@@ -2,7 +2,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs";
 
-import { getQueryClient, trpc } from "@/lib/trpc/server";
+import { AUTH_REDIRECT_COOKIE } from "@/lib/auth-redirect-cookie";
+import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
 
 import { Client } from "./client";
 import { searchParamsCache } from "./search-params";
@@ -46,7 +47,7 @@ export default async function Page({
   // didn't pass the callbackUrl properly. The cookie has a 10-minute TTL
   // and will expire naturally.
   const cookieStore = await cookies();
-  const authRedirect = cookieStore.get("auth-redirect")?.value;
+  const authRedirect = cookieStore.get(AUTH_REDIRECT_COOKIE)?.value;
   if (authRedirect) {
     tryRedirectToCallback(authRedirect);
   }
@@ -55,6 +56,7 @@ export default async function Page({
   const [monitors, pages] = await Promise.all([
     queryClient.fetchQuery(trpc.monitor.list.queryOptions()),
     queryClient.fetchQuery(trpc.page.list.queryOptions()),
+    queryClient.fetchQuery(trpc.apiKey.list.queryOptions()),
   ]);
 
   const updates: {
@@ -89,5 +91,9 @@ export default async function Page({
     redirect(`/onboarding?${next.toString()}`);
   }
 
-  return <Client />;
+  return (
+    <HydrateClient>
+      <Client />
+    </HydrateClient>
+  );
 }

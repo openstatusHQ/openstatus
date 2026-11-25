@@ -25,8 +25,11 @@ export async function createPrivateLocation(args: {
   input: CreatePrivateLocationInput;
 }): Promise<PrivateLocation> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = CreatePrivateLocationInput.parse(args.input);
+
+  // Callers that can't mint their own credential (the public API) omit it.
+  const token = input.token ?? crypto.randomUUID();
 
   // The pivot table has no UNIQUE (private_location_id, monitor_id)
   // constraint, so duplicate input ids would silently produce duplicate
@@ -44,7 +47,11 @@ export async function createPrivateLocation(args: {
       .insert(privateLocation)
       .values({
         name: input.name,
-        token: input.token,
+        token,
+        metadata:
+          input.metadata && Object.keys(input.metadata).length > 0
+            ? input.metadata
+            : null,
         workspaceId: ctx.workspace.id,
       })
       .returning()

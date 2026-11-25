@@ -1,5 +1,5 @@
-import { and, eq, isNull } from "@openstatus/db";
-import { incidentTable } from "@openstatus/db/src/schema";
+import { and, eq, inArray, isNull } from "@openstatus/db";
+import { type Incident, incident } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
@@ -9,35 +9,27 @@ import {
   withTransaction,
 } from "../context";
 import { ConflictError } from "../errors";
-import type { Incident } from "../types";
-import { getIncidentInWorkspace } from "./internal";
-import { AcknowledgeIncidentInput } from "./schemas";
+import { appendIncidentEvent, getIncidentInWorkspace } from "./internal";
+import { IncidentIdInput } from "./schemas";
 
+/** Set once, and only while open or mitigated: a later ack would outlast the time to resolve. */
 export async function acknowledgeIncident(args: {
   ctx: ServiceContext;
-  input: AcknowledgeIncidentInput;
+  input: IncidentIdInput;
 }): Promise<Incident> {
   const { ctx } = args;
-  requireScope(ctx, "write");
-  const input = AcknowledgeIncidentInput.parse(args.input);
+  requireScope(ctx, "incidents:write");
+  const input = IncidentIdInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    const existing = await getIncidentInWorkspace({
+    const existing = await getIncidentInWorkspace(
       tx,
-      id: input.id,
-      workspaceId: ctx.workspace.id,
-    });
-    if (existing.acknowledgedAt) {
-      throw new ConflictError("Incident already acknowledged.");
-    }
-
+      ctx.workspace.id,
+      input.id,
+    );
     const now = new Date();
-    // Conditional update — atomically flips `acknowledged_at` only while it
-    // is still NULL. A concurrent acknowledger losing the race returns no
-    // row, at which point we throw the same `ConflictError` the pre-read
-    // would have raised.
     const updated = await tx
-      .update(incidentTable)
+      .update(incident)
       .set({
         acknowledgedAt: now,
         acknowledgedBy: tryGetActorUserId(ctx.actor),
@@ -45,16 +37,21 @@ export async function acknowledgeIncident(args: {
       })
       .where(
         and(
-          eq(incidentTable.id, existing.id),
-          isNull(incidentTable.acknowledgedAt),
+          eq(incident.id, existing.id),
+          isNull(incident.acknowledgedAt),
+          isNull(incident.closedAt),
+          inArray(incident.status, ["open", "mitigated"]),
         ),
       )
       .returning()
       .get();
     if (!updated) {
-      throw new ConflictError("Incident already acknowledged.");
+      throw new ConflictError(
+        existing.acknowledgedAt
+          ? `Incident #${existing.id} is already acknowledged`
+          : `Incident #${existing.id} can only be acknowledged while open or mitigated`,
+      );
     }
-
     await emitAudit(tx, ctx, {
       action: "incident.update",
       entityType: "incident",
@@ -62,7 +59,12 @@ export async function acknowledgeIncident(args: {
       before: existing,
       after: updated,
     });
-
+    await appendIncidentEvent(tx, ctx, {
+      incidentId: updated.id,
+      type: "acknowledged",
+      message: "Incident acknowledged",
+      createdAt: now,
+    });
     return updated;
   });
 }

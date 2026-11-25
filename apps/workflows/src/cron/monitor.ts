@@ -1,17 +1,5 @@
 import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
-import {
-  and,
-  db,
-  desc,
-  eq,
-  isNull,
-  lte,
-  max,
-  or,
-  schema,
-} from "@openstatus/db";
-import { selectWorkspaceSchema, user } from "@openstatus/db/src/schema";
+import type { google } from "@google-cloud/tasks/build/protos";
 import {
   monitorDeactivationEmail,
   monitorPausedEmail,
@@ -20,7 +8,18 @@ import {
   type EmailHtml,
   sendBatchEmailHtml,
 } from "@openstatus/emails/src/send";
-import { bulkUpdateMonitors } from "@openstatus/services/monitor";
+import {
+  bulkUpdateMonitors,
+  countActiveMonitors,
+  listActiveMonitorIds,
+} from "@openstatus/services/monitor";
+import {
+  getFreeWorkspaceOfUser,
+  getLatestSessionExpiry,
+  getUserContact,
+  listFreeUsersLastSeenBefore,
+  listFreeUsersWithoutSession,
+} from "@openstatus/services/user";
 import { Redis } from "@openstatus/upstash";
 import { RateLimiter } from "limiter";
 import { z } from "zod";
@@ -29,20 +28,52 @@ import { env } from "../env";
 
 const redis = Redis.fromEnv();
 
-const client = new CloudTasksClient({
-  projectId: env().GCP_PROJECT_ID,
-  fallback: "rest",
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
+const PAUSE_FROM = "Thibault from openstatus <thibault@mail.openstatus.dev>";
+const PAUSE_REPLY_TO = "thibault@openstatus.dev";
 
-const parent = client.queuePath(
-  env().GCP_PROJECT_ID,
-  env().GCP_LOCATION,
-  "workflow",
-);
+// Check if GCP is properly configured (not empty and not placeholder values)
+const isGcpConfigured = () => {
+  const gcpProjectId = env().GCP_PROJECT_ID;
+  const gcpLocation = env().GCP_LOCATION;
+  const gcpClientEmail = env().GCP_CLIENT_EMAIL;
+  const gcpPrivateKey = env().GCP_PRIVATE_KEY;
+
+  return (
+    gcpProjectId &&
+    gcpLocation &&
+    gcpClientEmail &&
+    gcpPrivateKey &&
+    gcpProjectId !== "" &&
+    gcpLocation !== "" &&
+    gcpClientEmail !== "" &&
+    gcpPrivateKey !== "" &&
+    gcpProjectId !== "your-value" &&
+    gcpLocation !== "your-value" &&
+    gcpClientEmail !== "your-value" &&
+    gcpPrivateKey !== "your-value"
+  );
+};
+
+// Only initialize Cloud Tasks client if GCP is properly configured
+let client: CloudTasksClient | null = null;
+let parent: string | null = null;
+
+if (isGcpConfigured()) {
+  client = new CloudTasksClient({
+    projectId: env().GCP_PROJECT_ID,
+    fallback: "rest",
+    credentials: {
+      client_email: env().GCP_CLIENT_EMAIL,
+      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  });
+
+  parent = client.queuePath(
+    env().GCP_PROJECT_ID,
+    env().GCP_LOCATION,
+    "workflow",
+  );
+}
 
 const limiter = new RateLimiter({ tokensPerInterval: 15, interval: "second" });
 
@@ -51,82 +82,12 @@ export async function LaunchMonitorWorkflow() {
   const twoMonthAgo = new Date().setMonth(new Date().getMonth() - 2);
 
   const date = new Date(twoMonthAgo);
-  // User without session
-  const userWithoutSession = db
-    .select({
-      userId: schema.user.id,
-      email: schema.user.email,
-      updatedAt: schema.user.updatedAt,
-    })
-    .from(schema.user)
-    .leftJoin(schema.session, eq(schema.session.userId, schema.user.id))
-    .where(isNull(schema.session.userId))
-    .as("query");
   // Only free users monitors are paused
   // We don't need to handle multi users per workspace because free workspaces only have one user
-  // Only free users monitors are paused
-
-  const u1 = await db
-    .select({
-      userId: userWithoutSession.userId,
-      email: userWithoutSession.email,
-      workspaceId: schema.workspace.id,
-    })
-    .from(userWithoutSession)
-    .innerJoin(
-      schema.usersToWorkspaces,
-      eq(userWithoutSession.userId, schema.usersToWorkspaces.userId),
-    )
-    .innerJoin(
-      schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-    )
-    .where(
-      and(
-        or(
-          lte(userWithoutSession.updatedAt, date),
-          isNull(userWithoutSession.updatedAt),
-        ),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
-    );
+  const u1 = await listFreeUsersWithoutSession({ before: date });
 
   console.log(`Found ${u1.length} users without session to start the workflow`);
-  const maxSessionPerUser = db
-    .select({
-      userId: schema.user.id,
-      email: schema.user.email,
-      lastConnection: max(schema.session.expires).as("lastConnection"),
-    })
-    .from(schema.user)
-    .innerJoin(schema.session, eq(schema.session.userId, schema.user.id))
-    .groupBy(schema.user.id)
-    .as("maxSessionPerUser");
-  // Only free users monitors are paused
-  // We don't need to handle multi users per workspace because free workspaces only have one user
-  // Only free users monitors are paused
-
-  const u = await db
-    .select({
-      userId: maxSessionPerUser.userId,
-      email: maxSessionPerUser.email,
-      workspaceId: schema.workspace.id,
-    })
-    .from(maxSessionPerUser)
-    .innerJoin(
-      schema.usersToWorkspaces,
-      eq(maxSessionPerUser.userId, schema.usersToWorkspaces.userId),
-    )
-    .innerJoin(
-      schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-    )
-    .where(
-      and(
-        lte(maxSessionPerUser.lastConnection, date),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
-    );
+  const u = await listFreeUsersLastSeenBefore({ before: date });
   const usersMap = new Map<number, (typeof u)[number]>();
   for (const entry of [...u, ...u1]) {
     usersMap.set(entry.userId, entry);
@@ -171,19 +132,23 @@ async function workflowInit({
     return;
   }
   // check if user has some running monitors
-  const nbRunningMonitor = await db.$count(
-    schema.monitor,
-    and(
-      eq(schema.monitor.workspaceId, user.workspaceId),
-      eq(schema.monitor.active, true),
-      isNull(schema.monitor.deletedAt),
-    ),
-  );
+  const nbRunningMonitor = await countActiveMonitors({
+    workspaceId: user.workspaceId,
+  });
   if (nbRunningMonitor === 0) {
     console.log(`user has no running monitors for ${user.userId}`);
     return;
   }
   const initialRun = new Date().getTime();
+
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (!client || !parent) {
+    console.log(
+      `Skipping workflow for user ${user.userId} - GCP not configured`,
+    );
+    return;
+  }
+
   await CreateTask({
     parent,
     client: client,
@@ -191,6 +156,7 @@ async function workflowInit({
     userId: user.userId,
     initialRun,
   });
+
   await redis.set(`workflow:user:${user.userId}`, initialRun, {
     ex: 30 * 86400,
   });
@@ -211,31 +177,37 @@ export async function Step14Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
+    const email = await monitorDeactivationEmail({
+      deactivateAt: new Date(new Date().setDate(new Date().getDate() + 14)),
+      ...(await getPauseContext(userId)),
+    });
     await sendWorkflowEmail({
       userId,
       step: "14days",
       initialRun: workFlowRunTimestamp,
       email: {
         to: user.email,
-        subject: "Your OpenStatus monitors will be paused in 14 days",
-        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-        reply_to: "thibault@openstatus.dev",
-        html: monitorDeactivationEmail({
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 14),
-          ).toDateString(),
-        }),
+        from: PAUSE_FROM,
+        reply_to: PAUSE_REPLY_TO,
+        ...email,
       },
     });
   }
 
-  await CreateTask({
-    parent,
-    client: client,
-    step: "3days",
-    userId: user.id,
-    initialRun: workFlowRunTimestamp,
-  });
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (client && parent) {
+    await CreateTask({
+      parent,
+      client: client,
+      step: "3days",
+      userId: user.id,
+      initialRun: workFlowRunTimestamp,
+    });
+  } else {
+    console.log(
+      `Skipping Cloud Tasks creation for user ${user.id} - GCP not configured`,
+    );
+  }
 }
 
 export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
@@ -252,31 +224,37 @@ export async function Step3Days(userId: number, workFlowRunTimestamp: number) {
   const user = await getUser(userId);
 
   if (user.email) {
+    const email = await monitorDeactivationEmail({
+      deactivateAt: new Date(new Date().setDate(new Date().getDate() + 3)),
+      ...(await getPauseContext(userId)),
+    });
     await sendWorkflowEmail({
       userId,
       step: "3days",
       initialRun: workFlowRunTimestamp,
       email: {
         to: user.email,
-        subject: "Your OpenStatus monitors will be paused in 3 days",
-        from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-        reply_to: "thibault@openstatus.dev",
-        html: monitorDeactivationEmail({
-          date: new Date(
-            new Date().setDate(new Date().getDate() + 3),
-          ).toDateString(),
-        }),
+        from: PAUSE_FROM,
+        reply_to: PAUSE_REPLY_TO,
+        ...email,
       },
     });
   }
 
-  await CreateTask({
-    client,
-    parent,
-    step: "paused",
-    userId,
-    initialRun: workFlowRunTimestamp,
-  });
+  // Only create GCP Cloud Tasks if GCP is configured
+  if (client && parent) {
+    await CreateTask({
+      client,
+      parent,
+      step: "paused",
+      userId,
+      initialRun: workFlowRunTimestamp,
+    });
+  } else {
+    console.log(
+      `Skipping Cloud Tasks creation for user ${userId} - GCP not configured`,
+    );
+  }
 }
 
 export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
@@ -291,41 +269,38 @@ export async function StepPaused(userId: number, workFlowRunTimestamp: number) {
     }
 
     const workspace = await getUserWorkspace(userId);
+    let pausedCount = 0;
     if (workspace) {
-      const activeMonitors = await db
-        .select({ id: schema.monitor.id })
-        .from(schema.monitor)
-        .where(
-          and(
-            eq(schema.monitor.workspaceId, workspace.id),
-            eq(schema.monitor.active, true),
-            isNull(schema.monitor.deletedAt),
-          ),
-        )
-        .all();
-      if (activeMonitors.length > 0) {
+      const activeMonitorIds = await listActiveMonitorIds({
+        workspaceId: workspace.id,
+      });
+      pausedCount = activeMonitorIds.length;
+      if (activeMonitorIds.length > 0) {
         await bulkUpdateMonitors({
           ctx: {
             workspace,
             actor: { type: "system", job: "monitor-auto-pause" },
           },
-          input: { ids: activeMonitors.map((m) => m.id), active: false },
+          input: { ids: activeMonitorIds, active: false },
         });
       }
     }
 
     const currentUser = await getUser(userId);
     if (currentUser.email) {
+      const email = await monitorPausedEmail({
+        monitorCount: pausedCount || undefined,
+        workspaceSlug: workspace?.slug,
+      });
       await sendWorkflowEmail({
         userId,
         step: "paused",
         initialRun: workFlowRunTimestamp,
         email: {
           to: currentUser.email,
-          subject: "Your monitors have been paused",
-          from: "Thibault From OpenStatus <thibault@notifications.openstatus.dev>",
-          reply_to: "thibault@openstatus.dev",
-          html: monitorPausedEmail(),
+          from: PAUSE_FROM,
+          reply_to: PAUSE_REPLY_TO,
+          ...email,
         },
       });
     }
@@ -341,20 +316,11 @@ async function hasUserLoggedIn({
   userId: number;
   date: Date;
 }) {
-  const userResult = await db
-    .select({ lastSession: schema.session.expires })
-    .from(schema.session)
-    .where(eq(schema.session.userId, userId))
-    .orderBy(desc(schema.session.expires));
-
-  if (userResult.length === 0) {
+  const lastSession = await getLatestSessionExpiry({ userId });
+  if (lastSession === null) {
     return false;
   }
-  const user = userResult[0];
-  if (user.lastSession === null) {
-    return false;
-  }
-  return user.lastSession > date;
+  return lastSession > date;
 }
 
 async function CreateTask({
@@ -422,11 +388,7 @@ export const workflowStep = ["14days", "3days", "paused"] as const;
 export const workflowStepSchema = z.enum(workflowStep);
 
 async function getUser(userId: number) {
-  const currentUser = await db
-    .select()
-    .from(user)
-    .where(eq(schema.user.id, userId))
-    .get();
+  const currentUser = await getUserContact({ userId });
 
   if (!currentUser) {
     throw new Error("User not found");
@@ -455,24 +417,18 @@ async function sendWorkflowEmail({
   await redis.set(key, 1, { ex: 30 * 86400 });
 }
 
+async function getPauseContext(userId: number) {
+  const workspace = await getUserWorkspace(userId);
+  if (!workspace) return {};
+  const monitorCount = await countActiveMonitors({
+    workspaceId: workspace.id,
+  });
+  return {
+    monitorCount: monitorCount || undefined,
+    workspaceSlug: workspace.slug,
+  };
+}
+
 async function getUserWorkspace(userId: number) {
-  const row = await db
-    .select({ workspace: schema.workspace })
-    .from(schema.user)
-    .innerJoin(
-      schema.usersToWorkspaces,
-      eq(schema.user.id, schema.usersToWorkspaces.userId),
-    )
-    .innerJoin(
-      schema.workspace,
-      eq(schema.usersToWorkspaces.workspaceId, schema.workspace.id),
-    )
-    .where(
-      and(
-        eq(schema.user.id, userId),
-        or(isNull(schema.workspace.plan), eq(schema.workspace.plan, "free")),
-      ),
-    )
-    .get();
-  return row ? selectWorkspaceSchema.parse(row.workspace) : undefined;
+  return getFreeWorkspaceOfUser({ userId });
 }

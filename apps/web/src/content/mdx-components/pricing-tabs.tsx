@@ -43,13 +43,13 @@ export function PricingTabs() {
         <TabsList className="h-auto w-full rounded-none">
           <TabsTrigger
             value="monthly"
-            className="h-auto w-full truncate rounded-none p-3.5"
+            className="h-auto w-full truncate rounded-none px-3 py-2"
           >
             Monthly
           </TabsTrigger>
           <TabsTrigger
             value="yearly"
-            className="h-auto w-full truncate rounded-none p-3.5"
+            className="h-auto w-full truncate rounded-none px-3 py-2"
           >
             Yearly{" "}
             <Badge variant="secondary" className="ml-1.5 h-auto rounded-none">

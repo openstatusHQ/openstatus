@@ -22,7 +22,7 @@ export async function deletePrivateLocation(args: {
   input: DeletePrivateLocationInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = DeletePrivateLocationInput.parse(args.input);
 
   await withTransaction(ctx, async (tx) => {

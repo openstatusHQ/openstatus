@@ -1,0 +1,16 @@
+---
+title: "Custom theme for status pages"
+description: "Override your status page theme's CSS variables with your own values for light and dark mode."
+publishedAt: "2026-07-08"
+image: "/assets/changelog/status-page-custom-theme.png"
+category: "statuspage"
+author: "openstatus"
+---
+
+Your status page can now go beyond the built-in themes. With the new **Custom Theme** editor, you override individual CSS variables of the selected theme with your own values - separately for **light and dark mode**.
+
+Pick any theme as your base, then adjust exactly what you need: one `--name: value;` declaration per line, e.g. `--primary: oklch(0.6 0.1 250);`. Every variable you leave unset falls back to the theme's value, so you can change a single color or restyle the entire page.
+
+The editor lives in the status page configuration and comes pre-filled with your current theme's values as a template. Use **Extend** to open the full list of supported variables - background, foreground, card, status colors, radius, and more.
+
+Custom themes are available on the **Pro and Scale plans**. Check out the supported CSS variables in the [Status Page Reference](https://www.openstatus.dev/docs/reference/status-page/#custom-theme).

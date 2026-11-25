@@ -1,0 +1,58 @@
+TOKEN "endpoint__grpc_runs_45d__v0_endpoint_read" READ
+
+NODE endpoint
+SQL >
+
+%
+{% if defined(timezone) %}
+WITH {{ String(timezone) }} AS tz
+SELECT
+    -- same 'YYYY-MM-DD 00:00:00' as the UTC branch; inner alias avoids a cycle
+    toDateTime(localDay, 'UTC') AS day,
+    monitorId,
+    count() AS count,
+    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
+    countIf(e * 2 >= n) AS error,
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded
+FROM (
+    SELECT
+        toDate(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), tz)) AS localDay,
+        monitorId,
+        cronTimestamp,
+        uniqExactMerge(regions) AS n,
+        uniqExactMerge(errorRegions) AS e,
+        uniqExactMerge(degradedRegions) AS d
+    FROM mv__grpc_runs_45d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+        AND time >= toStartOfDay(toTimeZone(now(), tz)) - INTERVAL ({{ Int16(days, 45) }} + 1) DAY
+        AND fromUnixTimestamp64Milli(cronTimestamp) >= toStartOfDay(toTimeZone(now(), tz)) - INTERVAL {{ Int16(days, 45) }} DAY
+    GROUP BY localDay, monitorId, cronTimestamp
+)
+GROUP BY localDay, monitorId
+ORDER BY localDay DESC
+{% else %}
+SELECT
+    day,
+    monitorId,
+    count() AS count,
+    countIf(e * 2 < n AND (e + d) * 2 < n) AS ok,
+    countIf(e * 2 >= n) AS error,
+    countIf(e * 2 < n AND (e + d) * 2 >= n) AS degraded
+FROM (
+    SELECT
+        time AS day,
+        monitorId,
+        cronTimestamp,
+        uniqExactMerge(regions) AS n,
+        uniqExactMerge(errorRegions) AS e,
+        uniqExactMerge(degradedRegions) AS d
+    FROM mv__grpc_runs_45d__v0
+    WHERE monitorId IN {{ Array(monitorIds, 'String', '4433') }}
+        AND time >= toStartOfDay(now()) - INTERVAL {{ Int16(days, 45) }} DAY
+    GROUP BY day, monitorId, cronTimestamp
+)
+GROUP BY day, monitorId
+ORDER BY day DESC
+{% end %}
+
+TYPE endpoint

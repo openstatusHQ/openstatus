@@ -1,16 +1,18 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 import {
   formatDate,
   formatDateRange,
   formatDateRangeParts,
   formatDateTime,
+  formatMilliseconds,
+  formatMillisecondsRange,
   formatTime,
+  formatTimestamp,
 } from "./formatter";
 
-// Timestamps must render in UTC so every viewer sees the authored time,
-// independent of their local timezone (see #2302).
+// Timestamps render in UTC unless a zone is given, never in the viewer's
+// local timezone, so every viewer sees the same time (see #2302).
 describe("formatter UTC rendering", () => {
   describe("formatDate", () => {
     test("renders the UTC day with a long month", () => {
@@ -31,13 +33,13 @@ describe("formatter UTC rendering", () => {
       );
     });
 
-    test("ignores a caller attempt to override the timezone", () => {
-      // 01:00 UTC is still Jan 14 in New York, so a leaked override would read "January 14".
+    test("renders the day of the requested zone", () => {
+      // 22:30 UTC on the 15th is already the 16th in Tokyo
       expect(
-        formatDate(new Date("2024-01-15T01:00:00Z"), {
-          timeZone: "America/New_York",
+        formatDate(new Date("2024-01-15T22:30:00Z"), {
+          timeZone: "Asia/Tokyo",
         }),
-      ).toBe("January 15, 2024");
+      ).toBe("January 16, 2024");
     });
   });
 
@@ -46,6 +48,16 @@ describe("formatter UTC rendering", () => {
       expect(formatDateTime(new Date("2024-01-15T14:30:00Z"))).toBe(
         "January 15 at 2:30 PM",
       );
+    });
+
+    test("renders the wall-clock time of the requested zone", () => {
+      expect(
+        formatDateTime(
+          new Date("2024-01-15T22:30:00Z"),
+          undefined,
+          "Asia/Tokyo",
+        ),
+      ).toBe("January 16 at 7:30 AM");
     });
   });
 
@@ -57,6 +69,58 @@ describe("formatter UTC rendering", () => {
     test("does not shift a late-UTC time into the next day's hours", () => {
       expect(formatTime(new Date("2024-01-15T23:30:00Z"))).toBe("11:30 PM");
     });
+  });
+});
+
+describe("formatTimestamp", () => {
+  const date = new Date("2024-01-15T22:30:00Z");
+
+  test("renders the compact banner stamp in UTC by default", () => {
+    expect(formatTimestamp(date)).toBe("Jan 15, 2024 22:30");
+  });
+
+  test("renders the wall-clock time of the requested zone", () => {
+    expect(formatTimestamp(date, "Asia/Tokyo")).toBe("Jan 16, 2024 07:30");
+    expect(formatTimestamp(date, "America/New_York")).toBe(
+      "Jan 15, 2024 17:30",
+    );
+  });
+
+  test("appends seconds for the hover card rows", () => {
+    const at = new Date("2024-01-15T22:30:05Z");
+    expect(formatTimestamp(at, "Asia/Tokyo", true)).toBe(
+      "Jan 16, 2024 07:30:05",
+    );
+  });
+});
+
+describe("formatMilliseconds", () => {
+  test("renders sub-second values with the millisecond unit", () => {
+    expect(formatMilliseconds(111)).toBe("111 ms");
+  });
+
+  test("converts values above 1000ms to seconds", () => {
+    expect(formatMilliseconds(1500)).toBe("1.5 sec");
+  });
+});
+
+describe("formatMillisecondsRange", () => {
+  // Regression: both endpoints below 1000ms must stay in milliseconds — the
+  // `min` side was previously divided by 1000, rendering 111ms as "0.111".
+  test("keeps both endpoints in milliseconds when both are below 1000", () => {
+    expect(formatMillisecondsRange(111, 155)).toBe("111 - 155 ms");
+  });
+
+  test("does not divide the min endpoint by 1000 for sub-second ranges", () => {
+    expect(formatMillisecondsRange(111, 155)).not.toContain("0.111");
+  });
+
+  test("shares the seconds unit when both endpoints exceed 1000", () => {
+    expect(formatMillisecondsRange(1500, 2300)).toBe("1.5 - 2.3 sec");
+  });
+
+  test("formats each endpoint with its own unit for a mixed range", () => {
+    expect(formatMillisecondsRange(500, 1500)).toBe("500 ms - 1.5 sec");
   });
 });
 
@@ -107,6 +171,30 @@ describe("formatDateRange", () => {
 
   test("renders `All time` when no bounds are given", () => {
     expect(formatDateRange()).toBe("All time");
+  });
+
+  describe("in a time zone", () => {
+    // 01:00-05:00 on Jan 16 in Tokyo, still Jan 15 in UTC
+    const from = new Date("2024-01-15T16:00:00Z");
+    const to = new Date("2024-01-15T20:00:00Z");
+
+    test("collapses a range that is one day in the zone", () => {
+      expect(formatDateRange(from, to, undefined, "Asia/Tokyo")).toBe(
+        "January 16 at 1:00 AM - 5:00 AM",
+      );
+      expect(formatDateRange(from, to)).toBe("January 15 at 4:00 PM - 8:00 PM");
+    });
+
+    test("renders date-only when the range spans whole days in the zone", () => {
+      expect(
+        formatDateRange(
+          new Date("2024-01-14T15:00:00.000Z"),
+          new Date("2024-01-17T14:59:59.999Z"),
+          undefined,
+          "Asia/Tokyo",
+        ),
+      ).toBe("January 15, 2024 - January 17, 2024");
+    });
   });
 });
 

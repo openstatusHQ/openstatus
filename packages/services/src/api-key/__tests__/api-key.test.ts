@@ -1,12 +1,10 @@
 import { eq } from "@openstatus/db";
 import { apiKey } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   makeUserCtx,
   readAuditLog,
@@ -15,6 +13,7 @@ import {
 import type { ServiceContext } from "../../context";
 import { ForbiddenError, NotFoundError } from "../../errors";
 import {
+  authenticateApiKey,
   createApiKey,
   listApiKeys,
   revokeApiKey,
@@ -27,7 +26,7 @@ const TEST_PREFIX = "svc-apikey-test";
 let teamCtx: ServiceContext;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
 });
 
@@ -41,7 +40,7 @@ describe("createApiKey", () => {
       });
 
       expect(token).toMatch(/^os_[a-f0-9]{32}$/);
-      expect(key.workspaceId).toBe(SEEDED_WORKSPACE_TEAM_ID);
+      expect(key.workspaceId).toBe(teamCtx.workspace.id);
 
       const stored = await tx
         .select({ hashedToken: apiKey.hashedToken })
@@ -111,9 +110,8 @@ describe("createApiKey", () => {
 
   test("rejects read-only actor", async () => {
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       const readOnlyCtx = {
-        ...makeApiKeyCtx(team, {
+        ...makeApiKeyCtx(teamCtx.workspace, {
           keyId: "k-read",
           userId: 1,
           scopes: ["read"],
@@ -123,6 +121,25 @@ describe("createApiKey", () => {
       await expect(
         createApiKey({
           ctx: readOnlyCtx,
+          input: { name: `${TEST_PREFIX}-rejects-read` },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+    });
+  });
+
+  test("rejects write key: admin verbs need the admin scope", async () => {
+    await withTestTransaction(async (tx) => {
+      const writeKeyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-write",
+          userId: 1,
+          scopes: ["write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        createApiKey({
+          ctx: writeKeyCtx,
           input: { name: `${TEST_PREFIX}-rejects-read` },
         }),
       ).rejects.toBeInstanceOf(ForbiddenError);
@@ -173,7 +190,6 @@ describe("revokeApiKey", () => {
 
   test("self-revoke carve-out: read-only key can revoke itself", async () => {
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       // Create the key as a user so we get a real row id back.
       const { key } = await createApiKey({
         ctx: { ...teamCtx, db: tx },
@@ -182,7 +198,7 @@ describe("revokeApiKey", () => {
 
       // Now revoke as the read-only key itself — should succeed.
       const selfCtx = {
-        ...makeApiKeyCtx(team, {
+        ...makeApiKeyCtx(teamCtx.workspace, {
           keyId: String(key.id),
           userId: 1,
           scopes: ["read"],
@@ -244,7 +260,6 @@ describe("revokeApiKey", () => {
 
   test("read-only actor cannot revoke a different key", async () => {
     await withTestTransaction(async (tx) => {
-      const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
       const { key } = await createApiKey({
         ctx: { ...teamCtx, db: tx },
         input: { name: `${TEST_PREFIX}-other-key` },
@@ -252,7 +267,7 @@ describe("revokeApiKey", () => {
 
       // Read-only actor with a different keyId tries to revoke `key`.
       const otherCtx = {
-        ...makeApiKeyCtx(team, {
+        ...makeApiKeyCtx(teamCtx.workspace, {
           keyId: "different-key-id",
           userId: 1,
           scopes: ["read"],
@@ -340,6 +355,64 @@ describe("updateApiKeyLastUsed", () => {
         .where(eq(apiKey.id, key.id))
         .get();
       expect(row?.lastUsedAt).toBeInstanceOf(Date);
+    });
+  });
+});
+
+describe("authenticateApiKey", () => {
+  test("an unknown prefix is reported as unknown", async () => {
+    await withTestTransaction(async (tx) => {
+      const result = await authenticateApiKey(`os_${"0".repeat(32)}`, {
+        db: tx,
+      });
+      expect(result.status).toBe("unknown");
+    });
+  });
+
+  test("a valid token returns the key without its hash", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token, key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-auth-valid` },
+      });
+      const result = await authenticateApiKey(token, { db: tx });
+      expect(result.status).toBe("valid");
+      if (result.status !== "valid") return;
+      expect(result.key.id).toBe(key.id);
+      expect(result.key.workspaceId).toBe(teamCtx.workspace.id);
+      expect(result.key).not.toHaveProperty("hashedToken");
+    });
+  });
+
+  test("a matching prefix with the wrong secret is invalid", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-auth-invalid` },
+      });
+      const last = token.endsWith("a") ? "b" : "a";
+      const result = await authenticateApiKey(`${token.slice(0, -1)}${last}`, {
+        db: tx,
+      });
+      expect(result.status).toBe("invalid");
+    });
+  });
+
+  test("an expired key is reported as expired", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const { token, key } = await createApiKey({
+        ctx,
+        input: { name: `${TEST_PREFIX}-auth-expired` },
+      });
+      await tx
+        .update(apiKey)
+        .set({ expiresAt: new Date(Date.now() - 60_000) })
+        .where(eq(apiKey.id, key.id));
+      const result = await authenticateApiKey(token, { db: tx });
+      expect(result.status).toBe("expired");
     });
   });
 });

@@ -1,6 +1,7 @@
 import { selectUserSchema, workspaceRole } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import type { ListMembersInput } from "./schemas";
 
@@ -16,6 +17,7 @@ export async function listMembers(args: {
   ctx: ServiceContext;
   input?: ListMembersInput;
 }): Promise<Member[]> {
+  requireScope(args.ctx, "admin");
   const db = getReadDb(args.ctx);
 
   const rows = await db.query.usersToWorkspaces.findMany({

@@ -23,6 +23,7 @@ import {
   statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type {
   Maintenance,
@@ -30,6 +31,7 @@ import type {
   PageComponent,
   StatusReport,
 } from "../types";
+import { getPageComponentInWorkspace } from "./internal";
 import { ListPageComponentsInput } from "./schemas";
 
 type PageComponentGroupRow = typeof pageComponentGroup.$inferSelect;
@@ -170,6 +172,7 @@ export async function listPageComponents(args: {
   input: ListPageComponentsInput;
 }): Promise<PageComponentWithRelations[]> {
   const { ctx } = args;
+  requireScope(ctx, "pages:read");
   const input = ListPageComponentsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -190,4 +193,18 @@ export async function listPageComponents(args: {
     .all();
 
   return enrichPageComponentsBatch(db, rows, ctx.workspace.id);
+}
+
+/** One component in the caller's workspace, raw DB shape. */
+export async function getPageComponent(args: {
+  ctx: ServiceContext;
+  input: { id: number };
+}): Promise<typeof pageComponent.$inferSelect> {
+  const { ctx } = args;
+  requireScope(ctx, "pages:read");
+  return getPageComponentInWorkspace({
+    tx: ctx.db ?? defaultDb,
+    id: args.input.id,
+    workspaceId: ctx.workspace.id,
+  });
 }

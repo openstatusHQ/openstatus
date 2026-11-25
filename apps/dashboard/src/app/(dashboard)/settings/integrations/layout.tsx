@@ -16,8 +16,7 @@ export default async function Layout({
   children: React.ReactNode;
 }) {
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.integrationRouter.list.queryOptions());
-  await queryClient.prefetchQuery(trpc.workspace.get.queryOptions());
+  await queryClient.prefetchQuery(trpc.oauth.listGrants.queryOptions());
 
   return (
     <HydrateClient>

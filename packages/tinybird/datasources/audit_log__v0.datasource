@@ -1,4 +1,3 @@
-VERSION 0
 
 SCHEMA >
     `action` String `json:$.action`,

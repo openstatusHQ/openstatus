@@ -1,5 +1,7 @@
 ---
 title: "SLA vs SLO vs SLI Explained"
+seo:
+  title: "SLO vs SLA vs SLI: What's the Difference?"
 description: "Learn the critical differences between SLAs, SLOs, and SLIs. Understand how to measure service reliability, set internal targets, and make customer promises without over-committing or under-delivering."
 author: "openstatus"
 publishedAt: "2026-02-09"
@@ -23,6 +25,19 @@ Getting this wrong has real consequences. Either you over-promise to customers a
 
 Here's what they actually mean, how they relate, and how to use them without screwing up.
 
+## The Short Version
+
+|  | SLI | SLO | SLA |
+| --- | --- | --- | --- |
+| **What it is** | A measurement | An internal target | An external promise |
+| **Who it's for** | Your monitoring | Your team | Your customers |
+| **Example** | P95 latency is 180ms | P95 under 200ms, 99.5% of the time | 99.9% uptime, or 10% credit |
+| **If you miss it** | Nothing — it's just data | Slow down, spend error budget | Service credits, refunds, churn |
+| **Who sets it** | Engineering | Engineering and product | Legal and sales |
+
+The rest of this guide is why each row reads the way it does, and what breaks when
+teams collapse the three columns into one.
+
 ## What They Actually Are
 
 ### SLI (Service Level Indicator)
@@ -35,6 +50,14 @@ An SLI is a specific metric you can measure. Not a feeling. Not a goal. A measur
 - Error rate: less than 0.1% of requests fail
 
 "The site should feel fast" is not an SLI. "P95 page load time under 2 seconds" is an SLI. The difference is whether you can measure it objectively and build alerts around it.
+
+Picking a latency SLI means being precise about which number you mean — request
+latency and end-to-end response time are not the same measurement, and teams often
+write an SLO against one while their monitoring reports the other. See
+[latency vs response time](/docs/concept/latency-vs-response-time) before you commit
+a threshold to writing. The same trap applies to availability: a single uptime
+percentage hides how the downtime was distributed, which is why
+[uptime percentage alone is misleading](/guides/why-uptime-percentage-is-misleading).
 
 ### SLO (Service Level Objective)
 
@@ -72,6 +95,14 @@ SLA → External promise to customers (has buffer from SLO)
 - **SLA:** 99.9% uptime (customer promise)
 
 The gap between your SLO (99.95%) and your SLA (99.9%) is your **error budget**. That's the buffer that lets you deploy new features, run experiments, and handle incidents without immediately violating customer agreements.
+
+Those two percentages translate into wall-clock minutes, and the difference is
+bigger than it looks — 99.9% and 99.95% are 43 and 21 minutes per month
+respectively. Run your own numbers with the [SLA calculator](/play/uptime-sla)
+before agreeing to a tier.
+
+For how to calculate that budget, alert on its burn rate, and decide what happens
+when it runs out, see [error budgets explained](/guides/error-budgets-explained).
 
 If your SLO and SLA are the same number, one bad deploy breaks your promises. You've eliminated the margin that makes continuous deployment possible.
 
@@ -133,7 +164,7 @@ The lesson: don't promise what you can't measure. And don't measure without sett
 
 Your public page shows the commitments you've made to customers. Historical uptime against SLA targets. Incident timelines showing when you came close to—but didn't breach—agreements.
 
-This is customer-facing transparency. It's not real-time operations data. It's curated, reviewed communication.
+This is customer-facing transparency. It's not real-time operations data. It's curated, reviewed communication. A [public status page](/status-page) is where the SLA number stops being a clause in a contract and becomes something a customer can check for themselves.
 
 ### Private Status Page (Track SLOs)
 
@@ -146,6 +177,8 @@ This is operational data for teams making deployment and incident response decis
 Whether public or private, everything flows from the SLIs. If you can't measure it, you can't set targets for it. And if you can't set targets, you definitely can't promise it to customers.
 
 Your entire reliability strategy—internal targets, customer promises, incident response priorities—depends on accurate, continuous SLI measurement.
+
+"Continuous" is the load-bearing word. An SLI sampled by hand, or from one machine in one region, will not tell you whether you met a monthly target. [openstatus uptime monitoring](/uptime-monitoring) runs the checks on a schedule from 28 regions and keeps the history, so the number you report at the end of the month is one you measured rather than one you estimated.
 
 ## "But We're Just Three People"
 
@@ -182,9 +215,41 @@ If you can't measure it, you can't manage it. And you definitely shouldn't promi
 
 ---
 
-**OpenStatus tracks all three layers.** Monitor your SLIs, set alerts for SLO thresholds, and display SLA compliance on public and private status pages—all from one platform.
+**openstatus tracks all three layers.** Monitor your SLIs, set alerts for SLO thresholds, and display SLA compliance on public and private status pages—all from one platform.
 
 <ButtonLink href="/play/uptime-sla">Try out our SLA calculator</ButtonLink>
+
+## Frequently asked questions
+
+<Details summary="What's the difference between SLI, SLO, and SLA?">
+
+An SLI is a specific metric you measure (like API response time). An SLO is your internal target for that metric (stricter than customer promises). An SLA is your public promise to customers with consequences if you fail. They stack: SLI → SLO → SLA.
+
+</Details>
+
+<Details summary="Why should my SLO be stricter than my SLA?">
+
+The gap between your SLO and SLA is your error budget - the buffer that lets you deploy features, run experiments, and handle incidents without immediately violating customer agreements. If they're the same number, one bad deploy breaks your promises.
+
+</Details>
+
+<Details summary="What makes a good SLI?">
+
+A good SLI is specific, measurable, and directly correlates with user experience. If the metric degrades and users don't notice, it's not an SLI. Examples: P95 API response time under 200ms, 99.9% uptime, error rate below 0.1%.
+
+</Details>
+
+<Details summary="How many SLIs should I track?">
+
+Limit yourself to 3-5 SLIs. Pick metrics that directly impact user experience. Tracking too many creates alert fatigue and buries real issues under noise. Focus on what matters: availability, latency, and error rates.
+
+</Details>
+
+<Details summary="Do startups need SLAs?">
+
+No. Early-stage startups should skip SLAs entirely until they have the infrastructure to measure and maintain them. Focus on tracking 2-3 SLIs, being transparent about uptime, and communicating clearly during incidents. Formalize SLAs when enterprise customers start requesting them.
+
+</Details>
 
 ---
 

@@ -4,9 +4,10 @@
 export {
   parseHttpAssertions,
   parseDnsAssertions,
-  httpAssertionsToDbJson,
-  dnsAssertionsToDbJson,
+  protoHttpAssertionsToService,
+  protoDnsAssertionsToService,
   type HttpAssertions,
+  type MonitorAssertionInput,
 } from "./assertions";
 
 // Comparators
@@ -29,6 +30,10 @@ export {
   stringToHttpMethod,
   httpMethodToString,
   stringToMonitorStatus,
+  stringToHeartbeatPingKind,
+  heartbeatPingKindToString,
+  stringToGrpcTlsMode,
+  grpcTlsModeToString,
   timeRangeToKey,
   type TimeRangeKey,
 } from "./enums";
@@ -37,8 +42,8 @@ export {
 export {
   toProtoHeaders,
   parseOpenTelemetry,
-  headersToDbJson,
-  openTelemetryToDb,
+  protoHeadersToService,
+  protoOpenTelemetryToService,
 } from "./headers";
 
 // Monitors
@@ -46,6 +51,10 @@ export {
   dbMonitorToHttpProto,
   dbMonitorToTcpProto,
   dbMonitorToDnsProto,
+  dbMonitorToGrpcProto,
+  dbMonitorToIcmpProto,
+  dbMonitorToHeartbeatProto,
+  type HeartbeatPingState,
 } from "./monitors";
 
 // Regions
@@ -56,4 +65,5 @@ export {
   regionsToStrings,
   regionsToDbString,
   validateRegions,
+  getDeprecatedRegions,
 } from "./regions";

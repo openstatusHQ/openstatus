@@ -25,9 +25,9 @@ import { useFormSheetDirty } from "@/components/forms/form-sheet";
 import { CheckboxTree } from "@/components/ui/checkbox-tree";
 
 const schema = z.object({
-  name: z.string(),
+  name: z.string().trim().min(1, "Name is required"),
   provider: z.literal("sms"),
-  data: z.string(),
+  data: z.string().trim().min(1, "Phone number is required"),
   monitors: z.array(z.number()),
 });
 
@@ -108,7 +108,7 @@ export function FormSms({
             name="data"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>SMS</FormLabel>
+                <FormLabel>Phone Number</FormLabel>
                 <FormControl>
                   <Input placeholder="+1234567890" type="tel" {...field} />
                 </FormControl>

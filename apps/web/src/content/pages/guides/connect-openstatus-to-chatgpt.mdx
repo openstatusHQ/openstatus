@@ -1,0 +1,198 @@
+---
+title: "Connect Openstatus to ChatGPT (MCP Setup Guide)"
+author: "openstatus"
+description: "Add the openstatus MCP server to ChatGPT as a custom connector so the assistant can list status pages, draft incidents, and schedule maintenance from chat — sign in with OAuth, with audit-logged mutations and explicit notify semantics."
+publishedAt: "2026-09-08"
+updatedAt: "2026-09-08"
+category: "education"
+howto:
+  totalTime: "PT3M"
+  steps:
+    - name: "Enable developer mode"
+      text: "In ChatGPT on the web, open Settings > Security and login and switch on Developer mode. Custom MCP connectors with write tools require it."
+      url: "#step-1-enable-developer-mode"
+    - name: "Add openstatus as a custom connector"
+      text: "Open Settings > Connectors > Create, name it openstatus, enter https://api.openstatus.dev/mcp as the MCP server URL, and pick OAuth as the authentication method."
+      url: "#step-2-add-a-custom-connector"
+    - name: "Approve the connection"
+      text: "Sign in to openstatus in the browser, pick the workspace and read-only or read & write access, and approve."
+      url: "#step-3-approve-the-connection"
+    - name: "Enable the connector in a chat and run your first prompt"
+      text: "In a new chat, open the + menu, choose Developer mode, select openstatus, and ask ChatGPT to list your status pages or draft an incident. ChatGPT asks for confirmation before each write tool call."
+      url: "#step-4-run-your-first-prompt"
+faq:
+  - question: "Does ChatGPT support remote MCP servers like openstatus?"
+    answer: "Yes. With developer mode enabled, ChatGPT on the web lets you add any remote MCP server as a custom connector. Add openstatus under Settings > Connectors > Create with the URL `https://api.openstatus.dev/mcp` and OAuth authentication; the connection is authorized in your browser. No local process, no config file."
+  - question: "Which ChatGPT plans can add custom MCP connectors?"
+    answer: "Developer mode is available on Plus, Pro, Business, Enterprise, and Edu plans on the web. On Business, Enterprise, and Edu, a workspace admin may need to allow custom connectors first. The Free plan cannot add custom connectors."
+  - question: "Do I need an API key to connect ChatGPT?"
+    answer: "No. The openstatus MCP server is an OAuth 2.1 authorization server. ChatGPT opens a consent screen where you pick a workspace and an access level; tokens are issued and refreshed automatically. ChatGPT's connector form has no header field, so an API key cannot be used here — use the ChatGPT desktop app or Codex for header-based auth."
+  - question: "Why don't I see the openstatus tools in a chat?"
+    answer: "Custom connectors are enabled per chat. Open the + menu, choose Developer mode, and select openstatus. If the connector shows as disconnected in Settings > Connectors, open it and reconnect."
+  - question: "Can ChatGPT accidentally notify subscribers when posting an incident?"
+    answer: "No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. ChatGPT must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. ChatGPT also asks you to confirm every write tool call and shows the exact JSON it is about to send. `update_status_report` is metadata-only and has no notify path at all."
+  - question: "How do I give ChatGPT read-only access to my workspace?"
+    answer: "Pick Read-only on the consent screen. The MCP server filters write tools out of the `tools/list` response for read-only connections, so ChatGPT sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session."
+  - question: "Where do I revoke ChatGPT's access?"
+    answer: "In the openstatus dashboard under Settings > Integrations > Connected apps. Revoking signs the connector out immediately; reconnect from ChatGPT's connector settings. Members revoke their own connections, owners and admins can revoke any."
+  - question: "Where do MCP-driven changes appear in the audit log?"
+    answer: "Every mutation routed through ChatGPT lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the connection (`oat_<id>`) and `actor_user_id` set to the user who approved the connection. This separates AI-driven actions from CLI, dashboard, and direct API mutations."
+---
+
+**TL;DR** — Switch on developer mode, add `https://api.openstatus.dev/mcp` as a custom connector, approve it in the browser, and ChatGPT can drive your status pages: list incidents, draft updates, and schedule maintenance from the chat window. No config file, no key to paste. Every mutation is audit-logged under `actor_type = 'mcp'` and notifications never fire unless you explicitly approve.
+
+---
+
+[ChatGPT](https://chatgpt.com) speaks the [Model Context Protocol](https://modelcontextprotocol.io) (MCP) — the open standard for letting AI assistants reach external services with explicit approval on every call. This guide wires the [openstatus MCP server](/tooling/mcp-server) into ChatGPT as a custom connector so you can list status pages, post incident updates, resolve reports, and schedule maintenance windows without leaving the chat window.
+
+## Why connect Openstatus to ChatGPT?
+
+If your incident workflow already runs through chat, ChatGPT is a natural drafting surface. Concrete scenarios:
+
+- **Drafting customer-facing copy** — turn engineer shorthand ("payment-api spiking p99 to 6s") into the calm, structured update your subscribers expect, then approve and post it without leaving the chat.
+- **On-call summaries** — "Summarize the last 7 days of incidents on my API page" in seconds, useful for weekly reviews and handoffs.
+- **Read-only audits** — a teammate connects with read-only access; their ChatGPT sees only the `list_*` and `get_*` tools and cannot mutate anything.
+
+The same server works with [Codex](/guides/connect-openstatus-to-codex), [Claude Code](/guides/connect-openstatus-to-claude-code), [Claude Desktop](/guides/connect-openstatus-to-claude-desktop), [opencode](/guides/connect-openstatus-to-opencode), Cursor, and any other MCP-compatible client.
+
+## Prerequisites
+
+- An [openstatus account](https://www.openstatus.dev) with at least one status page.
+- ChatGPT on the web, signed in on a Plus, Pro, Business, Enterprise, or Edu plan. On Business, Enterprise, and Edu, a workspace admin may need to allow custom connectors.
+
+## Step 1: Enable developer mode
+
+Custom MCP connectors — and especially their write tools — are gated behind developer mode. Open **Settings > Security and login** and switch on **Developer mode**. This is a one-time toggle per account.
+
+## Step 2: Add a custom connector
+
+Open **Settings > Connectors** and click **Create**. Fill in:
+
+- **Name:** `openstatus`
+- **Description:** something short, e.g. `Status pages, incidents, and maintenance windows`
+- **MCP server URL:** `https://api.openstatus.dev/mcp`
+- **Authentication:** **OAuth**
+
+Leave the client id and client secret fields empty. openstatus registers the connector automatically; there is nothing to enter.
+
+## Step 3: Approve the connection
+
+Click **Create**. ChatGPT opens the openstatus consent screen:
+
+- **Workspace** — the workspace this connector can reach. If you belong to several, pick one; each workspace is a separate connection.
+- **Access** — **Read-only** lets ChatGPT list status pages, reports, monitors, and maintenance windows. **Read & write** also lets it create reports, append updates, resolve incidents, and schedule maintenance.
+
+Click **Approve**. You land back in ChatGPT with the connector listed and its tools discovered. Tokens refresh in the background; you won't be asked again unless the connection is revoked.
+
+The connector's detail page in Settings lists every tool the server exposed. With read-only access you'll see `list_status_pages`, `list_status_reports`, `list_maintenances`, `list_monitors`, and the other read tools. With read & write you'll also see `create_status_report`, `add_status_report_update`, `update_status_report`, `resolve_status_report`, and `create_maintenance`. You can switch individual tools off here, and **Refresh** re-syncs the list after a scope change.
+
+## Step 4: Run your first prompt
+
+Custom connectors are enabled per chat. Open a new chat, click the **+** button, choose **Developer mode**, and select **openstatus**.
+
+Try a read tool first:
+
+```
+List my openstatus status pages
+```
+
+ChatGPT calls `list_status_pages` and returns the slugs and ids in your workspace. With write access, draft an incident — ChatGPT shows you the title, status, message, and notify choice **before** firing:
+
+```
+Draft a status report on my "api" page: investigating elevated latency on the payment endpoint, do not notify subscribers yet
+```
+
+Write tools require confirmation by default. ChatGPT shows the exact JSON it is about to send to `create_status_report`, including `notify: false`; review it, then approve or deny. You can remember the choice for the rest of the conversation.
+
+## Prefer a desktop or terminal surface?
+
+ChatGPT's connector form has no header field, so this path is OAuth-only. If you need an API key — a shared machine, or a key that outlives your user — use the **ChatGPT desktop app** or **Codex** instead. Both read the same `~/.codex/config.toml`: in the desktop app open **Settings > MCP servers > Add server**, choose **Streamable HTTP**, enter the URL, save, and choose **Restart**. The [Codex guide](/guides/connect-openstatus-to-codex) covers the header-based setup.
+
+## Built-in safeguards
+
+Four properties make this safe enough for a real incident:
+
+- **Workspace-scoped consent** — the token only reaches the workspace you approved, with the access level you chose. A connector that asks for write access can be downgraded to read-only on the consent screen.
+- **Required `notify: boolean`** on every mutation tool — the schema rejects calls that omit it, so the LLM has to ask before firing. `notify: false` is a hard guarantee that no subscriber alert goes out.
+- **Lookup-before-mutate** — `create_status_report` and `create_maintenance` require a `pageId` resolved via `list_status_pages` rather than guessed.
+- **Audit log attribution** — every mutation lands in the audit log under `actor_type = 'mcp'`, with `actor_id` (the connection) and `actor_user_id` (the user who approved it), so AI-driven actions are traceable as a separate slice. Connecting and revoking are audited too.
+
+## Disconnecting
+
+Open **Settings > Integrations > Connected apps** in the openstatus dashboard. Each connection shows the client, its access, who connected it, and when it was last used. Revoke it and the connector's next call fails; reconnect from ChatGPT's **Settings > Connectors**. Members revoke their own connections; owners and admins can revoke any. Removing a member from the workspace revokes their connections automatically.
+
+To remove the connector on the ChatGPT side, open it under **Settings > Connectors** and delete it.
+
+## Troubleshooting
+
+- **There is no Create button under Connectors.** Developer mode is off, or your plan or workspace doesn't allow custom connectors. Check **Settings > Security and login > Developer mode**, then ask your workspace admin if the button is still missing.
+- **The connector shows as disconnected.** Open **Settings > Connectors**, click openstatus, and reconnect. This is expected after a revoke from the dashboard.
+- **Tools don't show up in a chat.** Connectors are enabled per chat: click **+**, choose **Developer mode**, and select openstatus.
+- **"Tool not available" when creating an incident.** Your connection is read-only. Reconnect and pick **Read & write** on the consent screen, then **Refresh** the tool list on the connector's detail page.
+- **ChatGPT reports that the server URL failed to load.** Sanity-check reachability with `curl -i -H "Accept: text/event-stream" https://api.openstatus.dev/mcp` — a `401` with a `WWW-Authenticate` header means the server is up and waiting for a sign-in.
+
+## What's next?
+
+- **[MCP Server Reference](/docs/reference/mcp-server)** — full tool schema, error codes, OAuth endpoints, and scope mechanics.
+- **[Connect to Codex](/guides/connect-openstatus-to-codex)** — terminal-shaped variant of this guide.
+- **[Connect to Claude Desktop](/guides/connect-openstatus-to-claude-desktop)** — the same setup for Anthropic's chat client.
+- **[Openstatus CLI](/tooling/cli)** — for terminal workflows that don't need an LLM in the loop.
+- **[Slack Agent](/status-page#slack-agent)** — for teams that live in Slack.
+
+## Frequently asked questions
+
+<Details summary="Does ChatGPT support remote MCP servers like openstatus?">
+
+Yes. With developer mode enabled, ChatGPT on the web lets you add any remote MCP server as a custom connector. Add openstatus under **Settings > Connectors > Create** with the URL `https://api.openstatus.dev/mcp` and **OAuth** authentication; the connection is authorized in your browser. No local process, no config file.
+
+</Details>
+
+<Details summary="Which ChatGPT plans can add custom MCP connectors?">
+
+Developer mode is available on Plus, Pro, Business, Enterprise, and Edu plans on the web. On Business, Enterprise, and Edu, a workspace admin may need to allow custom connectors first. The Free plan cannot add custom connectors.
+
+</Details>
+
+<Details summary="Do I need an API key to connect ChatGPT?">
+
+No. The openstatus MCP server is an OAuth 2.1 authorization server. ChatGPT opens a consent screen where you pick a workspace and an access level; tokens are issued and refreshed automatically. ChatGPT's connector form has no header field, so an API key cannot be used here — use the ChatGPT desktop app or [Codex](/guides/connect-openstatus-to-codex) for header-based auth.
+
+</Details>
+
+<Details summary="Why don't I see the openstatus tools in a chat?">
+
+Custom connectors are enabled per chat. Open the **+** menu, choose **Developer mode**, and select openstatus. If the connector shows as disconnected in **Settings > Connectors**, open it and reconnect.
+
+</Details>
+
+<Details summary="Can ChatGPT accidentally notify subscribers when posting an incident?">
+
+No. Every publishing tool (`create_status_report`, `add_status_report_update`, `resolve_status_report`, `create_maintenance`) requires an explicit `notify: true | false` field. ChatGPT must show the notify choice before firing the tool, so an LLM cannot quietly fan out an alert by omitting the flag. ChatGPT also asks you to confirm every write tool call and shows the exact JSON it is about to send. `update_status_report` is metadata-only and has no notify path at all.
+
+</Details>
+
+<Details summary="How do I give ChatGPT read-only access to my workspace?">
+
+Pick **Read-only** on the consent screen. The MCP server filters write tools out of the `tools/list` response for read-only connections, so ChatGPT sees only the 14 read tools — status pages and page components, status reports, maintenances, monitors, response logs, notifications, private locations, and audit logs. None of the `create_*`, `update_*`, or `resolve_*` tools are registered for that session.
+
+</Details>
+
+<Details summary="Where do I revoke ChatGPT's access?">
+
+In the openstatus dashboard under **Settings > Integrations > Connected apps**. Revoking signs the connector out immediately; reconnect from ChatGPT's connector settings. Members revoke their own connections, owners and admins can revoke any.
+
+</Details>
+
+<Details summary="Where do MCP-driven changes appear in the audit log?">
+
+Every mutation routed through ChatGPT lands in the audit log under `actor_type = 'mcp'`, with `actor_id` set to the connection (`oat_<id>`) and `actor_user_id` set to the user who approved the connection. This separates AI-driven actions from CLI, dashboard, and direct API mutations.
+
+</Details>
+
+---
+
+Start free. No credit card required. Configure ChatGPT to drive your status pages in under 5 minutes.
+
+<ButtonLink href="https://app.openstatus.dev">Try openstatus free</ButtonLink>
+
+---

@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 import type { z } from "zod";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { ListAuditLogsInput } from "./schemas";
 
@@ -50,6 +51,10 @@ export async function listAuditLogs(args: {
   input?: ListAuditLogsInput;
 }): Promise<ListAuditLogsResult> {
   const { ctx } = args;
+  // The log spans every group, so no group scope fits; `read` is what the
+  // agent tools are gated on.
+  // oxlint-disable-next-line openstatus/services-no-legacy-scope -- cross-group read, see above
+  requireScope(ctx, "read");
   const input = ListAuditLogsInput.parse(args.input);
   const db = getReadDb(ctx);
 

@@ -1,5 +1,5 @@
-import { db, sql } from "@openstatus/db";
-import { page } from "@openstatus/db/src/schema";
+import { resolveClientIp } from "@openstatus/services/page-access";
+import { getPublicStatusPageIndexing } from "@openstatus/services/public-status-page";
 import { cookies, headers } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -11,7 +11,6 @@ import {
 } from "../../../../content/status-json";
 import { getBaseUrl } from "../../../../lib/base-url";
 import { stripHostPort } from "../../../../lib/domain";
-import { resolveClientIp } from "../../../../lib/http/client-ip";
 import { computeETag, isNotModified } from "../../../../lib/http/etag";
 import { resolveGate } from "../../../../lib/proxy/resolve-gate";
 import { resolveRoute } from "../../../../lib/resolve-route";
@@ -55,18 +54,17 @@ export async function GET(
     });
     if (!route) return json({ error: "Not Found" }, 404);
 
-    const row = await db
-      .select({ slug: page.slug })
-      .from(page)
-      .where(
-        sql`lower(${page.slug}) = ${route.prefix} OR lower(${page.customDomain}) = ${route.prefix}`,
-      )
-      .get();
+    const row = await getPublicStatusPageIndexing({
+      input: { slug: route.prefix },
+    });
     if (!row) return json({ error: "Not Found" }, 404);
 
     const queryClient = getQueryClient();
     const data = await queryClient.fetchQuery(
-      trpc.statusPage.get.queryOptions({ slug: row.slug }),
+      trpc.statusPage.get.queryOptions({
+        slug: row.slug,
+        pw: url.searchParams.get("pw"),
+      }),
     );
     if (!data) return json({ error: "Not Found" }, 404);
 

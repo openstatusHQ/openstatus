@@ -68,6 +68,7 @@ const INCIDENT_UPDATE_STATUS_MAP: Record<string, StatusReportStatus> = {
   identified: "identified",
   monitoring: "monitoring",
   resolved: "resolved",
+  postmortem: "resolved",
   scheduled: "investigating",
   in_progress: "investigating",
   verifying: "monitoring",
@@ -89,13 +90,14 @@ export function mapIncidentToStatusReport(
 ) {
   const updates = [...(incident.incident_updates ?? [])].sort(
     (a, b) =>
-      new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      new Date(a.display_at ?? a.created_at).getTime() -
+      new Date(b.display_at ?? b.created_at).getTime(),
   );
 
   const mappedUpdates = updates.map((u) => ({
     status: mapIncidentUpdateStatus(u.status),
     message: u.body ?? "",
-    date: new Date(u.created_at),
+    date: new Date(u.display_at ?? u.created_at),
     componentImpacts: (u.affected_components ?? []).flatMap(
       (c): UpdateComponentImpact[] => {
         const impact = COMPONENT_IMPACT_MAP[c.new_status];
@@ -105,7 +107,13 @@ export function mapIncidentToStatusReport(
     ),
   }));
 
-  if (incident.postmortem_body && mappedUpdates.length > 0) {
+  // A `postmortem` update already carries the postmortem as its body.
+  const hasPostmortemUpdate = updates.some((u) => u.status === "postmortem");
+  if (
+    incident.postmortem_body &&
+    !hasPostmortemUpdate &&
+    mappedUpdates.length > 0
+  ) {
     const last = mappedUpdates[mappedUpdates.length - 1];
     last.message = `${last.message}\n\n---\n\n**Postmortem**\n\n${incident.postmortem_body}`;
   }

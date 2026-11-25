@@ -116,6 +116,13 @@ export function registerPutDNSMonitor(api: typeof monitorsApi) {
       .where(eq(monitor.id, Number(_monitor.id)))
       .returning()
       .get();
+
+    if (!_newMonitor) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
+    }
     const otelHeader = _newMonitor.otelHeaders
       ? z
           .array(

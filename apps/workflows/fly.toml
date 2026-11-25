@@ -6,13 +6,19 @@
 app = 'openstatus-workflows'
 primary_region = 'ams'
 
+# Long enough for shutdownOutbox to wait out an in-flight provider call
+# (NOTIFICATION_TIMEOUT_MS + 5s) before Fly SIGKILLs.
+kill_timeout = "25s"
+# serve.ts only handles SIGTERM; Fly defaults to SIGINT.
+kill_signal = "SIGTERM"
+
 [build]
   dockerfile = "./Dockerfile"
 
 [[vm]]
   cpu_kind = "shared"
-  cpus = 6
-  memory_mb = 1536
+  cpus = 2
+  memory_mb = 1024
 
 [http_service]
   internal_port = 3000
@@ -21,6 +27,13 @@ primary_region = 'ams'
   auto_start_machines = true
   min_machines_running = 2
   processes = ["app"]
+
+# Past soft_limit the proxy prefers the other machine, so cdg takes overflow
+# from ams. hard_limit is set high because Fly has no way to disable it.
+[http_service.concurrency]
+  type = "requests"
+  soft_limit = 5
+  hard_limit = 1000
 
 [deploy]
   strategy = "rolling"
@@ -36,6 +49,12 @@ primary_region = 'ams'
   NODE_ENV = "production"
   PORT = "3000"
 
+# The embedded replica mirrors the whole Turso database; a full volume stops
+# its sync silently and the checker dispatch reads a frozen snapshot.
 [[mounts]]
-    source = "libsql_data"
-    destination = "/app/data"
+  source = "libsql_data"
+  destination = "/app/data"
+  initial_size = "5gb"
+  auto_extend_size_threshold = 80
+  auto_extend_size_increment = "1gb"
+  auto_extend_size_limit = "10gb"

@@ -1,151 +1,52 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@openstatus/ui/components/ui/alert-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Row } from "@tanstack/react-table";
-import { isTRPCClientError } from "@trpc/client";
-import { useMemo, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
 import { getActions } from "@/data/incidents.client";
-import { useTRPC } from "@/lib/trpc/client";
 
-type Incident = RouterOutputs["incident"]["list"][number];
+import {
+  DialogConfirmIncident,
+  type IncidentConfirmType,
+} from "./dialog-confirm";
+import { DialogExcuseIncident } from "./dialog-excuse";
 
-interface DataTableRowActionsProps {
-  row: Row<Incident>;
-}
+type Incident = RouterOutputs["monitorIncident"]["list"][number];
 
-export function DataTableRowActions({ row }: DataTableRowActionsProps) {
-  const [isPending, startTransition] = useTransition();
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const acknowledgeIncidentMutation = useMutation(
-    trpc.incident.acknowledge.mutationOptions({
-      onSuccess: () => {
-        queryClient.refetchQueries({
-          queryKey: trpc.incident.list.queryKey({
-            monitorId: row.original.monitorId,
-          }),
-        });
-      },
-    }),
-  );
-  const resolveIncidentMutation = useMutation(
-    trpc.incident.resolve.mutationOptions({
-      onSuccess: () => {
-        queryClient.refetchQueries({
-          queryKey: trpc.incident.list.queryKey({
-            monitorId: row.original.monitorId,
-          }),
-        });
-      },
-    }),
-  );
-  const deleteIncidentMutation = useMutation(
-    trpc.incident.delete.mutationOptions({
-      onSuccess: () => {
-        queryClient.refetchQueries({
-          queryKey: trpc.incident.list.queryKey({
-            monitorId: row.original.monitorId,
-          }),
-        });
-      },
-    }),
-  );
-
-  const [type, setType] = useState<"acknowledge" | "resolve" | null>(null);
-  const open = useMemo(() => type !== null, [type]);
+export function IncidentRowActions({ incident }: { incident: Incident }) {
+  const [type, setType] = useState<IncidentConfirmType | null>(null);
+  const [excuseOpen, setExcuseOpen] = useState(false);
 
   const actions = getActions({
-    acknowledge: row.original.acknowledgedAt
+    acknowledge: incident.acknowledgedAt
       ? undefined
       : () => setType("acknowledge"),
-    resolve: row.original.resolvedAt ? undefined : () => setType("resolve"),
-  });
-
-  const handleConfirm = async () => {
-    try {
-      startTransition(async () => {
-        const promise =
-          type === "acknowledge"
-            ? acknowledgeIncidentMutation.mutateAsync({
-                id: row.original.id,
-              })
-            : resolveIncidentMutation.mutateAsync({
-                id: row.original.id,
-              });
-        toast.promise(promise, {
-          loading: "Confirming...",
-          success: "Confirmed",
-          error: (error) => {
-            if (isTRPCClientError(error)) {
-              return error.message;
-            }
-            return "Failed to confirm";
-          },
-        });
-        await promise;
-        setType(null);
-      });
-    } catch (error) {
-      console.error("Failed to confirm:", error);
-    }
-  };
+    resolve: incident.resolvedAt ? undefined : () => setType("resolve"),
+    // only a resolved outage can be excused
+    excuse: incident.resolvedAt ? () => setExcuseOpen(true) : undefined,
+    unexcuse: () => setType("unexcuse"),
+  }).filter(
+    // excuse and unexcuse swap places; the other is noise, not a disabled option
+    (action) => action.id !== (incident.excusedAt ? "excuse" : "unexcuse"),
+  );
 
   return (
     <>
-      <QuickActions
-        actions={actions}
-        deleteAction={{
-          confirmationValue: row.original.title || "incident",
-          submitAction: async () => {
-            await deleteIncidentMutation.mutateAsync({
-              id: row.original.id,
-            });
-          },
+      <QuickActions actions={actions} />
+      <DialogConfirmIncident
+        incident={incident}
+        type={type}
+        open={type !== null}
+        onOpenChange={(open) => {
+          if (!open) setType(null);
         }}
       />
-      <AlertDialog open={open} onOpenChange={() => setType(null)}>
-        <AlertDialogContent
-          onCloseAutoFocus={(event) => {
-            // NOTE: bug where the body is not clickable after closing the alert dialog
-            event.preventDefault();
-            document.body.style.pointerEvents = "";
-          }}
-        >
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirm your action</AlertDialogTitle>
-            <AlertDialogDescription>
-              You are about to <span className="font-semibold">{type}</span>{" "}
-              this incident.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleConfirm();
-              }}
-              disabled={isPending}
-            >
-              {isPending ? "Confirming..." : "Confirm"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <DialogExcuseIncident
+        incident={incident}
+        open={excuseOpen}
+        onOpenChange={setExcuseOpen}
+      />
     </>
   );
 }

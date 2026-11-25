@@ -1,17 +1,11 @@
+import { isEmailDomainAuthorized } from "@openstatus/services/page-access";
+import { statusLabel } from "@openstatus/utils";
 import { Feed } from "feed";
 import { notFound, unauthorized } from "next/navigation";
 
 import { auth } from "../../../../../../../lib/auth";
 import { getBaseUrl } from "../../../../../../../lib/base-url";
 import { getQueryClient, trpc } from "../../../../../../../lib/trpc/server";
-
-const STATUS_LABELS = {
-  investigating: "Investigating",
-  identified: "Identified",
-  monitoring: "Monitoring",
-  resolved: "Resolved",
-  maintenance: "Maintenance",
-} as const;
 
 export const revalidate = 60;
 
@@ -44,14 +38,16 @@ export async function GET(
     if (_page.accessType === "email-domain") {
       const session = await auth();
       const user = session?.user;
-      const allowedDomains = _page.authEmailDomains ?? [];
-      if (!user || !user.email) return unauthorized();
-      if (!allowedDomains.includes(user.email.split("@")[1]))
+      if (!isEmailDomainAuthorized(user?.email, _page.authEmailDomains)) {
         return unauthorized();
+      }
     }
 
     const page = await queryClient.fetchQuery(
-      trpc.statusPage.get.queryOptions({ slug: domain }),
+      trpc.statusPage.get.queryOptions({
+        slug: domain,
+        pw: new URL(_request.url).searchParams.get("pw"),
+      }),
     );
     if (!page) return notFound();
 
@@ -88,21 +84,29 @@ export async function GET(
 
     for (const maintenance of page.maintenances ?? []) {
       const maintenanceUrl = `${baseUrl}/events/maintenance/${maintenance.id}`;
+      const updates = [...(maintenance.maintenanceUpdates ?? [])].sort(
+        (a, b) => b.date.getTime() - a.date.getTime() || b.id - a.id,
+      );
+      const description = updates.length
+        ? updates
+            .map((update) => `${update.date.toISOString()}: ${update.message}`)
+            .join("\n\n")
+        : maintenance.message;
       feed.addItem({
         id: maintenanceUrl,
-        title: `Maintenance - ${maintenance.title}`,
+        title: `${statusLabel("maintenance")} - ${maintenance.title}`,
         link: maintenanceUrl,
-        description: maintenance.message,
+        description,
         date: maintenance.updatedAt ?? maintenance.createdAt ?? new Date(),
       });
     }
 
     for (const statusReport of page.statusReports ?? []) {
       const statusReportUrl = `${baseUrl}/events/report/${statusReport.id}`;
-      const status = STATUS_LABELS[statusReport.status] ?? statusReport.status;
+      const status = statusLabel(statusReport.status);
       const statusReportUpdates = (statusReport.statusReportUpdates ?? [])
         .map((update) => {
-          const updateStatus = STATUS_LABELS[update.status] ?? update.status;
+          const updateStatus = statusLabel(update.status);
           return `${updateStatus}: ${update.message}.`;
         })
         .join("\n\n");

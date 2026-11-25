@@ -1,5 +1,5 @@
 ARG GO_VERSION=1
-FROM golang:1.25.1-alpine as builder
+FROM golang:1.27.3-alpine as builder
 
 WORKDIR /usr/src/app
 COPY go.mod go.sum ./

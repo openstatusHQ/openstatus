@@ -1,7 +1,7 @@
 import { createRoute } from "@hono/zod-openapi";
 import { Events } from "@openstatus/analytics";
 import { and, db, eq } from "@openstatus/db";
-import { incidentTable } from "@openstatus/db/src/schema/incidents";
+import { monitorIncidentTable } from "@openstatus/db/src/schema/monitor_incidents";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
@@ -58,11 +58,11 @@ export function registerPutIncident(app: typeof incidentsApi) {
 
     const _incident = await db
       .select()
-      .from(incidentTable)
+      .from(monitorIncidentTable)
       .where(
         and(
-          eq(incidentTable.id, Number(id)),
-          eq(incidentTable.workspaceId, workspaceId),
+          eq(monitorIncidentTable.id, Number(id)),
+          eq(monitorIncidentTable.workspaceId, workspaceId),
         ),
       )
       .get();
@@ -75,10 +75,10 @@ export function registerPutIncident(app: typeof incidentsApi) {
     }
 
     const _newIncident = await db
-      .update(incidentTable)
+      .update(monitorIncidentTable)
       // TODO: we should set the acknowledgedBy and resolvedBy fields
       .set({ ...input, updatedAt: new Date() })
-      .where(eq(incidentTable.id, Number(id)))
+      .where(eq(monitorIncidentTable.id, Number(id)))
       .returning()
       .get();
 

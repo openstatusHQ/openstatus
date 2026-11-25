@@ -1,10 +1,28 @@
-import { Cog, Copy, Trash2 } from "lucide-react";
+import { Settings, Copy, Delete } from "@openstatus/icons";
+
+/** An open report first, then by title. */
+export function compareStatusPages(
+  a: { title: string; hasActiveStatusReport: boolean },
+  b: { title: string; hasActiveStatusReport: boolean },
+): number {
+  return (
+    Number(b.hasActiveStatusReport) - Number(a.hasActiveStatusReport) ||
+    a.title.localeCompare(b.title)
+  );
+}
+
+export function getPageUrl(page: {
+  slug: string;
+  customDomain: string | null;
+}): string {
+  return `https://${page.customDomain || `${page.slug}.openstatus.dev`}`;
+}
 
 export const actions = [
   {
     id: "edit",
     label: "Settings",
-    icon: Cog,
+    icon: Settings,
     variant: "default" as const,
   },
   {
@@ -22,7 +40,7 @@ export const actions = [
   {
     id: "delete",
     label: "Delete",
-    icon: Trash2,
+    icon: Delete,
     variant: "destructive" as const,
   },
 ] as const;

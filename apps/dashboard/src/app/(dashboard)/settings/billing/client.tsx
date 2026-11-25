@@ -1,20 +1,21 @@
 "use client";
 
+import { TRIAL_DAYS } from "@openstatus/api/src/router/stripe/trial-config";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import type { Limits } from "@openstatus/db/src/schema/plan/schema";
+import type { Addons, Limits } from "@openstatus/db/src/schema/plan/schema";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useCookieState } from "@openstatus/ui/hooks/use-cookie-state";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useQueryStates } from "nuqs";
-import { useEffect, useMemo, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 
-import { BillingAddons } from "@/components/content/billing-addons";
-import { BillingProgress } from "@/components/content/billing-progress";
 import {
-  EmptyStateContainer,
-  EmptyStateTitle,
-} from "@/components/content/empty-state";
+  BillingAddons,
+  BillingAddonUnavailable,
+} from "@/components/content/billing-addons";
+import { BillingProgress } from "@/components/content/billing-progress";
 import {
   Section,
   SectionDescription,
@@ -23,6 +24,7 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { DataTable } from "@/components/data-table/billing/data-table";
+import { UpgradeIntentDialog } from "@/components/dialogs/upgrade-intent";
 import {
   FormCard,
   FormCardContent,
@@ -34,14 +36,20 @@ import {
   FormCardSeparator,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import { formatDate } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 
 import { searchParamsParsers } from "./search-params";
 
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? "https://app.openstatus.dev"
-    : "http://localhost:3000";
+const ADDON_ORDER = [
+  "email-domain-protection",
+  "ip-restriction",
+  "white-label",
+  "custom-theme",
+  "status-pages",
+  "monitors",
+  "sso",
+] satisfies (keyof Addons)[];
 
 function calculateTotalRequests(limits: Limits) {
   const monitors = limits.monitors;
@@ -79,8 +87,37 @@ export function Client() {
   const trpc = useTRPC();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [{ success }, setSearchParams] = useQueryStates(searchParamsParsers);
+  const queryClient = useQueryClient();
+  const [{ success, setup, trial, highlight }, setSearchParams] =
+    useQueryStates(searchParamsParsers);
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
+  // Captured on mount: the toasts clear the params while the dialog is open.
+  const [askIntent, setAskIntent] = useState(Boolean(success || trial));
+  const [startedTrial] = useState(Boolean(trial));
+  const { data: hasIntent } = useQuery({
+    ...trpc.feedback.hasSubmitted.queryOptions({ source: "upgrade-intent" }),
+    enabled: askIntent,
+  });
+  const [currency] = useCookieState("x-currency", "USD");
+  const trialCheckoutMutation = useMutation(
+    trpc.stripeRouter.getCheckoutSession.mutationOptions({
+      onSuccess: (data) => {
+        if (data?.type === "checkout" && data.session.url) {
+          window.location.assign(data.session.url);
+        }
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
+  const { data: usage } = useQuery(trpc.workspace.usage.queryOptions());
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
   const customerPortalMutation = useMutation(
     trpc.stripeRouter.getUserCustomerPortal.mutationOptions({
       onSuccess: (url) => {
@@ -115,6 +152,61 @@ export function Client() {
     }
   }, [success, setSearchParams]);
 
+  useEffect(() => {
+    if (!trial) return;
+    let cancelled = false;
+    queryClient.invalidateQueries({
+      queryKey: trpc.stripeRouter.getBillingInterval.queryKey(),
+    });
+    // The webhook can land after the redirect, and anyone can open
+    // `?trial=true`, so only toast once the workspace is actually trialing.
+    (async () => {
+      for (let attempt = 0; attempt < 5 && !cancelled; attempt++) {
+        const ws = await queryClient.fetchQuery({
+          ...trpc.workspace.get.queryOptions(),
+          staleTime: 0,
+        });
+        if (cancelled) return;
+        if (ws.trialDaysLeft !== null) {
+          toast.success(`Your ${TRIAL_DAYS}-day Starter trial has started`, {
+            duration: 5_000,
+            onAutoClose: () => setSearchParams({ trial: null }),
+            onDismiss: () => setSearchParams({ trial: null }),
+          });
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 1_000));
+      }
+      if (cancelled) return;
+      // Webhook still pending: confirm checkout without claiming the trial.
+      toast.success("Checkout complete", {
+        description: "Your trial starts as soon as Stripe confirms it.",
+        duration: 5_000,
+        onAutoClose: () => setSearchParams({ trial: null }),
+        onDismiss: () => setSearchParams({ trial: null }),
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [trial, setSearchParams, queryClient, trpc]);
+
+  useEffect(() => {
+    if (setup) {
+      queryClient.invalidateQueries({
+        queryKey: trpc.workspace.get.queryKey(),
+      });
+      setTimeout(() => {
+        toast.success("Payment method added", {
+          description: "Your plan continues after the trial.",
+          duration: 5_000,
+          onAutoClose: () => setSearchParams({ setup: null }),
+          onDismiss: () => setSearchParams({ setup: null }),
+        });
+      }, 500);
+    }
+  }, [setup, setSearchParams, queryClient, trpc]);
+
   const totalRequests = useMemo(() => {
     const httpRequests = httpWorkspace30d?.data?.reduce(
       (acc, curr) => acc + curr.count,
@@ -130,10 +222,16 @@ export function Client() {
   if (!workspace) return null;
 
   const planAddons = allPlans[workspace.plan].addons;
+  const trialDaysLeft = workspace.trialDaysLeft;
 
   return (
     <SectionGroup>
-      <Section>
+      <UpgradeIntentDialog
+        open={askIntent && hasIntent === false}
+        onOpenChange={setAskIntent}
+        trial={startedTrial}
+      />
+      <Section id="billing">
         <SectionHeader>
           <SectionTitle>Billing</SectionTitle>
           <SectionDescription>
@@ -141,7 +239,84 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <FormCardGroup>
-          <FormCard>
+          {workspace?.trial.eligible ? (
+            <FormCard id="start-trial">
+              <FormCardHeader>
+                <FormCardTitle>
+                  Try Starter free for {TRIAL_DAYS} days
+                </FormCardTitle>
+                <FormCardDescription>
+                  1 min checks, more monitors, custom domain, Slack and on-call
+                  integrations.
+                </FormCardDescription>
+              </FormCardHeader>
+              <FormCardFooter>
+                <FormCardFooterInfo>
+                  <span className="text-foreground font-medium">
+                    No credit card needed.
+                  </span>{" "}
+                  The workspace returns to Hobby after {TRIAL_DAYS} days unless
+                  you add a card.
+                </FormCardFooterInfo>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    trialCheckoutMutation.mutate({
+                      trial: true,
+                      plan: "starter",
+                      interval: "monthly",
+                      surface: "billing",
+                      currency: currency || "USD",
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?trial=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    })
+                  }
+                  disabled={trialCheckoutMutation.isPending}
+                >
+                  {trialCheckoutMutation.isPending
+                    ? "Loading..."
+                    : "Start trial"}
+                </Button>
+              </FormCardFooter>
+            </FormCard>
+          ) : null}
+          {workspace.trialEndsAt && trialDaysLeft ? (
+            <FormCard id="trial">
+              <FormCardHeader>
+                <FormCardTitle>Starter trial</FormCardTitle>
+                <FormCardDescription>
+                  <span className="text-foreground font-medium">
+                    {trialDaysLeft}
+                  </span>{" "}
+                  {trialDaysLeft === 1 ? "day" : "days"} left. Your trial ends
+                  on {formatDate(workspace.trialEndsAt)}.
+                </FormCardDescription>
+              </FormCardHeader>
+              <FormCardFooter>
+                <FormCardFooterInfo>
+                  Add a payment method to keep Starter, or move to the free plan
+                  after the trial.
+                </FormCardFooterInfo>
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    })
+                  }
+                  disabled={paymentMethodSetupMutation.isPending}
+                >
+                  {paymentMethodSetupMutation.isPending
+                    ? "Loading..."
+                    : "Add payment method"}
+                </Button>
+              </FormCardFooter>
+            </FormCard>
+          ) : null}
+          <FormCard id="usage">
             <FormCardHeader>
               <FormCardTitle>Usage</FormCardTitle>
               <FormCardDescription>
@@ -152,22 +327,22 @@ export function Client() {
               <div className="flex flex-col gap-2">
                 <BillingProgress
                   label="Monitors"
-                  value={workspace.usage?.monitors ?? 0}
+                  value={usage?.monitors ?? 0}
                   max={workspace.limits.monitors}
                 />
                 <BillingProgress
                   label="Status Pages"
-                  value={workspace.usage?.pages ?? 0}
+                  value={usage?.pages ?? 0}
                   max={workspace.limits["status-pages"]}
                 />
                 <BillingProgress
                   label="Page Components"
-                  value={workspace.usage?.pageComponents ?? 0}
+                  value={usage?.pageComponents ?? 0}
                   max={workspace.limits["page-components"]}
                 />
                 <BillingProgress
                   label="Notifications"
-                  value={workspace.usage?.notifications ?? 0}
+                  value={usage?.notifications ?? 0}
                   max={workspace.limits["notification-channels"]}
                 />
                 <BillingProgress
@@ -178,7 +353,7 @@ export function Client() {
               </div>
             </FormCardContent>
             <FormCardSeparator />
-            <FormCardContent>
+            <FormCardContent id="add-ons" className="scroll-mt-28">
               <FormCardHeader className="col-span-full px-0 pt-0 pb-0">
                 <FormCardTitle>Add-ons</FormCardTitle>
                 <FormCardDescription>
@@ -186,45 +361,24 @@ export function Client() {
                 </FormCardDescription>
               </FormCardHeader>
               <div className="flex flex-col gap-2 pt-4">
-                {planAddons["email-domain-protection"] ? (
-                  <BillingAddons
-                    label={planAddons["email-domain-protection"].title}
-                    description={
-                      planAddons["email-domain-protection"].description
-                    }
-                    addon="email-domain-protection"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons["ip-restriction"] ? (
-                  <BillingAddons
-                    label={planAddons["ip-restriction"].title}
-                    description={planAddons["ip-restriction"].description}
-                    addon="ip-restriction"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons["white-label"] ? (
-                  <BillingAddons
-                    label={planAddons["white-label"].title}
-                    description={planAddons["white-label"].description}
-                    addon="white-label"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {planAddons["status-pages"] ? (
-                  <BillingAddons
-                    label={planAddons["status-pages"].title}
-                    description={planAddons["status-pages"].description}
-                    addon="status-pages"
-                    workspace={workspace}
-                  />
-                ) : null}
-                {Object.keys(planAddons).length === 0 ? (
-                  <EmptyStateContainer>
-                    <EmptyStateTitle>No add-ons available</EmptyStateTitle>
-                  </EmptyStateContainer>
-                ) : null}
+                {ADDON_ORDER.map((addon) => {
+                  const config = planAddons[addon];
+                  return config ? (
+                    <BillingAddons
+                      key={addon}
+                      label={config.title}
+                      description={config.description}
+                      addon={addon}
+                      workspace={workspace}
+                    />
+                  ) : (
+                    <BillingAddonUnavailable
+                      key={addon}
+                      addon={addon}
+                      plan={workspace.plan}
+                    />
+                  );
+                })}
               </div>
             </FormCardContent>
             <FormCardFooter>
@@ -240,7 +394,7 @@ export function Client() {
                   startTransition(async () => {
                     await customerPortalMutation.mutateAsync({
                       workspaceSlug: workspace.slug,
-                      returnUrl: `${BASE_URL}/settings/billing`,
+                      returnUrl: `${window.location.origin}/settings/billing`,
                     });
                   });
                 }}
@@ -250,7 +404,7 @@ export function Client() {
               </Button>
             </FormCardFooter>
           </FormCard>
-          <FormCard>
+          <FormCard id="plans">
             <FormCardHeader>
               <FormCardTitle>Plans</FormCardTitle>
               <FormCardDescription>
@@ -259,7 +413,7 @@ export function Client() {
             </FormCardHeader>
             <FormCardSeparator />
             <FormCardContent className="pb-4">
-              <DataTable />
+              <DataTable highlight={highlight} />
             </FormCardContent>
           </FormCard>
         </FormCardGroup>

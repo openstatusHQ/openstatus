@@ -20,7 +20,7 @@ export function getColumns(
     {
       id: "icon",
       accessorFn: (row) => row.action,
-      header: () => null,
+      header: "",
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {

@@ -47,11 +47,11 @@ export default function Page() {
 
   return (
     <SectionGroup>
-      <Section>
+      <Section id="account">
         <SectionHeader>
           <SectionTitle>Account</SectionTitle>
         </SectionHeader>
-        <FormCard>
+        <FormCard id="personal-information">
           <FormCardUpgrade />
           <FormCardHeader>
             <FormCardTitle>Personal Information</FormCardTitle>
@@ -60,12 +60,12 @@ export default function Page() {
             </FormCardDescription>
           </FormCardHeader>
           <FormCardContent>
-            <form className="grid gap-4">
-              <div className="grid gap-1.5">
+            <form className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-1.5 sm:col-span-2">
                 <Label>Name</Label>
                 <Input defaultValue={user?.name ?? undefined} />
               </div>
-              <div className="grid gap-1.5">
+              <div className="grid gap-1.5 sm:col-span-2">
                 <Label>Email</Label>
                 <Input defaultValue={user?.email ?? undefined} />
               </div>
@@ -77,7 +77,7 @@ export default function Page() {
             </FormCardFooterInfo>
           </FormCardFooter>
         </FormCard>
-        <FormCard>
+        <FormCard id="appearance">
           <FormCardHeader>
             <FormCardTitle>Appearance</FormCardTitle>
             <FormCardDescription>
@@ -88,7 +88,7 @@ export default function Page() {
             <ThemeToggle />
           </FormCardContent>
         </FormCard>
-        <FormCard variant="destructive">
+        <FormCard id="delete-account" variant="destructive">
           <FormCardHeader>
             <FormCardTitle>Delete Account</FormCardTitle>
             <FormCardDescription>
@@ -102,7 +102,7 @@ export default function Page() {
                 You must cancel your subscription before deleting your account.
                 Go to{" "}
                 <a
-                  href="/settings/billing"
+                  href="/settings/billing#usage"
                   className="font-medium underline underline-offset-4"
                 >
                   Billing

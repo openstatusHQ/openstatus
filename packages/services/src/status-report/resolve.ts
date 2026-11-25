@@ -1,3 +1,4 @@
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import {
   type AddStatusReportUpdateResult,
@@ -10,14 +11,14 @@ import { ResolveStatusReportInput } from "./schemas";
  * Slack's `resolveStatusReport` action has a named call site with matching
  * intent; audit action is still `status_report_update.create` (same db path).
  *
- * No scope check here: the delegate (`addStatusReportUpdate`) enforces
- * `requireScope(ctx, 'write')` itself, and a wrapper double-check is
- * pure noise.
+ * Checks the scope before parsing, like every verb; the delegate checks it
+ * again.
  */
 export async function resolveStatusReport(args: {
   ctx: ServiceContext;
   input: ResolveStatusReportInput;
 }): Promise<AddStatusReportUpdateResult> {
+  requireScope(args.ctx, "incidents:write");
   const input = ResolveStatusReportInput.parse(args.input);
   return addStatusReportUpdate({
     ctx: args.ctx,

@@ -1,5 +1,6 @@
 "use client";
 
+import { Expand, Add } from "@openstatus/icons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,10 +17,11 @@ import {
 } from "@openstatus/ui/components/ui/sidebar";
 import { cn } from "@openstatus/ui/lib/utils";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronsUpDown, Plus } from "lucide-react";
+import Link from "next/link";
 
-import { Link } from "@/components/common/link";
+import { TRIAL_BANNER_DAYS } from "@/lib/trial";
 import { useTRPC } from "@/lib/trpc/client";
+import { switchWorkspace } from "@/lib/workspace-cookie";
 
 interface WorkspaceSwitcherProps {
   className?: string;
@@ -34,10 +36,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
 
   if (!workspace) return null;
 
-  function handleClick(slug: string) {
-    document.cookie = `workspace-slug=${slug}; path=/;`;
-    window.location.href = "/overview";
-  }
+  const trialDaysLeft = workspace.trialDaysLeft;
 
   return (
     <SidebarMenu>
@@ -67,12 +66,25 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
                   <span className="font-commit-mono tracking-tight">
                     {workspace.slug}
                   </span>{" "}
-                  <span className="text-muted-foreground">
-                    {workspace.plan === "team" ? "pro" : workspace.plan}
-                  </span>
+                  {trialDaysLeft ? (
+                    <span
+                      className={cn(
+                        "tabular-nums",
+                        trialDaysLeft <= TRIAL_BANNER_DAYS
+                          ? "text-warning"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      trial · {trialDaysLeft}d
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      {workspace.plan === "team" ? "pro" : workspace.plan}
+                    </span>
+                  )}
                 </div>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <Expand className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -88,7 +100,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
               <DropdownMenuItem
                 key={workspace.id}
                 onClick={() => {
-                  handleClick(workspace.slug);
+                  switchWorkspace(workspace.slug);
                   setOpenMobile(false);
                 }}
                 className="gap-2 p-2"
@@ -104,7 +116,7 @@ export function WorkspaceSwitcher({ className, side }: WorkspaceSwitcherProps) {
             <DropdownMenuSeparator />
             <DropdownMenuItem className="gap-2 p-2" asChild>
               <Link href="/settings/general">
-                <Plus />
+                <Add />
                 <div className="font-commit-mono text-muted-foreground tracking-tight">
                   Add team member
                 </div>

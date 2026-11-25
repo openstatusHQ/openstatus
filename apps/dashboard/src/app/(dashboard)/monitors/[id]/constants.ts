@@ -1,13 +1,14 @@
-import type { LucideIcon } from "lucide-react";
-import { Cog, LayoutGrid, Logs, Siren } from "lucide-react";
+import type { IconType } from "@openstatus/icons";
+import { Alert, Calendar, Logs, Overview, Settings } from "@openstatus/icons";
 
 export const MONITOR_TABS: {
   value: string;
   label: string;
-  icon: LucideIcon;
+  icon: IconType;
 }[] = [
-  { value: "overview", label: "Overview", icon: LayoutGrid },
+  { value: "overview", label: "Overview", icon: Overview },
   { value: "logs", label: "Logs", icon: Logs },
-  { value: "incidents", label: "Incidents", icon: Siren },
-  { value: "edit", label: "Settings", icon: Cog },
+  { value: "history", label: "History", icon: Calendar },
+  { value: "outages", label: "Outages", icon: Alert },
+  { value: "edit", label: "Settings", icon: Settings },
 ];

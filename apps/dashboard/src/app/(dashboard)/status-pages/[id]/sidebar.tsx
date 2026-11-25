@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink } from "@openstatus/icons";
 import {
   Tooltip,
   TooltipContent,
@@ -8,12 +9,14 @@ import {
 } from "@openstatus/ui/components/ui/tooltip";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink } from "lucide-react";
 import { useParams } from "next/navigation";
 
 import { Link } from "@/components/common/link";
+import { TableCellEmpty } from "@/components/data-table/table-cell-empty";
 import { TableCellLink } from "@/components/data-table/table-cell-link";
 import { SidebarRight } from "@/components/nav/sidebar-right";
+import { getPageUrl } from "@/data/status-pages.client";
+import { configurationLabels } from "@/data/uptime-calculation.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Sidebar() {
@@ -26,7 +29,7 @@ export function Sidebar() {
 
   if (!statusPage) return null;
 
-  const BADGE_URL = `https://${statusPage.slug}.openstatus.dev/badge/v2`;
+  const BADGE_URL = `${getPageUrl(statusPage)}/badge/v2`;
 
   return (
     <SidebarRight
@@ -38,13 +41,7 @@ export function Sidebar() {
             {
               label: "Slug",
               value: (
-                <Link
-                  href={`https://${
-                    statusPage.customDomain ||
-                    `${statusPage.slug}.openstatus.dev`
-                  }`}
-                  target="_blank"
-                >
+                <Link href={getPageUrl(statusPage)} target="_blank">
                   {statusPage.slug}
                 </Link>
               ),
@@ -53,7 +50,12 @@ export function Sidebar() {
               label: "Access Type",
               value: statusPage.accessType,
             },
-            { label: "Domain", value: statusPage.customDomain || "-" },
+            {
+              label: "Domain",
+              value: statusPage.customDomain || (
+                <TableCellEmpty>No domain</TableCellEmpty>
+              ),
+            },
             {
               label: "Favicon",
               value: statusPage.icon ? (
@@ -61,7 +63,7 @@ export function Sidebar() {
                   <img src={statusPage.icon} alt="favicon" />
                 </div>
               ) : (
-                "-"
+                <TableCellEmpty>No favicon</TableCellEmpty>
               ),
             },
             {
@@ -94,18 +96,28 @@ export function Sidebar() {
           items: [
             {
               label: "Theme",
-              value: statusPage.configuration?.theme ?? "-",
+              value: statusPage.configuration?.theme ?? (
+                <TableCellEmpty>Default</TableCellEmpty>
+              ),
             },
             {
-              label: "Bar Value",
-              value: statusPage.configuration?.type ?? "-",
+              label: "Status source",
+              value: statusPage.configuration?.type ? (
+                configurationLabels.type[statusPage.configuration.type]
+              ) : (
+                <TableCellEmpty>Default</TableCellEmpty>
+              ),
             },
             {
-              label: "Card Value",
-              value: statusPage.configuration?.value ?? "-",
+              label: "Card shows",
+              value: statusPage.configuration?.value ? (
+                configurationLabels.value[statusPage.configuration.value]
+              ) : (
+                <TableCellEmpty>Default</TableCellEmpty>
+              ),
             },
             {
-              label: "Show Uptime",
+              label: "Show uptime percentage",
               value: statusPage.configuration?.uptime ? "Yes" : "No",
             },
           ],
@@ -136,12 +148,7 @@ export function Sidebar() {
       footerButton={{
         onClick: () =>
           typeof window !== "undefined" &&
-          window.open(
-            `https://${
-              statusPage.customDomain || `${statusPage.slug}.openstatus.dev`
-            }`,
-            "_blank",
-          ),
+          window.open(getPageUrl(statusPage), "_blank"),
         children: (
           <>
             <ExternalLink />

@@ -1,0 +1,831 @@
+import { and, db, eq, or } from "@openstatus/db";
+import { PAGE_MAINTENANCE_PAUSE_ENDS } from "@openstatus/db/src/maintenance";
+import {
+  auditLog,
+  maintenance,
+  monitor,
+  monitorIncidentTable,
+  monitorMaintenanceWindow,
+  notification,
+  notificationTrigger,
+  notificationsToMonitors,
+  page,
+  pageComponent,
+  privateLocation,
+  privateLocationMonitorStatus,
+  privateLocationToMonitors,
+} from "@openstatus/db/src/schema";
+import {
+  createMaintenanceWindow,
+  createPage,
+  createPageMaintenance,
+  createTestWorkspace,
+} from "@openstatus/db/src/test/factories";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
+
+import { env } from "../env";
+import { stubPublishAuditLog } from "../test/stub-audit-log";
+import { checkerRoute } from "./index";
+import { providerToFunction } from "./utils";
+
+// biome-ignore lint/suspicious/noExplicitAny: heterogeneous provider stubs
+type AnyStub = MockInstance;
+
+// Dedicated fixtures, not seed monitor 1: other suites (api/server maintenance
+// tests) put seed monitor 1 under active maintenance on the shared CI database,
+// which makes updateStatusPrivate suppress notifications and drop the write.
+let workspaceId: number;
+const TEST_MONITOR_ID = 9101;
+const INACTIVE_MONITOR_ID = 9102;
+const TEST_NOTIFICATION_ID = 9101;
+const TEST_LOCATION_ID = 9001;
+const UNATTACHED_LOCATION_ID = 9002;
+const PRIVATE_ONLY_MONITOR_ID = 9103;
+const PRIVATE_LOCATION_2_ID = 9003;
+const PRIVATE_LOCATION_3_ID = 9004;
+
+const cronSecret = env().CRON_SECRET;
+
+type PrivatePayload = {
+  monitorId: string;
+  privateLocationId: string;
+  status: string;
+  cronTimestamp: number;
+  statusCode?: number;
+  latency?: number;
+  message?: string;
+};
+
+function post(payload: PrivatePayload, authorization = `Basic ${cronSecret}`) {
+  return checkerRoute.request("/updateStatusPrivate", {
+    method: "POST",
+    headers: {
+      Authorization: authorization,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+}
+
+function readRow(monitorId: number, privateLocationId: number) {
+  return db
+    .select()
+    .from(privateLocationMonitorStatus)
+    .where(
+      and(
+        eq(privateLocationMonitorStatus.monitorId, monitorId),
+        eq(privateLocationMonitorStatus.privateLocationId, privateLocationId),
+      ),
+    )
+    .get();
+}
+
+describe("updateStatusPrivate", () => {
+  let stubs: AnyStub[] = [];
+  let mockEmailSendAlert: AnyStub;
+  let mockEmailSendRecovery: AnyStub;
+  let mockEmailSendDegraded: AnyStub;
+
+  beforeAll(async () => {
+    workspaceId = (await createTestWorkspace()).workspace.id;
+    await db
+      .insert(monitor)
+      .values([
+        {
+          id: TEST_MONITOR_ID,
+          workspaceId,
+          active: true,
+          url: "https://private-location.test",
+          name: "Private Location Test Monitor",
+          periodicity: "1m",
+          regions: "ams",
+        },
+        {
+          id: INACTIVE_MONITOR_ID,
+          workspaceId,
+          active: false,
+          url: "https://private-location-inactive.test",
+          name: "Private Location Inactive Monitor",
+          periodicity: "1m",
+          regions: "ams",
+        },
+        {
+          id: PRIVATE_ONLY_MONITOR_ID,
+          workspaceId,
+          active: true,
+          url: "https://private-only.test",
+          name: "Private-Only Monitor (No Cloud Regions)",
+          periodicity: "1m",
+          regions: "",
+        },
+      ])
+      .onConflictDoNothing()
+      .run();
+    await db
+      .insert(notification)
+      .values({
+        id: TEST_NOTIFICATION_ID,
+        provider: "email",
+        name: "private location test notification",
+        data: '{"email":"ping@openstatus.dev"}',
+        workspaceId,
+      })
+      .onConflictDoNothing()
+      .run();
+    await db
+      .insert(notificationsToMonitors)
+      .values({
+        monitorId: TEST_MONITOR_ID,
+        notificationId: TEST_NOTIFICATION_ID,
+      })
+      .onConflictDoNothing()
+      .run();
+    await db
+      .insert(privateLocation)
+      .values({
+        id: TEST_LOCATION_ID,
+        name: "Test Office",
+        token: "test-private-location-token",
+        workspaceId,
+        createdAt: new Date(),
+      })
+      .onConflictDoNothing()
+      .run();
+    await db
+      .insert(privateLocationToMonitors)
+      .values({
+        privateLocationId: TEST_LOCATION_ID,
+        monitorId: TEST_MONITOR_ID,
+        createdAt: new Date(),
+      })
+      .onConflictDoNothing()
+      .run();
+
+    // Additional private locations for multi-location tests
+    await db
+      .insert(privateLocation)
+      .values([
+        {
+          id: PRIVATE_LOCATION_2_ID,
+          name: "Test Office 2",
+          token: "test-private-location-token-2",
+          workspaceId,
+          createdAt: new Date(),
+        },
+        {
+          id: PRIVATE_LOCATION_3_ID,
+          name: "Test Office 3",
+          token: "test-private-location-token-3",
+          workspaceId,
+          createdAt: new Date(),
+        },
+      ])
+      .onConflictDoNothing()
+      .run();
+
+    // Link all three locations to private-only monitor
+    await db
+      .insert(privateLocationToMonitors)
+      .values([
+        {
+          privateLocationId: TEST_LOCATION_ID,
+          monitorId: PRIVATE_ONLY_MONITOR_ID,
+          createdAt: new Date(),
+        },
+        {
+          privateLocationId: PRIVATE_LOCATION_2_ID,
+          monitorId: PRIVATE_ONLY_MONITOR_ID,
+          createdAt: new Date(),
+        },
+        {
+          privateLocationId: PRIVATE_LOCATION_3_ID,
+          monitorId: PRIVATE_ONLY_MONITOR_ID,
+          createdAt: new Date(),
+        },
+      ])
+      .onConflictDoNothing()
+      .run();
+
+    // Link first location to private-only monitor for notifications
+    await db
+      .insert(notificationsToMonitors)
+      .values({
+        monitorId: PRIVATE_ONLY_MONITOR_ID,
+        notificationId: TEST_NOTIFICATION_ID,
+      })
+      .onConflictDoNothing()
+      .run();
+  });
+
+  afterAll(async () => {
+    await db
+      .delete(auditLog)
+      .where(eq(auditLog.workspaceId, workspaceId))
+      .run();
+    await db
+      .delete(privateLocationMonitorStatus)
+      .where(eq(privateLocationMonitorStatus.monitorId, TEST_MONITOR_ID))
+      .run();
+    await db
+      .delete(notificationTrigger)
+      .where(eq(notificationTrigger.monitorId, TEST_MONITOR_ID))
+      .run();
+    await db
+      .delete(privateLocationToMonitors)
+      .where(eq(privateLocationToMonitors.privateLocationId, TEST_LOCATION_ID))
+      .run();
+    await db
+      .delete(privateLocation)
+      .where(eq(privateLocation.id, TEST_LOCATION_ID))
+      .run();
+    await db
+      .delete(notificationsToMonitors)
+      .where(eq(notificationsToMonitors.monitorId, TEST_MONITOR_ID))
+      .run();
+    await db
+      .delete(notification)
+      .where(eq(notification.id, TEST_NOTIFICATION_ID))
+      .run();
+    // Cleanup private-only monitor fixtures
+    await db
+      .delete(privateLocationMonitorStatus)
+      .where(
+        eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID),
+      )
+      .run();
+    await db
+      .delete(notificationTrigger)
+      .where(eq(notificationTrigger.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+    await db
+      .delete(notificationsToMonitors)
+      .where(eq(notificationsToMonitors.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+    await db
+      .delete(privateLocationToMonitors)
+      .where(
+        or(
+          eq(privateLocationToMonitors.privateLocationId, TEST_LOCATION_ID),
+          eq(
+            privateLocationToMonitors.privateLocationId,
+            PRIVATE_LOCATION_2_ID,
+          ),
+          eq(
+            privateLocationToMonitors.privateLocationId,
+            PRIVATE_LOCATION_3_ID,
+          ),
+        ),
+      )
+      .run();
+    await db
+      .delete(privateLocation)
+      .where(
+        or(
+          eq(privateLocation.id, PRIVATE_LOCATION_2_ID),
+          eq(privateLocation.id, PRIVATE_LOCATION_3_ID),
+        ),
+      )
+      .run();
+    await db.delete(monitor).where(eq(monitor.id, TEST_MONITOR_ID)).run();
+    await db.delete(monitor).where(eq(monitor.id, INACTIVE_MONITOR_ID)).run();
+    await db
+      .delete(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+  });
+
+  beforeEach(() => {
+    stubs = [];
+    stubs.push(
+      stubPublishAuditLog(() =>
+        Promise.resolve({ successful_rows: 1, quarantined_rows: 0 }),
+      ),
+    );
+    mockEmailSendAlert = vi
+      .spyOn(providerToFunction.email, "sendAlert")
+      .mockImplementation(() => Promise.resolve()) as AnyStub;
+    mockEmailSendRecovery = vi
+      .spyOn(providerToFunction.email, "sendRecovery")
+      .mockImplementation(() => Promise.resolve()) as AnyStub;
+    mockEmailSendDegraded = vi
+      .spyOn(providerToFunction.email, "sendDegraded")
+      .mockImplementation(() => Promise.resolve()) as AnyStub;
+    stubs.push(
+      mockEmailSendAlert,
+      mockEmailSendRecovery,
+      mockEmailSendDegraded,
+    );
+  });
+
+  afterEach(async () => {
+    for (const s of stubs) s.mockRestore();
+    stubs = [];
+    await db
+      .delete(privateLocationMonitorStatus)
+      .where(eq(privateLocationMonitorStatus.monitorId, TEST_MONITOR_ID))
+      .run();
+    await db
+      .delete(privateLocationMonitorStatus)
+      .where(
+        eq(privateLocationMonitorStatus.monitorId, PRIVATE_ONLY_MONITOR_ID),
+      )
+      .run();
+    await db
+      .delete(notificationTrigger)
+      .where(eq(notificationTrigger.monitorId, TEST_MONITOR_ID))
+      .run();
+    await db
+      .delete(notificationTrigger)
+      .where(eq(notificationTrigger.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+  });
+
+  test("rejects a wrong CRON_SECRET with 401", async () => {
+    const res = await post(
+      {
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp: 9300001,
+      },
+      "Basic wrong-secret",
+    );
+    expect(res.status).toBe(401);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+  });
+
+  test("rejects an invalid payload with 422", async () => {
+    const res = await checkerRoute.request("/updateStatusPrivate", {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${cronSecret}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ monitorId: String(TEST_MONITOR_ID) }),
+    });
+    expect(res.status).toBe(422);
+  });
+
+  test("first error report alerts and writes an error row", async () => {
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9300010,
+      statusCode: 500,
+      message: "down",
+    });
+    expect(res.status).toBe(200);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+
+    const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
+    expect(row?.status).toBe("error");
+    expect(row?.cronTimestamp).toBe(9300010);
+  });
+
+  test("unchanged status does not re-notify but advances the timestamp", async () => {
+    await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9300020,
+    });
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9300021,
+    });
+    expect(res.status).toBe(200);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+
+    const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
+    expect(row?.cronTimestamp).toBe(9300021);
+  });
+
+  test("recovery after error sends a recovery notification", async () => {
+    await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9300030,
+    });
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "active",
+      cronTimestamp: 9300031,
+    });
+    expect(res.status).toBe(200);
+    expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
+
+    const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
+    expect(row?.status).toBe("active");
+  });
+
+  describe("during maintenance", () => {
+    afterEach(async () => {
+      await db
+        .delete(monitorMaintenanceWindow)
+        .where(eq(monitorMaintenanceWindow.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(maintenance)
+        .where(eq(maintenance.workspaceId, workspaceId))
+        .run();
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.workspaceId, workspaceId))
+        .run();
+      await db.delete(page).where(eq(page.workspaceId, workspaceId)).run();
+    });
+
+    const report = (cronTimestamp: number) =>
+      post({
+        monitorId: String(TEST_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp,
+      });
+
+    test.each(["pause", "continue"] as const)(
+      "a %s window drops a report that ran inside it; one at its end is processed",
+      async (mode) => {
+        const to = Math.floor(Date.now() / 1000) * 1000 + 3_600_000;
+        await createMaintenanceWindow(workspaceId, {
+          monitorIds: [TEST_MONITOR_ID],
+          mode,
+          from: new Date(to - 7_200_000),
+          to: new Date(to),
+        });
+
+        await report(Date.now());
+        expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+        expect(
+          await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID),
+        ).toBeUndefined();
+
+        if (mode === "continue") {
+          await report(to);
+          expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+        }
+      },
+    );
+
+    test.each(["pause", "continue"] as const)(
+      "a %s window lets a recovery through",
+      async (mode) => {
+        await report(Date.now() - 2000);
+        expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+        const now = Date.now();
+        await createMaintenanceWindow(workspaceId, {
+          monitorIds: [TEST_MONITOR_ID],
+          mode,
+          from: new Date(now - 1000),
+          to: new Date(now + 3_600_000),
+        });
+
+        await post({
+          monitorId: String(TEST_MONITOR_ID),
+          privateLocationId: String(TEST_LOCATION_ID),
+          status: "active",
+          cronTimestamp: now,
+        });
+
+        expect(mockEmailSendRecovery).toHaveBeenCalledTimes(1);
+        expect((await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID))?.status).toBe(
+          "active",
+        );
+      },
+    );
+
+    test("a failure that ran before a pause window is still processed", async () => {
+      const now = Date.now();
+      await createMaintenanceWindow(workspaceId, {
+        monitorIds: [TEST_MONITOR_ID],
+        mode: "pause",
+        from: new Date(now - 1000),
+        to: new Date(now + 3_600_000),
+      });
+
+      await report(now - 60_000);
+
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+    });
+
+    test("a status-page maintenance drops the report until the migration ends", async () => {
+      const pageId = (await createPage(workspaceId)).id;
+      const ends = PAGE_MAINTENANCE_PAUSE_ENDS.getTime();
+      await createPageMaintenance(workspaceId, pageId, {
+        monitorId: TEST_MONITOR_ID,
+        from: new Date(ends - 3_600_000),
+        to: new Date(ends + 3_600_000),
+      });
+
+      await report(ends - 1000);
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+      expect(await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID)).toBeUndefined();
+
+      await report(ends);
+      expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test("degraded report sends a degraded notification", async () => {
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "degraded",
+      cronTimestamp: 9300040,
+      latency: 5000,
+    });
+    expect(res.status).toBe(200);
+    expect(mockEmailSendDegraded).toHaveBeenCalledTimes(1);
+
+    const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
+    expect(row?.status).toBe("degraded");
+  });
+
+  test("a stale (older) report is dropped and does not notify", async () => {
+    await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "active",
+      cronTimestamp: 9300050,
+    });
+
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9300049,
+    });
+    expect(res.status).toBe(200);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+
+    const row = await readRow(TEST_MONITOR_ID, TEST_LOCATION_ID);
+    expect(row?.status).toBe("active");
+    expect(row?.cronTimestamp).toBe(9300050);
+  });
+
+  test("an unattached location is a no-op", async () => {
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(UNATTACHED_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9300060,
+    });
+    expect(res.status).toBe(200);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+
+    const row = await readRow(TEST_MONITOR_ID, UNATTACHED_LOCATION_ID);
+    expect(row).toBeUndefined();
+  });
+
+  test("an inactive monitor is a no-op", async () => {
+    const res = await post({
+      monitorId: String(INACTIVE_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9300070,
+    });
+    expect(res.status).toBe(200);
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(0);
+  });
+
+  test("private-only monitor: updates status when threshold met (2/3 locations agree)", async () => {
+    // First location reports error → 1/3 < 50% → should NOT update monitor status
+    const res1 = await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9310010,
+      statusCode: 500,
+      message: "down",
+    });
+    expect(res1.status).toBe(200);
+
+    const monitorAfter1 = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .get();
+    expect(monitorAfter1?.status).toBe("active"); // Threshold not met
+
+    // Second location reports error → 2/3 >= 50% → SHOULD update monitor status
+    const res2 = await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(PRIVATE_LOCATION_2_ID),
+      status: "error",
+      cronTimestamp: 9310020,
+      statusCode: 500,
+      message: "down",
+    });
+    expect(res2.status).toBe(200);
+
+    const monitorAfter2 = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .get();
+    expect(monitorAfter2?.status).toBe("error");
+    expect(mockEmailSendAlert).toHaveBeenCalledTimes(1);
+  });
+
+  test("private-only monitor: the incident is opened and auto-resolved through audited verbs", async () => {
+    await db
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+    // SQLite recycles the deleted incident's id, and its audit rows with it.
+    await db
+      .delete(auditLog)
+      .where(eq(auditLog.workspaceId, workspaceId))
+      .run();
+    await db
+      .update(monitor)
+      .set({ status: "active" })
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .run();
+
+    const locations = [TEST_LOCATION_ID, PRIVATE_LOCATION_2_ID];
+    for (const [i, status] of (["error", "active"] as const).entries()) {
+      for (const locationId of locations) {
+        const res = await post({
+          monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+          privateLocationId: String(locationId),
+          status,
+          cronTimestamp: 9320010 + i * 100 + locationId,
+        });
+        expect(res.status).toBe(200);
+      }
+    }
+
+    const incidents = await db
+      .select()
+      .from(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.monitorId, PRIVATE_ONLY_MONITOR_ID))
+      .all();
+    expect(incidents).toHaveLength(1);
+    expect(incidents[0]?.resolvedAt).not.toBeNull();
+    expect(incidents[0]?.autoResolved).toBe(true);
+
+    const rows = await db
+      .select()
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.workspaceId, workspaceId),
+          eq(auditLog.entityType, "monitor_incident"),
+          eq(auditLog.entityId, String(incidents[0]?.id)),
+        ),
+      )
+      .orderBy(auditLog.id)
+      .all();
+    expect(rows.map((row) => [row.action, row.actorType, row.actorId])).toEqual(
+      [
+        ["monitor_incident.create", "system", "checker"],
+        ["monitor_incident.update", "system", "checker"],
+      ],
+    );
+  });
+
+  test("does not change monitor.status from error when 1/3 locations report degraded (threshold not met)", async () => {
+    // First seed the monitor to "error" state via 2/3 locations agreeing
+    await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9320000,
+      statusCode: 500,
+      message: "down",
+    });
+    await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(PRIVATE_LOCATION_2_ID),
+      status: "error",
+      cronTimestamp: 9320005,
+      statusCode: 500,
+      message: "down",
+    });
+
+    // Now try degraded with only 1/3 → should NOT change
+    const res = await post({
+      monitorId: String(PRIVATE_ONLY_MONITOR_ID),
+      privateLocationId: String(PRIVATE_LOCATION_3_ID),
+      status: "degraded",
+      cronTimestamp: 9320010,
+      statusCode: 200,
+    });
+    expect(res.status).toBe(200);
+
+    const monitorAfter = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, PRIVATE_ONLY_MONITOR_ID))
+      .get();
+    // Monitor should remain "error" because 1/3 < 50% threshold
+    expect(monitorAfter?.status).toBe("error");
+  });
+
+  test("private-only monitor without a workspace: stores the report, leaves the status and stays silent", async () => {
+    const orphan = await db
+      .insert(monitor)
+      .values({
+        workspaceId: null,
+        active: true,
+        url: "https://orphan.test",
+        name: "Orphan Private-Only Monitor",
+        periodicity: "1m",
+        regions: "",
+      })
+      .returning({ id: monitor.id })
+      .get();
+    const ORPHAN_MONITOR_ID = orphan.id;
+    try {
+      await db
+        .insert(privateLocationToMonitors)
+        .values({
+          privateLocationId: TEST_LOCATION_ID,
+          monitorId: ORPHAN_MONITOR_ID,
+          createdAt: new Date(),
+        })
+        .run();
+      await db
+        .insert(notificationsToMonitors)
+        .values({
+          monitorId: ORPHAN_MONITOR_ID,
+          notificationId: TEST_NOTIFICATION_ID,
+        })
+        .run();
+
+      const res = await post({
+        monitorId: String(ORPHAN_MONITOR_ID),
+        privateLocationId: String(TEST_LOCATION_ID),
+        status: "error",
+        cronTimestamp: Date.now(),
+      });
+
+      expect(res.status).toBe(200);
+      expect((await readRow(ORPHAN_MONITOR_ID, TEST_LOCATION_ID))?.status).toBe(
+        "error",
+      );
+      const row = await db
+        .select()
+        .from(monitor)
+        .where(eq(monitor.id, ORPHAN_MONITOR_ID))
+        .get();
+      expect(row?.status).toBe("active");
+      expect(mockEmailSendAlert).not.toHaveBeenCalled();
+    } finally {
+      await db
+        .delete(privateLocationMonitorStatus)
+        .where(eq(privateLocationMonitorStatus.monitorId, ORPHAN_MONITOR_ID))
+        .run();
+      await db
+        .delete(notificationsToMonitors)
+        .where(eq(notificationsToMonitors.monitorId, ORPHAN_MONITOR_ID))
+        .run();
+      await db
+        .delete(privateLocationToMonitors)
+        .where(eq(privateLocationToMonitors.monitorId, ORPHAN_MONITOR_ID))
+        .run();
+      await db.delete(monitor).where(eq(monitor.id, ORPHAN_MONITOR_ID)).run();
+    }
+  });
+
+  test("does not update monitor.status for monitors with cloud regions", async () => {
+    // TEST_MONITOR_ID has regions: "ams" (cloud region)
+    const res = await post({
+      monitorId: String(TEST_MONITOR_ID),
+      privateLocationId: String(TEST_LOCATION_ID),
+      status: "error",
+      cronTimestamp: 9330010,
+      statusCode: 500,
+      message: "down",
+    });
+    expect(res.status).toBe(200);
+
+    const monitorAfter = await db
+      .select()
+      .from(monitor)
+      .where(eq(monitor.id, TEST_MONITOR_ID))
+      .get();
+    // Monitor has cloud regions, so private status updates should not affect it
+    expect(monitorAfter?.status).toBe("active");
+  });
+});

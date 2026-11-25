@@ -8,6 +8,8 @@ import {
   pageComponent,
   subdomainSafeList,
 } from "@openstatus/db/src/schema";
+import { ConflictError } from "@openstatus/services";
+import { assertCustomDomainAvailable } from "@openstatus/services/page";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { trackMiddleware } from "@/libs/middlewares";
@@ -111,6 +113,22 @@ export function registerPutPage(api: typeof pagesApi) {
       });
     }
 
+    try {
+      await assertCustomDomainAvailable({
+        tx: db,
+        customDomain: input.customDomain,
+        excludePageId: _page.id,
+      });
+    } catch (err) {
+      if (err instanceof ConflictError) {
+        throw new OpenStatusApiError({
+          code: "CONFLICT",
+          message: err.message,
+        });
+      }
+      throw err;
+    }
+
     if (input.slug && _page.slug !== input.slug) {
       if (subdomainSafeList.includes(input.slug)) {
         throw new OpenStatusApiError({
@@ -143,19 +161,21 @@ export function registerPutPage(api: typeof pagesApi) {
         : monitors.map((m) => m.monitorId)
       : [];
 
-    if (monitors?.length) {
-      const monitorsData = await db
-        .select()
-        .from(monitor)
-        .where(
-          and(
-            inArray(monitor.id, monitorIds),
-            eq(monitor.workspaceId, workspaceId),
-            isNull(monitor.deletedAt),
-          ),
-        )
-        .all();
+    const monitorsData = monitors?.length
+      ? await db
+          .select()
+          .from(monitor)
+          .where(
+            and(
+              inArray(monitor.id, monitorIds),
+              eq(monitor.workspaceId, workspaceId),
+              isNull(monitor.deletedAt),
+            ),
+          )
+          .all()
+      : [];
 
+    if (monitors?.length) {
       if (monitorsData.length !== monitors.length) {
         throw new OpenStatusApiError({
           code: "BAD_REQUEST",
@@ -163,6 +183,8 @@ export function registerPutPage(api: typeof pagesApi) {
         });
       }
     }
+
+    const monitorsById = new Map(monitorsData.map((m) => [m.id, m]));
 
     const newPage = await db
       .update(page)
@@ -177,6 +199,12 @@ export function registerPutPage(api: typeof pagesApi) {
       .where(eq(page.id, _page.id))
       .returning()
       .get();
+    if (!newPage) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Page ${id} not found`,
+      });
+    }
 
     const currentPageComponents = await db
       .select()
@@ -209,13 +237,7 @@ export function registerPutPage(api: typeof pagesApi) {
       for (const [index, m] of monitors.entries()) {
         const values = typeof m === "number" ? { monitorId: m } : m;
 
-        const _monitor = await db.query.monitor.findFirst({
-          where: {
-            id: values.monitorId,
-            workspaceId,
-            deletedAt: { isNull: true },
-          },
-        });
+        const _monitor = monitorsById.get(values.monitorId);
 
         if (!_monitor) {
           throw new OpenStatusApiError({

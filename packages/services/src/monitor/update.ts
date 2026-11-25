@@ -4,14 +4,21 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError, ValidationError } from "../errors";
 import type { Monitor } from "../types";
+import { heartbeatConfigChanged, syncHeartbeatDeadline } from "./heartbeat";
 import {
+  assertHeartbeatNotPublic,
+  assertSchedulingWithinPlan,
   getMonitorInWorkspace,
   headersToDbJson,
+  monitorAuditSnapshot,
   serialiseAssertions,
+  resetMonitorsForPause,
 } from "./internal";
 import {
   BulkUpdateMonitorsInput,
+  UpdateMonitorConfigInput,
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
   UpdateMonitorOtelInput,
@@ -19,6 +26,120 @@ import {
   UpdateMonitorResponseTimeInput,
   UpdateMonitorRetryInput,
 } from "./schemas";
+import { assertMonitorUrlSafe } from "./url-safety";
+
+/**
+ * Apply a whole-object patch in a single UPDATE. `undefined` fields are
+ * left untouched; `degradedAfter: null` clears the column.
+ */
+export async function updateMonitorConfig(args: {
+  ctx: ServiceContext;
+  input: UpdateMonitorConfigInput;
+}): Promise<Monitor> {
+  const { ctx } = args;
+  requireScope(ctx, "monitors:write");
+  const input = UpdateMonitorConfigInput.parse(args.input);
+  assertSchedulingWithinPlan(ctx.workspace.limits, input);
+
+  return withTransaction(ctx, async (tx) => {
+    const existing = await getMonitorInWorkspace({
+      tx,
+      id: input.id,
+      workspaceId: ctx.workspace.id,
+    });
+
+    if (input.url !== undefined) {
+      // `jobType` is absent from this patch, so the stored type decides.
+      assertMonitorUrlSafe({ jobType: existing.jobType, url: input.url });
+    }
+    const touchesHeartbeat =
+      input.heartbeatPeriod !== undefined || input.heartbeatGrace !== undefined;
+    if (touchesHeartbeat && existing.jobType !== "heartbeat") {
+      throw new ValidationError(
+        `Monitor ${existing.id} is not a heartbeat monitor`,
+      );
+    }
+    // Same invariants as create: a heartbeat has no target and no schedule,
+    // which keeps it out of every checker cron.
+    if (
+      existing.jobType === "heartbeat" &&
+      ((input.url !== undefined && input.url !== "") ||
+        (input.periodicity !== undefined && input.periodicity !== "other") ||
+        (input.regions !== undefined && input.regions.length > 0))
+    ) {
+      throw new ValidationError(
+        "Heartbeat monitors cannot have a URL, periodicity or regions",
+      );
+    }
+    assertHeartbeatNotPublic(existing, input.public);
+
+    const values: Record<string, unknown> = { updatedAt: new Date() };
+    if (input.name !== undefined) values.name = input.name;
+    if (input.url !== undefined) values.url = input.url;
+    if (input.method !== undefined) values.method = input.method;
+    if (input.headers !== undefined) {
+      values.headers = headersToDbJson(input.headers);
+    }
+    if (input.body !== undefined) values.body = input.body;
+    if (input.assertions !== undefined) {
+      values.assertions = serialiseAssertions(input.assertions);
+    }
+    if (input.active !== undefined) values.active = input.active;
+    if (input.periodicity !== undefined) values.periodicity = input.periodicity;
+    if (input.regions !== undefined) values.regions = input.regions.join(",");
+    if (input.description !== undefined) values.description = input.description;
+    if (input.public !== undefined) values.public = input.public;
+    if (input.timeout !== undefined) values.timeout = input.timeout;
+    if (input.degradedAfter !== undefined) {
+      values.degradedAfter = input.degradedAfter;
+    }
+    if (input.retry !== undefined) values.retry = input.retry;
+    if (input.followRedirects !== undefined) {
+      values.followRedirects = input.followRedirects;
+    }
+    if (input.grpcService !== undefined) values.grpcService = input.grpcService;
+    if (input.grpcTls !== undefined) values.grpcTls = input.grpcTls;
+    if (input.otelEndpoint !== undefined) {
+      values.otelEndpoint = input.otelEndpoint;
+    }
+    if (input.otelHeaders !== undefined) {
+      values.otelHeaders = headersToDbJson(input.otelHeaders);
+    }
+    if (input.heartbeatPeriod !== undefined) {
+      values.heartbeatPeriod = input.heartbeatPeriod;
+    }
+    if (input.heartbeatGrace !== undefined) {
+      values.heartbeatGrace = input.heartbeatGrace;
+    }
+
+    if (existing.active && input.active === false) {
+      await resetMonitorsForPause({ tx, ctx, monitorIds: [existing.id] });
+    }
+    const updated = await tx
+      .update(monitor)
+      .set(values)
+      .where(eq(monitor.id, existing.id))
+      .returning()
+      .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
+
+    if (!existing.active && updated.active) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
+    } else if (heartbeatConfigChanged(existing, updated)) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
+    }
+
+    await emitAudit(tx, ctx, {
+      action: "monitor.update",
+      entityType: "monitor",
+      entityId: existing.id,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
+    });
+
+    return selectMonitorSchema.parse(updated);
+  });
+}
 
 /**
  * Update a monitor's "general" fields — name / endpoint / method / headers /
@@ -31,8 +152,9 @@ export async function updateMonitorGeneral(args: {
   input: UpdateMonitorGeneralInput;
 }): Promise<Monitor> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorGeneralInput.parse(args.input);
+  assertMonitorUrlSafe({ jobType: input.jobType, url: input.url });
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -40,30 +162,65 @@ export async function updateMonitorGeneral(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    if (
+      (existing.jobType === "heartbeat") !==
+      (input.jobType === "heartbeat")
+    ) {
+      throw new ValidationError(
+        "A monitor cannot be switched to or from the heartbeat type",
+      );
+    }
+    const touchesHeartbeat =
+      input.heartbeatPeriod !== undefined || input.heartbeatGrace !== undefined;
+    if (touchesHeartbeat && existing.jobType !== "heartbeat") {
+      throw new ValidationError(
+        `Monitor ${existing.id} is not a heartbeat monitor`,
+      );
+    }
 
+    if (existing.active && input.active === false) {
+      await resetMonitorsForPause({ tx, ctx, monitorIds: [existing.id] });
+    }
     const updated = await tx
       .update(monitor)
       .set({
         name: input.name,
         jobType: input.jobType,
-        url: input.url,
+        url: input.jobType === "heartbeat" ? "" : input.url,
         method: input.method,
         headers: headersToDbJson(input.headers),
         body: input.body,
         active: input.active,
         assertions: serialiseAssertions(input.assertions),
+        ...(input.grpcService !== undefined
+          ? { grpcService: input.grpcService }
+          : {}),
+        ...(input.grpcTls !== undefined ? { grpcTls: input.grpcTls } : {}),
+        ...(input.heartbeatPeriod !== undefined
+          ? { heartbeatPeriod: input.heartbeatPeriod }
+          : {}),
+        ...(input.heartbeatGrace !== undefined
+          ? { heartbeatGrace: input.heartbeatGrace }
+          : {}),
         updatedAt: new Date(),
       })
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
+
+    if (!existing.active && updated.active) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
+    } else if (heartbeatConfigChanged(existing, updated)) {
+      await syncHeartbeatDeadline({ tx, row: updated, anchor: "last-ping" });
+    }
 
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
 
     return selectMonitorSchema.parse(updated);
@@ -75,7 +232,7 @@ export async function updateMonitorRetry(args: {
   input: UpdateMonitorRetryInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorRetryInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -89,12 +246,13 @@ export async function updateMonitorRetry(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -104,7 +262,7 @@ export async function updateMonitorFollowRedirects(args: {
   input: UpdateMonitorFollowRedirectsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorFollowRedirectsInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -118,12 +276,13 @@ export async function updateMonitorFollowRedirects(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -133,7 +292,7 @@ export async function updateMonitorOtel(args: {
   input: UpdateMonitorOtelInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorOtelInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -151,12 +310,13 @@ export async function updateMonitorOtel(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -166,7 +326,7 @@ export async function updateMonitorPublic(args: {
   input: UpdateMonitorPublicInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorPublicInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -174,18 +334,20 @@ export async function updateMonitorPublic(args: {
       id: input.id,
       workspaceId: ctx.workspace.id,
     });
+    assertHeartbeatNotPublic(existing, input.public);
     const updated = await tx
       .update(monitor)
       .set({ public: input.public, updatedAt: new Date() })
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -195,7 +357,7 @@ export async function updateMonitorResponseTime(args: {
   input: UpdateMonitorResponseTimeInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = UpdateMonitorResponseTimeInput.parse(args.input);
   await withTransaction(ctx, async (tx) => {
     const existing = await getMonitorInWorkspace({
@@ -213,12 +375,13 @@ export async function updateMonitorResponseTime(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
       entityId: existing.id,
-      before: existing,
-      after: updated,
+      before: await monitorAuditSnapshot(existing),
+      after: await monitorAuditSnapshot(updated),
     });
   });
 }
@@ -234,7 +397,7 @@ export async function bulkUpdateMonitors(args: {
   input: BulkUpdateMonitorsInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "monitors:write");
   const input = BulkUpdateMonitorsInput.parse(args.input);
   if (input.public === undefined && input.active === undefined) return;
 
@@ -254,10 +417,18 @@ export async function bulkUpdateMonitors(args: {
       )
       .all();
     if (existingRows.length === 0) return;
+    for (const row of existingRows) assertHeartbeatNotPublic(row, input.public);
 
     const set: Record<string, unknown> = { updatedAt: new Date() };
     if (input.public !== undefined) set.public = input.public;
     if (input.active !== undefined) set.active = input.active;
+    if (input.active === false) {
+      await resetMonitorsForPause({
+        tx,
+        ctx,
+        monitorIds: existingRows.filter((r) => r.active).map((r) => r.id),
+      });
+    }
 
     // `.returning()` the full rows that actually matched so the audit
     // loop below attributes only what we wrote and carries the new
@@ -286,12 +457,15 @@ export async function bulkUpdateMonitors(args: {
       // shouldn't emit an audit row at all.
       const before = existingById.get(updated.id);
       if (!before) continue;
+      if (!before.active && updated.active) {
+        await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
+      }
       await emitAudit(tx, ctx, {
         action: "monitor.update",
         entityType: "monitor",
         entityId: updated.id,
-        before,
-        after: updated,
+        before: await monitorAuditSnapshot(before),
+        after: await monitorAuditSnapshot(updated),
       });
     }
   });

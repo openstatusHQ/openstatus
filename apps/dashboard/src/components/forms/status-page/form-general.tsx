@@ -12,6 +12,11 @@ import {
 } from "@openstatus/ui/components/ui/form";
 import { Form } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { Textarea } from "@openstatus/ui/components/ui/textarea";
 import { useDebounce } from "@openstatus/ui/hooks/use-debounce";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -22,8 +27,6 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
 import {
   FormCard,
   FormCardContent,
@@ -54,7 +57,7 @@ function formatSlug(title: string) {
 }
 
 const schema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().trim().min(1, "Title is required"),
   slug: z
     .string()
     .min(3, "Slug is required")
@@ -161,7 +164,7 @@ export function FormGeneral({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="general">
           <FormCardHeader>
             <FormCardTitle>General</FormCardTitle>
             <FormCardDescription>
@@ -169,12 +172,12 @@ export function FormGeneral({
             </FormCardDescription>
           </FormCardHeader>
           <FormCardSeparator />
-          <FormCardContent className="grid gap-4">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="title"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Title</FormLabel>
                   <FormControl>
                     <Input placeholder="My Status Page" {...field} />
@@ -190,15 +193,16 @@ export function FormGeneral({
               control={form.control}
               name="slug"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Slug</FormLabel>
-                  <FormControl>
-                    <InputWithAddons
-                      placeholder="status"
-                      trailing=".openstatus.dev"
-                      {...field}
-                    />
-                  </FormControl>
+                  <InputGroup>
+                    <FormControl>
+                      <InputGroupInput placeholder="status" {...field} />
+                    </FormControl>
+                    <InputGroupAddon align="inline-end">
+                      .openstatus.dev
+                    </InputGroupAddon>
+                  </InputGroup>
                   <FormMessage />
                   <FormDescription>
                     Choose a unique subdomain for your status page (minimum 3
@@ -211,7 +215,7 @@ export function FormGeneral({
               control={form.control}
               name="icon"
               render={() => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Icon</FormLabel>
                   <FormControl>
                     <div className="flex items-center space-x-2">
@@ -271,7 +275,7 @@ export function FormGeneral({
               control={form.control}
               name="description"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="col-span-full">
                   <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Textarea {...field} />

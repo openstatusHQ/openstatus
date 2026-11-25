@@ -1,9 +1,14 @@
-import { eq } from "@openstatus/db";
-import { maintenance } from "@openstatus/db/src/schema";
+import { desc, eq } from "@openstatus/db";
+import { maintenance, maintenanceUpdate } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
-import { type ServiceContext, withTransaction } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  tryGetActorUserId,
+  withTransaction,
+} from "../context";
 import { ConflictError, InternalServiceError } from "../errors";
 import type { Maintenance } from "../types";
 import {
@@ -18,8 +23,9 @@ export async function updateMaintenance(args: {
   input: UpdateMaintenanceInput;
 }): Promise<Maintenance> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "incidents:write");
   const input = UpdateMaintenanceInput.parse(args.input);
+  const actorUserId = tryGetActorUserId(ctx.actor);
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getMaintenanceInWorkspace({
@@ -36,9 +42,11 @@ export async function updateMaintenance(args: {
       throw new ConflictError("End date must be after start date.");
     }
 
-    const updateValues: Record<string, unknown> = { updatedAt: new Date() };
+    const updateValues: Record<string, unknown> = {
+      updatedAt: new Date(),
+      updatedBy: actorUserId,
+    };
     if (input.title !== undefined) updateValues.title = input.title;
-    if (input.message !== undefined) updateValues.message = input.message;
     if (input.from !== undefined) updateValues.from = input.from;
     if (input.to !== undefined) updateValues.to = input.to;
 
@@ -49,19 +57,23 @@ export async function updateMaintenance(args: {
         pageComponentIds: input.pageComponentIds,
       });
 
-      // `pageId` follows the association set: a new non-empty set moves
-      // the maintenance to that page; an empty set nulls it. Matches the
-      // pattern established on status-report update and what the Connect
-      // `UpdateMaintenance` tests have encoded since the original handler.
-      // Mixed-page inputs are rejected upstream by
-      // `validatePageComponentIds` (all ids must share a page).
-      updateValues.pageId = validated.pageId;
+      // A non-empty set moves the maintenance to that page; an empty set
+      // only clears associations and keeps `pageId` (same as status-report).
+      // The dashboard edit sheet always sends the array, so nulling here
+      // orphaned every maintenance edited without components.
+      if (validated.pageId !== null) {
+        updateValues.pageId = validated.pageId;
+      }
 
       await updatePageComponentAssociations({
         tx,
         maintenanceId: existing.id,
         componentIds: validated.componentIds,
       });
+    }
+
+    if (input.message !== undefined) {
+      await rewriteLatestUpdate(tx, ctx, existing.id, input.message);
     }
 
     const updated = await tx
@@ -86,5 +98,69 @@ export async function updateMaintenance(args: {
     });
 
     return updated;
+  });
+}
+
+/**
+ * `message` is the newest update's text, so editing it rewrites that row.
+ * A maintenance without updates (pre-backfill) gets one dated now instead.
+ */
+async function rewriteLatestUpdate(
+  tx: DB,
+  ctx: ServiceContext,
+  maintenanceId: number,
+  message: string,
+): Promise<void> {
+  const actorUserId = tryGetActorUserId(ctx.actor);
+  const latest = await tx
+    .select()
+    .from(maintenanceUpdate)
+    .where(eq(maintenanceUpdate.maintenanceId, maintenanceId))
+    .orderBy(desc(maintenanceUpdate.date), desc(maintenanceUpdate.id))
+    .limit(1)
+    .get();
+
+  if (!latest) {
+    const created = await tx
+      .insert(maintenanceUpdate)
+      .values({
+        maintenanceId,
+        message,
+        date: new Date(),
+        createdBy: actorUserId,
+        updatedBy: actorUserId,
+      })
+      .returning()
+      .get();
+    await emitAudit(tx, ctx, {
+      action: "maintenance_update.create",
+      entityType: "maintenance_update",
+      entityId: created.id,
+      after: created,
+      metadata: { maintenanceId },
+    });
+    return;
+  }
+
+  if (latest.message === message) return;
+
+  const updated = await tx
+    .update(maintenanceUpdate)
+    .set({ message, updatedAt: new Date(), updatedBy: actorUserId })
+    .where(eq(maintenanceUpdate.id, latest.id))
+    .returning()
+    .get();
+  if (!updated) {
+    throw new InternalServiceError(
+      `failed to update maintenance update ${latest.id}`,
+    );
+  }
+  await emitAudit(tx, ctx, {
+    action: "maintenance_update.update",
+    entityType: "maintenance_update",
+    entityId: updated.id,
+    before: latest,
+    after: updated,
+    metadata: { maintenanceId },
   });
 }

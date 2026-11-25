@@ -1,8 +1,8 @@
 "use client";
 
+import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
-import { Check, Copy } from "lucide-react";
 import { z } from "zod";
 
 import {
@@ -27,7 +27,7 @@ export function FormSlug({ defaultValues }: { defaultValues?: FormValues }) {
   console.log({ defaultValues, schema });
 
   return (
-    <FormCard>
+    <FormCard id="workspace-slug">
       <FormCardHeader>
         <FormCardTitle>Slug</FormCardTitle>
         <FormCardDescription>

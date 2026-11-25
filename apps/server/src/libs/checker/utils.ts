@@ -1,9 +1,9 @@
 import type { z } from "@hono/zod-openapi";
 import type { selectMonitorSchema } from "@openstatus/db/src/schema";
 import {
-  type httpPayloadSchema,
-  type tpcPayloadSchema,
-  transformHeaders,
+  type CheckerPayload,
+  buildCheckerPayload,
+  isCheckerJobType,
 } from "@openstatus/utils";
 
 import { OpenStatusApiError } from "@/libs/errors";
@@ -11,59 +11,28 @@ import { OpenStatusApiError } from "@/libs/errors";
 export function getCheckerPayload(
   monitor: z.infer<typeof selectMonitorSchema>,
   status: z.infer<typeof selectMonitorSchema>["status"],
-): z.infer<typeof httpPayloadSchema> | z.infer<typeof tpcPayloadSchema> {
-  const timestamp = new Date().getTime();
-  switch (monitor.jobType) {
-    case "http":
-      return {
-        workspaceId: String(monitor.workspaceId),
-        monitorId: String(monitor.id),
-        url: monitor.url,
-        method: monitor.method || "GET",
-        cronTimestamp: timestamp,
-        body: monitor.body,
-        headers: monitor.headers,
-        status: status,
-        assertions: monitor.assertions ? JSON.parse(monitor.assertions) : null,
-        degradedAfter: monitor.degradedAfter,
-        timeout: monitor.timeout,
-        trigger: "api",
-        otelConfig: monitor.otelEndpoint
-          ? {
-              endpoint: monitor.otelEndpoint,
-              headers: transformHeaders(monitor.otelHeaders),
-            }
-          : undefined,
-        retry: monitor.retry ?? 0,
-        followRedirects: monitor.followRedirects ?? false,
-      };
-    case "tcp":
-      return {
-        workspaceId: String(monitor.workspaceId),
-        monitorId: String(monitor.id),
-        uri: monitor.url,
-        status: status,
-        assertions: monitor.assertions ? JSON.parse(monitor.assertions) : null,
-        cronTimestamp: timestamp,
-        degradedAfter: monitor.degradedAfter,
-        timeout: monitor.timeout,
-        trigger: "api",
-        otelConfig: monitor.otelEndpoint
-          ? {
-              endpoint: monitor.otelEndpoint,
-              headers: transformHeaders(monitor.otelHeaders),
-            }
-          : undefined,
-        retry: monitor.retry ?? 0,
-        followRedirects: monitor.followRedirects ?? false,
-      };
-    default:
-      throw new OpenStatusApiError({
-        code: "BAD_REQUEST",
-        message:
-          "Invalid jobType, currently only 'http' and 'tcp' are supported",
-      });
+): CheckerPayload {
+  // The v1 routes build the payload before the URL, so reject here to keep a 400.
+  if (!isCheckerJobType(monitor.jobType)) {
+    throw new OpenStatusApiError({
+      code: "BAD_REQUEST",
+      message: `Invalid jobType '${monitor.jobType}'`,
+    });
   }
+  return buildCheckerPayload({
+    monitor,
+    status,
+    trigger: "api",
+    timestamp: Date.now(),
+  });
+}
+
+// Bounds outbound checker fetches so a slow check can't pin API requests open
+// indefinitely: the monitor's own timeout plus a buffer for checker overhead.
+export function getCheckerTimeout(
+  monitor: z.infer<typeof selectMonitorSchema>,
+): number {
+  return (monitor.timeout ?? 45_000) + 15_000;
 }
 
 export function getCheckerUrl(
@@ -75,14 +44,15 @@ export function getCheckerUrl(
 ): string {
   switch (monitor.jobType) {
     case "http":
-      return `https://openstatus-checker.fly.dev/checker/http?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
     case "tcp":
-      return `https://openstatus-checker.fly.dev/checker/tcp?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
+    case "dns":
+    case "icmp":
+    case "grpc":
+      return `https://openstatus-checker.fly.dev/checker/${monitor.jobType}?monitor_id=${monitor.id}&trigger=${opts.trigger}&data=${opts.data}`;
     default:
       throw new OpenStatusApiError({
         code: "BAD_REQUEST",
-        message:
-          "Invalid jobType, currently only 'http' and 'tcp' are supported",
+        message: `Invalid jobType '${monitor.jobType}'`,
       });
   }
 }

@@ -1,107 +1,108 @@
+import { PubSub, type Topic } from "@google-cloud/pubsub";
 import { CloudTasksClient } from "@google-cloud/tasks";
-import type { google } from "@google-cloud/tasks/build/protos/protos";
+import type { google } from "@google-cloud/tasks/build/protos";
 import { getLogger } from "@logtape/logtape";
 import {
-  and,
-  eq,
-  gte,
-  inArray,
-  isNotNull,
-  lte,
-  notInArray,
-} from "@openstatus/db";
-import {
-  type MonitorStatus,
-  maintenance,
-  monitor,
-  monitorStatusTable,
   selectMonitorSchema,
   selectMonitorStatusSchema,
 } from "@openstatus/db/src/schema";
 import type { Region } from "@openstatus/db/src/schema/constants";
-import type { monitorPeriodicitySchema } from "@openstatus/db/src/schema/constants";
-import {
-  maintenancesToPageComponents,
-  pageComponent,
-} from "@openstatus/db/src/schema/page_components";
 import { regionDict } from "@openstatus/regions";
 import {
-  type DNSPayloadSchema,
-  type httpPayloadSchema,
-  type tpcPayloadSchema,
-  transformHeaders,
-} from "@openstatus/utils";
-import { Effect, Either, Schedule } from "effect";
+  countPausedMonitors,
+  listMonitorRegionStatuses,
+  listMonitorsToCheck,
+} from "@openstatus/services/monitor";
+import { Effect, Result, Schedule } from "effect";
 import { z } from "zod";
 
 import { env } from "../env";
 import { db } from "../lib/db";
-
-type TaskInput = {
-  row: z.infer<typeof selectMonitorSchema>;
-  timestamp: number;
-  status: MonitorStatus;
-  region: Region;
-};
+import {
+  type CheckerPublisher,
+  type Periodicity,
+  type TaskInput,
+  buildCronCheckerPayload,
+  buildTaskInputs,
+  publishCheckerTasks,
+} from "./checker-payload";
 
 export const isAuthorizedDomain = (url: string) => {
   return url.includes(env().SITE_URL);
 };
 
 const logger = getLogger("workflow");
+const otelLogger = getLogger(["workflow-otel"]);
 
-const client = new CloudTasksClient({
-  // fallback: true,
-  projectId: env().GCP_PROJECT_ID,
-  credentials: {
-    client_email: env().GCP_CLIENT_EMAIL,
-    private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
-  },
-});
+/**
+ * Check if GCP Cloud Tasks is properly configured.
+ * Returns false if credentials are missing or set to placeholder values.
+ */
+function isGcpConfigured(): boolean {
+  const projectId = env().GCP_PROJECT_ID;
+  const location = env().GCP_LOCATION;
+  const clientEmail = env().GCP_CLIENT_EMAIL;
+  const privateKey = env().GCP_PRIVATE_KEY;
+
+  return (
+    projectId !== "" &&
+    projectId !== "your-value" &&
+    location !== "" &&
+    location !== "your-value" &&
+    clientEmail !== "" &&
+    clientEmail !== "your-value" &&
+    privateKey !== "" &&
+    privateKey !== "your-value"
+  );
+}
+
+// Only initialize CloudTasksClient if GCP credentials are properly configured
+// This allows self-hosted deployments to run without GCP Cloud Tasks
+let client: CloudTasksClient | null = null;
+let publisher: CheckerPublisher | null = null;
+
+if (isGcpConfigured()) {
+  const options = {
+    projectId: env().GCP_PROJECT_ID,
+    credentials: {
+      client_email: env().GCP_CLIENT_EMAIL,
+      private_key: env().GCP_PRIVATE_KEY.replaceAll("\\n", "\n"),
+    },
+  };
+  client = new CloudTasksClient(options);
+  publisher = createPublisher(new PubSub(options));
+}
+
+function createPublisher(pubsub: PubSub): CheckerPublisher {
+  const topics = new Map<string, Topic>();
+  return {
+    publish: (name, data, attributes) => {
+      let topic = topics.get(name);
+      if (!topic) {
+        topic = pubsub.topic(name, {
+          batching: { maxMessages: 1000, maxMilliseconds: 10 },
+        });
+        topics.set(name, topic);
+      }
+      return topic.publishMessage({ data, attributes });
+    },
+  };
+}
 
 export async function sendCheckerTasks(
-  periodicity: z.infer<typeof monitorPeriodicitySchema>,
+  periodicity: Periodicity,
 ): Promise<{ success: number; failed: number }> {
-  const parent = client.queuePath(
-    env().GCP_PROJECT_ID,
-    env().GCP_LOCATION,
-    periodicity,
-  );
+  // If GCP is not configured, skip task creation
+  if (!client || !publisher) {
+    logger.warn("GCP Cloud Tasks not configured - skipping checker tasks", {
+      periodicity,
+    });
+    return { success: 0, failed: 0 };
+  }
 
   const timestamp = Date.now();
 
-  const currentMaintenance = db
-    .select({ id: maintenance.id })
-    .from(maintenance)
-    .where(
-      and(lte(maintenance.from, new Date()), gte(maintenance.to, new Date())),
-    )
-    .as("currentMaintenance");
-
-  const currentMaintenanceMonitors = db
-    .select({ id: pageComponent.monitorId })
-    .from(maintenancesToPageComponents)
-    .innerJoin(
-      currentMaintenance,
-      eq(maintenancesToPageComponents.maintenanceId, currentMaintenance.id),
-    )
-    .innerJoin(
-      pageComponent,
-      eq(maintenancesToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(isNotNull(pageComponent.monitorId));
-
-  const result = await db
-    .select()
-    .from(monitor)
-    .where(
-      and(
-        eq(monitor.periodicity, periodicity),
-        eq(monitor.active, true),
-        notInArray(monitor.id, currentMaintenanceMonitors),
-      ),
-    )
-    .all();
+  const result = await listMonitorsToCheck({ db, periodicity });
 
   logger.info("Starting cron job", {
     periodicity,
@@ -109,24 +110,37 @@ export async function sendCheckerTasks(
   });
 
   const monitors = z.array(selectMonitorSchema).safeParse(result);
-  const taskInputs: TaskInput[] = [];
   if (!monitors.success) {
     logger.error(`Error while fetching the monitors ${monitors.error}`);
     throw new Error("Error while fetching the monitors");
   }
 
+  // the dispatch runs after its request returned, so this is its only line in Axiom
+  const emitDispatch = async (success: number, failed: number) =>
+    otelLogger.info("checker_dispatch", {
+      periodicity,
+      monitor_count: result.length,
+      // a count that fails must not fail a dispatch that already went out
+      paused_count: await countPausedMonitors({
+        db,
+        periodicity,
+        now: new Date(timestamp),
+      }).catch(() => null),
+      success_count: success,
+      failed_count: failed,
+      duration_ms: Date.now() - timestamp,
+    });
+
   if (monitors.data.length === 0) {
     logger.info("No monitors to check", { periodicity });
+    // all paused must not look like a cron that never ran
+    await emitDispatch(0, 0);
     return { success: 0, failed: 0 };
   }
 
   // Batch fetch all monitor statuses in a single query (N+1 fix)
   const monitorIds = monitors.data.map((m) => m.id);
-  const rawStatuses = await db
-    .select()
-    .from(monitorStatusTable)
-    .where(inArray(monitorStatusTable.monitorId, monitorIds))
-    .all();
+  const rawStatuses = await listMonitorRegionStatuses({ db, monitorIds });
 
   const statusMap = new Map<
     number,
@@ -146,44 +160,73 @@ export async function sendCheckerTasks(
     statusMap.set(raw.monitorId, list);
   }
 
-  for (const row of monitors.data) {
-    const monitorStatuses = statusMap.get(row.id) ?? [];
+  const taskInputs = buildTaskInputs({
+    monitors: monitors.data,
+    statusesByMonitor: statusMap,
+    periodicity,
+    timestamp,
+  });
 
-    for (const region of row.regions) {
-      const status =
-        monitorStatuses.find((m) => region === m.region)?.status || "active";
+  const transport = env().CHECKER_TRANSPORT;
+  const { success, failed } =
+    transport === "pubsub"
+      ? await publishToPubSub(taskInputs, periodicity, publisher)
+      : await createCloudTasks(taskInputs, periodicity, client);
 
-      const r = regionDict[region as keyof typeof regionDict];
-
-      if (!r) {
-        logger.error(`Invalid region ${region}`);
-        continue;
-      }
-      if (r.deprecated) {
-        // Let's uncomment this when we are ready to remove deprecated regions
-        // We should not use deprecated regions anymore
-        logger.error(`Deprecated region ${region}`);
-        continue;
-      }
-      taskInputs.push({ row, timestamp, status, region });
-      if (periodicity === "30s") {
-        const scheduledAt = timestamp + 30 * 1000;
-        taskInputs.push({
-          row,
-          timestamp: scheduledAt,
-          status,
-          region,
-        });
-      }
-    }
+  await emitDispatch(success, failed);
+  logger.info("Completed cron job", {
+    periodicity,
+    transport,
+    total_tasks: taskInputs.length,
+    success_count: success,
+    failed_count: failed,
+    duration_ms: Date.now() - timestamp,
+  });
+  if (failed > 0) {
+    logger.error("Cron job had failures", {
+      periodicity,
+      transport,
+      failed_count: failed,
+      success_count: success,
+    });
   }
+
+  return { success, failed };
+}
+
+async function publishToPubSub(
+  taskInputs: TaskInput[],
+  periodicity: Periodicity,
+  publisher: CheckerPublisher,
+) {
+  const result = await publishCheckerTasks(taskInputs, periodicity, publisher);
+  if (result.failed > 0) {
+    logger.error("Pub/Sub publish failed", {
+      periodicity,
+      failed_by_region: result.failedByRegion,
+      error_message: result.errors[0],
+    });
+  }
+  return result;
+}
+
+export async function createCloudTasks(
+  taskInputs: TaskInput[],
+  periodicity: Periodicity,
+  client: CloudTasksClient,
+) {
+  const parent = client.queuePath(
+    env().GCP_PROJECT_ID,
+    env().GCP_LOCATION,
+    periodicity,
+  );
 
   const results = await Effect.runPromise(
     Effect.forEach(
       taskInputs,
       (input) =>
         Effect.tryPromise({
-          try: () => createCronTask(input, parent),
+          try: () => createCronTask(input, parent, client),
           catch: (err) => {
             if (err instanceof Error && "code" in err && err.code === 6) {
               return "ALREADY_EXISTS" as const;
@@ -201,121 +244,32 @@ export async function sendCheckerTasks(
             times: 3,
             schedule: Schedule.exponential("1000 millis"),
           }),
-          Effect.either,
+          Effect.result,
         ),
       { concurrency: 100 },
     ),
   );
 
   for (const result of results) {
-    if (Either.isLeft(result)) {
+    if (Result.isFailure(result)) {
       logger.error("Task creation failed after retries", {
-        error_message: result.left.message,
+        error_message: result.failure.message,
       });
     }
   }
 
-  const success = results.filter(Either.isRight).length;
-  const failed = results.filter(Either.isLeft).length;
-
-  logger.info("Completed cron job", {
-    periodicity,
-    total_tasks: taskInputs.length,
-    success_count: success,
-    failed_count: failed,
-    duration_ms: Date.now() - timestamp,
-  });
-  if (failed > 0) {
-    logger.error("Cron job had failures", {
-      periodicity,
-      failed_count: failed,
-      success_count: success,
-    });
-  }
-
-  return { success, failed };
+  return {
+    success: results.filter(Result.isSuccess).length,
+    failed: results.filter(Result.isFailure).length,
+  };
 }
-// timestamp needs to be in ms
+
 const createCronTask = async (
   { row, timestamp, status, region }: TaskInput,
   parent: string,
+  client: CloudTasksClient,
 ) => {
-  let payload:
-    | z.infer<typeof httpPayloadSchema>
-    | z.infer<typeof tpcPayloadSchema>
-    | z.infer<typeof DNSPayloadSchema>
-    | null = null;
-
-  //
-  if (row.jobType === "http") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      url: row.url,
-      method: row.method || "GET",
-      cronTimestamp: timestamp,
-      body: row.body,
-      headers: row.headers,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-      followRedirects:
-        row.followRedirects === null ? true : row.followRedirects,
-    };
-  }
-  if (row.jobType === "tcp") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      cronTimestamp: timestamp,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      retry: row.retry || 3,
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-    };
-  }
-  if (row.jobType === "dns") {
-    payload = {
-      workspaceId: String(row.workspaceId),
-      monitorId: String(row.id),
-      uri: row.url,
-      cronTimestamp: timestamp,
-      status: status,
-      assertions: row.assertions ? JSON.parse(row.assertions) : null,
-      degradedAfter: row.degradedAfter,
-      timeout: row.timeout,
-      trigger: "cron",
-      otelConfig: row.otelEndpoint
-        ? {
-            endpoint: row.otelEndpoint,
-            headers: transformHeaders(row.otelHeaders),
-          }
-        : undefined,
-      retry: row.retry || 3,
-    };
-  }
-
-  if (!payload) {
-    throw new Error("Invalid jobType");
-  }
+  const payload = buildCronCheckerPayload({ row, timestamp, status });
   const regionInfo = regionDict[region];
   let regionHeader = {};
   if (regionInfo.provider === "fly") {
@@ -343,6 +297,9 @@ const createCronTask = async (
     scheduleTime: {
       seconds: timestamp / 1000,
     },
+    // The checker answers only after its whole retry loop, which a 5m timeout
+    // can stretch well past Cloud Tasks' 10m default; 30m is the max allowed.
+    dispatchDeadline: { seconds: 30 * 60 },
   };
 
   const request = { parent: parent, task: newTask };

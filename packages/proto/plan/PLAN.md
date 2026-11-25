@@ -1,307 +1,276 @@
-# Status Report Proto Implementation Plan
+# Plan: `GetPageComponent` — resolve a page component by ID
 
-## Overview
+## Motivation
 
-Create proto definitions for Status Report CRUD operations, following the existing patterns in `packages/proto/api/openstatus/monitor/v1/`.
+Customer (Philipp Honsel, netgo) is on the **new `/rpc` Connect API** (C#
+backend, plain HTTP + JSON, no SDK). Their concrete pain:
 
-## Directory Structure
+> **API Gap — Component Name Resolution.** They fetch the *entire* status-page
+> content **daily** just to build a component-`id` → `name` map, because there
+> is no way to resolve a single component by id. Confirmed as a gap.
+
+Today the only read path for a `PageComponent` is
+`StatusPageService/GetStatusPageContent`, digging the component out of the
+`.components` array. Add a direct single-component read.
+
+The customer imagines a RESTful `GET /status-page-component/{id}`; the actual
+call on this API is a Connect unary POST (they already call
+`.../GetStatusPageContent` the same way):
 
 ```
-packages/proto/api/openstatus/status_report/
-└── v1/
-    ├── status_report.proto    # Message definitions
-    └── service.proto          # Service and RPC definitions
+POST https://api.openstatus.dev/rpc/openstatus.status_page.v1.StatusPageService/GetPageComponent
+x-openstatus-key: <key>
+content-type: application/json
+
+{ "id": "1777074467622" }
 ```
 
-## Database Schema Reference
+Response — the existing `PageComponent` shape (includes `name`, which is what
+they need, plus everything else):
 
-From `packages/db/src/schema/status_reports/status_reports.ts`:
+```json
+{
+  "component": {
+    "id": "1777074467622",
+    "pageId": "5076",
+    "name": "system",
+    "type": "PAGE_COMPONENT_TYPE_MONITOR",
+    "monitorId": "10360",
+    "order": 0,
+    "groupId": "",
+    "groupOrder": 0,
+    "description": "",
+    "createdAt": "2026-06-29T11:35:21.000Z",
+    "updatedAt": "2026-07-01T09:36:06.000Z"
+  }
+}
+```
 
-### StatusReport Table
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | integer | primary key |
-| status | enum | "investigating", "identified", "monitoring", "resolved" |
-| title | text(256) | not null |
-| workspaceId | integer | foreign key |
-| pageId | integer | foreign key (cascade delete) |
-| createdAt | timestamp | default now |
-| updatedAt | timestamp | default now |
+## Decisions (settled)
 
-### StatusReportUpdate Table
-| Field | Type | Constraints |
-|-------|------|-------------|
-| id | integer | primary key |
-| status | enum | same as above |
-| date | timestamp | not null |
-| message | text | not null |
-| statusReportId | integer | foreign key, not null (cascade delete) |
-| createdAt | timestamp | default now |
-| updatedAt | timestamp | default now |
+| Aspect | Decision | Rationale |
+|--------|----------|-----------|
+| **Access model** | Auth-only, workspace-scoped, request is `{ id }`. Cross-workspace id → 404. No public slug path. | Matches `GetStatusPage`/`GetMonitor`; customer calls with an API key. |
+| **Response** | Bare `PageComponent`, existing message untouched. No `page_component.proto` edit. | Already carries `name` + everything; smallest change. |
+| **RPC name** | `GetPageComponent` (not `GetPageComponentById`). | House convention: `GetMonitor`, `GetStatusPage`, `GetMaintenance`, `GetNotification`, `GetStatusReport` — none use a `ById` suffix. Tell the customer the final path. |
+| **Implementation** | Inline handler, reuse existing `getComponentById` + `dbComponentToProto` + `pageComponentNotFoundError`. No new service files. | This handler already reads components inline (e.g. `updateComponent`). Read → no audit, no `requireScope`. |
+| **Malformed id** | Non-numeric → `NaN` → lookup miss → **404** (fall-through). Empty string → **400** from the `min_len=1` validator. | Identical to every sibling `Get*`; no bespoke validation branch. |
+| **Tests** | Full 5-case mirror of the `GetStatusPage` block. | Consistency; reuses existing seed + `connectRequest` helper. |
+| **Transports** | Connect/REST `/rpc` API only. No MCP tool, no tRPC procedure. | Customer need is API-only; MCP already has `listPageComponentsTool`; dashboard reads via its own tRPC. |
 
-### Relationships
-- StatusReport has many StatusReportUpdates
-- StatusReport belongs to Workspace
-- StatusReport can be linked to multiple PageComponents (via `statusReportsToPageComponents` junction table)
-- Legacy: StatusReport belongs to Page (deprecated, use page components instead)
-- Legacy: StatusReport can be linked to Monitors (via `monitorsToStatusReport`, deprecated)
+Non-breaking: additive RPC + messages, passes buf `FILE` breaking rule.
 
 ---
 
-## Proto Definitions
+## 1. Proto — `api/openstatus/status_page/v1/service.proto`
 
-### File 1: `status_report.proto`
+No new message *types* (`PageComponent` in `page_component.proto` is reused).
+
+Add the RPC in the **Component Management** block of `StatusPageService`, after
+`UpdateComponent`:
 
 ```protobuf
-syntax = "proto3";
-
-package openstatus.status_report.v1;
-
-option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_report/v1;statusreportv1";
-
-// StatusReportStatus represents the current state of a status report.
-enum StatusReportStatus {
-  STATUS_REPORT_STATUS_UNSPECIFIED = 0;
-  STATUS_REPORT_STATUS_INVESTIGATING = 1;
-  STATUS_REPORT_STATUS_IDENTIFIED = 2;
-  STATUS_REPORT_STATUS_MONITORING = 3;
-  STATUS_REPORT_STATUS_RESOLVED = 4;
-}
-
-// StatusReportUpdate represents a single update entry in a status report timeline.
-message StatusReportUpdate {
-  // Unique identifier for the update.
-  string id = 1;
-
-  // Status at the time of this update.
-  StatusReportStatus status = 2;
-
-  // Timestamp when this update occurred (RFC 3339 format).
-  string date = 3;
-
-  // Message describing the update.
-  string message = 4;
-
-  // Timestamp when the update was created (RFC 3339 format).
-  string created_at = 5;
-}
-
-// StatusReportSummary represents metadata for a status report (used in list responses).
-message StatusReportSummary {
-  // Unique identifier for the status report.
-  string id = 1;
-
-  // Current status of the report.
-  StatusReportStatus status = 2;
-
-  // Title of the status report.
-  string title = 3;
-
-  // IDs of affected page components.
-  repeated string page_component_ids = 4;
-
-  // Timestamp when the report was created (RFC 3339 format).
-  string created_at = 5;
-
-  // Timestamp when the report was last updated (RFC 3339 format).
-  string updated_at = 6;
-}
-
-// StatusReport represents an incident or maintenance report with full details.
-message StatusReport {
-  // Unique identifier for the status report.
-  string id = 1;
-
-  // Current status of the report.
-  StatusReportStatus status = 2;
-
-  // Title of the status report.
-  string title = 3;
-
-  // IDs of affected page components.
-  repeated string page_component_ids = 4;
-
-  // Timeline of updates for this report (only included in GetStatusReport).
-  repeated StatusReportUpdate updates = 5;
-
-  // Timestamp when the report was created (RFC 3339 format).
-  string created_at = 6;
-
-  // Timestamp when the report was last updated (RFC 3339 format).
-  string updated_at = 7;
+// GetPageComponent retrieves a single component by ID.
+rpc GetPageComponent(GetPageComponentRequest) returns (GetPageComponentResponse) {
+  option idempotency_level = NO_SIDE_EFFECTS;
+  option (gnostic.openapi.v3.operation) = {
+    description: "Returns a single status-page component by its ID, scoped to the authenticated workspace. Use this to resolve a component id to its name (and other fields) instead of fetching the whole page via GetStatusPageContent and filtering .components."
+  };
 }
 ```
 
-### File 2: `service.proto`
+Add the messages in the **Component Management Messages** section:
 
 ```protobuf
-syntax = "proto3";
-
-package openstatus.status_report.v1;
-
-import "buf/validate/validate.proto";
-import "openstatus/status_report/v1/status_report.proto";
-
-option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/status_report/v1;statusreportv1";
-
-// StatusReportService provides CRUD operations for status reports.
-service StatusReportService {
-  // CreateStatusReport creates a new status report.
-  rpc CreateStatusReport(CreateStatusReportRequest) returns (CreateStatusReportResponse);
-
-  // GetStatusReport retrieves a specific status report by ID (includes full update timeline).
-  rpc GetStatusReport(GetStatusReportRequest) returns (GetStatusReportResponse);
-
-  // ListStatusReports returns all status reports for the workspace (metadata only).
-  rpc ListStatusReports(ListStatusReportsRequest) returns (ListStatusReportsResponse);
-
-  // UpdateStatusReport updates the metadata of a status report (title, page, monitors).
-  rpc UpdateStatusReport(UpdateStatusReportRequest) returns (UpdateStatusReportResponse);
-
-  // DeleteStatusReport removes a status report and all its updates.
-  rpc DeleteStatusReport(DeleteStatusReportRequest) returns (DeleteStatusReportResponse);
-
-  // AddStatusReportUpdate adds a new update to an existing status report timeline.
-  rpc AddStatusReportUpdate(AddStatusReportUpdateRequest) returns (AddStatusReportUpdateResponse);
-}
-
-// --- Create Status Report ---
-
-message CreateStatusReportRequest {
-  // Title of the status report (required).
-  string title = 1 [(buf.validate.field).string.min_len = 1];
-
-  // Initial status (required).
-  StatusReportStatus status = 2 [(buf.validate.field).enum.defined_only = true];
-
-  // Initial message describing the incident (required).
-  string message = 3 [(buf.validate.field).string.min_len = 1];
-
-  // Date when the event occurred (RFC 3339 format, required).
-  string date = 4 [(buf.validate.field).string.min_len = 1];
-
-  // Page component IDs to associate with this report (required).
-  repeated string page_component_ids = 5 [(buf.validate.field).repeated.min_items = 1];
-}
-
-message CreateStatusReportResponse {
-  // The created status report.
-  StatusReport status_report = 1;
-}
-
-// --- Get Status Report ---
-
-message GetStatusReportRequest {
-  // ID of the status report to retrieve (required).
+// GetPageComponentRequest is the request to fetch a single component by ID.
+message GetPageComponentRequest {
+  // ID of the component to retrieve (required).
   string id = 1 [(buf.validate.field).string.min_len = 1];
 }
 
-message GetStatusReportResponse {
-  // The requested status report.
-  StatusReport status_report = 1;
-}
-
-// --- List Status Reports ---
-
-message ListStatusReportsRequest {
-  // Maximum number of reports to return (1-100, defaults to 50).
-  optional int32 limit = 1 [(buf.validate.field).int32 = {
-    gte: 1
-    lte: 100
-  }];
-
-  // Number of reports to skip for pagination (defaults to 0).
-  optional int32 offset = 2 [(buf.validate.field).int32.gte = 0];
-
-  // Filter by status (optional). If empty, returns all statuses.
-  repeated StatusReportStatus statuses = 3;
-}
-
-message ListStatusReportsResponse {
-  // List of status reports (metadata only, use GetStatusReport for full details).
-  repeated StatusReportSummary status_reports = 1;
-
-  // Total number of reports matching the filter.
-  int32 total_size = 2;
-}
-
-// --- Update Status Report ---
-
-message UpdateStatusReportRequest {
-  // ID of the status report to update (required).
-  string id = 1 [(buf.validate.field).string.min_len = 1];
-
-  // New title for the report (optional).
-  optional string title = 2;
-
-  // New list of page component IDs (optional, replaces existing list).
-  repeated string page_component_ids = 3;
-}
-
-message UpdateStatusReportResponse {
-  // The updated status report.
-  StatusReport status_report = 1;
-}
-
-// --- Delete Status Report ---
-
-message DeleteStatusReportRequest {
-  // ID of the status report to delete (required).
-  string id = 1 [(buf.validate.field).string.min_len = 1];
-}
-
-message DeleteStatusReportResponse {
-  // Whether the deletion was successful.
-  bool success = 1;
-}
-
-// --- Add Status Report Update ---
-
-message AddStatusReportUpdateRequest {
-  // ID of the status report to update (required).
-  string status_report_id = 1 [(buf.validate.field).string.min_len = 1];
-
-  // New status for the report (required).
-  StatusReportStatus status = 2 [(buf.validate.field).enum.defined_only = true];
-
-  // Message describing what changed (required).
-  string message = 3 [(buf.validate.field).string.min_len = 1];
-
-  // Optional date for the update. Defaults to current time if not provided.
-  optional string date = 4;
-}
-
-message AddStatusReportUpdateResponse {
-  // The updated status report with the new update included.
-  StatusReport status_report = 1;
+// GetPageComponentResponse is the response containing the component.
+message GetPageComponentResponse {
+  // The requested component.
+  PageComponent component = 1;
 }
 ```
 
+## 2. Regenerate + sync OpenAPI
+
+From `packages/proto`:
+
+```sh
+pnpm buf:lint      # STANDARD lint must pass
+pnpm buf:ts        # regenerate gen/ts (server consumes this)
+pnpm buf:openapi   # refresh gen/openapi.yaml (NO_SIDE_EFFECTS → allow-get)
+```
+
+Then the **required manual sync** (server serves the static copy via Scalar at
+`/openapi`; there is no automated copy script — `static/openapi.yaml` was last
+updated by hand alongside the `GetStatusPageOverview` PR #2308):
+
+```sh
+cp packages/proto/gen/openapi.yaml apps/server/static/openapi.yaml
+```
+
+Commit the regenerated `gen/ts/**`, `gen/openapi.yaml`, and the updated
+`apps/server/static/openapi.yaml` together.
+
+## 3. Handler — `apps/server/src/routes/rpc/handlers/status-page/index.ts`
+
+All dependencies already exist in this file: `getComponentById(id, workspaceId)`
+(~line 277), `dbComponentToProto` (imported), `pageComponentNotFoundError`
+(imported, resolves to `Code.NotFound` → HTTP 404).
+
+Add to `statusPageServiceImpl`, in the Component Management block:
+
+```ts
+async getPageComponent(req, ctx) {
+  try {
+    const rpcCtx = getRpcContext(ctx);
+    const id = req.id?.trim();
+    if (!id) throw pageComponentNotFoundError(req.id);
+
+    const component = await getComponentById(Number(id), rpcCtx.workspace.id);
+    if (!component) throw pageComponentNotFoundError(id);
+
+    return { component: dbComponentToProto(component) };
+  } catch (err) {
+    toConnectError(err);
+  }
+},
+```
+
+`getComponentById` filters by `workspaceId`, so a foreign-workspace id returns
+404 with no info leak. The generated `ServiceImpl<typeof StatusPageService>`
+type now *requires* this method — a missing impl fails the build.
+
+## 4. Tests — `apps/server/src/routes/rpc/handlers/status-page/__tests__/status-page.test.ts`
+
+New `describe("StatusPageService.GetPageComponent")` block mirroring
+`GetStatusPage`, using the existing `connectRequest(method, body, headers)`
+helper and the already-seeded `${TEST_PREFIX}-component` (workspace 1):
+
+| Test | Input | Assert |
+|------|-------|--------|
+| returns component by ID | `{ id: <seeded component id> }`, key `"1"` | 200; body `component.name`/`id`/`pageId`/`type`/`monitorId` correct |
+| 401 when no auth key | `{ id: ... }`, no key | 401 |
+| 404 for non-existent component | `{ id: "99999" }`, key `"1"` | 404 |
+| error when ID is empty | `{ id: "" }`, key `"1"` | 400 (min_len validator) |
+| 404 for component in different workspace | insert component in workspace 2, key `"1"` | 404 (cleanup in `finally`) |
+
+## 5. Verification
+
+1. `pnpm buf:lint && pnpm buf:ts && pnpm buf:openapi` + the `cp` sync.
+2. Typecheck `apps/server` (the `ServiceImpl` type enforces the new method).
+3. Run the status-page RPC test suite (5 new cases green).
+4. Manual smoke:
+   ```sh
+   curl -X POST https://<host>/rpc/openstatus.status_page.v1.StatusPageService/GetPageComponent \
+     -H "x-openstatus-key: <key>" -H "content-type: application/json" \
+     -d '{"id":"<componentId>"}'
+   ```
+5. Reply to the customer with the exact POST call above (their `GET /path/{id}`
+   idea maps to this `/rpc` POST they already use for `GetStatusPageContent`).
+
+## Files touched
+
+| File | Change |
+|------|--------|
+| `packages/proto/api/openstatus/status_page/v1/service.proto` | +1 RPC, +2 messages |
+| `packages/proto/gen/ts/**`, `packages/proto/gen/openapi.yaml` | regenerated |
+| `apps/server/static/openapi.yaml` | synced copy of `gen/openapi.yaml` |
+| `apps/server/src/routes/rpc/handlers/status-page/index.ts` | +1 handler method |
+| `apps/server/src/routes/rpc/handlers/status-page/__tests__/status-page.test.ts` | +1 describe block, 5 tests |
+
+## Explicitly out of scope
+
+- No `page_component.proto` / message changes (bare component is enough).
+- No enrichment (monitor status, group name, computed status).
+- No new service verb (inline handler reuse).
+- No MCP tool, no tRPC procedure, no legacy v1 REST alias.
+- No public slug access path.
+
 ---
 
-## Questions Resolved
+## Implementation Checklist
 
-Based on the database schema:
+Ordered by phase. Each phase gates the next (proto must lint before codegen;
+codegen must land before the handler typechecks). Checkboxes are individual,
+verifiable tasks.
 
-1. **Status Report Structure**: Uses `id`, `status`, `title`, `workspaceId`, `createdAt`, `updatedAt`
-2. **Updates**: Separate table `status_report_update` with timeline entries (id, status, date, message, statusReportId)
-3. **Status Values**: `investigating`, `identified`, `monitoring`, `resolved`
-4. **Relationships**: Links to PageComponents (many-to-many via `statusReportsToPageComponents` junction table)
+### Phase 0 — Pre-flight
 
----
+- [x] Confirm working dir clean except the expected `M PLAN.md` (jj `@`).
+- [x] Confirm `buf` runnable: `packages/proto/node_modules/.bin/buf --version` (≥1.63). *(1.69.0)*
+- [x] Re-read the target files before editing so edits apply cleanly:
+  - [x] `packages/proto/api/openstatus/status_page/v1/service.proto`
+  - [x] `apps/server/src/routes/rpc/handlers/status-page/index.ts`
+  - [x] `apps/server/src/routes/rpc/handlers/status-page/__tests__/status-page.test.ts`
+- [x] Note the seeded fixture name/id used by the test suite (`${TEST_PREFIX}-component`, workspace 1) for the success-case assertion. *(static component, order 100)*
 
-## Implementation Notes
+### Phase 1 — Proto definition
 
-1. **Workspace ID**: Not included in request/response as it should be derived from the authenticated context (API key belongs to workspace)
-2. **Timestamps**: Use RFC 3339 format strings for interoperability
-3. **Pagination**: Uses offset-based pagination with `limit` and `offset` parameters
-4. **Validation**: Use `buf.validate` for field validation
+- [x] In `service.proto`, add the `GetPageComponent` RPC inside the **Component Management** block of `StatusPageService`, right after `UpdateComponent`.
+  - [x] Set `option idempotency_level = NO_SIDE_EFFECTS;`.
+  - [x] Add the `(gnostic.openapi.v3.operation)` description (id→name resolution wording).
+- [x] In the **Component Management Messages** section, add `GetPageComponentRequest` with `string id = 1 [(buf.validate.field).string.min_len = 1];`.
+- [x] Add `GetPageComponentResponse` with `PageComponent component = 1;`.
+- [x] Confirm no new imports needed (`PageComponent`, `buf/validate`, gnostic annotations already imported by this file).
+- [x] Do **not** touch `page_component.proto` (bare message reused).
 
----
+### Phase 2 — Codegen + OpenAPI sync
 
-## Decisions Made
+- [x] `cd packages/proto && pnpm buf:lint` → status_page path clean (exit 0). *(pre-existing camelCase violations remain in the untouched `internal/private_location` module — not introduced here.)*
+- [x] `pnpm buf:ts` → regenerates `gen/ts/**`.
+  - [x] Verify `GetPageComponentRequest` / `GetPageComponentResponse` appear in `gen/ts/openstatus/status_page/v1/service_pb.ts`.
+  - [x] Verify `GetPageComponent` is added to the `StatusPageService` definition.
+- [x] `pnpm buf:openapi` → regenerates `gen/openapi.yaml`.
+  - [x] Verify the new operation is present and, given `NO_SIDE_EFFECTS`, is GET-allowed (`allow-get`).
+- [x] `cp packages/proto/gen/openapi.yaml apps/server/static/openapi.yaml` (required manual sync).
+- [x] `diff -q packages/proto/gen/openapi.yaml apps/server/static/openapi.yaml` → IDENTICAL.
 
-1. **Delete Operation**: Yes - `DeleteStatusReport` RPC added (cascade deletes all updates)
-2. **Update Status Report**: Yes - `UpdateStatusReport` RPC added to modify title/page/monitors without creating a timeline entry
-3. **Filtering**: `ListStatusReports` supports filtering by status only (via `statuses` field)
-4. **Include Updates**: `ListStatusReports` returns `StatusReportSummary` (metadata only), `GetStatusReport` returns full `StatusReport` with update timeline
+### Phase 3 — Handler implementation
+
+- [x] In `status-page/index.ts`, add the `getPageComponent` method to `statusPageServiceImpl`, in the Component Management block.
+  - [x] `getRpcContext(ctx)` → workspace.
+  - [x] `req.id?.trim()`; empty → `pageComponentNotFoundError(req.id)`.
+  - [x] `getComponentById(Number(id), rpcCtx.workspace.id)`; miss → `pageComponentNotFoundError(id)`.
+  - [x] Return `{ component: dbComponentToProto(component) }`.
+  - [x] Wrap in `try/catch` → `toConnectError(err)` (mirror sibling `Get*` handlers).
+- [x] Confirm no new imports required (`getComponentById` is a local helper; `dbComponentToProto`, `pageComponentNotFoundError`, `getRpcContext`, `toConnectError` already imported).
+- [x] Confirm no service-layer / audit / `requireScope` additions (read-only path).
+
+### Phase 4 — Tests
+
+- [x] Add `describe("StatusPageService.GetPageComponent", …)` to `status-page.test.ts`, near the `GetStatusPage` block.
+- [x] Test: **returns component by ID** — fetch seeded `${TEST_PREFIX}-component` (key `"1"`) → 200; assert `component.id`, `name`, `pageId`, `type`, `monitorId`.
+- [x] Test: **401 when no auth key** — no `x-openstatus-key` → 401.
+- [x] Test: **404 for non-existent component** — `{ id: "99999" }`, key `"1"` → 404.
+- [x] Test: **400 when ID is empty** — `{ id: "" }`, key `"1"` → 400 (validator).
+- [x] Test: **404 for component in different workspace** — insert a `pageComponent` in workspace 2, query with key `"1"` → 404; clean up in `finally`.
+- [x] Mirror the existing block's `connectRequest(method, body, headers)` usage and any `beforeAll`/`afterAll` cleanup conventions (TEST_PREFIX).
+
+### Phase 5 — Verification (non-invasive, no DB writes)
+
+- [x] `cd packages/proto && pnpm buf:lint` clean for `status_page` (re-run after all edits). Also oxfmt `--check` + oxlint clean on both changed TS files.
+- [x] Typecheck `apps/server` (`pnpm check`) → passes; the generated `ServiceImpl<typeof StatusPageService>` now *requires* `getPageComponent`, so a missing/mis-typed impl fails here. Test file + `packages/proto` also typecheck.
+- [x] Do **not** run `pnpm migrate`/`pnpm seed`/`pnpm test` locally (integration tests run in CI on its ephemeral DB).
+- [x] Sanity-review the diff surface matches the "Files touched" table (reverted incidental `deno.lock` churn from `deno check`; no other stray files).
+
+### Phase 6 — Wrap-up
+
+- [x] Leave all edits in the jj working-copy change `@` — no `jj new`/describe/bookmark, no commit, no push.
+- [x] Summarize the diff back to the user (files + line counts).
+- [x] Draft the customer reply (do not send): the exact
+  `POST /rpc/openstatus.status_page.v1.StatusPageService/GetPageComponent`
+  call with `{ "id": "…" }`, noting it's the same `/rpc` POST pattern they
+  already use for `GetStatusPageContent`, and that the response `component.name`
+  resolves the id→name mapping. *(drafted in the final summary)*
+
+### Definition of done
+
+- [x] `service.proto` updated; `gen/ts/**` + `gen/openapi.yaml` + `apps/server/static/openapi.yaml` regenerated and in sync.
+- [x] `getPageComponent` handler implemented; server typechecks.
+- [x] 5 tests added (running deferred to CI).
+- [x] buf lint clean (status_page); nothing committed; PLAN.md retained.

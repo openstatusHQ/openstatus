@@ -5,6 +5,7 @@ import {
 import {
   getExternalComponentBySlug,
   listExternalComponentsBySlug,
+  listRecentlyFetchedServiceIds,
 } from "@openstatus/services/external-service-component";
 import { unstable_cache } from "next/cache";
 
@@ -33,5 +34,12 @@ export const cachedGetExternalComponentBySlug = unstable_cache(
   async (serviceSlug: string, componentSlug: string) =>
     getExternalComponentBySlug({ serviceSlug, componentSlug }),
   ["external-service-components:by-slug"],
+  { revalidate: REVALIDATE_SECONDS, tags: [TAG] },
+);
+
+// Outside a cache scope the Tinybird read (revalidate: 0) makes the prerendered sitemap bail out to dynamic.
+export const cachedListRecentlyFetchedServiceIds = unstable_cache(
+  async () => listRecentlyFetchedServiceIds({}),
+  ["external-services:recently-fetched-ids"],
   { revalidate: REVALIDATE_SECONDS, tags: [TAG] },
 );

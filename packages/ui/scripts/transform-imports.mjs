@@ -3,6 +3,7 @@
 import {
   cpSync,
   existsSync,
+  globSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -10,8 +11,6 @@ import {
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-
-import { globSync } from "glob";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -35,10 +34,10 @@ cpSync(SRC_DIR, join(DIST_DIR, "src"), { recursive: true });
 
 // Transform imports in all TypeScript/TSX files
 console.log("✨ Transforming imports from @openstatus/ui to @...");
-const files = globSync("**/*.{ts,tsx}", {
-  cwd: join(DIST_DIR, "src"),
-  absolute: true,
-});
+const srcDir = join(DIST_DIR, "src");
+const files = globSync(["**/*.ts", "**/*.tsx"], { cwd: srcDir }).map((file) =>
+  join(srcDir, file),
+);
 
 let transformCount = 0;
 for (const file of files) {

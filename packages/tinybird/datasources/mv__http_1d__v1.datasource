@@ -4,14 +4,15 @@ SCHEMA >
     `time` DateTime,
     `id` Nullable(String),
     `latency` Int64,
-    `requestStatus` Nullable(String),
     `region` LowCardinality(String),
     `trigger` Nullable(String),
     `statusCode` Nullable(Int16),
     `timestamp` Int64,
     `cronTimestamp` Int64,
     `monitorId` String,
-    `timing` Nullable(String)
+    `requestStatus` Nullable(String),
+    `timing` Nullable(String),
+    `attempts` Int16 DEFAULT 1
 
 ENGINE "MergeTree"
 ENGINE_PARTITION_KEY "toYYYYMM(time)"

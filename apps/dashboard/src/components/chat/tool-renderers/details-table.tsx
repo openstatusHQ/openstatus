@@ -45,7 +45,7 @@ export function DetailsTable({ sections, empty }: DetailsTableData) {
               {section.rows.map((row) => (
                 <TableRow
                   key={`${sIdx}-${row.label}`}
-                  className="hover:bg-transparent"
+                  className="group/row hover:bg-transparent"
                 >
                   <TableHead className="bg-muted/40 text-muted-foreground w-1/3 border-r font-mono">
                     {row.label}

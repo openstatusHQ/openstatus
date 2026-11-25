@@ -2,6 +2,7 @@ import { type ServiceContext, ServiceError } from "@openstatus/services";
 import { TRPCError } from "@trpc/server";
 import { ZodError } from "zod";
 
+import { tb } from "./tb";
 import type { Context } from "./trpc";
 
 type AuthedContext = Context & {
@@ -19,6 +20,7 @@ export function toServiceCtx(ctx: AuthedContext): ServiceContext {
     workspace: ctx.workspace,
     actor: { type: "user", userId: ctx.user.id },
     requestId: ctx.req?.headers.get("x-request-id") ?? undefined,
+    tb,
   };
 }
 
@@ -31,6 +33,9 @@ export function toServiceCtx(ctx: AuthedContext): ServiceContext {
 export function toTRPCError(err: unknown): never {
   if (err instanceof TRPCError) throw err;
   if (err instanceof ZodError) {
+    // `onError` drops BAD_REQUEST, so this is the only trace of a ZodError
+    // thrown inside a service (e.g. an importer parsing a provider response).
+    console.warn("[trpc] ZodError thrown inside service:", err.issues);
     throw new TRPCError({
       code: "BAD_REQUEST",
       message: "Invalid input",
@@ -61,6 +66,7 @@ export function toTRPCError(err: unknown): never {
         throw new TRPCError({
           code: "TOO_MANY_REQUESTS",
           message: err.message,
+          cause: err,
         });
       case "PRECONDITION_FAILED":
         throw new TRPCError({

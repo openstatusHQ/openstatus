@@ -1,0 +1,9 @@
+{
+  "extends": "@openstatus/tsconfig/base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "bundler"
+  },
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,4 +1,8 @@
 import {
+  LoadApprovalBeforeInput,
+  loadApprovalBefore,
+} from "@openstatus/services/agent-tools";
+import {
   DeleteChatSessionInput,
   GetChatSessionInput,
   deleteChatSession,
@@ -23,6 +27,17 @@ export const chatSessionRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         return await getChatSession({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  /** Current values behind a pending write-tool approval card. */
+  approvalBefore: protectedProcedure
+    .input(LoadApprovalBeforeInput)
+    .query(async ({ ctx, input }) => {
+      try {
+        return await loadApprovalBefore({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

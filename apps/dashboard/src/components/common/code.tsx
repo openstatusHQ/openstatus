@@ -1,9 +1,9 @@
 "use client";
 
+import { Check, Copy } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { useCopyToClipboard } from "@openstatus/ui/hooks/use-copy-to-clipboard";
 import { cn } from "@openstatus/ui/lib/utils";
-import { Check, Copy } from "lucide-react";
 
 export function Code({
   children,
@@ -24,8 +24,10 @@ export function Code({
         {children}
       </pre>
       <Button
+        type="button"
         variant="outline"
         size="icon"
+        aria-label={isCopied ? "Copied" : "Copy to clipboard"}
         className="absolute top-1 right-1 size-6 p-1 backdrop-blur-md"
         onClick={() =>
           copy(children?.toString() ?? "", {

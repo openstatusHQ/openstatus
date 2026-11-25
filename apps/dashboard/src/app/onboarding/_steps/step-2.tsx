@@ -1,8 +1,8 @@
 "use client";
 
+import { Next } from "@openstatus/icons";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { Button } from "@openstatus/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -97,7 +97,7 @@ export function Step2({
         <OnboardingActions>
           {isLocked ? (
             <Button onClick={onContinue}>
-              Continue <ArrowRight className="size-3" />
+              Continue <Next className="size-3" />
             </Button>
           ) : (
             <>

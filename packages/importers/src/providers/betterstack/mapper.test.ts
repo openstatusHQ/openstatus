@@ -1,5 +1,5 @@
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { regionDict } from "@openstatus/regions";
+import { describe, expect, test } from "vitest";
 
 import {
   MOCK_INCIDENTS,
@@ -28,6 +28,7 @@ import {
   mapResource,
   mapSection,
   mapStatusPage,
+  REGION_MAP,
 } from "./mapper";
 
 describe("mapFrequency", () => {
@@ -62,6 +63,17 @@ describe("mapRegions", () => {
     expect(mapRegions(["us", "eu", "as", "au"])).toBe("iad,fra,sin,syd");
   });
 
+  test("only targets regions that are still available", () => {
+    for (const [location, region] of Object.entries(REGION_MAP)) {
+      const info = regionDict[region as keyof typeof regionDict];
+      expect({ location, region, deprecated: info?.deprecated }).toEqual({
+        location,
+        region,
+        deprecated: false,
+      });
+    }
+  });
+
   test("returns default for unknown regions", () => {
     expect(mapRegions([])).toBe("iad");
     expect(mapRegions(["unknown"])).toBe("iad");
@@ -76,6 +88,8 @@ describe("mapMonitorType", () => {
     expect(mapMonitorType("tcp")).toBe("tcp");
     expect(mapMonitorType("udp")).toBe("udp");
     expect(mapMonitorType("dns")).toBe("dns");
+    expect(mapMonitorType("ping")).toBe("icmp");
+    expect(mapMonitorType("ping_icmp")).toBe("icmp");
   });
 
   test("defaults to http for unknown types", () => {
@@ -115,6 +129,11 @@ describe("mapMonitor", () => {
   test("maps monitor with empty headers", () => {
     const result = mapMonitor(MOCK_MONITORS[1], 42);
     expect(result.headers).toBe("");
+  });
+
+  test("carries over the monitor's follow_redirects setting", () => {
+    expect(mapMonitor(MOCK_MONITORS[0], 42).followRedirects).toBe(true);
+    expect(mapMonitor(MOCK_MONITORS[2], 42).followRedirects).toBe(false);
   });
 });
 
@@ -238,6 +257,159 @@ describe("mapReportAggregateState", () => {
 });
 
 describe("mapReportToStatusReport", () => {
+  test.each([
+    { states: [], expected: "investigating" },
+    { states: ["resolved"], expected: "resolved" },
+    { states: ["operational"], expected: "resolved" },
+    { states: ["downtime"], expected: "investigating" },
+    { states: ["degraded"], expected: "identified" },
+    { states: ["maintenance"], expected: "monitoring" },
+    { states: ["unknown"], expected: "investigating" },
+    { states: ["resolved", "resolved"], expected: "resolved" },
+    { states: ["resolved", "operational"], expected: "resolved" },
+    { states: ["resolved", "downtime"], expected: "investigating" },
+    { states: ["resolved", "degraded"], expected: "identified" },
+    { states: ["resolved", "maintenance"], expected: "monitoring" },
+    { states: ["maintenance", "degraded"], expected: "identified" },
+    { states: ["maintenance", "downtime"], expected: "investigating" },
+    { states: ["resolved", "unknown"], expected: "investigating" },
+    { states: ["degraded", "unknown"], expected: "investigating" },
+    { states: ["Resolved", "Downtime"], expected: "investigating" },
+    { states: ["resolved", "degraded", "downtime"], expected: "investigating" },
+    { states: ["resolved", "downtime", "degraded"], expected: "investigating" },
+    { states: ["degraded", "resolved", "downtime"], expected: "investigating" },
+    { states: ["degraded", "downtime", "resolved"], expected: "investigating" },
+    { states: ["downtime", "resolved", "degraded"], expected: "investigating" },
+    { states: ["downtime", "degraded", "resolved"], expected: "investigating" },
+  ])(
+    "aggregates $states as $expected regardless of resource order",
+    ({ states, expected }) => {
+      const affectedResources = states.map((status, index) => ({
+        status_page_resource_id: `resource-${index}`,
+        status,
+      }));
+      for (const resources of [
+        affectedResources,
+        [...affectedResources].reverse(),
+      ]) {
+        const result = mapReportToStatusReport(
+          MOCK_STATUS_REPORTS[0],
+          [
+            {
+              ...MOCK_STATUS_UPDATES_REPORT_001[0],
+              attributes: {
+                ...MOCK_STATUS_UPDATES_REPORT_001[0].attributes,
+                affected_resources: resources,
+              },
+            },
+          ],
+          42,
+        );
+        expect(result.updates[0].status).toBe(expected);
+        expect(result.report.status).toBe(expected);
+      }
+    },
+  );
+
+  test("aggregates every historical update before selecting the latest report status", () => {
+    const updates = [
+      {
+        published_at: "2024-06-01T10:00:00Z",
+        states: ["resolved", "downtime"],
+      },
+      {
+        published_at: "2024-06-01T11:00:00Z",
+        states: ["resolved", "degraded"],
+      },
+      {
+        published_at: "2024-06-01T12:00:00Z",
+        states: ["resolved", "resolved"],
+      },
+    ].map(({ published_at, states }, index) => ({
+      ...MOCK_STATUS_UPDATES_REPORT_001[index],
+      attributes: {
+        ...MOCK_STATUS_UPDATES_REPORT_001[index].attributes,
+        published_at,
+        affected_resources: states.map((status, resourceIndex) => ({
+          status_page_resource_id: `resource-${resourceIndex}`,
+          status,
+        })),
+      },
+    }));
+    const result = mapReportToStatusReport(
+      MOCK_STATUS_REPORTS[0],
+      [...updates].reverse(),
+      42,
+    );
+    expect(result.updates.map((update) => update.status)).toEqual([
+      "investigating",
+      "identified",
+      "resolved",
+    ]);
+    expect(result.report.status).toBe("resolved");
+    expect(
+      mapReportToStatusReport(
+        MOCK_STATUS_REPORTS[0],
+        updates.slice(0, 2).reverse(),
+        42,
+      ).report.status,
+    ).toBe("identified");
+    expect(result.updates[0].componentImpacts).toEqual([
+      { sourceComponentId: "resource-0", impact: "operational" },
+      { sourceComponentId: "resource-1", impact: "major_outage" },
+    ]);
+    expect(result.updates[1].componentImpacts).toEqual([
+      { sourceComponentId: "resource-0", impact: "operational" },
+      { sourceComponentId: "resource-1", impact: "degraded_performance" },
+    ]);
+  });
+
+  test.each([false, true])(
+    "retains omitted resources across updates (reverse initial order: %s)",
+    (reverse) => {
+      const initial = [
+        { status_page_resource_id: "api", status: "downtime" },
+        { status_page_resource_id: "db", status: "downtime" },
+      ];
+      const updates = [
+        reverse ? [...initial].reverse() : initial,
+        [{ status_page_resource_id: "api", status: "resolved" }],
+        [{ status_page_resource_id: "db", status: "degraded" }],
+        [],
+        [{ status_page_resource_id: "db", status: "resolved" }],
+      ].map((affected_resources, index) => ({
+        ...MOCK_STATUS_UPDATES_REPORT_001[0],
+        id: `update-${index}`,
+        attributes: {
+          ...MOCK_STATUS_UPDATES_REPORT_001[0].attributes,
+          published_at: `2024-06-01T1${index}:00:00Z`,
+          affected_resources,
+        },
+      }));
+      const result = mapReportToStatusReport(
+        MOCK_STATUS_REPORTS[0],
+        [...updates].reverse(),
+        42,
+      );
+      expect(result.updates.map((update) => update.status)).toEqual([
+        "investigating",
+        "investigating",
+        "identified",
+        "identified",
+        "resolved",
+      ]);
+      expect(result.report.status).toBe("resolved");
+      expect(
+        mapReportToStatusReport(MOCK_STATUS_REPORTS[0], updates.slice(0, 4), 42)
+          .report.status,
+      ).toBe("identified");
+      expect(result.updates[1].componentImpacts).toEqual([
+        { sourceComponentId: "api", impact: "operational" },
+      ]);
+      expect(result.updates[3].componentImpacts).toEqual([]);
+    },
+  );
+
   test("maps a resolved report with 3 updates", () => {
     const result = mapReportToStatusReport(
       MOCK_STATUS_REPORTS[0],

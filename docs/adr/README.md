@@ -1,11 +1,16 @@
 # Architecture Decision Records
 
-This directory holds the architecturally significant decisions made on
-openstatus, in [MADR](https://adr.github.io/madr/) format.
+**This set is frozen. Do not add new ADRs.**
 
-An ADR captures *why* a decision was made, what alternatives were weighed, and
-what trade-offs were accepted. `CLAUDE.md` documents the conventions in force
-today; ADRs explain how those conventions came to be.
+These nine records are background on *why* a handful of architectural decisions
+were made, in [MADR](https://adr.github.io/madr/) format. They are history, and
+several describe a change rather than a state — ADR-0008 says
+"`loadSeededWorkspace` is gone", which only makes sense against the world before
+it.
+
+Current-state truth lives in `AGENTS.md` at the repo root and in the nested
+`AGENTS.md` files it links. When a decision changes, update those; do not write
+a superseding ADR here.
 
 ## Index
 
@@ -19,28 +24,4 @@ today; ADRs explain how those conventions came to be.
 | [0005](0005-turso-for-app-data-tinybird-for-time-series.md) | Turso for application data, Tinybird for time-series | accepted |
 | [0006](0006-persist-external-incidents-in-turso.md) | Persist external-service incidents in Turso, not Tinybird | accepted |
 | [0007](0007-store-external-service-components.md) | Store external-service components in Turso, their status history in Tinybird | accepted |
-
-## When to write an ADR
-
-Write one when a decision is hard to reverse, cross-cutting, or non-obvious —
-for example:
-
-- adopting or dropping a framework, library, or runtime;
-- a repo-wide pattern every contributor must follow;
-- a data-model or API-contract decision that is expensive to change;
-- choosing one approach over a reasonable alternative someone would ask about.
-
-Skip it for routine, local, or easily reversible changes.
-
-## How to add one
-
-1. Copy `template.md` to `NNNN-kebab-case-title.md`, where `NNNN` is the next
-   zero-padded number.
-2. Fill it in. Keep it short — drivers, options, outcome, consequences.
-3. Add a row to the index above.
-4. Open it in the same PR as (or just before) the change it describes.
-
-## Changing a decision
-
-ADRs are immutable once accepted. To change a decision, write a new ADR and set
-the old one's `status` to `superseded by ADR-NNNN`.
+| [0008](0008-isolated-test-databases.md) | One test database per package, one workspace per suite, injected route config | accepted |

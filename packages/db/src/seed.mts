@@ -4,16 +4,23 @@ import { drizzle } from "drizzle-orm/libsql";
 import { env } from "../env.mjs";
 import {
   externalService,
-  incidentTable,
+  frozenMonitorUptime,
+  incident,
+  incidentEvent,
+  monitorIncidentTable,
   maintenance,
+  maintenanceUpdate,
   maintenancesToPageComponents,
   monitor,
+  monitorMaintenanceWindow,
+  monitorMaintenanceWindowToMonitor,
   notification,
   notificationsToMonitors,
   page,
   pageComponent,
   privateLocation,
   privateLocationToMonitors,
+  session,
   statusReport,
   statusReportUpdate,
   statusReportsToPageComponents,
@@ -22,6 +29,9 @@ import {
   workspace,
 } from "./schema";
 import { externalServicesSeed } from "./seed/external-services";
+import { frozenUptimeSeed } from "./seed/frozen-uptime";
+import { TEAM_WORKSPACE_LIMITS } from "./seed/limits";
+import { monitorIncidentsSeed } from "./seed/monitor-incidents";
 
 async function main() {
   if (
@@ -61,19 +71,18 @@ async function main() {
         id: 1,
         slug: "love-openstatus",
         stripeId: "stripeId1",
-        name: "test",
+        name: "Acme Inc.",
         subscriptionId: "subscriptionId",
         plan: "team",
         endsAt: null,
         paidUntil: null,
-        limits:
-          '{"monitors":50,"synthetic-checks":150000,"periodicity":["30s","1m","5m","10m","30m","1h"],"multi-region":true,"max-regions":35,"data-retention":"24 months","status-pages":20,"maintenance":true,"status-subscribers":true,"custom-domain":true,"password-protection":true,"email-domain-protection":true,"white-label":true,"notifications":true,"sms":true,"pagerduty":true,"notification-channels":50,"members":"Unlimited","audit-log":true,"regions":["ams","arn","atl","bog","bom","bos","cdg","den","dfw","ewr","eze","fra","gdl","gig","gru","hkg","iad","jnb","lax","lhr","mad","mia","nrt","ord","otp","phx","qro","scl","sea","sin","sjc","syd","waw","yul","yyz"]}',
+        limits: TEAM_WORKSPACE_LIMITS,
       },
       {
         id: 2,
         slug: "test2",
         stripeId: "stripeId2",
-        name: "test2",
+        name: "Side Project",
         subscriptionId: "subscriptionId2",
         plan: "free",
         endsAt: null,
@@ -83,7 +92,7 @@ async function main() {
         id: 3,
         slug: "test3",
         stripeId: "stripeId3",
-        name: "test3",
+        name: "Acme Labs",
         subscriptionId: "subscriptionId3",
         plan: "team",
         endsAt: null,
@@ -93,16 +102,19 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
+  // Older than every seeded outage and frozen month, so reports keep them.
+  const monitorsCreatedAt = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000);
   await db
     .insert(monitor)
     .values([
       {
         id: 1,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
         active: true,
         url: "https://www.openstatus.dev",
-        name: "OpenStatus",
-        description: "OpenStatus website",
+        name: "API",
+        description: "Public REST API",
         method: "POST",
         periodicity: "1m",
         regions: "ams",
@@ -112,7 +124,10 @@ async function main() {
       {
         id: 2,
         active: false,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
+        name: "Legacy Dashboard",
+        description: "Paused until the migration is done",
         periodicity: "10m",
         url: "https://www.google.com",
         method: "GET",
@@ -121,11 +136,12 @@ async function main() {
       },
       {
         id: 3,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
         active: true,
         url: "https://www.openstatus.dev",
-        name: "OpenStatus",
-        description: "OpenStatus website",
+        name: "Website",
+        description: "Marketing site and docs",
         method: "GET",
         periodicity: "1m",
         regions: "ams",
@@ -135,7 +151,10 @@ async function main() {
       {
         id: 4,
         active: true,
+        createdAt: monitorsCreatedAt,
         workspaceId: 1,
+        name: "Search",
+        description: "Search backend, traces exported to OpenTelemetry",
         periodicity: "10m",
         url: "https://www.google.com",
         method: "GET",
@@ -147,7 +166,10 @@ async function main() {
       {
         id: 5,
         active: true,
+        createdAt: monitorsCreatedAt,
         workspaceId: 3,
+        name: "Edge Proxy",
+        description: "Checked from a private location",
         periodicity: "10m",
         url: "https://openstat.us",
         method: "GET",
@@ -164,7 +186,7 @@ async function main() {
       id: 1,
       workspaceId: 1,
       title: "Acme Inc.",
-      description: "Get informed about our services.",
+      description: "Live status of the Acme API, website and search.",
       icon: "https://www.openstatus.dev/favicon.ico",
       slug: "status",
       customDomain: "",
@@ -178,12 +200,18 @@ async function main() {
     .values({
       id: 2,
       workspaceId: 1,
-      title: "Acme Inc.",
-      description: "Get informed about our services.",
+      title: "Acme Enterprise",
+      description: "Status of the dedicated Enterprise infrastructure.",
       icon: "https://www.openstatus.dev/favicon.ico",
       slug: "acme",
       customDomain: "status.acme.com",
       published: true,
+      configuration: {
+        value: "runs",
+        type: "absolute",
+        uptime: true,
+        theme: "default",
+      },
     })
     .onConflictDoNothing()
     .run();
@@ -206,6 +234,54 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
+  // Fixed tokens so the dashboard and scripts/screenshot.mjs log in without a
+  // magic link; main() refuses non-local databases.
+  await db
+    .insert(user)
+    .values([
+      {
+        id: 2,
+        tenantId: "2",
+        name: "Maximilian Kaske",
+        firstName: "Maximilian",
+        lastName: "Kaske",
+        email: "max@openstatus.dev",
+        emailVerified: new Date(),
+        photoUrl: "https://github.com/mxkaske.png",
+      },
+      {
+        id: 3,
+        tenantId: "3",
+        name: "Thibault Le Ouay Ducasse",
+        firstName: "Thibault",
+        lastName: "Le Ouay Ducasse",
+        email: "thibault@openstatus.dev",
+        emailVerified: new Date(),
+        photoUrl: "https://github.com/thibaultleouay.png",
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(usersToWorkspaces)
+    .values([
+      { workspaceId: 1, userId: 2, role: "owner" },
+      { workspaceId: 1, userId: 3, role: "admin" },
+      { workspaceId: 2, userId: 2, role: "owner" },
+      { workspaceId: 3, userId: 3, role: "owner" },
+    ])
+    .onConflictDoNothing()
+    .run();
+  const farFuture = new Date("2099-01-01T00:00:00Z");
+  await db
+    .insert(session)
+    .values([
+      { sessionToken: "seed-session-max", userId: 2, expires: farFuture },
+      { sessionToken: "seed-session-thibault", userId: 3, expires: farFuture },
+    ])
+    .onConflictDoNothing()
+    .run();
+
   // Page Components - representing monitors on the status page
   await db
     .insert(pageComponent)
@@ -216,8 +292,8 @@ async function main() {
         pageId: 1,
         type: "monitor",
         monitorId: 1,
-        name: "OpenStatus Monitor",
-        description: "Main website monitoring",
+        name: "API",
+        description: "Public REST API",
         order: 0,
       },
       {
@@ -226,8 +302,8 @@ async function main() {
         pageId: 1,
         type: "monitor",
         monitorId: 2,
-        name: "Google Monitor",
-        description: "Google.com monitoring",
+        name: "Legacy Dashboard",
+        description: "Being retired, read-only",
         order: 1,
       },
     ])
@@ -239,7 +315,7 @@ async function main() {
     .values({
       id: 1,
       provider: "email",
-      name: "sample test notification",
+      name: "On-call email",
       data: '{"email":"ping@openstatus.dev"}',
       workspaceId: 1,
     })
@@ -403,6 +479,34 @@ async function main() {
     .onConflictDoNothing()
     .run();
 
+  // the first update is the announcement; later ones are the timeline
+  await db
+    .insert(maintenanceUpdate)
+    .values([
+      {
+        id: 1,
+        maintenanceId: 1,
+        message:
+          "We will be performing database maintenance to improve performance. Some queries may be slower during this window.",
+        date: twentyDaysAgo,
+      },
+      {
+        id: 2,
+        maintenanceId: 1,
+        message: "Maintenance completed. All queries are back to full speed.",
+        date: twentyDaysAgoPlus2Hours,
+      },
+      {
+        id: 3,
+        maintenanceId: 2,
+        message:
+          "We will be upgrading our monitoring infrastructure to the latest version. Expect brief interruptions in data collection.",
+        date: new Date(),
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+
   // Link status reports to page components
   await db
     .insert(statusReportsToPageComponents)
@@ -438,12 +542,13 @@ async function main() {
   );
 
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  const tenDaysAgo = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000);
   const threeDaysAgoPlus20Min = new Date(
     threeDaysAgo.getTime() + 20 * 60 * 1000,
   );
 
   await db
-    .insert(incidentTable)
+    .insert(monitorIncidentTable)
     .values([
       {
         id: 1,
@@ -463,7 +568,233 @@ async function main() {
         acknowledgedAt: new Date(threeDaysAgo.getTime() + 2 * 60 * 1000),
         resolvedAt: threeDaysAgoPlus20Min,
       },
+      {
+        id: 3,
+        workspaceId: 1,
+        monitorId: 3,
+        createdAt: tenDaysAgo,
+        startedAt: tenDaysAgo,
+        resolvedAt: new Date(tenDaysAgo.getTime() + 45 * 60 * 1000),
+        resolvedBy: 2,
+        excusedAt: new Date(tenDaysAgo.getTime() + 2 * 60 * 60 * 1000),
+        excusedBy: 2,
+        excusedReason: "Planned DNS cutover, the failing checks were expected.",
+      },
+      ...monitorIncidentsSeed(),
     ])
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(incident)
+    .values({
+      id: 1,
+      workspaceId: 1,
+      title: "Elevated API error rates",
+      severity: "major",
+      status: "mitigated",
+      summary: "Increased 5xx responses on the public API.",
+      commanderId: 2,
+      declaredBy: 3,
+      declaredAt: twoHoursAgo,
+      startedAt: new Date(twoHoursAgo.getTime() - 10 * 60 * 1000),
+      mitigatedAt: new Date(twoHoursAgo.getTime() + 45 * 60 * 1000),
+      statusReportId: 2,
+    })
+    .onConflictDoNothing()
+    .run();
+  // Messages follow the service formats so the timeline parses them into
+  // sentences; one row of every kind the incident page renders.
+  const minutesAfterDeclare = (m: number) =>
+    new Date(twoHoursAgo.getTime() + m * 60 * 1000);
+  await db
+    .insert(incidentEvent)
+    .values([
+      {
+        incidentId: 1,
+        type: "declared",
+        message: "Declared as major: Elevated API error rates",
+        createdBy: 3,
+        createdAt: twoHoursAgo,
+      },
+      {
+        incidentId: 1,
+        type: "slack_channel_bound",
+        message: "Slack channel <#C0C7Y4CG6F2> bound",
+        createdBy: null,
+        createdAt: minutesAfterDeclare(1),
+      },
+      {
+        incidentId: 1,
+        type: "status_report_linked",
+        message: "Linked status report #2",
+        createdBy: 3,
+        createdAt: minutesAfterDeclare(2),
+      },
+      {
+        incidentId: 1,
+        type: "note",
+        message:
+          "Rolling back the latest API deploy, 5xx started right after it went out.",
+        source: "slack",
+        sourceRef:
+          "https://openstatus.slack.com/archives/C0C7Y4CG6F2/p1700000000000100",
+        createdBy: 2,
+        createdAt: minutesAfterDeclare(12),
+      },
+      {
+        incidentId: 1,
+        type: "commander_changed",
+        message: "Commander set to Maximilian Kaske",
+        source: "slack",
+        createdBy: 3,
+        createdAt: minutesAfterDeclare(15),
+      },
+      // Written before `source` existed: the Slack link lives in the message
+      // until `scripts/backfill-incident-event-source.mts` moves it.
+      {
+        incidentId: 1,
+        type: "note",
+        message:
+          "Rollback is out in all regions, watching the error rate.\n\n[From Slack](https://openstatus.slack.com/archives/C0C7Y4CG6F2/p1700000000000200)",
+        createdBy: 3,
+        createdAt: minutesAfterDeclare(20),
+      },
+      {
+        incidentId: 1,
+        type: "status_changed",
+        message:
+          "Status changed from open to mitigated\n\nRollback done, error rate back to baseline.",
+        createdBy: 2,
+        createdAt: minutesAfterDeclare(45),
+      },
+      {
+        incidentId: 1,
+        type: "note",
+        message:
+          "Baseline for 30 minutes now. Keeping the incident open until p99 latency recovers too.",
+        createdBy: 2,
+        createdAt: minutesAfterDeclare(75),
+      },
+      // Unbound again so the timeline and the incident's (empty) Slack binding agree.
+      {
+        incidentId: 1,
+        type: "slack_channel_unbound",
+        message: "Slack channel <#C0C7Y4CG6F2> unbound",
+        createdBy: null,
+        createdAt: minutesAfterDeclare(80),
+      },
+    ])
+    .run();
+
+  // Resolved and acknowledged, so response times and averages have data.
+  const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  const afterDeclare = (m: number) =>
+    new Date(fiveDaysAgo.getTime() + m * 60 * 1000);
+  await db
+    .insert(incident)
+    .values({
+      id: 2,
+      workspaceId: 1,
+      title: "Search results delayed",
+      severity: "minor",
+      status: "resolved",
+      summary: "Search index lagged behind by up to 20 minutes.",
+      commanderId: 3,
+      declaredBy: 2,
+      declaredAt: fiveDaysAgo,
+      startedAt: afterDeclare(-15),
+      acknowledgedAt: afterDeclare(4),
+      acknowledgedBy: 3,
+      mitigatedAt: afterDeclare(35),
+      resolvedAt: afterDeclare(90),
+      resolvedBy: 3,
+    })
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(incidentEvent)
+    .values([
+      {
+        incidentId: 2,
+        type: "declared",
+        message: "Declared as minor: Search results delayed",
+        createdBy: 2,
+        createdAt: fiveDaysAgo,
+      },
+      {
+        incidentId: 2,
+        type: "acknowledged",
+        message: "Incident acknowledged",
+        createdBy: 3,
+        createdAt: afterDeclare(4),
+      },
+      {
+        incidentId: 2,
+        type: "status_changed",
+        message: "Status changed from open to mitigated",
+        createdBy: 3,
+        createdAt: afterDeclare(35),
+      },
+      {
+        incidentId: 2,
+        type: "status_changed",
+        message: "Status changed from mitigated to resolved",
+        createdBy: 3,
+        createdAt: afterDeclare(90),
+      },
+    ])
+    .run();
+
+  // One window per state: running (continue), scheduled (pause), ended.
+  const hour = 60 * 60 * 1000;
+  const now = Date.now();
+  await db
+    .insert(monitorMaintenanceWindow)
+    .values([
+      {
+        id: 1,
+        workspaceId: 1,
+        title: "Search reindex",
+        mode: "continue",
+        from: new Date(now - hour),
+        to: new Date(now + 2 * hour),
+        createdBy: 2,
+      },
+      {
+        id: 2,
+        workspaceId: 1,
+        title: "Website hosting migration",
+        mode: "pause",
+        from: new Date(now + 2 * 24 * hour),
+        to: new Date(now + 2 * 24 * hour + hour),
+        createdBy: 3,
+      },
+      {
+        id: 3,
+        workspaceId: 1,
+        title: "API load balancer upgrade",
+        mode: "continue",
+        from: new Date(now - 6 * 24 * hour),
+        to: new Date(now - 6 * 24 * hour + 30 * 60 * 1000),
+        createdBy: 2,
+      },
+    ])
+    .onConflictDoNothing()
+    .run();
+  await db
+    .insert(monitorMaintenanceWindowToMonitor)
+    .values([
+      { monitorMaintenanceWindowId: 1, monitorId: 4 },
+      { monitorMaintenanceWindowId: 2, monitorId: 3 },
+      { monitorMaintenanceWindowId: 3, monitorId: 1 },
+    ])
+    .onConflictDoNothing()
+    .run();
+
+  await db
+    .insert(frozenMonitorUptime)
+    .values(frozenUptimeSeed())
     .onConflictDoNothing()
     .run();
 

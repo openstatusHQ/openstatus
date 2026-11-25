@@ -1,0 +1,106 @@
+import { getLogger } from "@logtape/logtape";
+import { withBusyRetry } from "@openstatus/services";
+import { listHeartbeatSweepCandidates } from "@openstatus/services/monitor";
+import { HEARTBEAT_REGION, formatHeartbeatSeconds } from "@openstatus/utils";
+
+import { triggerNotifications } from "../checker/alerting";
+import { enqueueOutbox } from "../checker/outbox";
+import {
+  EVENT_TYPE,
+  type TransitionInput,
+  type TransitionResult,
+  applyStatusTransition,
+  evaluateTransition,
+} from "../checker/transition";
+import { env } from "../env";
+
+const logger = getLogger(["workflow-otel"]);
+
+export function failedPingMessage(row: { last_ping_at: number }): string {
+  return `Job reported a failure at ${new Date(row.last_ping_at).toISOString()}`;
+}
+
+export function missedPingMessage(row: {
+  last_ping_at: number;
+  heartbeat_period: number | null;
+  heartbeat_grace: number | null;
+}): string {
+  const period = formatHeartbeatSeconds(row.heartbeat_period ?? 0);
+  const grace = formatHeartbeatSeconds(row.heartbeat_grace ?? 0);
+  return `No ping since ${new Date(row.last_ping_at).toISOString()}, expected every ${period} (+${grace} grace)`;
+}
+
+/**
+ * Applies the transition, and repairs it when the region row already carries
+ * the status: the region write and the transition batch are separate
+ * transactions, and `status-drift` skips monitors without configured regions.
+ */
+async function transition(input: TransitionInput): Promise<TransitionResult> {
+  const result = await applyStatusTransition(input);
+  if (result.kind !== "unchanged") return result;
+  return evaluateTransition(input);
+}
+
+async function deliver(
+  input: TransitionInput,
+  result: Extract<TransitionResult, { kind: "evaluated" }>,
+) {
+  if (result.outboxRows.some((row) => row.deliveryStatus === "pending")) {
+    enqueueOutbox(result.outboxRows.map((row) => row.id));
+  } else if (result.outboxRows.length > 0) {
+    await triggerNotifications({
+      monitorId: String(input.monitorId),
+      message: input.message,
+      notifType: EVENT_TYPE[input.status],
+      cronTimestamp: input.cronTimestamp,
+      regions: result.affectedRegions,
+      incidentId: result.incidentId ?? undefined,
+    });
+  }
+}
+
+export async function handleHeartbeatSweepCron(now = Date.now()) {
+  const candidates = await withBusyRetry(() =>
+    listHeartbeatSweepCandidates({ now }),
+  );
+  let down = 0;
+  let recovered = 0;
+
+  for (const row of candidates) {
+    const failed = row.last_ping_kind === "fail";
+    const overdue = !failed && row.next_due_at < now;
+    // Deterministic timestamps: both machines write the same dedup key, the
+    // incident starts at the failure or the missed deadline, and each step
+    // moves forward.
+    const input: TransitionInput = {
+      monitorId: row.monitor_id,
+      region: HEARTBEAT_REGION,
+      status: failed || overdue ? "error" : "active",
+      cronTimestamp: overdue ? row.next_due_at : row.last_ping_at,
+      // a deadline missed inside a maintenance is still missed once it ends
+      observedAt: now,
+      message: failed
+        ? failedPingMessage(row)
+        : overdue
+          ? missedPingMessage(row)
+          : undefined,
+      deadlineSeconds: Math.floor(env().OUTBOX_DEADLINE_MS / 1000),
+      rolloutPct: env().OUTBOX_ROLLOUT_PCT,
+    };
+
+    const result = await transition(input);
+    if (result.kind !== "evaluated" || !result.transitioned) continue;
+
+    if (input.status === "error") down += 1;
+    else recovered += 1;
+    logger.info("Heartbeat status changed", {
+      monitor_id: row.monitor_id,
+      status: input.status,
+      overdue,
+      outbox_rows: result.outboxRows.length,
+    });
+    await deliver(input, result);
+  }
+
+  return { candidates: candidates.length, down, recovered };
+}

@@ -1,19 +1,19 @@
 import { db, eq } from "@openstatus/db";
-import { expect } from "@std/expect";
 import {
   afterAll,
   beforeAll,
   beforeEach,
   describe,
+  expect,
   test,
-} from "@std/testing/bdd";
+} from "vitest";
 
 import { app } from "../../index";
 
 const testRedisStore = (globalThis as Record<string, unknown>)
   .__testRedisStore as Map<string, string> | undefined;
 import {
-  incidentTable,
+  monitorIncidentTable,
   maintenance,
   monitor,
   page,
@@ -125,8 +125,8 @@ afterAll(async () => {
   // Clean up test data
   if (testIncidentId) {
     await db
-      .delete(incidentTable)
-      .where(eq(incidentTable.id, testIncidentId))
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, testIncidentId))
       .catch(() => {});
   }
   if (testStatusReportId) {
@@ -210,7 +210,7 @@ describe("Status Route: Active monitor filtering", () => {
   test("only considers active monitors for status calculation", async () => {
     // Create an incident for the inactive monitor
     const inactiveIncident = await db
-      .insert(incidentTable)
+      .insert(monitorIncidentTable)
       .values({
         monitorId: testMonitor2Id,
         title: "Inactive Monitor Incident",
@@ -229,8 +229,35 @@ describe("Status Route: Active monitor filtering", () => {
 
     // Clean up
     await db
-      .delete(incidentTable)
-      .where(eq(incidentTable.id, inactiveIncident.id));
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, inactiveIncident.id));
+  });
+});
+
+describe("Status Route: Excused outages", () => {
+  test("ignores an excused outage", async () => {
+    const excused = await db
+      .insert(monitorIncidentTable)
+      .values({
+        monitorId: testMonitorId,
+        title: "Excused Incident",
+        status: "investigating",
+        excusedAt: new Date(),
+        excusedReason: "Provider outage",
+      })
+      .returning()
+      .get();
+
+    try {
+      const res = await app.request(`/public/status/${TEST_PREFIX}-page`);
+      const data = await res.json();
+      expect(data.status).toBe("operational");
+      expect(JSON.stringify(data)).not.toContain("Provider outage");
+    } finally {
+      await db
+        .delete(monitorIncidentTable)
+        .where(eq(monitorIncidentTable.id, excused.id));
+    }
   });
 });
 
@@ -238,7 +265,7 @@ describe("Status Route: Incident detection", () => {
   test("returns incident status with ongoing incident", async () => {
     // Create an ongoing incident for the active monitor
     const incident = await db
-      .insert(incidentTable)
+      .insert(monitorIncidentTable)
       .values({
         monitorId: testMonitorId,
         title: "Test Incident",
@@ -257,7 +284,9 @@ describe("Status Route: Incident detection", () => {
     expect(data.status).toBe("incident");
 
     // Clean up
-    await db.delete(incidentTable).where(eq(incidentTable.id, testIncidentId));
+    await db
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, testIncidentId));
     testIncidentId = 0;
   });
 
@@ -265,15 +294,15 @@ describe("Status Route: Incident detection", () => {
     // First clean up the ongoing incident from previous test if it still exists
     if (testIncidentId) {
       await db
-        .delete(incidentTable)
-        .where(eq(incidentTable.id, testIncidentId))
+        .delete(monitorIncidentTable)
+        .where(eq(monitorIncidentTable.id, testIncidentId))
         .catch(() => {});
       testIncidentId = 0;
     }
 
     // Create a resolved incident
     const resolvedIncident = await db
-      .insert(incidentTable)
+      .insert(monitorIncidentTable)
       .values({
         monitorId: testMonitorId,
         title: "Resolved Incident",
@@ -293,8 +322,8 @@ describe("Status Route: Incident detection", () => {
 
     // Clean up
     await db
-      .delete(incidentTable)
-      .where(eq(incidentTable.id, resolvedIncident.id));
+      .delete(monitorIncidentTable)
+      .where(eq(monitorIncidentTable.id, resolvedIncident.id));
   });
 });
 
@@ -512,5 +541,68 @@ describe("Status Route: Cache functionality", () => {
 
     // Clean up
     await db.delete(page).where(eq(page.id, cachePage.id));
+  });
+});
+
+describe("Status Route: cache key isolation", () => {
+  test("never serves a foreign redis key as a status", async () => {
+    for (const key of ["1-daily-stats", "telegram:workspace_token:1"]) {
+      testRedisStore?.set(key, JSON.stringify("leaked"));
+      const res = await app.request(
+        `/public/status/${encodeURIComponent(key)}`,
+      );
+      expect(await res.json()).toEqual({ status: "unknown" });
+    }
+  });
+
+  test("a page slug shaped like a stats key leaves that key untouched", async () => {
+    const slug = "987654-daily-stats";
+    await db.delete(page).where(eq(page.slug, slug));
+    const collidingPage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Collision Test Page",
+        description: "",
+        slug,
+        customDomain: "",
+        accessType: "public",
+      })
+      .returning()
+      .get();
+
+    const statsKey = "stats:monitor:987654:daily";
+    testRedisStore?.set(statsKey, "cached-stats");
+
+    const res = await app.request(`/public/status/${slug}`);
+    expect((await res.json()).status).toBe("operational");
+    expect(testRedisStore?.has(slug)).toBe(false);
+    expect(testRedisStore?.get(statsKey)).toBe("cached-stats");
+
+    await db.delete(page).where(eq(page.id, collidingPage.id));
+  });
+
+  test("a protected page is never written to the cache", async () => {
+    const slug = `${TEST_PREFIX}-uncached-private`;
+    await db.delete(page).where(eq(page.slug, slug));
+    const privatePage = await db
+      .insert(page)
+      .values({
+        workspaceId: 1,
+        title: "Uncached Private Page",
+        description: "",
+        slug,
+        customDomain: "",
+        accessType: "password",
+        password: "secret",
+      })
+      .returning()
+      .get();
+
+    const res = await app.request(`/public/status/${slug}`);
+    expect(await res.json()).toEqual({ status: "unknown" });
+    expect(testRedisStore?.has(`status:page:${slug}`)).toBe(false);
+
+    await db.delete(page).where(eq(page.id, privatePage.id));
   });
 });

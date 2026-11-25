@@ -1,10 +1,8 @@
 import { page, pageComponent } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { beforeAll, describe, test } from "@std/testing/bdd";
+import { beforeAll, describe, expect, test } from "vitest";
 
-import { SEEDED_WORKSPACE_TEAM_ID } from "../../../test/fixtures";
 import {
-  loadSeededWorkspace,
+  createWorkspaceFixture,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
@@ -20,7 +18,7 @@ const TEST_PREFIX = "agent-tools-impacts-test";
 let teamCtx: ServiceContext;
 
 beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
+  const team = (await createWorkspaceFixture("team")).workspace;
   teamCtx = makeUserCtx(team, { userId: 1 });
 });
 
@@ -465,6 +463,56 @@ describe("add_status_report_update carries prior impacts forward", () => {
         update.statusReportUpdateId,
       );
       expect(rows.length).toBe(0);
+    });
+  });
+});
+
+describe("status-report agent tools: notified", () => {
+  test("a plan without subscribers reports notified: false on all three tools", async () => {
+    await withTestTransaction(async (tx) => {
+      const base = { ...teamCtx, db: tx };
+      const ctx: ServiceContext = {
+        ...base,
+        workspace: {
+          ...base.workspace,
+          limits: { ...base.workspace.limits, "status-subscribers": false },
+        },
+      };
+      const { pageId } = await seedPageWithComponents(tx, ctx.workspace.id);
+
+      const created = await agentTools.create_status_report.run({
+        ctx,
+        input: agentTools.create_status_report.inputSchema.parse({
+          title: `${TEST_PREFIX}-notified`,
+          status: "investigating",
+          message: "down",
+          pageId,
+          pageComponentIds: [],
+          notify: true,
+        }),
+      });
+      expect(created.notified).toBe(false);
+
+      const added = await agentTools.add_status_report_update.run({
+        ctx,
+        input: agentTools.add_status_report_update.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          status: "monitoring",
+          message: "recovering",
+          notify: true,
+        }),
+      });
+      expect(added.notified).toBe(false);
+
+      const resolved = await agentTools.resolve_status_report.run({
+        ctx,
+        input: agentTools.resolve_status_report.inputSchema.parse({
+          statusReportId: created.statusReport.id,
+          message: "all good",
+          notify: true,
+        }),
+      });
+      expect(resolved.notified).toBe(false);
     });
   });
 });

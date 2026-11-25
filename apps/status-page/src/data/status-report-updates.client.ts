@@ -1,16 +1,16 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Edit, Delete } from "@openstatus/icons";
 
 export const actions = [
   {
     id: "edit",
     label: "Edit",
-    icon: Pencil,
+    icon: Edit,
     variant: "default" as const,
   },
   {
     id: "delete",
     label: "Delete",
-    icon: Trash2,
+    icon: Delete,
     variant: "destructive" as const,
   },
 ] as const;

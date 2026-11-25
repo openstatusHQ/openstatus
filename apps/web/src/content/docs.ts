@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import {
+  type DocsNavNode,
   type DocsSection,
   flattenDocsNav,
   sectionForSlug,
@@ -48,6 +49,23 @@ export function getDocs(): MDXData[] {
 export function getDocsPage(slug: string): MDXData | undefined {
   const direct = path.join(DOCS_DIR, `${slug}.mdx`);
   if (fs.existsSync(direct)) return readDocsFile(direct);
+  return undefined;
+}
+
+// A container's own description, else its first page's. A chapter's `slug` is
+// a directory hub with no file behind it, so walk down to the first leaf.
+export function getDocsNodeDescription(node: DocsNavNode): string | undefined {
+  if (node.description) return node.description;
+  const leaf = firstDocsLeaf(node);
+  return leaf?.slug ? getDocsPage(leaf.slug)?.metadata.description : undefined;
+}
+
+function firstDocsLeaf(node: DocsNavNode): DocsNavNode | undefined {
+  if (!node.children?.length) return node.slug ? node : undefined;
+  for (const child of node.children) {
+    const leaf = firstDocsLeaf(child);
+    if (leaf) return leaf;
+  }
   return undefined;
 }
 

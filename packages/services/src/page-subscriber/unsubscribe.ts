@@ -5,7 +5,12 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
-import { type DB, type ServiceContext, withTransaction } from "../context";
+import {
+  type DB,
+  type ServiceContext,
+  withTransaction,
+  dbOnlyContext,
+} from "../context";
 import { NotFoundError } from "../errors";
 import { resolveSubscriberByToken } from "./internal";
 import { UnsubscribeSubscriberInput } from "./schemas";
@@ -16,6 +21,9 @@ import { UnsubscribeSubscriberInput } from "./schemas";
  * second call on an already-unsubscribed row returns silently with no
  * audit emit.
  */
+// Token-addressed self-service by an anonymous visitor: the audit actor is
+// `subscriber`, for which `requireScope` is a documented no-op.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function unsubscribeSubscriber(args: {
   input: UnsubscribeSubscriberInput;
   db?: DB;
@@ -33,7 +41,7 @@ export async function unsubscribeSubscriber(args: {
   // Idempotent — no row, no audit on the second call.
   if (row.unsubscribedAt) return;
 
-  await withTransaction({ db: args.db } as ServiceContext, async (tx) => {
+  await withTransaction(dbOnlyContext(args.db), async (tx) => {
     const before = selectPageSubscriberSchema.parse(row);
     const updated = await tx
       .update(pageSubscriber)
@@ -41,7 +49,9 @@ export async function unsubscribeSubscriber(args: {
       .where(eq(pageSubscriber.id, row.id))
       .returning()
       .get();
-    const after = selectPageSubscriberSchema.parse(updated ?? row);
+    // deleted since the lookup above
+    if (!updated) throw new NotFoundError("page_subscriber");
+    const after = selectPageSubscriberSchema.parse(updated);
 
     const auditCtx: ServiceContext = {
       workspace: pageData.workspace,

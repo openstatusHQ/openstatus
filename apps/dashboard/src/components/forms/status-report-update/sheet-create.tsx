@@ -1,0 +1,70 @@
+"use client";
+
+import type { RouterOutputs } from "@openstatus/api";
+import type { StatusReportStatus } from "@openstatus/db/src/schema";
+import { currentImpactsFromUpdates } from "@openstatus/db/src/schema/page_components/constants";
+
+import { FormSheetStatusReportUpdate } from "@/components/forms/status-report-update/sheet";
+import { usePublishUpdate } from "@/components/status-reports/use-publish-update";
+import { getNextStatus } from "@/data/status-report-updates.client";
+
+type StatusReport = RouterOutputs["statusReport"]["list"][number];
+
+/** Create-update sheet prefilled with `status` (default: the next one) — `children` is the trigger. */
+export function FormSheetStatusReportUpdateCreate({
+  report,
+  status,
+  children,
+  open,
+  onOpenChange,
+}: {
+  report: StatusReport;
+  status?: StatusReportStatus;
+  children?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const reportComponents =
+    report.pageComponents?.map((c) => ({ id: c.id, name: c.name })) ?? [];
+  const reportHasImpacts = report.updates.some(
+    (u) => u.componentImpacts.length > 0,
+  );
+  const currentImpacts = currentImpactsFromUpdates(report.updates);
+  const nextStatus = status ?? getNextStatus(report.status);
+  const update = usePublishUpdate(report.id);
+
+  return (
+    <FormSheetStatusReportUpdate
+      open={open}
+      onOpenChange={onOpenChange}
+      defaultValues={{
+        status: nextStatus,
+        componentImpacts: reportComponents.map((c) => ({
+          pageComponentId: c.id,
+          impact:
+            nextStatus === "resolved"
+              ? "operational"
+              : (currentImpacts.get(c.id) ?? "operational"),
+        })),
+      }}
+      components={reportComponents}
+      onSubmit={async (values) => {
+        // a legacy report stays legacy unless the operator actively
+        // sets a non-operational impact
+        const sendImpacts =
+          reportHasImpacts ||
+          values.componentImpacts?.some((ci) => ci.impact !== "operational");
+        await update.publish({
+          statusReportId: report.id,
+          message: values.message,
+          status: values.status,
+          componentImpacts: sendImpacts ? values.componentImpacts : undefined,
+          date: values.date,
+          notifySubscribers: values.notifySubscribers,
+        });
+      }}
+    >
+      {children}
+    </FormSheetStatusReportUpdate>
+  );
+}

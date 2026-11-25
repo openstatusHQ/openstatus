@@ -1,4 +1,4 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -36,10 +36,24 @@ const withNextIntl = createNextIntlPlugin({
   },
 });
 
+// ICON_SET=nucleo swaps the icon set at resolution time (see packages/icons)
+const useNucleoIcons = process.env.ICON_SET === "nucleo";
+
 const nextConfig: NextConfig = {
   output: process.env.SELF_HOST === "true" ? "standalone" : undefined,
   experimental: {
     authInterrupts: true,
+    // barrel-optimize only when unaliased — the rewrite would bypass the nucleo alias
+    optimizePackageImports: useNucleoIcons ? [] : ["@openstatus/icons"],
+  },
+  turbopack: useNucleoIcons
+    ? { resolveAlias: { "@openstatus/icons": "@openstatus/icons/nucleo" } }
+    : undefined,
+  webpack: (config) => {
+    if (useNucleoIcons) {
+      config.resolve.alias["@openstatus/icons$"] = "@openstatus/icons/nucleo";
+    }
+    return config;
   },
   images: {
     remotePatterns: [
@@ -79,9 +93,6 @@ const sentryConfig = {
 
   // Upload a larger set of source maps for improved stack trace accuracy (increases build time)
   widenClientFileUpload: true,
-
-  // If set to true, transpiles Sentry SDK to be compatible with IE11 (increases bundle size)
-  transpileClientSDK: false,
 
   // Tree-shake Sentry logger statements to reduce bundle size
   webpack: {

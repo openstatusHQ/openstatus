@@ -1,33 +1,44 @@
 ---
 category: Reference
 title: Maintenance Reference
-description: Technical specification for scheduled maintenance windows in openstatus.
+description: Technical specification for status page maintenances and monitor maintenance windows in openstatus.
 ---
 
-A maintenance window is a scheduled period during which you expect planned disruption to one or more services — a database upgrade, a deployment, or infrastructure work. Announcing it ahead of time lets you communicate the disruption to your users instead of letting your status page register it as an unexpected outage.
+Openstatus has two kinds of planned maintenance. They are independent: neither creates, changes or links to the other.
 
-A maintenance belongs to a single status page and targets one or more of that page's components — monitor-linked or static.
+| | Status page maintenance | Maintenance window |
+| --- | --- | --- |
+| Purpose | Tell your users about planned work | Stop checks or alerts during planned work |
+| Targets | Components of one status page | Monitors |
+| Public | Yes, on the status page, feeds and subscriber notifications | No, dashboard only |
+| Checks | Paused for the monitors behind its components until January 1, 2027, unaffected afterwards | Paused, or kept running without status changes |
+| Active | `from` to `to`, both included | `from` included, `to` excluded |
 
-## Behaviour
+## Status page maintenance
 
-While a maintenance window is active (the current time is between `from` and `to`):
+A status page maintenance announces planned disruption, such as a database upgrade, a deployment or infrastructure work, so your users see it coming instead of an unexpected outage. It belongs to a single status page and targets one or more of that page's components, monitor-linked or static.
+
+### Behaviour
+
+While a maintenance is active (the current time is between `from` and `to`, both included):
 
 - The affected components display the **Under Maintenance** (info) status on the status page.
 - A higher-priority event overrides it: an active incident (error) or an unresolved status report (degraded) takes precedence, so the component shows that status instead. Maintenance only outranks the default operational status.
 - The maintenance is reflected in the historical status bars for the days it overlaps.
+- Until January 1, 2027 (00:00 UTC), monitors behind the affected monitor-linked components are not checked, unless a [continue window](#mode) covers them.
 
-Maintenance windows **do not** exclude downtime from uptime calculations. The uptime percentage is computed from raw check results and is unaffected by maintenance windows; only the displayed status changes.
+**Pausing checks is moving to maintenance windows.** From January 1, 2027 (00:00 UTC) a status page maintenance no longer stops checks: its monitors keep running and can alert, including for a maintenance that started before that date. To keep a monitor quiet during planned work, schedule a [maintenance window](#maintenance-windows) for the same time.
+
+A maintenance does **not** exclude downtime from uptime calculations. Uptime is computed from check results; a paused monitor simply has no results for that time.
 
 When a maintenance is created, status page subscribers can be notified that it has been scheduled (see [Notify](#notify)). Updating a maintenance never re-notifies.
-
-## Configuration and properties
 
 ### Title
 
 **Type:** String (required)
 **Length:** 1–256 characters
 
-A short, human-readable name for the maintenance window.
+A short, human-readable name for the maintenance.
 
 **Example:** `"Database Upgrade"`
 
@@ -35,23 +46,16 @@ A short, human-readable name for the maintenance window.
 
 **Type:** String (required)
 
-A description of the maintenance shown to users, explaining what is happening and the expected impact.
+The text shown to users, explaining what is happening and the expected impact. On create it is posted as the first [update](#updates); on read it is the message of the newest update; on update it rewrites the newest update. New timeline entries are added through the update endpoints, not through this field.
 
 **Example:** `"Upgrading our database to improve performance. Brief interruptions may occur."`
 
-### From
+### From and to
 
 **Type:** Datetime (required)
 **Format:** RFC 3339 / ISO 8601 (e.g., `2026-01-20T02:00:00Z`)
 
-When the maintenance window starts.
-
-### To
-
-**Type:** Datetime (required)
-**Format:** RFC 3339 / ISO 8601 (e.g., `2026-01-20T04:00:00Z`)
-
-When the maintenance window ends. Must be later than `from`.
+When the maintenance starts and ends. `to` must be later than `from`.
 
 ### Status page
 
@@ -64,7 +68,7 @@ The id of the status page this maintenance belongs to. A maintenance is scoped t
 **Type:** Array of integers (optional)
 **Default:** `[]`
 
-The ids of the page components that should display the Under Maintenance status during the window. Each component must belong to the status page referenced above, and can be either a monitor-linked or a static component.
+The ids of the page components that display the Under Maintenance status during the maintenance. Each component must belong to the status page referenced above, and can be either a monitor-linked or a static component.
 
 In the v1 REST API these are passed as `monitorIds`, which accepts monitor components only and is retained for backward compatibility. Static components can be targeted through the dashboard.
 
@@ -73,17 +77,76 @@ In the v1 REST API these are passed as `monitorIds`, which accepts monitor compo
 **Type:** Boolean (optional)
 **Default:** `false`
 
-A one-time flag evaluated at creation time — it is **not** stored on the maintenance record and cannot be read back. When set, status page subscribers are notified that the maintenance has been scheduled.
+A one-time flag evaluated at creation time. It is **not** stored on the maintenance and cannot be read back. When set, status page subscribers are notified that the maintenance has been scheduled.
 
 The v1 REST API does not expose this flag; it notifies subscribers automatically when a maintenance is created on a page whose workspace has subscribers enabled.
 
-## Relationships
+### Updates
 
-- **Status page** — a maintenance is tied to a single page. Deleting the page deletes its maintenance windows.
-- **Page components** — a maintenance can affect multiple components (monitor-linked or static), and a component can be covered by multiple (including overlapping) maintenance windows.
+A maintenance is a timeline of dated notes. The first one is the announcement written at creation, later ones track progress, for example "Work started", "Taking longer than expected" or "Completed early". Each update has:
+
+- **Message**: String (required). The note shown on the status page.
+- **Date**: Datetime (optional). When the note applies. Defaults to the time it is posted.
+- **Notify**: Boolean (optional, write-only). Sends the note to status page subscribers.
+
+A maintenance always keeps at least one update: deleting the last one is rejected; delete the maintenance instead. Reads return them newest-first under `updates` (RPC, agent tools) or `maintenanceUpdates` (status page JSON). The public status page, feeds and Markdown render the updates in order, oldest first on the page.
+
+### Relationships
+
+- **Status page**: a maintenance is tied to a single page. Deleting the page deletes its maintenances.
+- **Page components**: a maintenance can affect multiple components, and a component can be covered by several, even overlapping, maintenances.
+
+## Maintenance windows
+
+A maintenance window tells openstatus what to do with a set of monitors during planned work. It is internal: nothing about it appears on a status page. Manage windows under [**Maintenance Windows**](https://app.openstatus.dev/maintenance-windows).
+
+A window is active from `from`, included, to `to`, excluded. A check that ran at the exact end instant is treated as outside the window.
+
+### Mode
+
+**Type:** `pause` or `continue` (required)
+**Default:** `pause`
+
+- **`pause`**: the window's monitors are not checked. Nothing is recorded for that time, so nothing can fail or alert.
+- **`continue`**: checks run and their results are recorded as usual, but the monitor's status does not change, no downtime is opened and no notification is sent. A check is judged by when it ran, so a result that arrives just after the window but ran inside it is still ignored. If the monitor is still failing after the window, the first failing check after it alerts. A recovery is the exception: if the monitor was already down when the window started, a passing check inside the window closes that downtime and sends the recovery notification.
+
+Heartbeat monitors follow the same rule: in `pause` they are not swept; in `continue` a deadline missed inside the window is reported once the window has ended, if no ping arrived in the meantime.
+
+When windows and status page maintenances overlap on one monitor, `continue` wins: the monitor keeps being checked even if a `pause` window or a status page maintenance covers it at the same time. From January 1, 2027 only windows count here, since a status page maintenance no longer pauses checks.
+
+### Title
+
+**Type:** String (required)
+**Length:** 1–256 characters
+
+An internal name, shown in the dashboard only.
+
+### From and to
+
+**Type:** Datetime (required)
+
+When the window starts and ends. `to` must be later than `from`. A running window can be ended early, which sets `to` to the current time; a window that has not started can be edited or deleted instead.
+
+### Monitors
+
+**Type:** Array of integers (required, at least one)
+
+The monitors the window applies to. Every selected monitor is in maintenance for the whole window. Editing the list replaces it.
+
+### Status in the dashboard
+
+A monitor inside an active window, or behind a component in an active status page maintenance, shows a blue **Maintenance** status dot in the sidebar and monitor list until the maintenance ends. Its last check status is kept and shows again afterwards.
+
+### Permissions
+
+Reading windows requires the `monitors:read` scope; creating, editing, ending and deleting them requires `monitors:write`. Every change is recorded in the workspace audit log.
 
 ## Related resources
 
-- **[Status page reference](/docs/reference/status-page)** — how maintenance windows surface on the public status page.
-- **[Page components](/docs/reference/page-components)** — the monitor and static components a maintenance window can target.
-- **[Status report reference](/docs/reference/status-report)** — communicate unplanned incidents, as opposed to scheduled maintenance.
+- **[Status page reference](/docs/reference/status-page)**: how maintenances surface on the public status page.
+- **[Page components](/docs/reference/page-components)**: the monitor and static components a maintenance can target.
+- **[Status report reference](/docs/reference/status-report)**: communicate unplanned incidents, as opposed to scheduled maintenance.
+
+## Video tutorial
+
+<ShowcaseYouTube href="https://www.youtube.com/watch?v=7rjDDyMumeY" title="How to schedule maintenance on your status page" />

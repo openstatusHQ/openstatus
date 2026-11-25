@@ -16,7 +16,7 @@ import {
 import { useMediaQuery } from "@openstatus/ui/hooks/use-media-query";
 import { cn } from "@openstatus/ui/lib/utils";
 import { formatDistanceToNowStrict, subDays } from "date-fns";
-import { InfoIcon } from "lucide-react";
+import { ArrowUpRight, InfoIcon } from "lucide-react";
 import { useState } from "react";
 
 // ============================================================================
@@ -118,7 +118,7 @@ export function StatusComponentHeader({
   return (
     <div
       data-slot="status-component-header"
-      className={cn("flex items-center justify-between", className)}
+      className={cn("flex items-center justify-between gap-2", className)}
       {...props}
     >
       {children}
@@ -156,7 +156,7 @@ export function StatusComponentHeaderLeft({
   return (
     <div
       data-slot="status-component-header-left"
-      className={cn("flex items-center gap-2", className)}
+      className={cn("flex min-w-0 items-center gap-2 truncate", className)}
       {...props}
     >
       {children}
@@ -499,6 +499,50 @@ export function StatusComponentUptimeSkeleton({
 }: React.ComponentProps<typeof Skeleton>) {
   return <Skeleton className={cn("h-4 w-16", className)} {...props} />;
 }
+
+/**
+ * StatusComponentLatency - Latency chip shown next to the monitor title.
+ *
+ * Presentational only; wrap in the app's link primitive to navigate to the
+ * monitor page. The caller supplies the label text (e.g. "92ms p75").
+ *
+ * @see StatusComponentLatencySkeleton - For loading state
+ */
+export function StatusComponentLatency({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="status-component-latency"
+      className={cn(
+        "text-muted-foreground flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-mono text-xs leading-none",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+      <ArrowUpRight className="size-3" />
+    </div>
+  );
+}
+StatusComponentLatency.displayName = "StatusComponentLatency";
+
+/**
+ * StatusComponentLatencySkeleton - Loading skeleton sized to the latency chip.
+ *
+ * @see StatusComponentLatency - For the actual chip
+ */
+export function StatusComponentLatencySkeleton({
+  className,
+  ...props
+}: React.ComponentProps<typeof Skeleton>) {
+  return (
+    <Skeleton className={cn("h-5 w-16 rounded-md", className)} {...props} />
+  );
+}
+StatusComponentLatencySkeleton.displayName = "StatusComponentLatencySkeleton";
 
 /**
  * StatusComponentStatus - Automatic status label display

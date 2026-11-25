@@ -1,5 +1,5 @@
 import type {
-  Incident,
+  MonitorIncident,
   Maintenance,
   StatusReport,
   StatusReportUpdate,
@@ -16,11 +16,13 @@ export type Monitor = {
   ok: number;
   day: string;
 };
-type StatusReports = (StatusReport & {
-  statusReportUpdates?: StatusReportUpdate[];
+// public page payloads strip author columns; the tracker never reads them
+type AuthorColumns = "createdBy" | "updatedBy";
+type StatusReports = (Omit<StatusReport, AuthorColumns> & {
+  statusReportUpdates?: Omit<StatusReportUpdate, AuthorColumns>[];
 })[];
-type Incidents = Incident[];
-type Maintenances = Maintenance[];
+type Incidents = MonitorIncident[];
+type Maintenances = Omit<Maintenance, AuthorColumns>[];
 
 /**
  * Tracker Class is supposed to handle the data and calculate from a single monitor.
@@ -38,7 +40,7 @@ export class Tracker {
     data?: Monitor[];
     statusReports?: StatusReports;
     incidents?: Incidents;
-    maintenances?: Maintenance[];
+    maintenances?: Maintenances;
   }) {
     this.data = arg.data || []; // TODO: use another Class to handle a single Day
     this.statusReports = arg.statusReports || [];
@@ -49,7 +51,7 @@ export class Tracker {
   private calculateUptime(data: { ok: number; count: number }[]) {
     const { count, ok } = this.aggregatedData(data);
     if (count === 0) return 100; // starting with 100% uptime
-    return Math.round((ok / count) * 10_000) / 100; // round to 2 decimal places
+    return Math.round((ok / count) * 100_000) / 1_000; // round to 3 decimal places
   }
 
   private aggregatedData(data: { ok: number; count: number }[]) {

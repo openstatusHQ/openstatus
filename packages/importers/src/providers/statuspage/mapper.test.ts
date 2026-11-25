@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { describe, it } from "@std/testing/bdd";
+import { describe, expect, it } from "vitest";
 
 import {
   MOCK_COMPONENTS,
@@ -97,6 +96,61 @@ describe("mapIncidentToStatusReport", () => {
     expect(result.sourceComponentIds).toEqual(["sp_comp_001"]);
   });
 
+  it.each([
+    ["2024-06-10T08:00:00.000Z", "2024-06-10T08:00:00.000Z"],
+    ["2024-06-12T10:00:00.000Z", "2024-06-12T10:00:00.000Z"],
+    [null, "2024-06-12T10:00:00.000Z"],
+    [undefined, "2024-06-12T10:00:00.000Z"],
+  ])(
+    "uses display_at %s with creation-time fallback",
+    (display_at, expected) => {
+      const result = mapIncidentToStatusReport(
+        {
+          ...MOCK_INCIDENTS[0],
+          incident_updates: [
+            {
+              ...(MOCK_INCIDENTS[0].incident_updates ?? [])[0],
+              created_at: "2024-06-12T10:00:00.000Z",
+              display_at,
+            },
+          ],
+        },
+        1,
+      );
+      expect(result.updates[0].date.toISOString()).toBe(expected);
+    },
+  );
+
+  it("orders backdated updates by display time without mutating the source", () => {
+    const updates = MOCK_INCIDENTS[0].incident_updates ?? [];
+    const incident = {
+      ...MOCK_INCIDENTS[0],
+      incident_updates: [
+        {
+          ...updates[3],
+          created_at: "2024-06-12T10:00:00Z",
+          display_at: "2024-06-10T09:00:00Z",
+        },
+        {
+          ...updates[0],
+          created_at: "2024-06-12T11:00:00Z",
+          display_at: "2024-06-10T08:00:00Z",
+        },
+      ],
+    };
+    const result = mapIncidentToStatusReport(incident, 1);
+    expect(result.updates.map((u) => u.status)).toEqual([
+      "investigating",
+      "resolved",
+    ]);
+    expect(result.report.status).toBe("resolved");
+    expect(result.updates[1].message).toContain("**Postmortem**");
+    expect(incident.incident_updates.map((u) => u.status)).toEqual([
+      "resolved",
+      "investigating",
+    ]);
+  });
+
   it("maps an ongoing incident", () => {
     const result = mapIncidentToStatusReport(MOCK_INCIDENTS[1], 1, 10);
     expect(result.report.status).toBe("identified");
@@ -109,6 +163,32 @@ describe("mapIncidentToStatusReport", () => {
     const lastUpdate = result.updates[result.updates.length - 1];
     expect(lastUpdate.message).toContain("---\n\n**Postmortem**\n\n");
     expect(lastUpdate.message).toContain("## Summary");
+  });
+
+  it("does not duplicate the postmortem when a postmortem update exists", () => {
+    const incident = MOCK_INCIDENTS[0];
+    const updates = incident.incident_updates ?? [];
+    const postmortemUpdate = {
+      ...updates[updates.length - 1],
+      id: "sp_upd_postmortem",
+      status: "postmortem" as const,
+      body: incident.postmortem_body,
+      affected_components: null,
+      created_at: "2099-01-01T00:00:00.000Z",
+    };
+    const result = mapIncidentToStatusReport(
+      {
+        ...incident,
+        status: "postmortem",
+        incident_updates: [...updates, postmortemUpdate],
+      },
+      1,
+      10,
+    );
+    expect(result.report.status).toBe("resolved");
+    const lastUpdate = result.updates[result.updates.length - 1];
+    expect(lastUpdate.status).toBe("resolved");
+    expect(lastUpdate.message).toBe(incident.postmortem_body);
   });
 
   it("maps per-update component impacts from affected_components", () => {
@@ -131,10 +211,12 @@ describe("mapIncidentUpdateStatus", () => {
     ["identified", "identified"],
     ["monitoring", "monitoring"],
     ["resolved", "resolved"],
+    ["postmortem", "resolved"],
     ["scheduled", "investigating"],
     ["in_progress", "investigating"],
     ["verifying", "monitoring"],
     ["completed", "resolved"],
+    ["unknown", "investigating"],
   ] as const) {
     it(`maps ${input} to ${expected}`, () => {
       expect(mapIncidentUpdateStatus(input)).toBe(expected);
@@ -185,5 +267,10 @@ describe("mapSubscriber", () => {
 
   it("returns null for slack subscriber", () => {
     expect(mapSubscriber(MOCK_SUBSCRIBERS[4], 10)).toBeNull();
+  });
+
+  it("returns null for subscriber with unknown mode", () => {
+    const subscriber = { ...MOCK_SUBSCRIBERS[0], mode: "unknown" as const };
+    expect(mapSubscriber(subscriber, 10)).toBeNull();
   });
 });

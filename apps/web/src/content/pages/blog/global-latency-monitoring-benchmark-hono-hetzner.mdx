@@ -148,3 +148,29 @@ Through this global setup, I gained valuable insights into external network perf
 My 2cts, if you want to pick a PaaS to deploy your next project, pick the one that fits your needs the best, because in the end, the network differences are minimal!
 
 If you want to try monitoring our app from multiple global locations, you can try our [global speed checker](/play/checker) for free.
+
+## Frequently asked questions
+
+<Details summary="Does the cloud provider affect latency to Hetzner?">
+
+Barely. In our 7-day benchmark from 17 probes across Fly, Koyeb, and Railway, providers in the same region reported less than 10% latency difference. For example, Fly and Koyeb probes in Frankfurt both showed ~80ms P95 to Hetzner Finland. Geographic distance is the dominant factor.
+
+</Details>
+
+<Details summary="What is the latency from different regions to Hetzner Finland?">
+
+Frankfurt probes averaged ~80ms P95. US East probes were higher due to transatlantic routing. Singapore probes from Fly, Koyeb, and Railway all reported similar latencies with less than 10% difference between providers, confirming distance is the primary factor.
+
+</Details>
+
+<Details summary="Should I pick Fly, Koyeb, or Railway based on network performance?">
+
+Network performance alone should not drive your decision. Our benchmark showed minimal latency differences between Fly, Koyeb, and Railway when monitoring the same target from the same region. Pick the PaaS that fits your workflow, pricing, and deployment needs — the network differences are negligible.
+
+</Details>
+
+<Details summary="How do you benchmark global latency with openstatus?">
+
+Deploy your app on any provider, then configure openstatus to monitor it from multiple regions across Fly, Koyeb, and Railway simultaneously. openstatus checks all selected regions in parallel every minute, giving you a true multi-provider, multi-region latency baseline without internal network bias.
+
+</Details>

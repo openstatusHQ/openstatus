@@ -1,6 +1,5 @@
 import { defaultStatusBlocksLabels as labels } from "@openstatus/ui/components/blocks/status.utils";
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
+import { describe, expect, test } from "vitest";
 
 // Status-page timestamps render in UTC, so the user-facing labels carry a
 // trailing "(UTC)" to tell viewers which zone they are reading (see #2302).
@@ -13,6 +12,14 @@ describe("defaultStatusBlocksLabels UTC suffix", () => {
 
   test("formatDateShort omits the UTC suffix (date-only label)", () => {
     expect(labels.formatDateShort(date)).toBe("Jan 15, 2024");
+  });
+
+  test("formatDay renders the bar's calendar date without shifting it", () => {
+    expect(labels.formatDay("2026-10-16T00:00:00.000Z")).toBe("Oct 16, 2026");
+  });
+
+  test("formatTimestamp keeps the compact banner shape", () => {
+    expect(labels.formatTimestamp(date)).toBe("Jan 15, 2024 14:30 (UTC)");
   });
 
   test("formatDateTime appends the UTC suffix", () => {

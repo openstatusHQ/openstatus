@@ -17,7 +17,7 @@ export function FormDangerZone({
   title: string;
 }) {
   return (
-    <FormCard variant="destructive">
+    <FormCard id="danger-zone" variant="destructive">
       <FormCardHeader>
         <FormCardTitle>Danger Zone</FormCardTitle>
         <FormCardDescription>This action cannot be undone.</FormCardDescription>

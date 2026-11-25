@@ -8,9 +8,8 @@ import {
   createMonitor,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
+import { afterAll, beforeAll, expect, test } from "vitest";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";
@@ -153,7 +152,7 @@ test("privateLocation.new rejects monitors from another workspace", async () => 
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 
@@ -195,6 +194,36 @@ test("privateLocation.update rejects monitors from another workspace", async () 
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
+});
+
+test("privateLocation.new persists metadata and defaults status", async () => {
+  const caller = callerFor();
+
+  const result = await caller.privateLocation.new({
+    name: "Metadata Location",
+    token: "test-token-metadata",
+    monitors: [],
+    metadata: { datacenter: "eu-west" },
+  });
+
+  expect(result.metadata).toEqual({ datacenter: "eu-west" });
+  expect(result.status).toBe("error");
+
+  await db.delete(privateLocation).where(eq(privateLocation.id, result.id));
+});
+
+test("privateLocation.update replaces metadata", async () => {
+  const caller = callerFor();
+
+  const result = await caller.privateLocation.update({
+    id: ownWorkspaceLocationId,
+    name: "Metadata Update",
+    monitors: [ownMonitorId],
+    metadata: { env: "prod" },
+  });
+
+  expect(result.metadata).toEqual({ env: "prod" });
+  expect(result.status).toBe("error");
 });

@@ -1,22 +1,34 @@
-import { FetchError } from "@openstatus/status-fetcher";
-import * as Sentry from "@sentry/deno";
+import { sentryPrivacyDefaults } from "@openstatus/utils/src/sentry";
+import * as Sentry from "@sentry/node";
 
 import { env } from "../env";
 
 Sentry.init({
+  ...sentryPrivacyDefaults,
   dsn: env().SENTRY_DSN,
   environment: env().NODE_ENV,
   tracesSampleRate: 0,
 });
 
-export function runSentryCron(monitorSlug: string): {
+export type SentryMonitorConfig = NonNullable<
+  Parameters<typeof Sentry.captureCheckIn>[1]
+>;
+
+/**
+ * Passing `monitorConfig` upserts the Sentry monitor from code, so a schedule
+ * defined in this repo does not also need configuring in Sentry.
+ */
+export function runSentryCron(
+  monitorSlug: string,
+  monitorConfig?: SentryMonitorConfig,
+): {
   cronCompleted: () => Promise<void>;
   cronFailed: () => Promise<void>;
 } {
-  const checkInId = Sentry.captureCheckIn({
-    monitorSlug,
-    status: "in_progress",
-  });
+  const checkInId = Sentry.captureCheckIn(
+    { monitorSlug, status: "in_progress" },
+    monitorConfig,
+  );
   return {
     cronCompleted: async () => {
       Sentry.captureCheckIn({ checkInId, monitorSlug, status: "ok" });
@@ -32,24 +44,4 @@ export function runSentryCron(monitorSlug: string): {
 export async function reportBackgroundError(message: string): Promise<void> {
   Sentry.captureMessage(message, "error");
   await Sentry.flush();
-}
-
-// Fires inside the per-service fetch loop, so no flush here — the tick's
-// cronCompleted/cronFailed path flushes once the tick settles.
-export function reportFetchFailure(args: {
-  phase: "status" | "incidents" | "components";
-  slug: string;
-  error: FetchError;
-}): void {
-  const { phase, slug, error } = args;
-  Sentry.captureException(error, {
-    tags: {
-      cron: "external-status",
-      phase,
-      slug,
-      fetcher: error.fetcherName ?? "unknown",
-      http_status: error.httpStatus,
-    },
-    extra: { url: error.url },
-  });
 }

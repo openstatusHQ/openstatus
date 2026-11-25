@@ -29,7 +29,7 @@ export async function revokeApiKey(args: {
   const isSelfRevoke =
     (ctx.actor.type === "apiKey" || ctx.actor.type === "mcp") &&
     String(input.id) === ctx.actor.keyId;
-  if (!isSelfRevoke) requireScope(ctx, "write");
+  if (!isSelfRevoke) requireScope(ctx, "admin");
 
   await withTransaction(ctx, async (tx) => {
     // Narrow select: matches the fields we put in the audit `before`

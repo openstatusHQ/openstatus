@@ -3,6 +3,7 @@ import type {
   AgentToolOutput,
 } from "@openstatus/services/agent-tools";
 
+import { EntityRefList } from "@/components/common/entity-ref/entity-ref";
 import { TableCellBoolean } from "@/components/data-table/table-cell-boolean";
 import { TableCellNumber } from "@/components/data-table/table-cell-number";
 import { TableCellText } from "@/components/data-table/table-cell-text";
@@ -78,12 +79,13 @@ export function getMonitorDetails(
     },
     {
       label: "Notifications",
-      value: (
-        <TableCellText
-          value={output.notifications
-            .map((n) => `${n.name} (${n.provider})`)
-            .join(", ")}
+      value: output.notifications.length ? (
+        <EntityRefList
+          kind="notification"
+          refs={output.notifications.map((n) => ({ id: n.id, label: n.name }))}
         />
+      ) : (
+        <TableCellText value={null} empty="None" />
       ),
     },
   ];
@@ -99,7 +101,12 @@ export function getMonitorDetails(
       rows: [
         {
           label: "IDs",
-          value: <TableCellText value={output.privateLocationIds.join(", ")} />,
+          value: (
+            <EntityRefList
+              kind="privateLocation"
+              refs={output.privateLocationIds}
+            />
+          ),
         },
       ],
     });

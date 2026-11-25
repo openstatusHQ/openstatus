@@ -1,5 +1,4 @@
 import {
-  type SQL,
   and,
   asc,
   db as defaultDb,
@@ -7,21 +6,25 @@ import {
   eq,
   gte,
   inArray,
+  type SQL,
   sql,
 } from "@openstatus/db";
 import {
-  type PageComponentImpact,
-  pageComponent,
+  incident,
   page as pageTable,
+  pageComponent,
+  type PageComponentImpact,
   selectPageComponentSchema,
   selectPageSchema,
   statusReport,
+  statusReportsToPageComponents,
   statusReportUpdate,
   statusReportUpdateToPageComponents,
-  statusReportsToPageComponents,
 } from "@openstatus/db/src/schema";
 
-import type { DB, ServiceContext } from "../context";
+import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
+import { requireScope } from "../auth";
+import { batchReads, type DB, type ServiceContext } from "../context";
 import type {
   Page,
   PageComponent,
@@ -48,22 +51,33 @@ function periodToSince(period: StatusReportListPeriod): Date {
   }
 }
 
-export type StatusReportUpdateWithImpacts = StatusReportUpdate & {
-  /** Impacts this update set; empty for legacy reports. */
-  componentImpacts: { pageComponentId: number; impact: PageComponentImpact }[];
+type Attributed = {
+  createdByUser: AttributedUserDetail | null;
+  updatedByUser: AttributedUserDetail | null;
 };
 
-export type StatusReportWithRelations = StatusReport & {
-  updates: StatusReportUpdateWithImpacts[];
-  pageComponents: PageComponent[];
-  /** Flat list of associated component ids. Convenience for proto conversion. */
-  pageComponentIds: number[];
-  /**
-   * The owning page with its full component roster. `null` when the report
-   * has no `pageId` — rare today but schema-allowed.
-   */
-  page: (Page & { pageComponents: PageComponent[] }) | null;
-};
+export type StatusReportUpdateWithImpacts = StatusReportUpdate &
+  Attributed & {
+    /** Impacts this update set; empty for legacy reports. */
+    componentImpacts: {
+      pageComponentId: number;
+      impact: PageComponentImpact;
+    }[];
+  };
+
+export type StatusReportWithRelations = StatusReport &
+  Attributed & {
+    updates: StatusReportUpdateWithImpacts[];
+    pageComponents: PageComponent[];
+    /** Flat list of associated component ids. Convenience for proto conversion. */
+    pageComponentIds: number[];
+    incidentId: number | null;
+    /**
+     * The owning page with its full component roster. `null` when the report
+     * has no `pageId` — rare today but schema-allowed.
+     */
+    page: (Page & { pageComponents: PageComponent[] }) | null;
+  };
 
 export type ListStatusReportsResult = {
   items: StatusReportWithRelations[];
@@ -71,13 +85,13 @@ export type ListStatusReportsResult = {
 };
 
 /**
- * Load relations for a set of status reports in three batched queries
- * (updates, component associations, pages + page components) regardless of
- * how many reports were passed in. Avoids the O(N) per-row pattern that
+ * Load relations for a set of status reports in three round-trips regardless
+ * of how many reports were passed in. Avoids the O(N) per-row pattern that
  * pairs badly with the dashboard's effectively-unlimited list request.
  */
 async function enrichReportsBatch(
   db: DB,
+  workspaceId: number,
   rows: StatusReport[],
 ): Promise<StatusReportWithRelations[]> {
   if (rows.length === 0) return [];
@@ -86,14 +100,57 @@ async function enrichReportsBatch(
   const pageIdsSet = new Set<number>();
   for (const r of rows) if (r.pageId != null) pageIdsSet.add(r.pageId);
   const pageIds = Array.from(pageIdsSet);
+  // Keeps the batch a fixed five statements when no report carries a pageId;
+  // `inArray` with an empty list is not a valid predicate.
+  const anyPage = pageIds.length > 0 ? inArray(pageTable.id, pageIds) : sql`0`;
+  const anyPageComponent =
+    pageIds.length > 0 ? inArray(pageComponent.pageId, pageIds) : sql`0`;
 
-  // One query: all updates for all reports, newest-first.
-  const allUpdates = await db
-    .select()
-    .from(statusReportUpdate)
-    .where(inArray(statusReportUpdate.statusReportId, reportIds))
-    .orderBy(desc(statusReportUpdate.date))
-    .all();
+  // Everything that keys off the reports themselves — updates, component
+  // associations, owning pages and their component rosters — in one
+  // round-trip. Only the impact rows below depend on a prior result.
+  const [allUpdates, assocRows, pageRows, pageSiblings, incidentRows] =
+    await batchReads(db, [
+      db
+        .select()
+        .from(statusReportUpdate)
+        .where(inArray(statusReportUpdate.statusReportId, reportIds))
+        .orderBy(desc(statusReportUpdate.date), desc(statusReportUpdate.id)),
+      // Explicit column selection with aliases avoids depending on drizzle's
+      // auto-derived `row.<object_name>` keys — those are named after the
+      // exported JS variable, so a rename in the schema silently breaks the
+      // row shape at runtime.
+      db
+        .select({
+          reportId: statusReportsToPageComponents.statusReportId,
+          component: pageComponent,
+        })
+        .from(pageComponent)
+        .innerJoin(
+          statusReportsToPageComponents,
+          eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
+        )
+        .where(inArray(statusReportsToPageComponents.statusReportId, reportIds))
+        // stable order: rows truncate the list to the first few names
+        .orderBy(asc(pageComponent.order), asc(pageComponent.id)),
+      db.select().from(pageTable).where(anyPage),
+      db.select().from(pageComponent).where(anyPageComponent),
+      db
+        .select({ id: incident.id, statusReportId: incident.statusReportId })
+        .from(incident)
+        .where(
+          and(
+            eq(incident.workspaceId, workspaceId),
+            inArray(incident.statusReportId, reportIds),
+          ),
+        ),
+    ]);
+  const incidentByReport = new Map<number, number>();
+  for (const row of incidentRows) {
+    if (row.statusReportId !== null) {
+      incidentByReport.set(row.statusReportId, row.id);
+    }
+  }
 
   // One query: all impact rows for all updates.
   const updateIds = allUpdates.map((u) => u.id);
@@ -129,10 +186,25 @@ async function enrichReportsBatch(
     else impactsByUpdate.set(row.statusReportUpdateId, [entry]);
   }
 
+  const users = await loadAttributedUsers(db, [
+    ...rows.flatMap((r) => [r.createdBy, r.updatedBy]),
+    ...allUpdates.flatMap((u) => [u.createdBy, u.updatedBy]),
+  ]);
+  const attributed = (row: {
+    createdBy: number | null;
+    updatedBy: number | null;
+  }): Attributed => ({
+    createdByUser:
+      row.createdBy != null ? (users.get(row.createdBy) ?? null) : null,
+    updatedByUser:
+      row.updatedBy != null ? (users.get(row.updatedBy) ?? null) : null,
+  });
+
   const updatesByReport = new Map<number, StatusReportUpdateWithImpacts[]>();
   for (const u of allUpdates) {
     const withImpacts = {
       ...u,
+      ...attributed(u),
       componentImpacts: impactsByUpdate.get(u.id) ?? [],
     };
     const arr = updatesByReport.get(u.statusReportId);
@@ -140,23 +212,6 @@ async function enrichReportsBatch(
     else updatesByReport.set(u.statusReportId, [withImpacts]);
   }
 
-  // One query: all component associations joined to their components.
-  // Explicit column selection with aliases avoids depending on drizzle's
-  // auto-derived `row.<object_name>` keys — those are named after the
-  // exported JS variable, so a rename in the schema silently breaks the
-  // row shape at runtime.
-  const assocRows = await db
-    .select({
-      reportId: statusReportsToPageComponents.statusReportId,
-      component: pageComponent,
-    })
-    .from(pageComponent)
-    .innerJoin(
-      statusReportsToPageComponents,
-      eq(statusReportsToPageComponents.pageComponentId, pageComponent.id),
-    )
-    .where(inArray(statusReportsToPageComponents.statusReportId, reportIds))
-    .all();
   const componentsByReport = new Map<number, PageComponent[]>();
   for (const row of assocRows) {
     const component = selectPageComponentSchema.parse(row.component);
@@ -165,43 +220,34 @@ async function enrichReportsBatch(
     else componentsByReport.set(row.reportId, [component]);
   }
 
-  // Two queries: distinct pages + their component rosters. Keyed by pageId so
-  // multiple reports sharing a page share the same Page object.
+  // Keyed by pageId so multiple reports sharing a page share the same Page.
   const pageById = new Map<
     number,
     Page & { pageComponents: PageComponent[] }
   >();
-  if (pageIds.length > 0) {
-    const [pageRows, pageSiblings] = await Promise.all([
-      db.select().from(pageTable).where(inArray(pageTable.id, pageIds)).all(),
-      db
-        .select()
-        .from(pageComponent)
-        .where(inArray(pageComponent.pageId, pageIds))
-        .all(),
-    ]);
-    const siblingsByPageId = new Map<number, PageComponent[]>();
-    for (const c of pageSiblings) {
-      const parsed = selectPageComponentSchema.parse(c);
-      const arr = siblingsByPageId.get(parsed.pageId);
-      if (arr) arr.push(parsed);
-      else siblingsByPageId.set(parsed.pageId, [parsed]);
-    }
-    for (const p of pageRows) {
-      pageById.set(p.id, {
-        ...selectPageSchema.parse(p),
-        pageComponents: siblingsByPageId.get(p.id) ?? [],
-      });
-    }
+  const siblingsByPageId = new Map<number, PageComponent[]>();
+  for (const c of pageSiblings) {
+    const parsed = selectPageComponentSchema.parse(c);
+    const arr = siblingsByPageId.get(parsed.pageId);
+    if (arr) arr.push(parsed);
+    else siblingsByPageId.set(parsed.pageId, [parsed]);
+  }
+  for (const p of pageRows) {
+    pageById.set(p.id, {
+      ...selectPageSchema.parse(p),
+      pageComponents: siblingsByPageId.get(p.id) ?? [],
+    });
   }
 
   return rows.map((r) => {
     const components = componentsByReport.get(r.id) ?? [];
     return {
       ...r,
+      ...attributed(r),
       updates: updatesByReport.get(r.id) ?? [],
       pageComponents: components,
       pageComponentIds: components.map((c) => c.id),
+      incidentId: incidentByReport.get(r.id) ?? null,
       page: r.pageId != null ? (pageById.get(r.pageId) ?? null) : null,
     };
   });
@@ -212,6 +258,7 @@ export async function listStatusReports(args: {
   input: ListStatusReportsInput;
 }): Promise<ListStatusReportsResult> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = ListStatusReportsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -227,28 +274,36 @@ export async function listStatusReports(args: {
   }
   const whereClause = and(...conditions);
 
-  const [countRow, rows] = await Promise.all([
-    db
+  const rows = await db
+    .select()
+    .from(statusReport)
+    .where(whereClause)
+    // `createdAt` has second precision, so the `id` tie-break keeps pages
+    // stable across reports created in the same second.
+    .orderBy(
+      ...(input.order === "asc"
+        ? [asc(statusReport.createdAt), asc(statusReport.id)]
+        : [desc(statusReport.createdAt), desc(statusReport.id)]),
+    )
+    .limit(input.limit)
+    .offset(input.offset)
+    .all();
+
+  // A short page is the last page, so the total is already known and the
+  // extra `count(*)` is only paid when a full page comes back — or when an
+  // empty page leaves it ambiguous whether we ran off the end. Both tRPC
+  // consumers discard `totalSize` entirely.
+  let totalSize = input.offset + rows.length;
+  if (rows.length === input.limit || (rows.length === 0 && input.offset > 0)) {
+    const countRow = await db
       .select({ count: sql<number>`count(*)` })
       .from(statusReport)
       .where(whereClause)
-      .get(),
-    db
-      .select()
-      .from(statusReport)
-      .where(whereClause)
-      .orderBy(
-        input.order === "asc"
-          ? asc(statusReport.createdAt)
-          : desc(statusReport.createdAt),
-      )
-      .limit(input.limit)
-      .offset(input.offset)
-      .all(),
-  ]);
+      .get();
+    totalSize = countRow?.count ?? totalSize;
+  }
 
-  const totalSize = countRow?.count ?? 0;
-  const items = await enrichReportsBatch(db, rows);
+  const items = await enrichReportsBatch(db, ctx.workspace.id, rows);
   return { items, totalSize };
 }
 
@@ -257,6 +312,7 @@ export async function getStatusReport(args: {
   input: GetStatusReportInput;
 }): Promise<StatusReportWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "incidents:read");
   const input = GetStatusReportInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -265,7 +321,7 @@ export async function getStatusReport(args: {
     id: input.id,
     workspaceId: ctx.workspace.id,
   });
-  const [enriched] = await enrichReportsBatch(db, [report]);
+  const [enriched] = await enrichReportsBatch(db, ctx.workspace.id, [report]);
   // `enrichReportsBatch` guarantees a 1:1 mapping for a non-empty input.
   // oxlint-disable-next-line typescript/no-non-null-assertion -- always non-null for len === 1
   return enriched!;

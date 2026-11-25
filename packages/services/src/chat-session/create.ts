@@ -5,6 +5,7 @@ import {
   chatSession,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
@@ -14,10 +15,15 @@ import { UnauthorizedError } from "../errors";
 import { enforceSessionCap } from "./internal";
 import { CreateChatSessionInput } from "./schemas";
 
+// Per-user UI state, not workspace configuration: only user actors get past
+// `tryGetActorUserId`, so `requireScope` could never fire, and the audit action
+// union has no `chat_session` verb.
+// oxlint-disable-next-line openstatus/services-mutation-guards
 export async function createChatSession(args: {
   ctx: ServiceContext;
   input: CreateChatSessionInput;
 }): Promise<ChatSessionRow> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const input = CreateChatSessionInput.parse(args.input);
 

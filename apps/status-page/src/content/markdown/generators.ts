@@ -43,13 +43,28 @@ export type MaintenanceDetail = NonNullable<
   RouterOutputs["statusPage"]["getMaintenance"]
 >;
 
-// Detail payloads don't carry the page's homepage/contact URLs — thread them in
-// from getLight so a directly-fetched detail page has those nav anchors.
-type PageUrls = { homepageUrl?: string | null; contactUrl?: string | null };
+// Detail payloads don't carry these page fields — thread them in from getGate
+// so a directly-fetched detail page has the nav anchors and the page's zone.
+type PageFields = {
+  homepageUrl?: string | null;
+  contactUrl?: string | null;
+  defaultTimezone?: string;
+};
 
 function avg(values: number[]): number | null {
   if (values.length === 0) return null;
   return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+// Dates have second precision, so the id breaks ties.
+function newestMaintenanceUpdates<
+  T extends { date: Date | string | number; id?: number },
+>(updates: T[] | undefined): T[] {
+  return [...(updates ?? [])].sort(
+    (a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime() ||
+      (b.id ?? 0) - (a.id ?? 0),
+  );
 }
 
 export function generateOverview(
@@ -77,6 +92,7 @@ export function generateOverview(
       canonical: canonicalUrl(baseUrl),
       homepageUrl: page.homepageUrl,
       contactUrl: page.contactUrl,
+      timeZone: page.defaultTimezone,
       live: {
         status: page.status,
         // Minute-granular so the body (and its ETag) stays stable within the
@@ -108,7 +124,7 @@ export function generateOverview(
   );
   if (page.description) out.push(`> ${page.description}\n`);
   out.push(
-    `\`${statusGlyph(page.status)}\` **${statusLabel(page.status)}** · ${formatStamp(now)}\n`,
+    `\`${statusGlyph(page.status)}\` **${statusLabel(page.status)}** · ${formatStamp(now, page.defaultTimezone)}\n`,
   );
 
   const componentNames = (
@@ -139,12 +155,18 @@ export function generateOverview(
     for (const m of activeMaintenance) {
       const affects = componentNames(m.maintenancesToPageComponents);
       const head = [
-        `- ${statusGlyph("info")} **${m.title}** — ${formatDay(m.from)} → ${formatDay(m.to)}`,
+        `- ${statusGlyph("info")} **${m.title}** — ${formatDay(m.from, page.defaultTimezone)} → ${formatDay(m.to, page.defaultTimezone)}`,
         affects.length ? `affects: ${affects.join(", ")}` : null,
         mdUrl(`events/maintenance/${m.id}`),
       ].filter(Boolean);
       out.push(head.join(" · "));
-      if (m.message) out.push(`  ${m.message}`);
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length === 0 && m.message) out.push(`  ${m.message}`);
+      for (const update of updates) {
+        out.push(
+          `  - ${formatDayTime(update.date, page.defaultTimezone)} — ${update.message}`,
+        );
+      }
     }
     out.push("");
   }
@@ -303,6 +325,7 @@ export function generateEventsList(
       canonical: canonicalUrl(baseUrl, "events"),
       homepageUrl: page.homepageUrl,
       contactUrl: page.contactUrl,
+      timeZone: page.defaultTimezone,
     }),
   );
   out.push(`# ${page.title} — Events · Reports\n`);
@@ -339,6 +362,15 @@ export function generateEventsList(
       ref: `maintenance/${m.id}`,
       title: m.title,
     });
+    for (const update of newestMaintenanceUpdates(m.maintenanceUpdates)) {
+      logRows.push({
+        timestamp: update.date,
+        label: "MAINTENANCE",
+        glyph: statusGlyph("info"),
+        ref: `maintenance/${m.id}`,
+        title: m.title,
+      });
+    }
     // Only log a COMPLETED entry once the window has actually ended. (`m.to`
     // is non-null per schema; the truthy check is just defensive.)
     if (m.to && new Date(m.to).getTime() <= now) {
@@ -353,7 +385,7 @@ export function generateEventsList(
   }
   if (logRows.length > 0) {
     out.push("## Event log\n");
-    out.push(`${eventLog(logRows)}\n`);
+    out.push(`${eventLog(logRows, page.defaultTimezone)}\n`);
   }
 
   if (page.statusReports.length === 0) {
@@ -393,7 +425,7 @@ export function generateEventsList(
         .filter((v): v is string => Boolean(v));
 
       const meta = [
-        start ? formatDay(start) : null,
+        start ? formatDay(start, page.defaultTimezone) : null,
         start ? relativeTime(start, now) : null,
         affects.length ? `affects: ${affects.join(", ")}` : null,
         oldest && updates[0]
@@ -412,7 +444,7 @@ export function generateEventsList(
             return name ? componentImpactExplicit(name, ci.impact) : null;
           })
           .filter((v): v is string => Boolean(v));
-        const head = `- ${reportStatusGlyph(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}`;
+        const head = `- ${reportStatusGlyph(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date, page.defaultTimezone)}`;
         out.push(
           updateAffects.length ? `${head} · ${updateAffects.join(", ")}` : head,
         );
@@ -428,7 +460,7 @@ export function generateEventsList(
         .map((c) => c.pageComponent?.name)
         .filter((name): name is string => Boolean(name));
       const meta = [
-        formatDay(m.from),
+        formatDay(m.from, page.defaultTimezone),
         m.to ? humanDuration(m.from, m.to) : null,
         affects.length ? `affects: ${affects.join(", ")}` : null,
       ].filter(Boolean);
@@ -436,6 +468,15 @@ export function generateEventsList(
         `### [${escapeLinkLabel(m.title)}](${mdUrl(`events/maintenance/${m.id}`)})`,
       );
       out.push(meta.join(" · "));
+      const updates = newestMaintenanceUpdates(m.maintenanceUpdates);
+      if (updates.length === 0 && m.message) out.push(m.message);
+      for (const update of updates) {
+        // indent continuation lines so a blank line does not end the item
+        const message = update.message.replace(/\n/g, "\n  ");
+        out.push(
+          `- ${formatDayTime(update.date, page.defaultTimezone)} — ${message}`,
+        );
+      }
       out.push("");
     }
   }
@@ -446,7 +487,7 @@ export function generateEventsList(
 export function generateReport(
   report: ReportDetail,
   baseUrl: string,
-  page?: PageUrls,
+  page?: PageFields,
 ): string {
   const now = Date.now();
   const updates = report.statusReportUpdates;
@@ -466,7 +507,7 @@ export function generateReport(
     [
       latest ? statusLabel(latest.status) : null,
       components.length ? `affects ${components.join(", ")}` : null,
-      oldest ? formatDay(oldest.date) : null,
+      oldest ? formatDay(oldest.date, page?.defaultTimezone) : null,
     ]
       .filter(Boolean)
       .join(" · ") || `Status report: ${report.title}`;
@@ -480,6 +521,7 @@ export function generateReport(
       canonical: canonicalUrl(baseUrl, `events/report/${report.id}`),
       homepageUrl: page?.homepageUrl,
       contactUrl: page?.contactUrl,
+      timeZone: page?.defaultTimezone,
     }),
   );
   out.push(`# ${report.title}\n`);
@@ -492,7 +534,7 @@ export function generateReport(
   );
   const meta = [
     oldest
-      ? `${formatDay(oldest.date)} · ${relativeTime(oldest.date, now)}`
+      ? `${formatDay(oldest.date, page?.defaultTimezone)} · ${relativeTime(oldest.date, now)}`
       : null,
     components.length ? `affects: ${components.join(", ")}` : null,
     oldest && updates[0] ? humanDuration(oldest.date, updates[0].date) : null,
@@ -511,7 +553,7 @@ export function generateReport(
         })
         .filter((v): v is string => Boolean(v));
       out.push(
-        `### ${reportStatusGlyph(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date)}\n`,
+        `### ${reportStatusGlyph(update.status)} ${statusLabel(update.status)} — ${formatDayTime(update.date, page?.defaultTimezone)}\n`,
       );
       if (updateAffects.length)
         out.push(`affects: ${updateAffects.join(", ")}\n`);
@@ -525,7 +567,7 @@ export function generateReport(
 export function generateMaintenance(
   maintenance: MaintenanceDetail,
   baseUrl: string,
-  page?: PageUrls,
+  page?: PageFields,
 ): string {
   const out: string[] = [];
   out.push(
@@ -536,6 +578,7 @@ export function generateMaintenance(
       canonical: canonicalUrl(baseUrl, `events/maintenance/${maintenance.id}`),
       homepageUrl: page?.homepageUrl,
       contactUrl: page?.contactUrl,
+      timeZone: page?.defaultTimezone,
     }),
   );
   out.push(`# ${maintenance.title}\n`);
@@ -547,7 +590,7 @@ export function generateMaintenance(
     ])}\n`,
   );
   const windowLine = [
-    `${formatDayTime(maintenance.from)} → ${formatDayTime(maintenance.to)}`,
+    `${formatDayTime(maintenance.from, page?.defaultTimezone)} → ${formatDayTime(maintenance.to, page?.defaultTimezone)}`,
     maintenance.to
       ? humanDuration(maintenance.from, maintenance.to)
       : "ongoing",
@@ -561,8 +604,19 @@ export function generateMaintenance(
     out.push(`**Affected components:** ${components.join(", ")}\n`);
   }
 
-  out.push("## Details\n");
-  out.push(`${maintenance.message}\n`);
+  // the oldest update is the announcement; `message` only serves rows that
+  // predate the timeline
+  const updates = newestMaintenanceUpdates(maintenance.maintenanceUpdates);
+  if (updates.length > 0) {
+    out.push("## Updates\n");
+    for (const update of updates) {
+      out.push(`### ${formatDayTime(update.date, page?.defaultTimezone)}\n`);
+      out.push(`${update.message}\n`);
+    }
+  } else {
+    out.push("## Details\n");
+    out.push(`${maintenance.message}\n`);
+  }
 
   return `${out.join("\n").trimEnd()}\n`;
 }
@@ -570,7 +624,7 @@ export function generateMaintenance(
 export function generateMonitor(
   monitor: MonitorDetail,
   baseUrl: string,
-  page?: PageUrls,
+  page?: PageFields,
 ): string {
   const out: string[] = [];
   out.push(

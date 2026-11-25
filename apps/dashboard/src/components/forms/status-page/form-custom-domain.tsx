@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -8,17 +9,20 @@ import {
   FormItem,
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@openstatus/ui/components/ui/input-group";
 import { Label } from "@openstatus/ui/components/ui/label";
 import { isTRPCClientError } from "@trpc/client";
-import { Lock } from "lucide-react";
+import NextLink from "next/link";
 import type React from "react";
 import { useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-// FIXME: use input-group instead
-import { InputWithAddons } from "@/components/common/input-with-addons";
 import { Link } from "@/components/common/link";
 import DomainConfiguration from "@/components/domains/domain-configuration";
 import { useDomainStatus } from "@/components/domains/use-domain-status";
@@ -91,7 +95,7 @@ export function FormCustomDomain({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="custom-domain">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Custom Domain</FormCardTitle>
@@ -99,19 +103,23 @@ export function FormCustomDomain({
               Use your own domain for your status page.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="domain"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <Label>Domain</Label>
-                  <InputWithAddons
-                    placeholder="status.openstatus.dev"
-                    leading="https://"
-                    disabled={locked}
-                    {...field}
-                  />
+                  <InputGroup>
+                    <InputGroupAddon align="inline-start">
+                      https://
+                    </InputGroupAddon>
+                    <InputGroupInput
+                      placeholder="status.openstatus.dev"
+                      disabled={locked}
+                      {...field}
+                    />
+                  </InputGroup>
                   <FormMessage />
                 </FormItem>
               )}
@@ -138,11 +146,16 @@ export function FormCustomDomain({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
-                <Link href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit="custom-domain"
+                type="button"
+                asChild
+              >
+                <NextLink href="/settings/billing?highlight=custom-domain#plans">
                   <Lock />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <div className="flex items-center gap-2">

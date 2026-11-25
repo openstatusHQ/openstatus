@@ -14,6 +14,9 @@ const webhookHeaders = z
 export const ListPageSubscribersInput = z.object({
   pageId: z.number().int().positive(),
   order: z.enum(["asc", "desc"]).optional(),
+  includeUnsubscribed: z.boolean().optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().min(0).optional(),
 });
 export type ListPageSubscribersInput = z.infer<typeof ListPageSubscribersInput>;
 
@@ -36,6 +39,33 @@ export const CreatePageSubscriberInput = z.discriminatedUnion("channelType", [
 ]);
 export type CreatePageSubscriberInput = z.infer<
   typeof CreatePageSubscriberInput
+>;
+
+export const CreateSlackSubscriberInput = z.object({
+  pageId: z.number().int().positive(),
+  teamId: z.string().min(1),
+  channelId: z.string().min(1),
+  channelName: z.string().max(255).optional(),
+});
+export type CreateSlackSubscriberInput = z.infer<
+  typeof CreateSlackSubscriberInput
+>;
+
+export const RemoveSlackSubscriberInput = z.object({
+  pageId: z.number().int().positive(),
+  teamId: z.string().min(1),
+  channelId: z.string().min(1),
+});
+export type RemoveSlackSubscriberInput = z.infer<
+  typeof RemoveSlackSubscriberInput
+>;
+
+export const ListSlackSubscribersInput = z.object({
+  teamId: z.string().min(1),
+  channelId: z.string().min(1),
+});
+export type ListSlackSubscribersInput = z.infer<
+  typeof ListSlackSubscribersInput
 >;
 
 export const UpdatePageSubscriberChannelInput = z.object({
@@ -116,4 +146,23 @@ export const UnsubscribeSubscriberInput = z.object({
 });
 export type UnsubscribeSubscriberInput = z.infer<
   typeof UnsubscribeSubscriberInput
+>;
+
+/**
+ * Workspace-scoped unsubscribe for the management API, where the caller
+ * holds a key rather than a subscriber's token. Addressed by row id or by
+ * email within one page.
+ */
+export const UnsubscribePageSubscriberInput = z.object({
+  pageId: z.number().int().positive(),
+  identifier: z.discriminatedUnion("type", [
+    z.object({ type: z.literal("id"), value: z.number().int().positive() }),
+    z.object({
+      type: z.literal("email"),
+      value: z.email().toLowerCase(),
+    }),
+  ]),
+});
+export type UnsubscribePageSubscriberInput = z.infer<
+  typeof UnsubscribePageSubscriberInput
 >;

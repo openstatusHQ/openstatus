@@ -1,14 +1,31 @@
 import { sentry } from "@hono/sentry";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { Events } from "@openstatus/analytics";
 import { db, desc, eq } from "@openstatus/db";
+import type { Scope, Workspace } from "@openstatus/db/src/schema";
 import { auditLog, page, statusReport } from "@openstatus/db/src/schema";
+import { ForbiddenError } from "@openstatus/services";
+import { createStatusReportTool } from "@openstatus/services/agent-tools";
+import { resourceMetadataUrl } from "@openstatus/services/oauth";
 import { SEEDED_WORKSPACE_TEAM_ID } from "@openstatus/services/test/fixtures";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
 import { requestId } from "hono/request-id";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  type Mock,
+} from "vitest";
 
 import { handleError } from "../../libs/errors";
+import { oauthConfigFromEnv } from "../oauth/config";
+import { toServiceCtx } from "./adapter";
 import { mcpRoute } from "./index";
+import { createMcpServer } from "./server";
 
 /**
  * Build a fresh Hono app with the same middleware chain as production.
@@ -38,13 +55,13 @@ const KEY = String(SEEDED_WORKSPACE_TEAM_ID);
  * path) — `undefined` would trigger the parameter default and
  * silently authenticate, masking the missing-auth case.
  */
-function jsonRpc(body: object, key: string | false = KEY): Request {
+function jsonRpc(body: object, key: string | false = KEY, query = ""): Request {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json, text/event-stream",
   };
   if (key !== false) headers["x-openstatus-key"] = key;
-  return new Request("http://localhost/mcp", {
+  return new Request(`http://localhost/mcp${query}`, {
     method: "POST",
     headers,
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, ...body }),
@@ -70,11 +87,59 @@ async function readJsonRpc(
 }
 
 describe("MCP transport", () => {
-  test("rejects requests missing x-openstatus-key with 401", async () => {
+  test("a request without a key is a 401 that starts OAuth discovery", async () => {
     const app = makeApp();
-    const res = await app.fetch(jsonRpc({ method: "tools/list" }, false));
+    const res = await app.fetch(jsonRpc({ method: "initialize" }, false));
     expect(res.status).toBe(401);
+    // RFC 9728: the challenge points at the protected-resource metadata, which
+    // is how an MCP client finds the authorization server. Without it the
+    // client has a dead endpoint rather than a protected one.
+    const challenge = res.headers.get("WWW-Authenticate") ?? "";
+    expect(challenge.startsWith("Bearer ")).toBe(true);
+    expect(challenge).toContain(
+      `resource_metadata="${resourceMetadataUrl(oauthConfigFromEnv().issuer)}"`,
+    );
   });
+
+  test("a present but empty key is a 401 too", async () => {
+    const app = makeApp();
+    const res = await app.fetch(jsonRpc({ method: "resources/list" }, ""));
+    expect(res.status).toBe(401);
+    expect(res.headers.get("WWW-Authenticate")).toBeTruthy();
+  });
+
+  test("resources/list serves the public documents to an authenticated key", async () => {
+    const app = makeApp();
+    const res = await app.fetch(jsonRpc({ method: "resources/list" }));
+    expect(res.status).toBe(200);
+    const body = await readJsonRpc(res);
+    const resources = (body.result as { resources: { uri: string }[] })
+      .resources;
+    expect(resources.map((r) => r.uri).sort()).toEqual([
+      "https://api.openstatus.dev/openapi.json",
+      "https://www.openstatus.dev/docs/reference/mcp-server",
+      "https://www.openstatus.dev/llms.txt",
+    ]);
+  });
+
+  // Flip to an explicit experimental list once the first gated tool lands.
+  test.each(["tools/list", "resources/list"])(
+    "%s is the same with ?experimental=1 while nothing is gated",
+    async (method) => {
+      const app = makeApp();
+      const [stable, experimental] = await Promise.all(
+        [jsonRpc({ method }), jsonRpc({ method }, KEY, "?experimental=1")].map(
+          async (req) => {
+            const res = await app.fetch(req);
+            expect(res.status).toBe(200);
+            return (await readJsonRpc(res)).result;
+          },
+        ),
+      );
+      expect(stable).toBeDefined();
+      expect(experimental).toEqual(stable);
+    },
+  );
 
   test("tools/list returns the expected registered tool set", async () => {
     const app = makeApp();
@@ -84,24 +149,57 @@ describe("MCP transport", () => {
     const tools = (body.result as { tools: { name: string }[] }).tools;
     const names = tools.map((t) => t.name).sort();
     expect(names).toEqual([
+      "add_incident_note",
+      "add_maintenance_update",
+      "add_page_component",
       "add_status_report_update",
+      "approve_postmortem",
+      "create_component_group",
       "create_maintenance",
+      "create_monitor",
+      "create_status_page",
       "create_status_report",
+      "declare_incident",
+      "delete_maintenance_update",
+      "delete_status_report_update",
+      "draft_postmortem",
       "get_audit_log",
+      "get_content_page",
+      "get_doc_page",
+      "get_incident",
+      "get_maintenance",
       "get_monitor",
       "get_monitor_status",
       "get_monitor_summary",
+      "get_postmortem",
       "get_response_log",
+      "get_status_report",
+      "get_workspace",
       "list_audit_logs",
+      "list_incidents",
       "list_maintenances",
       "list_monitors",
       "list_notifications",
       "list_page_components",
+      "list_private_locations",
       "list_response_logs",
       "list_status_pages",
       "list_status_reports",
+      "resolve_incident",
       "resolve_status_report",
+      "search_content",
+      "search_docs",
+      "set_incident_status",
+      "submit_feedback",
+      "update_component_group",
+      "update_incident",
+      "update_maintenance",
+      "update_maintenance_update",
+      "update_monitor",
+      "update_page_component",
+      "update_status_page",
       "update_status_report",
+      "update_status_report_update",
     ]);
   });
 
@@ -192,6 +290,66 @@ describe("MCP transport", () => {
       expect(tool.inputSchema).toBeDefined();
       expect(tool.outputSchema).toBeDefined();
     }
+  });
+});
+
+/**
+ * `@openstatus/analytics` is swapped for a double (test.importmap.json) whose
+ * spies live on `globalThis.__analyticsSpies`.
+ */
+const analyticsSpies = (globalThis as Record<string, unknown>)
+  .__analyticsSpies as { track: Mock; setupAnalytics: Mock };
+
+/**
+ * Tracking is fire-and-forget — `track` runs in a microtask chained off
+ * `setupAnalytics`, which may not have settled when `app.fetch` resolves.
+ */
+async function flushTracking() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+describe("MCP transport — analytics", () => {
+  beforeEach(() => {
+    analyticsSpies.setupAnalytics.mockClear();
+    analyticsSpies.track.mockClear();
+  });
+
+  test("tools/call tracks mcp_request with the tool name", async () => {
+    const app = makeApp();
+    await app.fetch(
+      jsonRpc({
+        method: "tools/call",
+        params: { name: "list_status_pages", arguments: {} },
+      }),
+    );
+    await flushTracking();
+
+    const identify = analyticsSpies.setupAnalytics.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(identify?.userId).toBe(`api_${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.workspaceId).toBe(`${SEEDED_WORKSPACE_TEAM_ID}`);
+    expect(identify?.source).toBe("mcp");
+
+    const event = analyticsSpies.track.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(event?.name).toBe(Events.McpRequest.name);
+    expect(event?.method).toBe("tools/call");
+    expect(event?.tool).toBe("list_status_pages");
+    expect(event?.authenticated).toBe(true);
+  });
+
+  test("a rejected request is not tracked", async () => {
+    const app = makeApp();
+    await app.fetch(jsonRpc({ method: "resources/list" }, false));
+    await flushTracking();
+
+    // `authMiddleware` throws before the handler runs, so unauthenticated
+    // traffic never reaches the tracker: the event counts real MCP calls.
+    expect(analyticsSpies.track.mock.calls.length).toBe(0);
   });
 });
 
@@ -301,5 +459,200 @@ describe("MCP transport — audit stamping", () => {
     // No `createdById` available in dev mode → audit's actorUserId
     // is null. Production custom keys would carry the creator's id.
     expect(createRow?.actorUserId).toBeNull();
+  });
+});
+
+/**
+ * The HTTP route resolves dev keys to `'*'`, so scoped credentials are
+ * exercised against the server the route builds, over an in-memory
+ * transport. `isAgentToolAvailable` only reads `workspace.id`.
+ */
+const scopedWorkspace = {
+  id: SEEDED_WORKSPACE_TEAM_ID,
+  slug: "ws",
+  name: "ws",
+  // `audit-log` on so the audit tools register (scope `read`).
+  limits: { "audit-log": true },
+} as unknown as Workspace;
+
+function scopedCtx(scopes: Scope[]) {
+  return toServiceCtx({
+    workspace: scopedWorkspace,
+    apiKey: { id: "scoped-key", scopes },
+    requestId: "req-scoped",
+  });
+}
+
+async function connectScoped(scopes: Scope[]) {
+  const server = createMcpServer(scopedCtx(scopes));
+  const client = new Client({ name: "probe", version: "test" });
+  const [clientTransport, serverTransport] =
+    InMemoryTransport.createLinkedPair();
+  await Promise.all([
+    server.connect(serverTransport),
+    client.connect(clientTransport),
+  ]);
+  return { client, close: () => client.close() };
+}
+
+const INCIDENT_GROUP_TOOLS = [
+  "add_incident_note",
+  "add_maintenance_update",
+  "add_status_report_update",
+  "approve_postmortem",
+  "create_maintenance",
+  "create_status_report",
+  "declare_incident",
+  "delete_maintenance_update",
+  "delete_status_report_update",
+  "draft_postmortem",
+  "get_incident",
+  "get_maintenance",
+  "get_postmortem",
+  "get_status_report",
+  "list_incidents",
+  "list_maintenances",
+  "list_status_reports",
+  "resolve_incident",
+  "resolve_status_report",
+  "set_incident_status",
+  "update_incident",
+  "update_maintenance",
+  "update_maintenance_update",
+  "update_status_report",
+  "update_status_report_update",
+];
+
+const ANY_TOOLS = [
+  "get_content_page",
+  "get_doc_page",
+  "get_workspace",
+  "search_content",
+  "search_docs",
+  "submit_feedback",
+];
+
+// Snapshots span every group, so only the `read` umbrella (or above) sees them.
+const AUDIT_TOOLS = ["get_audit_log", "list_audit_logs"];
+
+const OTHER_GROUP_TOOLS = [
+  "get_monitor",
+  "get_monitor_status",
+  "get_monitor_summary",
+  "get_response_log",
+  "list_monitors",
+  "list_response_logs",
+  "list_notifications",
+  "list_page_components",
+  "list_private_locations",
+  "list_status_pages",
+];
+
+describe("MCP transport — group scopes", () => {
+  test("sends write-confirmation instructions on initialize", async () => {
+    const { client, close } = await connectScoped(["incidents:write"]);
+    try {
+      const instructions = client.getInstructions();
+      expect(instructions).toContain("Confirm every write before calling it");
+      expect(instructions).toContain("resolve_status_report");
+    } finally {
+      await close();
+    }
+  });
+
+  test("incidents:write lists the incident group plus `any` tools and nothing else", async () => {
+    const { client, close } = await connectScoped(["incidents:write"]);
+    try {
+      const { tools } = await client.listTools();
+      const names = tools.map((t) => t.name).sort();
+      expect(names).toEqual([...INCIDENT_GROUP_TOOLS, ...ANY_TOOLS].sort());
+      for (const name of OTHER_GROUP_TOOLS) expect(names).not.toContain(name);
+    } finally {
+      await close();
+    }
+  });
+
+  test("monitors:read sees `any` tools and no write tool", async () => {
+    const { client, close } = await connectScoped(["monitors:read"]);
+    try {
+      const { tools } = await client.listTools();
+      const names = tools.map((t) => t.name);
+      for (const name of ANY_TOOLS) expect(names).toContain(name);
+      for (const name of ["list_monitors", "get_monitor", "get_monitor_status"])
+        expect(names).toContain(name);
+      expect(names).not.toContain("create_monitor");
+      for (const name of INCIDENT_GROUP_TOOLS)
+        expect(names).not.toContain(name);
+      for (const tool of tools) {
+        // Writes a row for the openstatus team, nothing in the workspace.
+        if (tool.name === "submit_feedback") {
+          expect(tool.annotations?.readOnlyHint).toBeUndefined();
+          continue;
+        }
+        expect(tool.annotations?.readOnlyHint, tool.name).toBe(true);
+      }
+    } finally {
+      await close();
+    }
+  });
+
+  test("audit tools need the read umbrella, not a group scope", async () => {
+    for (const scopes of [
+      ["incidents:write"],
+      ["monitors:read"],
+    ] as Scope[][]) {
+      const { client, close } = await connectScoped(scopes);
+      try {
+        const names = (await client.listTools()).tools.map((t) => t.name);
+        for (const name of AUDIT_TOOLS) expect(names).not.toContain(name);
+      } finally {
+        await close();
+      }
+    }
+    const { client, close } = await connectScoped(["read"]);
+    try {
+      const names = (await client.listTools()).tools.map((t) => t.name);
+      for (const name of AUDIT_TOOLS) expect(names).toContain(name);
+    } finally {
+      await close();
+    }
+  });
+
+  test("monitors:read calling a write tool directly is refused at both layers", async () => {
+    const { client, close } = await connectScoped(["monitors:read"]);
+    try {
+      // Transport layer: the tool was never registered for this key, so the
+      // SDK answers with an error result naming the unknown tool.
+      const result = await client.callTool({
+        name: "create_status_report",
+        arguments: {
+          title: "x",
+          status: "investigating",
+          message: "x",
+          pageId: 1,
+          pageComponentIds: [],
+          notify: false,
+        },
+      });
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toMatch(/create_status_report/);
+    } finally {
+      await close();
+    }
+
+    // Service layer: `requireScope` fires before any DB lookup.
+    await expect(
+      createStatusReportTool.run({
+        ctx: scopedCtx(["monitors:read"]),
+        input: {
+          title: "x",
+          status: "investigating",
+          message: "x",
+          pageId: 1,
+          pageComponentIds: [],
+          notify: false,
+        },
+      }),
+    ).rejects.toBeInstanceOf(ForbiddenError);
   });
 });

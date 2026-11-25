@@ -1,18 +1,21 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, it } from "@std/testing/bdd";
-import { spy } from "@std/testing/mock";
 import { Cause, Effect, Exit, Option } from "effect";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { FetchError, fetchJson, fetchText } from "../src/fetch";
+import {
+  FetchError,
+  fetchJson,
+  fetchText,
+  fetchTextWithUrl,
+} from "../src/fetch";
 
 const TEST_URL = "https://api.example.com/status";
 
 type FetchImpl = (url: string, init?: RequestInit) => Promise<Response>;
 
 const installMockFetch = (impl: FetchImpl) => {
-  const fn = spy(impl);
-  global.fetch = fn as unknown as typeof fetch;
+  const fn = vi.fn(impl);
+  globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 };
 
@@ -47,7 +50,7 @@ const expectFailure = <A>(exit: Exit.Exit<A, FetchError>): FetchError => {
   if (!Exit.isFailure(exit)) {
     throw new Error("expected Exit.Failure");
   }
-  const failure = Cause.failureOption(exit.cause);
+  const failure = Cause.findErrorOption(exit.cause);
   if (Option.isNone(failure)) {
     throw new Error("expected Cause.Fail");
   }
@@ -78,9 +81,10 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.httpStatus).toBe(404);
+    expect(err.kind).toBe("http");
     expect(err.fetcherName).toBe("test");
     expect(err.entryId).toBe("x");
-    expect(fetchMock.calls.length).toBe(1);
+    expect(fetchMock.mock.calls.length).toBe(1);
   });
 
   it("retries up to 3 times on 5xx then fails", async () => {
@@ -93,7 +97,7 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.httpStatus).toBe(503);
-    expect(fetchMock.calls.length).toBe(4);
+    expect(fetchMock.mock.calls.length).toBe(4);
   });
 
   it("retries up to 3 times on network error then fails", async () => {
@@ -106,7 +110,8 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.httpStatus).toBeUndefined();
-    expect(fetchMock.calls.length).toBe(4);
+    expect(err.kind).toBe("network");
+    expect(fetchMock.mock.calls.length).toBe(4);
   });
 
   it("fails with FetchError on schema mismatch without retrying", async () => {
@@ -119,7 +124,35 @@ describe("fetchJson", () => {
     );
     const err = expectFailure(exit);
     expect(err.cause).toBeInstanceOf(Error);
-    expect(fetchMock.calls.length).toBe(1);
+    expect(err.kind).toBe("schema");
+    expect(err.message).toBe(`[FetchError] schema mismatch: ${TEST_URL}`);
+    expect(fetchMock.mock.calls.length).toBe(1);
+  });
+
+  it("classifies a non-JSON 200 body as parse", async () => {
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => JSON.parse("<html>"),
+        text: async () => "<html>",
+      } as Response),
+    );
+    const schema = z.object({ name: z.string() });
+    const exit = await Effect.runPromiseExit(
+      fetchJson({ url: TEST_URL, schema }),
+    );
+    expect(expectFailure(exit).kind).toBe("parse");
+  });
+
+  it("classifies a timeout as timeout", async () => {
+    installMockFetch(() => new Promise<Response>(() => {}));
+    const schema = z.object({ name: z.string() });
+    const exit = await Effect.runPromiseExit(
+      fetchJson({ url: TEST_URL, schema, timeout: "20 millis" }),
+    );
+    expect(expectFailure(exit).kind).toBe("timeout");
   });
 
   it("applies default User-Agent and Accept headers", async () => {
@@ -201,7 +234,43 @@ describe("fetchText", () => {
     const exit = await Effect.runPromiseExit(fetchText({ url: TEST_URL }));
     const err = expectFailure(exit);
     expect(err.httpStatus).toBe(500);
-    expect(fetchMock.calls.length).toBe(4);
+    expect(fetchMock.mock.calls.length).toBe(4);
+  });
+});
+
+describe("fetchBody timeouts", () => {
+  it("times out a stalled body read", async () => {
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        text: () => new Promise<string>(() => {}),
+        json: async () => ({}),
+      } as Response),
+    );
+    const exit = await Effect.runPromiseExit(
+      fetchText({ url: TEST_URL, timeout: "20 millis" }),
+    );
+    expect(expectFailure(exit).kind).toBe("timeout");
+  });
+});
+
+describe("fetchTextWithUrl", () => {
+  it("returns text and the final URL after redirects", async () => {
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        url: "https://final.example.com/status",
+        text: async () => "<html>ok</html>",
+        json: async () => ({}),
+      } as Response),
+    );
+    const result = await Effect.runPromise(fetchTextWithUrl({ url: TEST_URL }));
+    expect(result.text).toBe("<html>ok</html>");
+    expect(result.finalUrl).toBe("https://final.example.com/status");
   });
 });
 

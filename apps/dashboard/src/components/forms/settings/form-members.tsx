@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
   Form,
@@ -17,7 +18,7 @@ import {
   TabsTrigger,
 } from "@openstatus/ui/components/ui/tabs";
 import { Tabs } from "@openstatus/ui/components/ui/tabs";
-import { Lock } from "lucide-react";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -83,7 +84,7 @@ export function FormMembers({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="team-members">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Team</FormCardTitle>
@@ -104,13 +105,13 @@ export function FormMembers({
             </Tabs>
           </FormCardContent>
           <FormCardSeparator />
-          <FormCardContent>
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               disabled={locked}
               name="email"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Add member</FormLabel>
                   <FormControl>
                     <Input
@@ -142,11 +143,17 @@ export function FormMembers({
                   </Link>
                   .
                 </FormCardFooterInfo>
-                <Button type="button" size="sm" asChild>
-                  <Link href="/settings/billing">
+                <Button
+                  data-track="paywall_viewed"
+                  data-limit="members"
+                  type="button"
+                  size="sm"
+                  asChild
+                >
+                  <NextLink href="/settings/billing?highlight=members#plans">
                     <Lock />
                     Upgrade
-                  </Link>
+                  </NextLink>
                 </Button>
               </>
             ) : (

@@ -1,21 +1,23 @@
 import { db, eq } from "@openstatus/db";
-import { monitor, pageComponent } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, describe, test } from "@std/testing/bdd";
+import {
+  monitor,
+  page as pageTable,
+  pageComponent,
+  selectWorkspaceSchema,
+  statusReport,
+  workspace,
+} from "@openstatus/db/src/schema";
+import { getLimits } from "@openstatus/db/src/schema/plan/utils";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 
 import {
-  SEEDED_WORKSPACE_FREE_ID,
-  SEEDED_WORKSPACE_TEAM_ID,
-} from "../../../test/fixtures";
-import {
-  cleanQuotaGatedTables,
+  createWorkspaceFixture,
   expectAuditRow,
-  loadSeededWorkspace,
   makeApiKeyCtx,
   makeUserCtx,
   withTestTransaction,
 } from "../../../test/helpers";
-import type { ServiceContext } from "../../context";
+import type { DrizzleTx, ServiceContext } from "../../context";
 import {
   ConflictError,
   ForbiddenError,
@@ -25,25 +27,54 @@ import {
 import { createPage, newPage } from "../create";
 import { deletePage } from "../delete";
 import { getPage, getPageBySlug, getSlugAvailable, listPages } from "../list";
-import { updatePageGeneral, updatePageLocales } from "../update";
+import { type CreatePageInput, UpdatePageConfigurationInput } from "../schemas";
+import {
+  updatePageConfiguration,
+  updatePageCustomDomain,
+  updatePageCustomTheme,
+  updatePageGeneral,
+  updatePageLocales,
+  updatePageTimezone,
+} from "../update";
 
 const TEST_PREFIX = "svc-page-test";
 
 let teamCtx: ServiceContext;
 let freeCtx: ServiceContext;
+let otherTeamCtx: ServiceContext;
 let teamMonitorId: number;
 
-beforeAll(async () => {
-  const team = await loadSeededWorkspace(SEEDED_WORKSPACE_TEAM_ID);
-  const free = await loadSeededWorkspace(SEEDED_WORKSPACE_FREE_ID);
-  teamCtx = makeUserCtx(team, { userId: 1 });
-  freeCtx = makeUserCtx(free, { userId: 2 });
+// Dedicated, freshly-inserted free-plan workspace for the quota-sensitive
+// negative-path tests (status-pages limit = 1). They assume exclusive control
+// of the workspace's page count, but the shared seeded free workspace (#2) is
+// written concurrently by the apps/server RPC suites under parallel test
+// execution — which intermittently exhausts the quota and fails the wrong
+// assertion. An isolated workspace removes that cross-suite race; because every
+// test writes inside a rolled-back transaction, its committed page count stays
+// at zero for the whole suite.
+const FREE_WS_SLUG = `${TEST_PREFIX}-free-ws`;
 
-  // Clear leftover quota-gated rows on the free workspace so
-  // negative-path tests hit their intended assertion (e.g.
-  // `assertStatusPageQuota` on free = 1 page) regardless of what
-  // prior runs left behind.
-  await cleanQuotaGatedTables(SEEDED_WORKSPACE_FREE_ID);
+beforeAll(async () => {
+  const team = (await createWorkspaceFixture("team")).workspace;
+  teamCtx = makeUserCtx(team, { userId: 1 });
+  const otherTeam = (await createWorkspaceFixture("team")).workspace;
+  otherTeamCtx = makeUserCtx(otherTeam, { userId: 3 });
+
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
+    .catch(() => undefined);
+  const freeRow = await db
+    .insert(workspace)
+    .values({
+      slug: FREE_WS_SLUG,
+      name: `${TEST_PREFIX}-free`,
+      plan: "free",
+      limits: JSON.stringify(getLimits("free")),
+    })
+    .returning()
+    .get();
+  freeCtx = makeUserCtx(selectWorkspaceSchema.parse(freeRow), { userId: 2 });
 
   const teamMonitor = await db
     .insert(monitor)
@@ -65,6 +96,10 @@ afterAll(async () => {
   await db
     .delete(monitor)
     .where(eq(monitor.id, teamMonitorId))
+    .catch(() => undefined);
+  await db
+    .delete(workspace)
+    .where(eq(workspace.slug, FREE_WS_SLUG))
     .catch(() => undefined);
 });
 
@@ -118,6 +153,118 @@ describe("newPage", () => {
 });
 
 describe("createPage (full form)", () => {
+  for (const { name, input } of [
+    {
+      name: "custom theme",
+      input: { customTheme: { dark: { "--primary": "pink" } } },
+    },
+    {
+      name: "nondefault locale",
+      input: { defaultLocale: "fr" },
+    },
+    {
+      name: "additional locale",
+      input: { locales: ["en", "fr"] },
+    },
+    {
+      name: "custom domain",
+      input: { customDomain: `${TEST_PREFIX}-denied.example.com` },
+    },
+    {
+      name: "time zone",
+      input: { defaultTimezone: "Asia/Tokyo" },
+    },
+  ] satisfies {
+    name: string;
+    input: Partial<CreatePageInput>;
+  }[]) {
+    test(`rejects ${name} without the feature entitlement`, async () => {
+      await withTestTransaction(async (tx) => {
+        const slug = uniqueSlug("feature-denied");
+        await expect(
+          createPage({
+            ctx: { ...freeCtx, db: tx },
+            input: {
+              workspaceId: freeCtx.workspace.id,
+              title: "Restricted feature",
+              description: "",
+              slug,
+              ...input,
+            },
+          }),
+        ).rejects.toMatchObject({ code: "LIMIT_EXCEEDED", max: 0 });
+        expect(
+          await tx
+            .select()
+            .from(pageTable)
+            .where(eq(pageTable.slug, slug))
+            .get(),
+        ).toBeUndefined();
+      });
+    });
+  }
+
+  for (const [index, input] of (
+    [
+      {},
+      { customTheme: null, locales: null },
+      {
+        customTheme: { light: {}, dark: {} },
+        defaultLocale: "en",
+        locales: ["en"],
+        defaultTimezone: "UTC",
+      },
+    ] satisfies Partial<CreatePageInput>[]
+  ).entries()) {
+    test(`allows default features without entitlements (${index})`, async () => {
+      await withTestTransaction(async (tx) => {
+        const row = await createPage({
+          ctx: { ...freeCtx, db: tx },
+          input: {
+            workspaceId: freeCtx.workspace.id,
+            title: "Default features",
+            description: "",
+            slug: uniqueSlug("feature-defaults"),
+            ...input,
+          },
+        });
+        expect(row.customTheme).toBeNull();
+        expect(row.defaultLocale).toBe("en");
+        expect(row.locales).toEqual(input.locales ?? null);
+      });
+    });
+  }
+
+  test("stores custom theme and locales with feature entitlements", async () => {
+    await withTestTransaction(async (tx) => {
+      const row = await createPage({
+        ctx: { ...teamCtx, db: tx },
+        input: {
+          workspaceId: teamCtx.workspace.id,
+          title: "Paid features",
+          description: "",
+          slug: uniqueSlug("feature-allowed"),
+          customTheme: { light: { "--primary": " red " } },
+          defaultLocale: "fr",
+          locales: ["fr"],
+        },
+      });
+      expect(row.customTheme).toEqual({
+        light: { "--primary": "red" },
+        dark: {},
+      });
+      expect(row.defaultLocale).toBe("fr");
+      expect(row.locales).toEqual(["fr"]);
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.create",
+        entityType: "page",
+        entityId: row.id,
+        db: tx,
+      });
+    });
+  });
+
   test("attaches monitors as pageComponents", async () => {
     await withTestTransaction(async (tx) => {
       const slug = uniqueSlug("full");
@@ -128,7 +275,7 @@ describe("createPage (full form)", () => {
           slug,
           description: "desc",
           customDomain: "",
-          workspaceId: SEEDED_WORKSPACE_TEAM_ID,
+          workspaceId: teamCtx.workspace.id,
           monitors: [{ monitorId: teamMonitorId }],
         },
       });
@@ -138,6 +285,115 @@ describe("createPage (full form)", () => {
         .where(eq(pageComponent.pageId, row.id))
         .all();
       expect(components.map((c) => c.monitorId)).toEqual([teamMonitorId]);
+    });
+  });
+
+  test("counts components on other pages and the full monitor batch", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await tx
+        .update(workspace)
+        .set({
+          limits: JSON.stringify({
+            ...teamCtx.workspace.limits,
+            "status-pages": 10,
+            "page-components": 2,
+          }),
+        })
+        .where(eq(workspace.id, ctx.workspace.id));
+      const existing = await newPage({
+        ctx,
+        input: { title: "Existing", slug: uniqueSlug("component-existing") },
+      });
+      await tx.insert(pageComponent).values({
+        workspaceId: ctx.workspace.id,
+        pageId: existing.id,
+        type: "static",
+        name: "Existing component",
+      });
+      const secondMonitor = await tx
+        .insert(monitor)
+        .values({
+          workspaceId: ctx.workspace.id,
+          active: true,
+          url: "https://example.com",
+          name: "Second monitor",
+          method: "GET",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+      await expect(
+        createPage({
+          ctx,
+          input: {
+            workspaceId: ctx.workspace.id,
+            description: "",
+            title: "Over limit",
+            slug: uniqueSlug("component-batch"),
+            monitors: [
+              { monitorId: teamMonitorId },
+              { monitorId: secondMonitor.id },
+            ],
+          },
+        }),
+      ).rejects.toMatchObject({
+        code: "LIMIT_EXCEEDED",
+        max: 2,
+        current: 1,
+      });
+      const allowed = await createPage({
+        ctx,
+        input: {
+          workspaceId: ctx.workspace.id,
+          description: "",
+          title: "At limit",
+          slug: uniqueSlug("component-allowed"),
+          monitors: [{ monitorId: teamMonitorId }],
+        },
+      });
+      const components = await tx
+        .select()
+        .from(pageComponent)
+        .where(eq(pageComponent.workspaceId, ctx.workspace.id))
+        .all();
+      expect(components.map((c) => c.pageId).sort()).toEqual(
+        [existing.id, allowed.id].sort(),
+      );
+      await expect(
+        createPage({
+          ctx,
+          input: {
+            workspaceId: ctx.workspace.id,
+            description: "",
+            title: "Cap spent",
+            slug: uniqueSlug("component-spent"),
+            monitors: [{ monitorId: secondMonitor.id }],
+          },
+        }),
+      ).rejects.toMatchObject({
+        code: "LIMIT_EXCEEDED",
+        max: 2,
+        current: 2,
+      });
+      const empty = await createPage({
+        ctx,
+        input: {
+          workspaceId: ctx.workspace.id,
+          description: "",
+          title: "No components",
+          slug: uniqueSlug("component-empty"),
+          monitors: [],
+        },
+      });
+      expect(
+        await tx
+          .select()
+          .from(pageComponent)
+          .where(eq(pageComponent.pageId, empty.id))
+          .all(),
+      ).toEqual([]);
     });
   });
 
@@ -152,7 +408,7 @@ describe("createPage (full form)", () => {
             slug,
             description: "",
             customDomain: "",
-            workspaceId: SEEDED_WORKSPACE_FREE_ID,
+            workspaceId: freeCtx.workspace.id,
             monitors: [{ monitorId: teamMonitorId }],
           },
         }),
@@ -234,6 +490,300 @@ describe("updatePageGeneral", () => {
   });
 });
 
+describe("updatePageCustomDomain", () => {
+  test("rejects a domain without the feature and preserves the stored domain", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Domain", slug: uniqueSlug("domain-denied") },
+      });
+      await expect(
+        updatePageCustomDomain({
+          ctx,
+          input: { id: p.id, customDomain: "status.example.com" },
+        }),
+      ).rejects.toMatchObject({
+        code: "LIMIT_EXCEEDED",
+        max: 0,
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customDomain).toBe(p.customDomain);
+    });
+  });
+
+  test("allows an enabled domain and clearing it after the feature is disabled", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Domain", slug: uniqueSlug("domain-clear") },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: p.id, customDomain: "status.example.com" },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customDomain).toBe("status.example.com");
+      await expectAuditRow({
+        workspaceId: ctx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+      await updatePageCustomDomain({
+        ctx: {
+          ...ctx,
+          workspace: {
+            ...ctx.workspace,
+            limits: { ...ctx.workspace.limits, "custom-domain": false },
+          },
+        },
+        input: { id: p.id, customDomain: "" },
+      });
+      const cleared = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(cleared?.customDomain).toBe("");
+    });
+  });
+});
+
+describe("custom domain uniqueness", () => {
+  const uniqueDomain = (tag: string) =>
+    `${uniqueSlug(tag)}.example.com`.toLowerCase();
+
+  test("createPage rejects a domain another workspace already uses", async () => {
+    await withTestTransaction(async (tx) => {
+      const domain = uniqueDomain("taken-create");
+      await tx
+        .insert(pageTable)
+        .values({
+          workspaceId: freeCtx.workspace.id,
+          title: "Owner",
+          description: "",
+          slug: uniqueSlug("domain-owner"),
+          customDomain: domain,
+        })
+        .run();
+
+      const slug = uniqueSlug("domain-thief");
+      await expect(
+        createPage({
+          ctx: { ...teamCtx, db: tx },
+          input: {
+            workspaceId: teamCtx.workspace.id,
+            title: "Thief",
+            description: "",
+            slug,
+            customDomain: domain.toUpperCase(),
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+      expect(
+        await tx.select().from(pageTable).where(eq(pageTable.slug, slug)).get(),
+      ).toBeUndefined();
+    });
+  });
+
+  test("updatePageCustomDomain rejects a domain used by another page", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const domain = uniqueDomain("taken-update");
+      const owner = await newPage({
+        ctx,
+        input: { title: "Owner", slug: uniqueSlug("domain-owner") },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: owner.id, customDomain: domain },
+      });
+
+      const other = await newPage({
+        ctx,
+        input: { title: "Other", slug: uniqueSlug("domain-other") },
+      });
+      await expect(
+        updatePageCustomDomain({
+          ctx,
+          input: { id: other.id, customDomain: domain },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, other.id))
+        .get();
+      expect(row?.customDomain).toBe("");
+    });
+  });
+
+  test("updatePageCustomDomain lets a page re-save its own domain", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const domain = uniqueDomain("own");
+      const p = await newPage({
+        ctx,
+        input: { title: "Own", slug: uniqueSlug("domain-own") },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: p.id, customDomain: domain },
+      });
+      await updatePageCustomDomain({
+        ctx,
+        input: { id: p.id, customDomain: domain },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customDomain).toBe(domain);
+    });
+  });
+});
+
+describe("new pages count requests", () => {
+  const storedValue = async (tx: DrizzleTx, id: number) =>
+    (
+      (await tx.select().from(pageTable).where(eq(pageTable.id, id)).get())
+        ?.configuration as { value?: string } | null
+    )?.value;
+
+  test("newPage stores requests", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await newPage({
+        ctx,
+        input: { title: "Runs", slug: uniqueSlug("runs-new") },
+      });
+      expect(await storedValue(tx, row.id)).toBe("requests");
+    });
+  });
+
+  test("createPage stores requests unless the caller picks a measure", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const create = (configuration?: Record<string, unknown>) =>
+        createPage({
+          ctx,
+          input: {
+            workspaceId: ctx.workspace.id,
+            title: "Runs",
+            slug: uniqueSlug("runs-create"),
+            description: "",
+            configuration,
+          },
+        });
+
+      expect(await storedValue(tx, (await create()).id)).toBe("requests");
+      const themed = await create({ theme: "default-rounded" });
+      expect(
+        (
+          await tx
+            .select()
+            .from(pageTable)
+            .where(eq(pageTable.id, themed.id))
+            .get()
+        )?.configuration,
+      ).toEqual({ theme: "default-rounded", value: "requests" });
+      expect(await storedValue(tx, (await create({ value: "runs" })).id)).toBe(
+        "runs",
+      );
+    });
+  });
+
+  test("a configuration update keeps the stored requests", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const row = await newPage({
+        ctx,
+        input: { title: "Runs", slug: uniqueSlug("runs-update") },
+      });
+      await updatePageConfiguration({
+        ctx,
+        input: UpdatePageConfigurationInput.parse({
+          id: row.id,
+          configuration: { days: 30 },
+        }),
+      });
+      expect(await storedValue(tx, row.id)).toBe("requests");
+    });
+  });
+});
+
+describe("updatePageConfiguration", () => {
+  test("preserves omitted settings in partial updates", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await createPage({
+        ctx,
+        input: {
+          workspaceId: ctx.workspace.id,
+          title: "Configuration",
+          slug: uniqueSlug("configuration"),
+          description: "",
+          customDomain: "",
+          configuration: {
+            type: "manual",
+            value: "manual",
+            uptime: false,
+            theme: "default-rounded",
+            days: 30,
+          },
+        },
+      });
+
+      for (const configuration of [
+        { days: 45 },
+        {},
+        { theme: undefined },
+        null,
+        undefined,
+      ]) {
+        await updatePageConfiguration({
+          ctx,
+          input: UpdatePageConfigurationInput.parse({
+            id: p.id,
+            configuration,
+          }),
+        });
+        const row = await tx
+          .select()
+          .from(pageTable)
+          .where(eq(pageTable.id, p.id))
+          .get();
+        expect(row?.configuration).toEqual({
+          type: "manual",
+          value: "manual",
+          uptime: false,
+          theme: "default-rounded",
+          days: 45,
+        });
+      }
+      await expectAuditRow({
+        workspaceId: ctx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+});
+
 describe("updatePageLocales", () => {
   test("rejects when plan lacks i18n", async () => {
     await withTestTransaction(async (tx) => {
@@ -249,6 +799,260 @@ describe("updatePageLocales", () => {
           input: { id: p.id, defaultLocale: "en", locales: ["en"] },
         }),
       ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("lets a plan without i18n go back to English only", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("free-en") },
+      });
+      // as if set while the workspace was still on a paid plan
+      await tx
+        .update(pageTable)
+        .set({ defaultLocale: "fr", locales: ["en", "fr"] })
+        .where(eq(pageTable.id, p.id));
+      await updatePageLocales({
+        ctx,
+        input: { id: p.id, defaultLocale: "en", locales: null },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.defaultLocale).toBe("en");
+      expect(row?.locales).toBeNull();
+    });
+  });
+});
+
+describe("updatePageTimezone", () => {
+  test("stores the zone + audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone") },
+      });
+      for (const zone of ["Asia/Tokyo", "Asia/Kolkata"]) {
+        await updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: zone },
+        });
+        const row = await tx
+          .select()
+          .from(pageTable)
+          .where(eq(pageTable.id, p.id))
+          .get();
+        expect(row?.defaultTimezone).toBe(zone);
+      }
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects a name that is not a time zone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Zone", slug: uniqueSlug("zone-bad") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Mars/Olympus" },
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  test("lets a plan without timezone go back to UTC", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free-utc") },
+      });
+      // as if set while the workspace was still on a paid plan
+      await tx
+        .update(pageTable)
+        .set({ defaultTimezone: "Asia/Tokyo" })
+        .where(eq(pageTable.id, p.id));
+      await updatePageTimezone({
+        ctx,
+        input: { id: p.id, defaultTimezone: "UTC" },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.defaultTimezone).toBe("UTC");
+    });
+  });
+
+  test("rejects when plan lacks timezone", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Free", slug: uniqueSlug("zone-free") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx,
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("cross-workspace → NotFoundError", async () => {
+    await withTestTransaction(async (tx) => {
+      const p = await newPage({
+        ctx: { ...teamCtx, db: tx },
+        input: { title: "Zone", slug: uniqueSlug("zone-iso") },
+      });
+      await expect(
+        updatePageTimezone({
+          ctx: { ...otherTeamCtx, db: tx },
+          input: { id: p.id, defaultTimezone: "Asia/Tokyo" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("updatePageCustomTheme", () => {
+  test("happy path stores sanitized vars + audit", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Theme", slug: uniqueSlug("theme") },
+      });
+      await updatePageCustomTheme({
+        ctx,
+        input: {
+          id: p.id,
+          customTheme: {
+            light: { "--primary": " red " },
+            dark: { "--primary": "pink" },
+          },
+        },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customTheme).toEqual({
+        light: { "--primary": "red" },
+        dark: { "--primary": "pink" },
+      });
+      await expectAuditRow({
+        workspaceId: teamCtx.workspace.id,
+        action: "page.update",
+        entityType: "page",
+        entityId: p.id,
+        db: tx,
+      });
+    });
+  });
+
+  test("rejects unknown css variables", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await expect(
+        updatePageCustomTheme({
+          ctx,
+          input: { id: 1, customTheme: { light: { "--nope": "red" } } },
+        }),
+      ).rejects.toThrow("Unknown CSS variable");
+    });
+  });
+
+  test("rejects values with style-tag breakout characters", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await expect(
+        updatePageCustomTheme({
+          ctx,
+          input: {
+            id: 1,
+            customTheme: { light: { "--primary": "red;} </style>" } },
+          },
+        }),
+      ).rejects.toThrow("unsupported characters");
+    });
+  });
+
+  test("empty custom theme clears the column", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Theme Clear", slug: uniqueSlug("theme-clear") },
+      });
+      await updatePageCustomTheme({
+        ctx,
+        input: { id: p.id, customTheme: { dark: { "--primary": "pink" } } },
+      });
+      await updatePageCustomTheme({
+        ctx,
+        input: { id: p.id, customTheme: { light: {}, dark: {} } },
+      });
+      const row = await tx
+        .select()
+        .from(pageTable)
+        .where(eq(pageTable.id, p.id))
+        .get();
+      expect(row?.customTheme).toBeNull();
+    });
+  });
+
+  test("rejects when plan lacks custom-theme", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      // No page needed: the `custom-theme` limit check fires before the
+      // page lookup (mirrors the read-only-actor case below). Creating a
+      // page here would depend on the shared free workspace's status-pages
+      // quota, which a parallel suite can exhaust → flaky LimitExceededError
+      // on the wrong assertion.
+      await expect(
+        updatePageCustomTheme({
+          ctx,
+          input: { id: 1, customTheme: { light: { "--primary": "red" } } },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("rejects read-only actor", async () => {
+    await withTestTransaction(async (tx) => {
+      const readOnlyCtx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-read",
+          userId: 1,
+          scopes: ["read"],
+        }),
+        db: tx,
+      };
+      await expect(
+        updatePageCustomTheme({
+          ctx: readOnlyCtx,
+          input: { id: 1, customTheme: { light: { "--primary": "red" } } },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });
@@ -309,6 +1113,100 @@ describe("list / get / getSlugAvailable", () => {
           input: { slug: uniqueSlug("free-slug") },
         }),
       ).toBe(true);
+    });
+  });
+});
+
+describe("listPages hasActiveStatusReport", () => {
+  const addReport = async (
+    tx: DrizzleTx,
+    pageId: number,
+    workspaceId: number,
+    status: "investigating" | "resolved",
+  ) =>
+    tx.insert(statusReport).values({
+      workspaceId,
+      pageId,
+      status,
+      title: `${TEST_PREFIX}-report-${status}`,
+    });
+
+  const flagFor = async (ctx: ServiceContext, pageId: number) => {
+    const items = await listPages({ ctx, input: { order: "desc" } });
+    return items.find((p) => p.id === pageId)?.hasActiveStatusReport;
+  };
+
+  test("false when the page has no status reports", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "No reports", slug: uniqueSlug("flag-none") },
+      });
+      expect(await flagFor(ctx, p.id)).toBe(false);
+    });
+  });
+
+  test("true when the page has a non-resolved report", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Active", slug: uniqueSlug("flag-active") },
+      });
+      await addReport(tx, p.id, teamCtx.workspace.id, "investigating");
+      expect(await flagFor(ctx, p.id)).toBe(true);
+    });
+  });
+
+  test("false once every report on the page is resolved", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const p = await newPage({
+        ctx,
+        input: { title: "Resolved", slug: uniqueSlug("flag-resolved") },
+      });
+      await addReport(tx, p.id, teamCtx.workspace.id, "resolved");
+      await addReport(tx, p.id, teamCtx.workspace.id, "resolved");
+      expect(await flagFor(ctx, p.id)).toBe(false);
+    });
+  });
+
+  test("an active report on one page does not flag its siblings", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const noisy = await newPage({
+        ctx,
+        input: { title: "Noisy", slug: uniqueSlug("flag-noisy") },
+      });
+      const quiet = await newPage({
+        ctx,
+        input: { title: "Quiet", slug: uniqueSlug("flag-quiet") },
+      });
+      await addReport(tx, noisy.id, teamCtx.workspace.id, "investigating");
+
+      expect(await flagFor(ctx, noisy.id)).toBe(true);
+      expect(await flagFor(ctx, quiet.id)).toBe(false);
+    });
+  });
+
+  test("the probe is workspace-scoped", async () => {
+    await withTestTransaction(async (tx) => {
+      const teamCtxTx = { ...teamCtx, db: tx };
+      const freeCtxTx = { ...freeCtx, db: tx };
+      const foreign = await newPage({
+        ctx: freeCtxTx,
+        input: { title: "Foreign", slug: uniqueSlug("flag-foreign") },
+      });
+      // Active report owned by the *other* workspace, pointing at its page.
+      await addReport(tx, foreign.id, freeCtx.workspace.id, "investigating");
+
+      const teamItems = await listPages({
+        ctx: teamCtxTx,
+        input: { order: "desc" },
+      });
+      expect(teamItems.some((p) => p.hasActiveStatusReport)).toBe(false);
+      expect(await flagFor(freeCtxTx, foreign.id)).toBe(true);
     });
   });
 });
@@ -382,6 +1280,74 @@ describe("deletePage", () => {
       await expect(
         deletePage({ ctx: { ...freeCtx, db: tx }, input: { id: p.id } }),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+});
+
+describe("status-page count quota", () => {
+  test("createPage rejects once the plan's page cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      // Free plan caps status pages at 1.
+      const ctx = { ...freeCtx, db: tx };
+      await newPage({
+        ctx,
+        input: { title: "Quota 1", slug: uniqueSlug("quota-1") },
+      });
+
+      await expect(
+        createPage({
+          ctx,
+          input: {
+            title: "Quota 2",
+            description: "",
+            slug: uniqueSlug("quota-2"),
+            customDomain: "",
+            workspaceId: ctx.workspace.id,
+            monitors: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+
+  test("newPage rejects once the cap is spent", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...freeCtx, db: tx };
+      await newPage({
+        ctx,
+        input: { title: "Quota 3", slug: uniqueSlug("quota-3") },
+      });
+
+      await expect(
+        newPage({
+          ctx,
+          input: { title: "Quota 4", slug: uniqueSlug("quota-4") },
+        }),
+      ).rejects.toBeInstanceOf(LimitExceededError);
+    });
+  });
+});
+
+describe("group scopes", () => {
+  test("rejects other-group key", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = {
+        ...makeApiKeyCtx(teamCtx.workspace, {
+          keyId: "k-incidents",
+          userId: 1,
+          scopes: ["incidents:write"],
+        }),
+        db: tx,
+      };
+      await expect(
+        newPage({
+          ctx,
+          input: { title: "Other group", slug: uniqueSlug("other-group") },
+        }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
+      await expect(
+        listPages({ ctx, input: { order: "desc" } }),
+      ).rejects.toBeInstanceOf(ForbiddenError);
     });
   });
 });

@@ -1,10 +1,28 @@
-import { and, asc, db as defaultDb, eq, or, sql } from "@openstatus/db";
+import {
+  and,
+  asc,
+  db as defaultDb,
+  eq,
+  inArray,
+  or,
+  sql,
+} from "@openstatus/db";
 import type { ApiConfigType, ExternalService } from "@openstatus/db/src/schema";
-import { externalServiceComponent } from "@openstatus/db/src/schema";
+import {
+  externalService,
+  externalServiceComponent,
+} from "@openstatus/db/src/schema";
 
 import { defaultTb } from "../context";
-import { getExternalServiceBySlug } from "../external-service";
-import type { GlobalReadContext } from "../external-service/internal";
+import {
+  getExternalServiceBySlug,
+  listExternalServices,
+  listExternalServicesBySlugs,
+} from "../external-service";
+import {
+  type GlobalReadContext,
+  liveOnlyClause,
+} from "../external-service/internal";
 import { retryRead } from "../retry";
 
 export type ExternalComponentListItem = {
@@ -27,10 +45,13 @@ export type ExternalComponentListItem = {
 const COMPONENT_STALE_MS = 24 * 60 * 60 * 1000;
 
 const TB_BATCH_SIZE = 100;
+// Caps in-flight Tinybird requests: an unbounded fan-out exhausts sockets and fds.
+const TB_CONCURRENCY = 4;
 
 // must stay in sync with fetchers that implement `fetchComponents` in @openstatus/status-fetcher
 export const COMPONENT_SUPPORTED_API_CONFIG_TYPES = new Set<ApiConfigType>([
   "atlassian",
+  "betterstack",
   "incidentio",
 ]);
 
@@ -53,9 +74,14 @@ async function fetchLatestByIds(ids: string[]): Promise<LatestFetchedResult> {
     return { errored: true, byId: new Map() };
   }
   const byId = new Map<string, number>();
-  try {
-    for (let i = 0; i < ids.length; i += TB_BATCH_SIZE) {
-      const chunk = ids.slice(i, i + TB_BATCH_SIZE);
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += TB_BATCH_SIZE) {
+    chunks.push(ids.slice(i, i + TB_BATCH_SIZE));
+  }
+  let next = 0;
+  const worker = async () => {
+    while (next < chunks.length) {
+      const chunk = chunks[next++];
       const { data } = await defaultTb.externalStatusComponentLatest({
         component_ids: chunk,
       });
@@ -63,6 +89,11 @@ async function fetchLatestByIds(ids: string[]): Promise<LatestFetchedResult> {
         byId.set(row.component_id, row.last_fetched_at);
       }
     }
+  };
+  try {
+    await Promise.all(
+      Array.from({ length: Math.min(TB_CONCURRENCY, chunks.length) }, worker),
+    );
     return { errored: false, byId };
   } catch (err) {
     console.warn(
@@ -163,6 +194,85 @@ export async function listExternalComponentsBySlug(args: {
   };
 }
 
+export type LiveComponentSlug = { serviceSlug: string; componentSlug: string };
+
+// Ids of component-capable services fetched within COMPONENT_STALE_MS, from one
+// Tinybird read. Null when Tinybird can't answer, so callers degrade open.
+export async function listRecentlyFetchedServiceIds(args: {
+  ctx?: GlobalReadContext;
+  now?: Date;
+}): Promise<number[] | null> {
+  if (!process.env.TINY_BIRD_API_KEY) return null;
+  let rows: { id: string; last_fetched_at: number }[];
+  try {
+    ({ data: rows } = await defaultTb.externalStatusLatest({}));
+  } catch (err) {
+    console.warn("[external-service components] TB latest read failed:", err);
+    return null;
+  }
+  const cutoff = (args.now ?? new Date()).getTime() - COMPONENT_STALE_MS;
+  const fresh = new Set(
+    rows.filter((r) => r.last_fetched_at >= cutoff).map((r) => r.id),
+  );
+
+  const services = await listExternalServices({ ctx: args.ctx });
+  return services
+    .filter((s) => supportsComponents(s.apiConfig?.type))
+    .filter((s) =>
+      // A renamed service keeps snapshots under an alias.
+      [s.slug, ...(Array.isArray(s.aliases) ? s.aliases : [])].some((id) =>
+        fresh.has(id),
+      ),
+    )
+    .map((s) => s.id);
+}
+
+// Every component of a live, component-capable service, ordered by service slug
+// then page order. Turso only: no per-component staleness check.
+export async function listLiveComponentSlugs(args: {
+  ctx?: GlobalReadContext;
+  externalServiceIds?: number[] | null;
+}): Promise<LiveComponentSlug[]> {
+  const { ctx } = args;
+  const db = ctx?.db ?? defaultDb;
+
+  const services = await listExternalServices({ ctx });
+  const only = args.externalServiceIds
+    ? new Set(args.externalServiceIds)
+    : null;
+  const slugById = new Map(
+    services
+      .filter((s) => supportsComponents(s.apiConfig?.type))
+      .filter((s) => only === null || only.has(s.id))
+      .map((s) => [s.id, s.slug]),
+  );
+  if (slugById.size === 0) return [];
+
+  const rows = await retryRead(() =>
+    db
+      .select({
+        externalServiceId: externalServiceComponent.externalServiceId,
+        slug: externalServiceComponent.slug,
+      })
+      .from(externalServiceComponent)
+      .innerJoin(
+        externalService,
+        eq(externalService.id, externalServiceComponent.externalServiceId),
+      )
+      .where(liveOnlyClause())
+      .orderBy(
+        asc(externalService.slug),
+        asc(externalServiceComponent.position),
+        asc(externalServiceComponent.name),
+      )
+      .all(),
+  );
+  return rows.flatMap((r) => {
+    const serviceSlug = slugById.get(r.externalServiceId);
+    return serviceSlug ? [{ serviceSlug, componentSlug: r.slug }] : [];
+  });
+}
+
 export type ExternalComponentDetail = ExternalComponentListItem & {
   aliases: string[];
   stale: boolean;
@@ -231,4 +341,76 @@ export async function getExternalComponentBySlug(args: {
     service,
     component: { ...row, lastFetchedAt, stale },
   };
+}
+
+export type ComponentRef = { service: string; component: string };
+
+export type ComponentByRef = {
+  service: ExternalService;
+  component: ExternalComponentListItem;
+};
+
+// Components by current service and component slug, in the order asked;
+// refs that do not resolve are skipped. Two DB queries and one Tinybird
+// read in total, however many refs.
+export async function listExternalComponentsByRefs(args: {
+  ctx?: GlobalReadContext;
+  refs: ComponentRef[];
+}): Promise<ComponentByRef[]> {
+  const { ctx, refs } = args;
+  if (refs.length === 0) return [];
+  const db = ctx?.db ?? defaultDb;
+
+  const services = await listExternalServicesBySlugs({
+    ctx,
+    slugs: [...new Set(refs.map((r) => r.service))],
+  });
+  if (services.length === 0) return [];
+  const serviceBySlug = new Map(services.map((s) => [s.slug, s]));
+
+  const rows = await retryRead(() =>
+    db
+      .select({
+        id: externalServiceComponent.id,
+        externalServiceId: externalServiceComponent.externalServiceId,
+        upstreamComponentId: externalServiceComponent.upstreamComponentId,
+        slug: externalServiceComponent.slug,
+        name: externalServiceComponent.name,
+        description: externalServiceComponent.description,
+        groupName: externalServiceComponent.groupName,
+        position: externalServiceComponent.position,
+        indicator: externalServiceComponent.indicator,
+        status: externalServiceComponent.status,
+        firstSeenAt: externalServiceComponent.firstSeenAt,
+      })
+      .from(externalServiceComponent)
+      .where(
+        and(
+          inArray(
+            externalServiceComponent.externalServiceId,
+            services.map((s) => s.id),
+          ),
+          inArray(externalServiceComponent.slug, [
+            ...new Set(refs.map((r) => r.component)),
+          ]),
+        ),
+      )
+      .all(),
+  );
+  const rowByKey = new Map(
+    rows.map((r) => [`${r.externalServiceId}/${r.slug}`, r]),
+  );
+
+  const matched = refs.flatMap((ref) => {
+    const service = serviceBySlug.get(ref.service);
+    const row = service ? rowByKey.get(`${service.id}/${ref.component}`) : null;
+    return service && row ? [{ service, row }] : [];
+  });
+  if (matched.length === 0) return [];
+
+  const { byId } = await fetchLatestByIds(matched.map((m) => String(m.row.id)));
+  return matched.map(({ service, row }) => ({
+    service,
+    component: { ...row, lastFetchedAt: byId.get(String(row.id)) ?? null },
+  }));
 }

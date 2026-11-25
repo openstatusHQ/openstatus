@@ -2,6 +2,7 @@ package checker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"strings"
@@ -9,22 +10,28 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-
 type DnsResponse struct {
 	A     []string `json:"a,omitempty"`
 	AAAA  []string `json:"aaaa,omitempty"`
 	CNAME string   `json:"cname,omitempty"`
 	MX    []string `json:"mx,omitempty"`
-	NS  []string `json:"ns,omitempty"`
-	TXT []string `json:"txt,omitempty"`
+	NS    []string `json:"ns,omitempty"`
+	TXT   []string `json:"txt,omitempty"`
 }
 
-func Dns(ctx context.Context, host string) (*DnsResponse, error) {
-	logger:= log.Ctx(ctx).With().Str("monitor", host).Logger()
+// resolver is net.DefaultResolver reached through its context-aware methods:
+// the package-level net.Lookup* helpers take no context, so a stalled resolver
+// would block a probe past its timeout and hold up the monitor's next run.
+var resolver = net.DefaultResolver
 
-	ips, err := net.LookupIP(host)
-	if err != nil {
-		logger.Error().Err(err).Msg("DNS IP lookup failed")
+func Dns(ctx context.Context, host string) (*DnsResponse, error) {
+	logger := log.Ctx(ctx).With().Str("monitor", host).Logger()
+
+	// A host can legitimately carry no address or CNAME (e.g. a TXT-only
+	// record), so a not-found answer is an empty set, not a failed check.
+	ips, err := resolver.LookupIP(ctx, "ip", host)
+	if err != nil && !isNotFound(err) {
+		logger.Warn().Err(err).Msg("DNS IP lookup failed")
 		return nil, fmt.Errorf("failed to lookup IPs: %w", err)
 	}
 
@@ -38,20 +45,31 @@ func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 			AAAA = append(AAAA, ip.String())
 		}
 	}
-	CNAME,err := lookupCNAME(host)
-	if err != nil {
-		logger.Error().Err(err).Msg("DNS CNAME record lookup failed")
+	CNAME, err := lookupCNAME(ctx, host)
+	if err != nil && !isNotFound(err) {
+		logger.Warn().Err(err).Msg("DNS CNAME record lookup failed")
 		return nil, fmt.Errorf("failed to lookup CNAME record: %w", err)
 	}
-	MXRecords := lookupMX(host)
+	MXRecords := lookupMX(ctx, host)
 
-	NS,err  := lookupNS(host)
-	if err != nil {
-		logger.Error().Err(err).Msg("DNS NS record lookup failed")
+	NS, err := lookupNS(ctx, host)
+	if err != nil && !isNotFound(err) {
+		logger.Warn().Err(err).Msg("DNS NS record lookup failed")
 		return nil, fmt.Errorf("failed to lookup NS record: %w", err)
 	}
-	TXT := lookupTXT(host)
+	TXT := lookupTXT(ctx, host)
 
+	// MX and TXT tolerate lookup errors, but an expired deadline means those
+	// records are unknown rather than absent — don't report that as a success.
+	if err := ctx.Err(); err != nil {
+		logger.Warn().Err(err).Msg("DNS lookup did not complete before the deadline")
+		return nil, fmt.Errorf("DNS lookup for %s did not complete: %w", host, err)
+	}
+
+	if len(A) == 0 && len(AAAA) == 0 && CNAME == "" && len(MXRecords) == 0 && len(NS) == 0 && len(TXT) == 0 {
+		logger.Warn().Msg("DNS lookup returned no records")
+		return nil, fmt.Errorf("no DNS records found for %s", host)
+	}
 
 	response := &DnsResponse{
 		A:     A,
@@ -59,16 +77,27 @@ func Dns(ctx context.Context, host string) (*DnsResponse, error) {
 		CNAME: CNAME,
 		MX:    MXRecords,
 		NS:    NS,
-		TXT: TXT,
+		TXT:   TXT,
 	}
 
 	return response, nil
 }
 
+// FormatDNSRecords flattens a lookup into the per-record-type map shape that
+// both the public handler and the private-location probe report.
+func FormatDNSRecords(result *DnsResponse) map[string][]string {
+	return map[string][]string{
+		"A":     append([]string{}, result.A...),
+		"AAAA":  append([]string{}, result.AAAA...),
+		"CNAME": {result.CNAME},
+		"MX":    append([]string{}, result.MX...),
+		"NS":    append([]string{}, result.NS...),
+		"TXT":   append([]string{}, result.TXT...),
+	}
+}
 
-
-func lookupCNAME(domain string) (string, error) {
-	cname, err := net.LookupCNAME(domain)
+func lookupCNAME(ctx context.Context, domain string) (string, error) {
+	cname, err := resolver.LookupCNAME(ctx, domain)
 	if err != nil {
 		return "", err
 	}
@@ -76,10 +105,9 @@ func lookupCNAME(domain string) (string, error) {
 	return cname, nil
 }
 
-func lookupMX(domain string) ([]string) {
+func lookupMX(ctx context.Context, domain string) []string {
 	mx := []string{}
-	mxRecords,_ := net.LookupMX(domain)
-
+	mxRecords, _ := resolver.LookupMX(ctx, domain)
 
 	for _, r := range mxRecords {
 		mx = append(mx, fmt.Sprintf("%s:%d", r.Host, r.Pref))
@@ -87,14 +115,14 @@ func lookupMX(domain string) ([]string) {
 	return mx
 }
 
-func lookupNS(domain string) ([]string, error) {
+func lookupNS(ctx context.Context, domain string) ([]string, error) {
 
 	hosts := []string{}
 	isSubdomain := isSubdomain(domain)
 	if isSubdomain {
 		return hosts, nil
 	}
-	nsRecords, err := net.LookupNS(domain)
+	nsRecords, err := resolver.LookupNS(ctx, domain)
 	if err != nil {
 		return nil, err
 	}
@@ -105,9 +133,9 @@ func lookupNS(domain string) ([]string, error) {
 	return hosts, nil
 }
 
-func lookupTXT(domain string) ([]string) {
+func lookupTXT(ctx context.Context, domain string) []string {
 	records := []string{}
-	txtRecords, err := net.LookupTXT(domain)
+	txtRecords, err := resolver.LookupTXT(ctx, domain)
 	if err != nil {
 		return nil
 	}
@@ -118,6 +146,12 @@ func lookupTXT(domain string) ([]string) {
 	return records
 }
 
+// isNotFound reports whether a lookup failed because the name has no records of
+// the requested type, as opposed to a resolver or network failure.
+func isNotFound(err error) bool {
+	var dnsErr *net.DNSError
+	return errors.As(err, &dnsErr) && dnsErr.IsNotFound
+}
 
 func isSubdomain(domain string) bool {
 	parent := strings.Split(domain, ".")

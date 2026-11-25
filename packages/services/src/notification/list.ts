@@ -16,6 +16,7 @@ import {
   selectNotificationSchema,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { DB, ServiceContext } from "../context";
 import type { Monitor, Notification } from "../types";
 import { getNotificationInWorkspace } from "./internal";
@@ -84,6 +85,7 @@ export async function listNotifications(args: {
   input: ListNotificationsInput;
 }): Promise<ListNotificationsResult> {
   const { ctx } = args;
+  requireScope(ctx, "notifications:read");
   const input = ListNotificationsInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
 
@@ -123,6 +125,7 @@ export async function getNotification(args: {
   input: GetNotificationInput;
 }): Promise<NotificationWithRelations> {
   const { ctx } = args;
+  requireScope(ctx, "notifications:read");
   const input = GetNotificationInput.parse(args.input);
   const db = ctx.db ?? defaultDb;
   const record = await getNotificationInWorkspace({

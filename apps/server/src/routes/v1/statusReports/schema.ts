@@ -27,7 +27,7 @@ export const StatusReportSchema = z
     }),
     statusReportUpdateIds: z
       .array(z.number())
-      .optional()
+
       .nullable()
       .prefault([])
       .openapi({
@@ -35,7 +35,7 @@ export const StatusReportSchema = z
       }),
     monitorIds: z
       .array(z.number())
-      .optional()
+
       .prefault([])
       .openapi({ description: "Ids of the monitors the status report." }),
     pageId: z.number().openapi({

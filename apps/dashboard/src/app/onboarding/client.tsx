@@ -1,8 +1,8 @@
 "use client";
 
 import type { RouterOutputs } from "@openstatus/api";
+import { Monitor, StatusPage, Launch } from "@openstatus/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, PanelTop, Rocket } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useQueryStates } from "nuqs";
 import { generateSlug } from "random-word-slugs";
@@ -31,9 +31,9 @@ export type OnboardingPage = Pick<
 >;
 
 const STEPS = [
-  { id: "1", label: "Monitor", icon: <Activity /> },
-  { id: "2", label: "Status page", icon: <PanelTop /> },
-  { id: "3", label: "Launch", icon: <Rocket /> },
+  { id: "1", label: "Monitor", icon: <Monitor /> },
+  { id: "2", label: "Status page", icon: <StatusPage /> },
+  { id: "3", label: "Launch", icon: <Launch /> },
 ] as const;
 
 // Fallback URL used when the user's email domain is generic (gmail, yahoo, …).
@@ -76,6 +76,24 @@ export function Client() {
   const pathname = usePathname();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
+  const skipMutation = useMutation(trpc.track.onboardingSkip.mutationOptions());
+  const completeMutation = useMutation(
+    trpc.track.onboardingComplete.mutationOptions(),
+  );
+  const trackSkip = (step: "monitor" | "page") => {
+    skipMutation.mutate({ step });
+  };
+
+  // Once per mount; the search params say how they reached the launch step.
+  const completedRef = useRef(false);
+  useEffect(() => {
+    if (step !== "3" || completedRef.current) return;
+    completedRef.current = true;
+    completeMutation.mutate({
+      monitor: monitor ?? "none",
+      page: page ?? "none",
+    });
+  }, [step, monitor, page, completeMutation]);
 
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
@@ -83,14 +101,14 @@ export function Client() {
   const { data: monitors } = useQuery(trpc.monitor.list.queryOptions());
   const { data: pages } = useQuery(trpc.page.list.queryOptions());
 
-  // Invalidate so workspace counts (sidebar quota, plan gates) stay fresh.
+  // Invalidate so the getting-started counts stay fresh.
   const createMonitorMutation = useMutation(
     trpc.monitor.new.mutationOptions({
       onSuccess: async () => {
         await setSearchParams({ monitor: "completed" });
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: trpc.workspace.get.queryKey(),
+            queryKey: trpc.workspace.usage.queryKey(),
           }),
           queryClient.invalidateQueries({
             queryKey: trpc.monitor.list.queryKey(),
@@ -105,7 +123,7 @@ export function Client() {
         await setSearchParams({ page: "completed" });
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: trpc.workspace.get.queryKey(),
+            queryKey: trpc.workspace.usage.queryKey(),
           }),
           queryClient.invalidateQueries({
             queryKey: trpc.page.list.queryKey(),
@@ -215,7 +233,10 @@ export function Client() {
                 active: true,
               });
             }}
-            onSkip={() => setSearchParams({ monitor: "skipped", step: "2" })}
+            onSkip={() => {
+              trackSkip("monitor");
+              setSearchParams({ monitor: "skipped", step: "2" });
+            }}
             onContinue={() => {
               setSearchParams({ step: "2" });
               stopChecks();
@@ -267,7 +288,10 @@ export function Client() {
                 });
               }
             }}
-            onSkip={() => setSearchParams({ page: "skipped", step: "3" })}
+            onSkip={() => {
+              trackSkip("page");
+              setSearchParams({ page: "skipped", step: "3" });
+            }}
             onContinue={() => setSearchParams({ step: "3" })}
           />
         ) : null}

@@ -16,7 +16,7 @@ import {
 } from "@opentelemetry/sdk-logs";
 import { ATTR_SERVICE_NAME } from "@opentelemetry/semantic-conventions";
 import { ATTR_DEPLOYMENT_ENVIRONMENT_NAME } from "@opentelemetry/semantic-conventions/incubating";
-import * as Sentry from "@sentry/deno";
+import * as Sentry from "@sentry/node";
 import { Hono } from "hono";
 import { showRoutes } from "hono/dev";
 import { requestId } from "hono/request-id";
@@ -25,6 +25,7 @@ import { checkerRoute } from "./checker";
 import "./lib/sentry";
 import { cronRouter } from "./cron";
 import { env } from "./env";
+import { pingRoute } from "./health";
 import { incidentRoute } from "./incident";
 
 const { NODE_ENV } = env();
@@ -56,6 +57,18 @@ function shouldSample(event: Record<string, unknown>): boolean {
   // Always capture: slow requests (above p99 - 2s threshold)
   if (durationMs && durationMs > 2000) return true;
 
+  // Always capture: alerting branches and drift sweeps, so Axiom counts are exact
+  const su = event.status_update as Record<string, unknown> | undefined;
+  if (
+    su?.maintenance_skipped ||
+    su?.transition_applied ||
+    su?.notificationTriggered ||
+    su?.incident_error ||
+    event.status_drift
+  ) {
+    return true;
+  }
+
   // Higher sampling for client errors (4xx) - 50%
   if (statusCode && statusCode >= 400 && statusCode < 500) {
     return true;
@@ -65,25 +78,25 @@ function shouldSample(event: Record<string, unknown>): boolean {
   return Math.random() < 0.2;
 }
 
-// Build the LoggerProvider with a static OTLP exporter import so `deno bundle`
-// includes it. Letting @logtape/otel create the exporter triggers a dynamic
-// import of a bare specifier, which the compiled --node-modules-dir=none binary
-// can't resolve.
+// Build the LoggerProvider with a static OTLP exporter import so tsdown
+// bundles it. Letting @logtape/otel create the exporter triggers a dynamic
+// import of a bare specifier, which the image can't resolve: its side-car
+// node_modules only carries the tsdown externals.
 const loggerProvider = new LoggerProvider({
   resource: resourceFromAttributes({
     [ATTR_SERVICE_NAME]: "openstatus-workflows",
     [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: env().NODE_ENV,
   }),
   processors: [
-    new BatchLogRecordProcessor(
-      new OTLPLogExporter({
+    new BatchLogRecordProcessor({
+      exporter: new OTLPLogExporter({
         url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
         headers: {
           Authorization: `Bearer ${env().AXIOM_TOKEN}`,
           "X-Axiom-Dataset": env().AXIOM_DATASET,
         },
       }),
-    ),
+    }),
   ],
 });
 
@@ -101,7 +114,7 @@ await configure({
     {
       category: "workflow",
       lowestLevel: "warning",
-      sinks: ["console"],
+      sinks: ["console", "otel"],
     },
     {
       category: "workflow-otel",
@@ -185,9 +198,10 @@ app.onError((err, c) => {
 app.get("/", (c) => c.text("workflows", 200));
 
 /**
- * Ping Pong
+ * Health check — probes the database and Tinybird and reports the Fly
+ * machine answering.
  */
-app.get("/ping", (c) => c.json({ ping: "pong" }, 200));
+app.route("/", pingRoute);
 
 /**
  * Cron Routes

@@ -31,14 +31,20 @@ export const limitsSchema = z.object({
   "page-components": z.number().prefault(3),
   maintenance: z.boolean().prefault(true),
   "monitor-values-visibility": z.boolean().prefault(true),
+  // months of history; limits stored before this was a number hold a boolean
+  "uptime-history": z
+    .preprocess((v) => (typeof v === "boolean" ? (v ? 12 : 0) : v), z.number())
+    .prefault(0),
   "status-subscribers": z.boolean().prefault(false),
   "custom-domain": z.boolean().prefault(false),
   i18n: z.boolean().prefault(false),
+  timezone: z.boolean().prefault(false),
   "password-protection": z.boolean().prefault(false),
   "email-domain-protection": z.boolean().prefault(false), // add-on but required in limits
   "ip-restriction": z.boolean().prefault(false), // add-on but required in limits
   "white-label": z.boolean().prefault(false),
   "no-index": z.boolean().prefault(false),
+  "custom-theme": z.boolean().prefault(false),
   /**
    * Notification limits
    */
@@ -57,6 +63,7 @@ export const limitsSchema = z.object({
    */
   members: z.literal("Unlimited").or(z.number()).prefault(1),
   "audit-log": z.boolean().prefault(false),
+  sso: z.boolean().prefault(false), // add-on but required in limits
 
   /**
    * Other limits
@@ -89,8 +96,26 @@ export const addons = [
   "email-domain-protection",
   "ip-restriction",
   "white-label",
+  "custom-theme",
   "status-pages",
+  "monitors",
+  "sso",
 ] as const satisfies Partial<keyof Limits>[];
+
+// Declares which add-ons are sold by quantity, what one subscription unit grants
+// and the self-serve ceiling. Both keys are also service `LimitKey`s, which is
+// what lets the purchase guard count current usage for them.
+export const addonQuantityConfig = {
+  "status-pages": { packSize: 1, maxQuantity: null },
+  monitors: { packSize: 10, maxQuantity: 10 },
+} as const satisfies Partial<
+  Record<
+    (typeof addons)[number],
+    { packSize: number; maxQuantity: number | null }
+  >
+>;
+
+export type AddonQuantityKey = keyof typeof addonQuantityConfig;
 
 export const addonsSchema = z.partialRecord(
   z.enum(addons),

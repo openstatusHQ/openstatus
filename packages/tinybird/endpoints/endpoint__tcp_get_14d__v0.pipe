@@ -1,15 +1,16 @@
-TAGS "tcp"
+TOKEN "endpoint__tcp_get_14d__v0_endpoint_read_3805" READ
 
 NODE endpoint
 SQL >
 
-    %
-        SELECT *
-        FROM mv__tcp_full_14d__v0
-        WHERE
-        monitorId = {{ String(monitorId, '4433', required=True) }}
-        AND id = {{ String(id, '', required=True) }}
-        ORDER BY time DESC
+%
+    SELECT *
+    FROM mv__tcp_full_14d__v0
+    WHERE
+    monitorId = {{ String(monitorId, '4433', required=True) }}
+    AND id = {{ String(id, '', required=True) }}
+    ORDER BY time DESC
+
+TYPE endpoint
 
 
-TYPE ENDPOINT

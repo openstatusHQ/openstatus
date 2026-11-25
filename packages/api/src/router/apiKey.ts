@@ -41,7 +41,7 @@ export const apiKeyRouter = createTRPCRouter({
       }
     }),
 
-  getAll: protectedProcedure.query(async ({ ctx }) => {
+  list: protectedProcedure.query(async ({ ctx }) => {
     try {
       return await listApiKeys({ ctx: toServiceCtx(ctx) });
     } catch (err) {

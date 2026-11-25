@@ -178,6 +178,26 @@ const { notification } = await client.notification.v1.NotificationService
   });
 ```
 
+### Microsoft Teams
+
+```typescript
+const { notification } = await client.notification.v1.NotificationService
+  .createNotification({
+    name: "Teams Alerts",
+    provider: NotificationProvider.MS_TEAMS,
+    data: {
+      data: {
+        case: "msTeams",
+        value: {
+          webhookUrl:
+            "https://prod-00.westeurope.logic.azure.com:443/workflows/abc/triggers/manual/paths/invoke",
+        },
+      },
+    },
+    monitorIds: ["123456"],
+  });
+```
+
 ### Ntfy
 
 ```typescript
@@ -193,23 +213,6 @@ const { notification } = await client.notification.v1.NotificationService
           serverUrl: "https://ntfy.sh",
           token: "tk_...",
         },
-      },
-    },
-    monitorIds: ["123456"],
-  });
-```
-
-### SMS
-
-```typescript
-const { notification } = await client.notification.v1.NotificationService
-  .createNotification({
-    name: "SMS Alerts",
-    provider: NotificationProvider.SMS,
-    data: {
-      data: {
-        case: "sms",
-        value: { phoneNumber: "+1234567890" },
       },
     },
     monitorIds: ["123456"],

@@ -28,12 +28,14 @@ enum Periodicity {
 }
 
 // Geographic regions where monitors can run checks from.
+// REGION_FLY_BOM is deprecated and rejected on create/update; use REGION_FLY_SIN.
 enum Region {
   REGION_UNSPECIFIED = 0;
   // Fly.io regions
   REGION_FLY_AMS = 1;   // Amsterdam, Netherlands
   REGION_FLY_ARN = 2;   // Stockholm, Sweden
-  REGION_FLY_BOM = 3;   // Mumbai, India
+  // Deprecated: Mumbai is no longer accepted on create/update; use REGION_FLY_SIN.
+  REGION_FLY_BOM = 3 [deprecated = true];   // Mumbai, India
   REGION_FLY_CDG = 4;   // Paris, France
   REGION_FLY_DFW = 5;   // Dallas, USA
   REGION_FLY_EWR = 6;   // Newark, USA

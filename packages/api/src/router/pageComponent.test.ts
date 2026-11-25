@@ -1,9 +1,8 @@
 import { db, eq } from "@openstatus/db";
 import { monitor } from "@openstatus/db/src/schema";
 import { allPlans } from "@openstatus/db/src/schema/plan/config";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
+import { afterAll, beforeAll, expect, test } from "vitest";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";
@@ -57,7 +56,7 @@ test("pageComponent.updateOrder rejects monitorId from another workspace", async
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 
@@ -92,7 +91,7 @@ test("pageComponent.updateOrder rejects monitorId from another workspace in grou
     throw new Error("Should have thrown");
   } catch (e) {
     expect(e).toBeInstanceOf(TRPCError);
-    expect((e as TRPCError).code).toBe("FORBIDDEN");
+    expect((e as TRPCError).code).toBe("NOT_FOUND");
   }
 });
 

@@ -1,26 +1,17 @@
 import type { DB } from "../context";
-import { ForbiddenError } from "../errors";
+import { NotFoundError } from "../errors";
+import { findMissingMonitorId } from "../monitor/internal";
 
-/**
- * Ensure every id in `monitorIds` belongs to the given workspace. No-op
- * when the list is empty. Throws `ForbiddenError` (not `NotFound`) to
- * match the legacy router's `FORBIDDEN` response — surfacing "this id
- * doesn't exist" vs. "this id isn't yours" would leak workspace state.
- */
+/** Throws `NotFoundError` for the first id that is not a live monitor of the workspace. */
 export async function assertMonitorsInWorkspace(args: {
   tx: DB;
   workspaceId: number;
   monitorIds: number[];
 }): Promise<void> {
-  const { tx, workspaceId, monitorIds } = args;
-  if (monitorIds.length === 0) return;
-
-  const uniqueIds = Array.from(new Set(monitorIds));
-
-  const valid = await tx.query.monitor.findMany({
-    where: { workspaceId, id: { in: uniqueIds } },
+  const missing = await findMissingMonitorId({
+    tx: args.tx,
+    workspaceId: args.workspaceId,
+    ids: args.monitorIds,
   });
-  if (valid.length !== uniqueIds.length) {
-    throw new ForbiddenError("Invalid monitor IDs.");
-  }
+  if (missing !== undefined) throw new NotFoundError("monitor", missing);
 }

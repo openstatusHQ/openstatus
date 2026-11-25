@@ -135,7 +135,7 @@ export const regionDict: Record<Region, RegionInfo> = {
     location: "Mumbai, India",
     flag: "🇮🇳",
     continent: "Asia",
-    deprecated: false,
+    deprecated: true,
     provider: "fly",
   },
   bos: {

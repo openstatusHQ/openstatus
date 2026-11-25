@@ -7,14 +7,17 @@ export const ErrorReason = {
   MONITOR_NOT_FOUND: "MONITOR_NOT_FOUND",
   MONITOR_REQUIRED: "MONITOR_REQUIRED",
   MONITOR_ID_REQUIRED: "MONITOR_ID_REQUIRED",
+  MONITOR_ID_INVALID: "MONITOR_ID_INVALID",
   MONITOR_CREATE_FAILED: "MONITOR_CREATE_FAILED",
   MONITOR_UPDATE_FAILED: "MONITOR_UPDATE_FAILED",
   MONITOR_PARSE_FAILED: "MONITOR_PARSE_FAILED",
   MONITOR_RUN_CREATE_FAILED: "MONITOR_RUN_CREATE_FAILED",
+  MONITOR_TRIGGER_FAILED: "MONITOR_TRIGGER_FAILED",
   MONITOR_INVALID_DATA: "MONITOR_INVALID_DATA",
   MONITOR_TYPE_MISMATCH: "MONITOR_TYPE_MISMATCH",
   RESPONSE_LOG_NOT_FOUND: "RESPONSE_LOG_NOT_FOUND",
   RESPONSE_LOGS_NOT_ENABLED: "RESPONSE_LOGS_NOT_ENABLED",
+  CURSOR_INVALID: "CURSOR_INVALID",
   RATE_LIMIT_EXCEEDED: "RATE_LIMIT_EXCEEDED",
 } as const;
 
@@ -83,24 +86,26 @@ export function monitorIdRequiredError(): ConnectError {
 }
 
 /**
- * Creates a "failed to create monitor" error.
+ * Creates an "invalid monitor ID" error for an id that is not a decimal integer.
  */
-export function monitorCreateFailedError(): ConnectError {
+export function monitorIdInvalidError(monitorId: string): ConnectError {
   return createError(
-    "Failed to create monitor",
-    Code.Internal,
-    ErrorReason.MONITOR_CREATE_FAILED,
+    `Invalid monitor id: "${monitorId}"`,
+    Code.InvalidArgument,
+    ErrorReason.MONITOR_ID_INVALID,
+    // Raw input may hold CR/LF, which `Headers` rejects.
+    { "monitor-id": encodeURIComponent(monitorId) },
   );
 }
 
 /**
- * Creates a "failed to update monitor" error.
+ * Creates a "trigger failed" error when no region could be reached.
  */
-export function monitorUpdateFailedError(monitorId: string): ConnectError {
+export function monitorTriggerFailedError(monitorId: string): ConnectError {
   return createError(
-    "Failed to update monitor",
-    Code.Internal,
-    ErrorReason.MONITOR_UPDATE_FAILED,
+    "Failed to trigger the monitor in any region",
+    Code.Unavailable,
+    ErrorReason.MONITOR_TRIGGER_FAILED,
     { "monitor-id": monitorId },
   );
 }
@@ -112,9 +117,11 @@ export function monitorTypeMismatchError(
   monitorId: string,
   expectedType: string,
   actualType: string,
+  hint?: string,
 ): ConnectError {
+  const message = `Monitor type mismatch: expected ${expectedType}, got ${actualType}`;
   return createError(
-    `Monitor type mismatch: expected ${expectedType}, got ${actualType}`,
+    hint ? `${message}. ${hint}` : message,
     Code.InvalidArgument,
     ErrorReason.MONITOR_TYPE_MISMATCH,
     {
@@ -152,6 +159,17 @@ export function responseLogsNotEnabledError(): ConnectError {
 }
 
 /**
+ * Creates an "invalid cursor" error for a cursor not issued by a previous response.
+ */
+export function cursorInvalidError(): ConnectError {
+  return createError(
+    "Invalid cursor: pass next_cursor from a previous response",
+    Code.InvalidArgument,
+    ErrorReason.CURSOR_INVALID,
+  );
+}
+
+/**
  * Creates a "failed to parse monitor data" error.
  */
 export function monitorParseFailedError(monitorId?: string): ConnectError {
@@ -160,18 +178,6 @@ export function monitorParseFailedError(monitorId?: string): ConnectError {
     Code.Internal,
     ErrorReason.MONITOR_PARSE_FAILED,
     monitorId ? { "monitor-id": monitorId } : undefined,
-  );
-}
-
-/**
- * Creates a "failed to create monitor run" error.
- */
-export function monitorRunCreateFailedError(monitorId: string): ConnectError {
-  return createError(
-    "Failed to create monitor run",
-    Code.Internal,
-    ErrorReason.MONITOR_RUN_CREATE_FAILED,
-    { "monitor-id": monitorId },
   );
 }
 

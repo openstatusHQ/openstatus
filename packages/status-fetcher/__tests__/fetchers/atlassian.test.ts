@@ -1,5 +1,4 @@
-import { expect } from "@std/expect";
-import { beforeEach, describe, it } from "@std/testing/bdd";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { AtlassianFetcher } from "../../src/fetchers/atlassian";
 import type { StatusPageEntry } from "../../src/types";
@@ -114,11 +113,11 @@ describe("AtlassianFetcher", () => {
       expect(result.description).toBe("All Systems Operational");
       expect(result.timezone).toBe("Etc/UTC");
       expect(typeof result.updated_at).toBe("number");
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe(
+      const call = fetchMock.mock.lastCall;
+      expect(call?.[0]).toBe(
         "https://www.githubstatus.com/api/v2/summary.json",
       );
-      expect(call.args[1]).toEqual(
+      expect(call?.[1]).toEqual(
         expect.objectContaining({
           headers: expect.objectContaining({
             "User-Agent": "OpenStatus-Directory/1.0",
@@ -238,9 +237,9 @@ describe("AtlassianFetcher", () => {
 
       await runFetcher(fetcher, entry);
 
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe("https://custom.endpoint.com/status.json");
-      expect(call.args[1]).toEqual(expect.any(Object));
+      const call = fetchMock.mock.lastCall;
+      expect(call?.[0]).toBe("https://custom.endpoint.com/status.json");
+      expect(call?.[1]).toEqual(expect.any(Object));
     });
 
     it("should fail with FetchError on non-200 response", async () => {
@@ -335,11 +334,11 @@ describe("AtlassianFetcher", () => {
 
       const incidents = await runIncidents(fetcher, entry);
 
-      const call = fetchMock.calls[fetchMock.calls.length - 1];
-      expect(call.args[0]).toBe(
+      const call = fetchMock.mock.lastCall;
+      expect(call?.[0]).toBe(
         "https://www.githubstatus.com/api/v2/incidents.json",
       );
-      expect(call.args[1]).toEqual(expect.any(Object));
+      expect(call?.[1]).toEqual(expect.any(Object));
       expect(incidents).toHaveLength(2);
       expect(incidents[0]).toMatchObject({
         providerIncidentId: "abc",
@@ -389,5 +388,43 @@ describe("AtlassianFetcher", () => {
       const err = expectIncidentsFetchError(exit);
       expect(err.cause).toBeInstanceOf(Error);
     });
+  });
+});
+
+describe("AtlassianFetcher maintenance indicator", () => {
+  it("maps the maintenance indicator to severity none and under_maintenance", async () => {
+    const fetcher = new AtlassianFetcher();
+    const entry: StatusPageEntry = {
+      id: "test",
+      name: "Test",
+      url: "https://test.com",
+      status_page_url: "https://test.statuspage.io",
+      provider: "atlassian-statuspage",
+      industry: ["saas"],
+    };
+    installMockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: async () => ({
+          page: {
+            id: "123",
+            name: "Test",
+            url: "https://test.statuspage.io",
+            timezone: "Europe/Berlin",
+            updated_at: "2026-09-10T13:01:07.723+02:00",
+          },
+          status: {
+            indicator: "maintenance",
+            description: "Service Under Maintenance",
+          },
+        }),
+      } as Response),
+    );
+
+    const result = await runFetcher(fetcher, entry);
+
+    expect(result.severity).toBe("none");
+    expect(result.status).toBe("under_maintenance");
+    expect(result.description).toBe("Service Under Maintenance");
   });
 });

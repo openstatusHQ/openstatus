@@ -1,6 +1,16 @@
 "use client";
 
 import {
+  Expand,
+  Billing,
+  System,
+  Logout,
+  Dark,
+  AI,
+  Light,
+  Account,
+} from "@openstatus/icons";
+import {
   Avatar,
   AvatarFallback,
   AvatarImage,
@@ -24,20 +34,12 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@openstatus/ui/components/ui/sidebar";
-import { useQuery } from "@tanstack/react-query";
-import {
-  ChevronsUpDown,
-  CreditCard,
-  Laptop,
-  LogOut,
-  Moon,
-  Sparkles,
-  Sun,
-  User,
-} from "lucide-react";
+import { personName } from "@openstatus/utils";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { toast } from "sonner";
 
 import { useTRPC } from "@/lib/trpc/client";
 
@@ -47,10 +49,19 @@ export function NavUser() {
   const trpc = useTRPC();
   const { data: workspace } = useQuery(trpc.workspace.get.queryOptions());
   const { data: user } = useQuery(trpc.user.get.queryOptions());
+  const paymentMethodSetupMutation = useMutation(
+    trpc.stripeRouter.getPaymentMethodSetupSession.mutationOptions({
+      onSuccess: (url) => {
+        if (url) window.location.assign(url);
+      },
+      onError: (error) => toast.error(error.message),
+    }),
+  );
 
   if (!user || !workspace) return null;
 
-  const userName = user?.name ?? `${user?.firstName} ${user?.lastName}`.trim();
+  const userName = personName(user) ?? "";
+  const isTrialing = workspace.trialDaysLeft !== null;
 
   return (
     <SidebarMenu>
@@ -78,7 +89,7 @@ export function NavUser() {
                   {user?.email}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              <Expand className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -107,15 +118,33 @@ export function NavUser() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {workspace.plan === "free" ? (
+            {isTrialing ? (
+              <>
+                <DropdownMenuItem
+                  onClick={() =>
+                    paymentMethodSetupMutation.mutate({
+                      workspaceSlug: workspace.slug,
+                      successUrl: `${window.location.origin}/settings/billing?setup=true`,
+                      cancelUrl: `${window.location.origin}/settings/billing`,
+                    })
+                  }
+                  disabled={paymentMethodSetupMutation.isPending}
+                  className="font-commit-mono tracking-tight"
+                >
+                  <Billing />
+                  Add payment method
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            ) : workspace.plan === "free" ? (
               <>
                 <DropdownMenuItem asChild>
                   <Link
-                    href="/settings/billing"
+                    href="/settings/billing#plans"
                     onClick={() => setOpenMobile(false)}
                     className="font-commit-mono tracking-tight"
                   >
-                    <Sparkles />
+                    <AI />
                     Upgrade Workspace
                   </Link>
                 </DropdownMenuItem>
@@ -128,31 +157,31 @@ export function NavUser() {
                   href="/settings/account"
                   onClick={() => setOpenMobile(false)}
                 >
-                  <User />
+                  <Account />
                   Account
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="[&_svg:not([class*='text-'])]:text-muted-foreground gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
                   {theme === "dark" ? (
-                    <Moon />
+                    <Dark />
                   ) : theme === "light" ? (
-                    <Sun />
+                    <Light />
                   ) : (
-                    <Laptop />
+                    <System />
                   )}
                   Theme
                 </DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
                   <DropdownMenuSubContent className="font-commit-mono tracking-tight">
                     <DropdownMenuItem onClick={() => setTheme("light")}>
-                      <Sun /> Light
+                      <Light /> Light
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("dark")}>
-                      <Moon /> Dark
+                      <Dark /> Dark
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setTheme("system")}>
-                      <Laptop /> System
+                      <System /> System
                     </DropdownMenuItem>
                   </DropdownMenuSubContent>
                 </DropdownMenuPortal>
@@ -162,7 +191,7 @@ export function NavUser() {
                   href="/settings/billing"
                   onClick={() => setOpenMobile(false)}
                 >
-                  <CreditCard />
+                  <Billing />
                   Billing
                 </Link>
               </DropdownMenuItem>
@@ -172,7 +201,7 @@ export function NavUser() {
               onClick={() => signOut()}
               className="font-commit-mono tracking-tight"
             >
-              <LogOut />
+              <Logout />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

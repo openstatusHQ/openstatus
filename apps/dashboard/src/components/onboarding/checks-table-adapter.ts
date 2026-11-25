@@ -1,19 +1,7 @@
-import type {
-  CheckResult,
-  CheckResultSuccess,
-} from "@openstatus/services/monitor";
+import type { CheckResult } from "@openstatus/services/monitor";
+import { calculateTiming } from "@openstatus/tinybird/src/schema";
 
 import type { OnboardingChecksRow } from "./checks-table";
-
-function calculatePhases(timing: CheckResultSuccess["timing"]) {
-  return {
-    dns: timing.dnsDone - timing.dnsStart,
-    connect: timing.connectDone - timing.connectStart,
-    tls: timing.tlsHandshakeDone - timing.tlsHandshakeStart,
-    ttfb: timing.firstByteDone - timing.firstByteStart,
-    transfer: timing.transferDone - timing.transferStart,
-  };
-}
 
 /**
  * Adapt a Go-checker preview result into the `ResponseLog` shape
@@ -22,8 +10,7 @@ function calculatePhases(timing: CheckResultSuccess["timing"]) {
  *
  * - `id` is set to `region` — synthetic but stable for selection.
  * - `requestStatus` derived from status + state.
- * - `timing` is the raw start/done timestamps that `<HoverCardTiming>`
- *   diffs into phases.
+ * - `timing` is the phase durations `<HoverCardTiming>` renders.
  * - `workspaceId` is intentionally `""` — no current row renderer
  *   (`columns.tsx`, `data-table-basics.tsx`, `data-table-sheet.tsx`)
  *   reads it. If a future renderer constructs a URL from `workspaceId`,
@@ -62,7 +49,7 @@ export function checkResultToResponseLog(
   const requestStatus =
     result.status >= 400 ? "error" : result.status >= 200 ? "success" : "error";
 
-  const phases = result.timing ? calculatePhases(result.timing) : null;
+  const phases = result.timing ? calculateTiming(result.timing) : null;
 
   return {
     type: "http",

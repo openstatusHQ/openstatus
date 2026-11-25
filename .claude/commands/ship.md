@@ -20,7 +20,7 @@ $ARGUMENTS - optional branch name
 - Confirm there are uncommitted changes (from status above). If none, stop.
 - Confirm current branch. If not on `main`, ask user before proceeding.
 - Warn if any .env or credential files would be staged.
-- Run `pnpm format:fix` in the root directory to fix formatting issues
+- Run `pnpm format` in the root directory to fix formatting issues
 
 ## 2. Create Branch
 

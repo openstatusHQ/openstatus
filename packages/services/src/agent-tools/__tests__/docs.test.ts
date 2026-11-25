@@ -1,6 +1,4 @@
-import { expect } from "@std/expect";
-import { afterEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, spy } from "@std/testing/mock";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import type { ServiceContext } from "../../context";
 import { getDocPageTool, searchDocsTool } from "../docs";
@@ -15,7 +13,7 @@ afterEach(() => {
 });
 
 function mockFetch(response: Response) {
-  const fn = spy(async () => response);
+  const fn = vi.fn(async () => response);
   globalThis.fetch = fn as unknown as typeof fetch;
   return fn;
 }
@@ -130,6 +128,16 @@ describe("get_doc_page", () => {
     expect(result.error).toBe("page not found (HTTP 404)");
   });
 
+  test("reports non-404 failures as unavailable, not missing", async () => {
+    mockFetch(new Response("oops", { status: 500 }));
+    const result = await getDocPageTool.run({
+      ctx,
+      input: { path: "docs/concept/monitor" },
+    });
+    expect(result.markdown).toBe("");
+    expect(result.error).toBe("page unavailable (HTTP 500)");
+  });
+
   test("returns error shape when fetch throws", async () => {
     globalThis.fetch = (async () => {
       throw new Error("ECONNREFUSED");
@@ -153,6 +161,6 @@ describe("get_doc_page", () => {
       );
       expect(getDocPageTool.outputSchema.safeParse(result).success).toBe(true);
     }
-    assertSpyCalls(fn, 0);
+    expect(fn).toHaveBeenCalledTimes(0);
   });
 });

@@ -1,0 +1,21 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toStartOfDay(toTimeZone(fromUnixTimestamp64Milli(cronTimestamp), 'UTC')) AS time,
+        monitorId,
+        cronTimestamp,
+        uniqExactState(CAST(region, 'String')) AS regions,
+        uniqExactStateIf(CAST(region, 'String'), coalesce(requestStatus, '') = 'error') AS errorRegions,
+        uniqExactStateIf(CAST(region, 'String'), coalesce(requestStatus, '') = 'degraded') AS degradedRegions
+    FROM ping_response__v8
+    WHERE coalesce(nullIf(trigger, ''), 'cron') = 'cron'
+        -- private locations carry no shared run key
+        AND NOT match(region, '^[0-9]+$')
+    GROUP BY
+        time,
+        monitorId,
+        cronTimestamp
+
+TYPE materialized
+DATASOURCE mv__http_runs_45d__v0

@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-export const jobTypes = ["http", "tcp", "icmp", "udp", "dns", "ssl"] as const;
+export const jobTypes = [
+  "http",
+  "tcp",
+  "icmp",
+  "grpc",
+  "udp",
+  "dns",
+  "ssl",
+  "heartbeat",
+] as const;
 export const jobTypeEnum = z.enum(jobTypes);
 export type JobType = z.infer<typeof jobTypeEnum>;
 
@@ -43,15 +52,22 @@ export function transformTiming(val: string) {
   return null;
 }
 
+// 0 = phase hook never fired (e.g. timeout before first byte); subtracting
+// absolute epoch timestamps would yield huge negative durations.
+function phaseDuration(start: number, done: number) {
+  if (start === 0 || done === 0) return 0;
+  return done - start;
+}
+
 export function calculateTiming(obj: z.infer<typeof httpTimingSchema>) {
   if (!obj) return null;
 
   return {
-    dns: obj.dnsDone - obj.dnsStart,
-    connect: obj.connectDone - obj.connectStart,
-    tls: obj.tlsHandshakeDone - obj.tlsHandshakeStart,
-    ttfb: obj.firstByteDone - obj.firstByteStart,
-    transfer: obj.transferDone - obj.transferStart,
+    dns: phaseDuration(obj.dnsStart, obj.dnsDone),
+    connect: phaseDuration(obj.connectStart, obj.connectDone),
+    tls: phaseDuration(obj.tlsHandshakeStart, obj.tlsHandshakeDone),
+    ttfb: phaseDuration(obj.firstByteStart, obj.firstByteDone),
+    transfer: phaseDuration(obj.transferStart, obj.transferDone),
   };
 }
 

@@ -1,7 +1,7 @@
 import { and, db, eq, isNull } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
-import { expect } from "@std/expect";
-import { test } from "@std/testing/bdd";
+import { delivery, resend } from "@openstatus/emails/src/send";
+import { expect, test, vi } from "vitest";
 
 import { app } from "@/index";
 
@@ -27,6 +27,50 @@ test("create a page subscription", async () => {
     await db
       .delete(pageSubscriber)
       .where(eq(pageSubscriber.id, result.data.id));
+  }
+});
+
+test("sends the same redesigned verification email as the status page form", async () => {
+  const enabled = vi.spyOn(delivery, "enabled").mockImplementation(() => true);
+  const send = vi
+    .spyOn(resend.emails, "send")
+    .mockImplementation(() =>
+      Promise.resolve({ data: { id: "email_1" }, error: null } as never),
+    );
+
+  const email = "verify-mail@openstatus.dev";
+  const cleanup = () =>
+    db.delete(pageSubscriber).where(eq(pageSubscriber.email, email));
+
+  try {
+    await cleanup();
+    const res = await app.request("/v1/page_subscriber/1/update", {
+      method: "POST",
+      headers: {
+        "x-openstatus-key": "1",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    });
+    expect(res.status).toBe(200);
+
+    expect(send).toHaveBeenCalledTimes(1);
+    const payload = send.mock.calls[0][0];
+    expect(payload.to).toEqual([email]);
+    expect(payload.from).toMatch(
+      /^".+" <notifications@subscribers\.openstatus\.dev>$/,
+    );
+    expect(payload.subject).toMatch(/^Confirm your subscription to /);
+    // the route calls the template as a function, so this is its <Layout>
+    const layout = payload.react as unknown as {
+      props: { brand: { name: string }; pill: { label: string } };
+    };
+    expect(layout.props.brand.name).toMatch(/Status$/);
+    expect(layout.props.pill.label).toBe("Confirm");
+  } finally {
+    await cleanup();
+    send.mockRestore();
+    enabled.mockRestore();
   }
 });
 

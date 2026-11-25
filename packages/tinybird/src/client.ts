@@ -2,6 +2,9 @@ import { Tinybird as Client, NoopTinybird } from "@chronark/zod-bird";
 import { z } from "zod";
 
 import { monitorRegions } from "../../db/src/schema/constants";
+import { frozenMonitorUptimeMonthSchema } from "../../db/src/schema/frozen_uptime/month";
+import { env } from "./env";
+import { withStatusErrors } from "./fetch";
 import {
   headersSchema,
   timingPhasesSchema,
@@ -11,7 +14,58 @@ import {
 
 const PUBLIC_CACHE = 300; // 5 * 60 = 300s = 5m
 const DEV_CACHE = 10 * 60; // 10m
-const REVALIDATE = process.env.NODE_ENV === "development" ? DEV_CACHE : 0;
+const REVALIDATE = env.NODE_ENV === "development" ? DEV_CACHE : 0;
+
+// Cheaper than a Tinybird 400 round trip for a zone ClickHouse won't know.
+const timeZoneValidity = new Map<string, boolean>();
+
+export function isValidTimeZone(timeZone: string): boolean {
+  // Intl also takes `+05:30`-style offsets; ClickHouse only knows zone names.
+  if (/^[+-]/.test(timeZone)) return false;
+  let valid = timeZoneValidity.get(timeZone);
+  if (valid === undefined) {
+    try {
+      new Intl.DateTimeFormat("en-US", { timeZone });
+      valid = true;
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error;
+      valid = false;
+    }
+    timeZoneValidity.set(timeZone, valid);
+  }
+  return valid;
+}
+
+// 15-minute buckets regroup into local days for every IANA zone: all current
+// offsets are multiples of 15 minutes.
+export const status15mParameters = z.object({
+  monitorIds: z.string().array(),
+  timezone: z
+    .string()
+    .refine(isValidTimeZone, "timezone must be an IANA zone name")
+    .prefault("UTC"),
+});
+
+/**
+ * Same columns as the 45d pipes. `day` is the local calendar date re-keyed as
+ * UTC midnight, the convention day-keyed consumers already read — a Berlin
+ * 2026-10-14 stays "2026-10-14", not the 22:00Z instant of local midnight.
+ * `monitorId` is a String column in the http datasource and Int32 elsewhere,
+ * so the non-http getters pass `z.coerce.string()`.
+ */
+export function status15mShape(monitorId: z.ZodType<string>) {
+  return z.object({
+    day: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .transform((val) => new Date(`${val}T00:00:00.000Z`).toISOString()),
+    count: z.number().prefault(0),
+    ok: z.number().prefault(0),
+    degraded: z.number().prefault(0),
+    error: z.number().prefault(0),
+    monitorId,
+  });
+}
 
 // Daily-aggregate columns shared by the external-status history pipes (page-
 // level and per-component). One shape so the `day` GMT-parse can't drift.
@@ -22,25 +76,416 @@ const externalStatusHistoryDailyShape = {
   snapshot_count: z.int(),
 };
 
+const icmpMetricsShape = z.object({
+  p50Latency: z.number().nullable().prefault(0),
+  p75Latency: z.number().nullable().prefault(0),
+  p90Latency: z.number().nullable().prefault(0),
+  p95Latency: z.number().nullable().prefault(0),
+  p99Latency: z.number().nullable().prefault(0),
+  count: z.int().prefault(0),
+  success: z.int().prefault(0),
+  degraded: z.int().prefault(0),
+  error: z.int().prefault(0),
+  lastTimestamp: z.int().nullable(),
+});
+
+const icmpMetricsByIntervalParameters = z.object({
+  regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+  interval: z.int().optional(),
+  monitorId: z.string(),
+});
+
+const icmpMetricsByIntervalShape = z.object({
+  region: z.enum(monitorRegions).or(z.string()),
+  timestamp: z.int(),
+  p50Latency: z.number().nullable().prefault(0),
+  p75Latency: z.number().nullable().prefault(0),
+  p90Latency: z.number().nullable().prefault(0),
+  p95Latency: z.number().nullable().prefault(0),
+  p99Latency: z.number().nullable().prefault(0),
+});
+
+const icmpMetricsByRegionParameters = z.object({
+  monitorId: z.string(),
+  regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+});
+
+const icmpMetricsByRegionShape = z.object({
+  region: z.enum(monitorRegions).or(z.string()),
+  count: z.int(),
+  ok: z.int(),
+  p50Latency: z.number().nullable().prefault(0),
+  p75Latency: z.number().nullable().prefault(0),
+  p90Latency: z.number().nullable().prefault(0),
+  p95Latency: z.number().nullable().prefault(0),
+  p99Latency: z.number().nullable().prefault(0),
+});
+
+const icmpMetricsLatencyShape = z.object({
+  timestamp: z.int(),
+  p50Latency: z.int(),
+  p75Latency: z.int(),
+  p90Latency: z.int(),
+  p95Latency: z.int(),
+  p99Latency: z.int(),
+});
+
+const icmpUptimeParameters = z.object({
+  monitorId: z.string(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+  regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+  interval: z.int().optional(),
+});
+
+const icmpUptimeShape = z.object({
+  interval: z.coerce.date(),
+  success: z.int(),
+  degraded: z.int(),
+  error: z.int(),
+});
+
+// Row shapes shared by the v1 (offset) and v2 (cursor) list pipes of each job
+// type — one object per type so the two generations cannot drift apart.
+export const attemptsSchema = z.int().prefault(1);
+
+const httpListRowShape = {
+  type: z.literal("http").prefault("http"),
+  attempts: attemptsSchema,
+  id: z.string().nullable(),
+  latency: z.int(),
+  statusCode: z.int().nullable(),
+  monitorId: z.string(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  timing: timingPhasesSchema,
+};
+
+const tcpListRowShape = {
+  type: z.literal("tcp").prefault("tcp"),
+  attempts: attemptsSchema,
+  id: z.string().nullable(),
+  latency: z.int(),
+  monitorId: z.coerce.string(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+};
+
+const icmpListRowShape = {
+  type: z.literal("icmp").prefault("icmp"),
+  attempts: attemptsSchema,
+  id: z.string().nullable(),
+  latency: z.int(),
+  latencyMin: z.int().prefault(0),
+  latencyMax: z.int().prefault(0),
+  packetsSent: z.int().prefault(0),
+  packetsReceived: z.int().prefault(0),
+  monitorId: z.coerce.string(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+};
+
+const dnsListRowShape = {
+  type: z.literal("dns").prefault("dns"),
+  attempts: attemptsSchema,
+  id: z.coerce.string().nullable(),
+  uri: z.string(),
+  latency: z.int(),
+  monitorId: z.coerce.string(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  records: z
+    .string()
+    .transform((str) => {
+      try {
+        return JSON.parse(str) as Record<string, unknown>;
+      } catch (error) {
+        console.error(error);
+        return {};
+      }
+    })
+    .pipe(z.record(z.string(), z.array(z.string()))),
+};
+
+const grpcListRowShape = {
+  type: z.literal("grpc").prefault("grpc"),
+  attempts: attemptsSchema,
+  id: z.string().nullable(),
+  latency: z.int(),
+  servingStatus: z.string().nullable(),
+  grpcCode: z.int().nullable(),
+  service: z.string().nullable(),
+  monitorId: z.coerce.string(),
+  requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+  region: z.enum(monitorRegions).or(z.string()),
+  cronTimestamp: z.int(),
+  trigger: z.enum(triggers).nullable().prefault("cron"),
+  timestamp: z.number(),
+  // gRPC is HTTP/2, so the checker writes HTTP's phase shape verbatim.
+  timing: timingPhasesSchema,
+};
+
+// Filters every v2 list and facet pipe accepts; each maps to one `IN` or range
+// predicate evaluated by Tinybird instead of the browser.
+// Bounded here too: these are comma-joined into the pipe request's query string,
+// so the ceiling has to hold at the boundary that builds the URL.
+const responseLogFilterShape = {
+  regions: z.array(z.string().max(64)).max(128).optional(),
+  status: z.array(z.string().max(16)).max(3).optional(),
+  trigger: z.array(z.string().max(16)).max(2).optional(),
+  // `Array(attempts, 'Int16')` in the pipes.
+  attempts: z.array(z.int().min(0).max(32_767)).max(32).optional(),
+  latencyMin: z.int().optional(),
+  latencyMax: z.int().optional(),
+};
+
+const httpResponseLogFilterShape = {
+  ...responseLogFilterShape,
+  // `Array(statusCodes, 'Int16')` in the pipes: out of that range the query
+  // errors instead of matching nothing.
+  statusCodes: z.array(z.int().min(0).max(32_767)).max(100).optional(),
+};
+
+// The service overfetches by the monitor's location count on top of the caller's
+// page size, so this ceiling sits well above the 100-row service maximum.
+const listV2WindowShape = {
+  monitorId: z.string(),
+  fromDate: z.int().optional(),
+  toDate: z.int().optional(),
+  cursor: z.int().optional(),
+  direction: z.enum(["next", "prev"]).prefault("next"),
+  limit: z.int().min(1).max(1000),
+};
+
+const facetWindowShape = {
+  monitorId: z.string(),
+  fromDate: z.int().optional(),
+  toDate: z.int().optional(),
+};
+
+const facetRowShape = {
+  field: z.string(),
+  value: z.string(),
+  count: z.int(),
+};
+
+const grpcMetricsShape = z.object({
+  p50Latency: z.number().nullable().prefault(0),
+  p75Latency: z.number().nullable().prefault(0),
+  p90Latency: z.number().nullable().prefault(0),
+  p95Latency: z.number().nullable().prefault(0),
+  p99Latency: z.number().nullable().prefault(0),
+  count: z.int().prefault(0),
+  success: z.int().prefault(0),
+  degraded: z.int().prefault(0),
+  error: z.int().prefault(0),
+  lastTimestamp: z.int().nullable(),
+});
+
+const grpcMetricsByIntervalParameters = z.object({
+  regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+  interval: z.int().optional(),
+  monitorId: z.string(),
+});
+
+const grpcMetricsByIntervalShape = z.object({
+  region: z.enum(monitorRegions).or(z.string()),
+  timestamp: z.int(),
+  p50Latency: z.number().nullable().prefault(0),
+  p75Latency: z.number().nullable().prefault(0),
+  p90Latency: z.number().nullable().prefault(0),
+  p95Latency: z.number().nullable().prefault(0),
+  p99Latency: z.number().nullable().prefault(0),
+});
+
+const grpcMetricsByRegionParameters = z.object({
+  monitorId: z.string(),
+  regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+});
+
+const grpcMetricsByRegionShape = z.object({
+  region: z.enum(monitorRegions).or(z.string()),
+  count: z.int(),
+  ok: z.int(),
+  p50Latency: z.number().nullable().prefault(0),
+  p75Latency: z.number().nullable().prefault(0),
+  p90Latency: z.number().nullable().prefault(0),
+  p95Latency: z.number().nullable().prefault(0),
+  p99Latency: z.number().nullable().prefault(0),
+});
+
+const grpcMetricsLatencyShape = z.object({
+  timestamp: z.int(),
+  p50Latency: z.int(),
+  p75Latency: z.int(),
+  p90Latency: z.int(),
+  p95Latency: z.int(),
+  p99Latency: z.int(),
+});
+
+const grpcUptimeParameters = z.object({
+  monitorId: z.string(),
+  fromDate: z.string().optional(),
+  toDate: z.string().optional(),
+  regions: z.enum(monitorRegions).or(z.string()).array().optional(),
+  interval: z.int().optional(),
+});
+
+const grpcUptimeShape = z.object({
+  interval: z.coerce.date(),
+  success: z.int(),
+  degraded: z.int(),
+  error: z.int(),
+});
+
+// days back from today, 45 by default in the pipe. The views keep 76 UTC days
+// counting today, and a reader's time zone can shift the window one more.
+const windowDays = z.int().min(1).max(74).optional();
+
+export const status45dParameters = z.object({
+  monitorIds: z.string().array(),
+  days: windowDays,
+});
+
+// omit `timezone` for UTC pages: the pipe then runs its unchanged UTC query
+export const runs45dParameters = z.object({
+  monitorIds: z.string().array(),
+  days: windowDays,
+  timezone: z
+    .string()
+    .refine(isValidTimeZone, "timezone must be an IANA zone name")
+    .optional(),
+});
+
+// Each run is judged against the cloud regions that reported in it.
+export const runs45dShape = z.object({
+  day: z.string().transform((val) => new Date(`${val} GMT`).toISOString()),
+  monitorId: z.string(),
+  count: z.number().prefault(0),
+  ok: z.number().prefault(0),
+  degraded: z.number().prefault(0),
+  error: z.number().prefault(0),
+});
+
+export const bad15mParameters = z.object({
+  monitorIds: z.string().array(),
+  fromDate: z.int(), // epoch ms, inclusive
+  toDate: z.int(), // epoch ms, exclusive
+});
+
+const bad15mFields = {
+  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  bucket: z.int().min(0).max(95),
+  degradedCount: z.number(),
+  errorCount: z.number(),
+};
+
+function renameBadCounts<
+  T extends { degradedCount: number; errorCount: number },
+>({ degradedCount, errorCount, ...row }: T) {
+  return { ...row, degraded: degradedCount, error: errorCount };
+}
+
+/**
+ * One failing UTC quarter-hour (bucket 0..95) of a day. `monitorId` is Int32 in
+ * the non-http status views, so those getters pass `z.coerce.string()`.
+ */
+export function bad15mShape(monitorId: z.ZodType<string>) {
+  return z.object({ monitorId, ...bad15mFields }).transform(renameBadCounts);
+}
+
+export const backfillBad15mParameters = z.object({
+  month: frozenMonitorUptimeMonthSchema,
+  monitorIds: z.string().array(),
+});
+
+/** A failing quarter-hour copied from raw data for a month frozen without ranges. */
+export const backfillBad15mShape = z
+  .object({
+    monitorId: z.string(),
+    measure: z.enum(["requests", "runs"]),
+    ...bad15mFields,
+  })
+  .transform(renameBadCounts);
+
+export const TINYBIRD_DEFAULT_URL = "https://api.tinybird.co";
+
+/**
+ * A `TINYBIRD_NOOP` env value. Apps hand this over in two shapes: a real
+ * boolean where the env schema validated it, a raw string where the schema ran
+ * with `skipValidation` — and the string `"false"` is truthy, so it can never
+ * be tested directly. Anything unset or unrecognised means disabled.
+ */
+export const noopFlagSchema = z.stringbool().or(z.boolean()).catch(false);
+
+/** Test runs and the `TINYBIRD_NOOP` flag resolve every pipe to empty. */
+export function isTinybirdNoop(noop: OSTinybirdConfig["noop"]): boolean {
+  return env.NODE_ENV === "test" || noopFlagSchema.parse(noop);
+}
+
+export const heartbeatPingShape = z.object({
+  id: z.string(),
+  timestamp: z.int(),
+  monitorId: z.coerce.string(),
+  ip: z.string().nullable(),
+  method: z.string(),
+  userAgent: z.string().nullable(),
+  headers: z.string().nullable(),
+  body: z.string().nullable(),
+  bodyTruncated: z.int(),
+  kind: z.enum(["success", "fail"]).prefault("success"),
+});
+export type HeartbeatPing = z.infer<typeof heartbeatPingShape>;
+
+const heartbeatPingEvent = heartbeatPingShape.extend({
+  monitorId: z.int(),
+  workspaceId: z.int(),
+});
+export type HeartbeatPingEvent = z.input<typeof heartbeatPingEvent>;
+
+export type OSTinybirdConfig = {
+  token: string;
+  /** Instance to query. Callers pass their app's validated env value. */
+  baseUrl?: string;
+  /** Resolve every pipe and ingest to empty — tests and offline dev. */
+  noop?: boolean | string;
+};
+
 export class OSTinybird {
   private readonly tb: Client;
 
-  constructor(token: string) {
-    const tinybirdUrl = process.env.TINYBIRD_URL;
-    // Empty token → noop unconditionally; pipes resolve empty rather than
-    // failing authn. Dev/test without a TINYBIRD_URL also gets a noop.
-    if (
-      !token ||
-      ((process.env.NODE_ENV === "development" ||
-        process.env.NODE_ENV === "test") &&
-        !tinybirdUrl)
-    ) {
+  constructor(config: OSTinybirdConfig) {
+    // Tests must never reach a real instance whatever token sits in the env —
+    // checked here so no call site can forget it.
+    const noop = isTinybirdNoop(config.noop);
+    // An empty token cannot authenticate, so noop keeps pipes resolving empty
+    // instead of throwing at every call site.
+    if (noop || !config.token) {
+      if (!noop) {
+        console.warn(
+          "[tinybird] no token configured — every pipe will return empty data",
+        );
+      }
       this.tb = new NoopTinybird();
     } else {
-      this.tb = new Client({
-        token,
-        baseUrl: tinybirdUrl || "https://api.tinybird.co",
-      });
+      this.tb = withStatusErrors(
+        new Client({
+          token: config.token,
+          baseUrl: config.baseUrl || TINYBIRD_DEFAULT_URL,
+        }),
+      );
     }
   }
 
@@ -89,19 +534,7 @@ export class OSTinybird {
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
       }),
-      data: z.object({
-        type: z.literal("http").prefault("http"),
-        id: z.string().nullable(),
-        latency: z.int(),
-        statusCode: z.int().nullable(),
-        monitorId: z.string(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        timing: timingPhasesSchema,
-      }),
+      data: z.object(httpListRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -136,19 +569,7 @@ export class OSTinybird {
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
       }),
-      data: z.object({
-        type: z.literal("http").prefault("http"),
-        id: z.string().nullable(),
-        latency: z.int(),
-        statusCode: z.int().nullable(),
-        monitorId: z.string(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        timing: timingPhasesSchema,
-      }),
+      data: z.object(httpListRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -185,19 +606,55 @@ export class OSTinybird {
         limit: z.int().optional(),
         offset: z.int().optional(),
       }),
-      data: z.object({
-        type: z.literal("http").prefault("http"),
-        id: z.string().nullable(),
-        latency: z.int(),
-        statusCode: z.int().nullable(),
-        monitorId: z.string(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        timing: timingPhasesSchema,
+      data: z.object(httpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpListV2Daily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_list_1d__v2",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...httpResponseLogFilterShape,
       }),
+      data: z.object(httpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpListV2Weekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_list_7d__v2",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...httpResponseLogFilterShape,
+      }),
+      data: z.object(httpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpListV2Biweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_list_14d__v2",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...httpResponseLogFilterShape,
+      }),
+      data: z.object(httpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpListFacets() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_list_facets_14d__v0",
+      parameters: z.object({
+        ...facetWindowShape,
+        ...httpResponseLogFilterShape,
+      }),
+      data: z.object(facetRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -504,12 +961,56 @@ export class OSTinybird {
     });
   }
 
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get httpStatus15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get frozenBad15mBackfill() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__frozen_bad_15m_backfill__v0",
+      parameters: backfillBad15mParameters,
+      data: backfillBad15mShape,
+      opts: { cache: "no-store" },
+    });
+  }
+
+  public get httpRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get httpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__http_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get httpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_status_45d__v1",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
@@ -534,6 +1035,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("http").prefault("http"),
+        attempts: attemptsSchema,
         latency: z.int(),
         statusCode: z.int().nullable(),
         requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
@@ -645,17 +1147,7 @@ export class OSTinybird {
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
       }),
-      data: z.object({
-        type: z.literal("tcp").prefault("tcp"),
-        id: z.string().nullable(),
-        latency: z.int(),
-        monitorId: z.coerce.string(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-      }),
+      data: z.object(tcpListRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -689,17 +1181,7 @@ export class OSTinybird {
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
       }),
-      data: z.object({
-        type: z.literal("tcp").prefault("tcp"),
-        id: z.string().nullable(),
-        latency: z.int(),
-        monitorId: z.coerce.string(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-      }),
+      data: z.object(tcpListRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -733,17 +1215,55 @@ export class OSTinybird {
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
       }),
-      data: z.object({
-        type: z.literal("tcp").prefault("tcp"),
-        id: z.string().nullable(),
-        latency: z.int(),
-        monitorId: z.coerce.string(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
+      data: z.object(tcpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpListV2Daily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_1d__v2",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
       }),
+      data: z.object(tcpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpListV2Weekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_7d__v2",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(tcpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpListV2Biweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_14d__v2",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(tcpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpListFacets() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_list_facets_14d__v0",
+      parameters: z.object({
+        ...facetWindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(facetRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1053,13 +1573,47 @@ export class OSTinybird {
     });
   }
 
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get tcpStatus15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get tcpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__tcp_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get tcpStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__tcp_status_45d__v1",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-        days: z.int().max(45).optional(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
@@ -1072,6 +1626,58 @@ export class OSTinybird {
         monitorId: z.coerce.string(),
       }),
       opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get heartbeatStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__heartbeat_status_45d__v0",
+      parameters: status45dParameters,
+      data: z.object({
+        day: z
+          .string()
+          .transform((val) => new Date(`${val} GMT`).toISOString()),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  /** Pings regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get heartbeatStatus15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__heartbeat_status_tz__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get heartbeatList() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__heartbeat_list__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+        kinds: z.enum(["success", "fail"]).array().optional(),
+        cursor: z.int().optional(),
+        direction: z.enum(["next", "prev"]).optional(),
+        limit: z.int().min(1).max(100),
+      }),
+      data: heartbeatPingShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get publishHeartbeatPing() {
+    return this.tb.buildIngestEndpoint({
+      datasource: "heartbeat_ping__v0",
+      event: heartbeatPingEvent,
     });
   }
 
@@ -1116,6 +1722,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("tcp").prefault("tcp"),
+        attempts: attemptsSchema,
         id: z.string().nullable(),
         uri: z.string(),
         latency: z.int(),
@@ -1153,6 +1760,1017 @@ export class OSTinybird {
         workspaceId: z.string(),
       }),
       // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpListDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_list_1d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+      }),
+      data: z.object(icmpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpListWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_list_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+      }),
+      data: z.object(icmpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpListBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_list_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+      }),
+      data: z.object(icmpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpListV2Daily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_list_1d__v1",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(icmpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpListV2Weekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_list_7d__v1",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(icmpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpListV2Biweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_list_14d__v1",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(icmpListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpListFacets() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_list_facets_14d__v0",
+      parameters: z.object({
+        ...facetWindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(facetRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpGetBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_get_14d__v0",
+      parameters: z.object({
+        id: z.string().nullable(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("icmp").prefault("icmp"),
+        attempts: attemptsSchema,
+        id: z.string().nullable(),
+        uri: z.string(),
+        latency: z.int(),
+        latencyMin: z.int().prefault(0),
+        latencyMax: z.int().prefault(0),
+        packetsSent: z.int().prefault(0),
+        packetsReceived: z.int().prefault(0),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_1d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: icmpMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_7d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: icmpMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_14d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: icmpMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetrics30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_30d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: icmpMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetrics90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_90d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: icmpMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByIntervalDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_interval_1d__v0",
+      parameters: icmpMetricsByIntervalParameters,
+      data: icmpMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByIntervalWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_interval_7d__v0",
+      parameters: icmpMetricsByIntervalParameters,
+      data: icmpMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByIntervalBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_interval_14d__v0",
+      parameters: icmpMetricsByIntervalParameters,
+      data: icmpMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByInterval30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_interval_30d__v0",
+      parameters: icmpMetricsByIntervalParameters,
+      data: icmpMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByInterval90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_interval_90d__v0",
+      parameters: icmpMetricsByIntervalParameters,
+      data: icmpMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsLatency1d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_latency_1d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: icmpMetricsLatencyShape,
+    });
+  }
+
+  public get icmpMetricsLatency7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_latency_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: icmpMetricsLatencyShape,
+    });
+  }
+
+  public get icmpMetricsLatency30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_latency_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: icmpMetricsLatencyShape,
+    });
+  }
+
+  public get icmpMetricsLatency90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_latency_90d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: icmpMetricsLatencyShape,
+    });
+  }
+
+  public get icmpMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_latency_1d_multi__v0",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        monitorId: z.coerce.string(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get icmpStatus15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_status_45d__v0",
+      parameters: status45dParameters,
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpUptimeWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_uptime_7d__v0",
+      parameters: icmpUptimeParameters,
+      data: icmpUptimeShape,
+    });
+  }
+
+  public get icmpUptime30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_uptime_30d__v0",
+      parameters: icmpUptimeParameters,
+      data: icmpUptimeShape,
+    });
+  }
+
+  public get icmpUptime90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_uptime_90d__v0",
+      parameters: icmpUptimeParameters,
+      data: icmpUptimeShape,
+    });
+  }
+
+  public get icmpGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.int(),
+        maxLatency: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+        lastTimestamp: z.int(),
+        count: z.int(),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpWorkspace30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_workspace_30d__v0",
+      parameters: z.object({
+        workspaceId: z.string(),
+      }),
+      data: z.object({
+        day: z
+          .string()
+          .transform((val) => new Date(`${val} GMT`).toISOString()),
+        count: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpGetMonthly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_get_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        region: z.enum(monitorRegions).or(z.string()).optional(),
+        cronTimestamp: z.int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("icmp").prefault("icmp"),
+        id: z.string().nullable(),
+        uri: z.string(),
+        latency: z.int(),
+        latencyMin: z.int().prefault(0),
+        latencyMax: z.int().prefault(0),
+        packetsSent: z.int().prefault(0),
+        packetsReceived: z.int().prefault(0),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
+        workspaceId: z.coerce.string(),
+      }),
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpStatusWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_status_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByRegionDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_region_1d__v0",
+      parameters: icmpMetricsByRegionParameters,
+      data: icmpMetricsByRegionShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByRegionWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_region_7d__v0",
+      parameters: icmpMetricsByRegionParameters,
+      data: icmpMetricsByRegionShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get icmpMetricsByRegionBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__icmp_metrics_by_region_14d__v0",
+      parameters: icmpMetricsByRegionParameters,
+      data: icmpMetricsByRegionShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcListDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_list_1d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("grpc").prefault("grpc"),
+        id: z.string().nullable(),
+        latency: z.int(),
+        servingStatus: z.string().nullable(),
+        grpcCode: z.int().nullable(),
+        service: z.string().nullable(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcListWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_list_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("grpc").prefault("grpc"),
+        id: z.string().nullable(),
+        latency: z.int(),
+        servingStatus: z.string().nullable(),
+        grpcCode: z.int().nullable(),
+        service: z.string().nullable(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcListBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_list_14d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        fromDate: z.int().optional(),
+        toDate: z.int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("grpc").prefault("grpc"),
+        id: z.string().nullable(),
+        latency: z.int(),
+        servingStatus: z.string().nullable(),
+        grpcCode: z.int().nullable(),
+        service: z.string().nullable(),
+        monitorId: z.coerce.string(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcGetBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_get_14d__v0",
+      parameters: z.object({
+        id: z.string().nullable(),
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        type: z.literal("grpc").prefault("grpc"),
+        attempts: attemptsSchema,
+        id: z.string().nullable(),
+        uri: z.string(),
+        latency: z.int(),
+        servingStatus: z.string().nullable(),
+        grpcCode: z.int().nullable(),
+        service: z.string().nullable(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcListV2Biweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_list_14d__v1",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(grpcListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcListFacets() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_list_facets_14d__v0",
+      parameters: z.object({
+        ...facetWindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(facetRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_1d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: grpcMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_7d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: grpcMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_14d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: grpcMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetrics30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_30d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: grpcMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetrics90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_90d__v0",
+      parameters: z.object({
+        interval: z.int().optional(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        monitorId: z.string(),
+      }),
+      data: grpcMetricsShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByIntervalDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_interval_1d__v0",
+      parameters: grpcMetricsByIntervalParameters,
+      data: grpcMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByIntervalWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_interval_7d__v0",
+      parameters: grpcMetricsByIntervalParameters,
+      data: grpcMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByIntervalBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_interval_14d__v0",
+      parameters: grpcMetricsByIntervalParameters,
+      data: grpcMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByInterval30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_interval_30d__v0",
+      parameters: grpcMetricsByIntervalParameters,
+      data: grpcMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByInterval90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_interval_90d__v0",
+      parameters: grpcMetricsByIntervalParameters,
+      data: grpcMetricsByIntervalShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsLatency1d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_latency_1d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: grpcMetricsLatencyShape,
+    });
+  }
+
+  public get grpcMetricsLatency7d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_latency_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: grpcMetricsLatencyShape,
+    });
+  }
+
+  public get grpcMetricsLatency30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_latency_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: grpcMetricsLatencyShape,
+    });
+  }
+
+  public get grpcMetricsLatency90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_latency_90d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: grpcMetricsLatencyShape,
+    });
+  }
+
+  public get grpcMetricsLatency1dMulti() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_latency_1d_multi__v0",
+      parameters: z.object({
+        monitorIds: z.string().array().min(1),
+        fromDate: z.string().optional(),
+        toDate: z.string().optional(),
+      }),
+      data: z.object({
+        timestamp: z.int(),
+        monitorId: z.coerce.string(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get grpcStatus15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcStatus45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_status_45d__v0",
+      parameters: status45dParameters,
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+        degraded: z.number().prefault(0),
+        error: z.number().prefault(0),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcUptimeWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_uptime_7d__v0",
+      parameters: grpcUptimeParameters,
+      data: grpcUptimeShape,
+    });
+  }
+
+  public get grpcUptime30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_uptime_30d__v0",
+      parameters: grpcUptimeParameters,
+      data: grpcUptimeShape,
+    });
+  }
+
+  public get grpcUptime90d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_uptime_90d__v0",
+      parameters: grpcUptimeParameters,
+      data: grpcUptimeShape,
+    });
+  }
+
+  public get grpcGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.int(),
+        maxLatency: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+        lastTimestamp: z.int(),
+        count: z.int(),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcWorkspace30d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_workspace_30d__v0",
+      parameters: z.object({
+        workspaceId: z.string(),
+      }),
+      data: z.object({
+        day: z
+          .string()
+          .transform((val) => new Date(`${val} GMT`).toISOString()),
+        count: z.int(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcGetMonthly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_get_30d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+        region: z.enum(monitorRegions).or(z.string()).optional(),
+        cronTimestamp: z.int().optional(),
+      }),
+      data: z.object({
+        type: z.literal("grpc").prefault("grpc"),
+        id: z.string().nullable(),
+        uri: z.string(),
+        latency: z.int(),
+        servingStatus: z.string().nullable(),
+        grpcCode: z.int().nullable(),
+        service: z.string().nullable(),
+        monitorId: z.coerce.string(),
+        error: z.coerce.boolean(),
+        region: z.enum(monitorRegions).or(z.string()),
+        cronTimestamp: z.int(),
+        trigger: z.enum(triggers).nullable().prefault("cron"),
+        timestamp: z.number(),
+        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
+        errorMessage: z.string().nullable(),
+        workspaceId: z.coerce.string(),
+      }),
+      // REMINDER: cache the result for accessing the data for a check as it won't change
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcStatusWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_status_7d__v0",
+      parameters: z.object({
+        monitorId: z.string(),
+      }),
+      data: z.object({
+        day: z.string().transform((val) => {
+          // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)
+          return new Date(`${val} GMT`).toISOString();
+        }),
+        count: z.number().prefault(0),
+        ok: z.number().prefault(0),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByRegionDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_region_1d__v0",
+      parameters: grpcMetricsByRegionParameters,
+      data: grpcMetricsByRegionShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByRegionWeekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_region_7d__v0",
+      parameters: grpcMetricsByRegionParameters,
+      data: grpcMetricsByRegionShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get grpcMetricsByRegionBiweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__grpc_metrics_by_region_14d__v0",
+      parameters: grpcMetricsByRegionParameters,
+      data: grpcMetricsByRegionShape,
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1369,6 +2987,28 @@ export class OSTinybird {
     });
   }
 
+  public get dnsGlobalMetricsDaily() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_metrics_global_1d__v0",
+      parameters: z.object({
+        monitorIds: z.string().array(),
+      }),
+      data: z.object({
+        minLatency: z.int(),
+        maxLatency: z.int(),
+        p50Latency: z.int(),
+        p75Latency: z.int(),
+        p90Latency: z.int(),
+        p95Latency: z.int(),
+        p99Latency: z.int(),
+        lastTimestamp: z.int(),
+        count: z.int(),
+        monitorId: z.coerce.string(),
+      }),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get httpTimingPhases14d() {
     return this.tb.buildPipe({
       pipe: "endpoint__http_timing_phases_14d__v1",
@@ -1413,6 +3053,8 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_latency_1d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1432,6 +3074,8 @@ export class OSTinybird {
       pipe: "endpoint__http_metrics_latency_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1473,6 +3117,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1492,6 +3137,8 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_7d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -1536,6 +3183,7 @@ export class OSTinybird {
       }),
       data: z.object({
         type: z.literal("dns").prefault("dns"),
+        attempts: attemptsSchema,
         id: z.coerce.string().nullable(),
         uri: z.string(),
         latency: z.int(),
@@ -1573,29 +3221,31 @@ export class OSTinybird {
         fromDate: z.int().optional(),
         toDate: z.int().optional(),
       }),
-      data: z.object({
-        type: z.literal("dns").prefault("dns"),
-        id: z.coerce.string().nullable(),
-        uri: z.string(),
-        latency: z.int(),
-        monitorId: z.coerce.string(),
-        requestStatus: z.enum(["error", "success", "degraded"]).nullable(),
-        region: z.enum(monitorRegions).or(z.string()),
-        cronTimestamp: z.int(),
-        trigger: z.enum(triggers).nullable().prefault("cron"),
-        timestamp: z.number(),
-        records: z
-          .string()
-          .transform((str) => {
-            try {
-              return JSON.parse(str) as Record<string, unknown>;
-            } catch (error) {
-              console.error(error);
-              return {};
-            }
-          })
-          .pipe(z.record(z.string(), z.array(z.string()))),
+      data: z.object(dnsListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsListV2Biweekly() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_list_14d__v1",
+      parameters: z.object({
+        ...listV2WindowShape,
+        ...responseLogFilterShape,
       }),
+      data: z.object(dnsListRowShape),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsListFacets() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_list_facets_14d__v0",
+      parameters: z.object({
+        ...facetWindowShape,
+        ...responseLogFilterShape,
+      }),
+      data: z.object(facetRowShape),
       opts: { next: { revalidate: REVALIDATE } },
     });
   }
@@ -1696,6 +3346,8 @@ export class OSTinybird {
       pipe: "endpoint__dns_metrics_latency_7d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2071,6 +3723,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2091,6 +3744,7 @@ export class OSTinybird {
       parameters: z.object({
         monitorId: z.string(),
         regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2110,6 +3764,8 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_30d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2129,6 +3785,8 @@ export class OSTinybird {
       pipe: "endpoint__tcp_metrics_latency_90d__v1",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2148,6 +3806,8 @@ export class OSTinybird {
       pipe: "endpoint__dns_metrics_latency_30d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2167,6 +3827,8 @@ export class OSTinybird {
       pipe: "endpoint__dns_metrics_latency_90d__v0",
       parameters: z.object({
         monitorId: z.string(),
+        regions: z.array(z.enum(monitorRegions).or(z.string())).optional(),
+        interval: z.int().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
       }),
@@ -2259,12 +3921,47 @@ export class OSTinybird {
     });
   }
 
+  /** 15m buckets regrouped into days of `timezone`; see {@link status15mShape}. */
+  public get dnsStatus15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_status_15m__v0",
+      parameters: status15mParameters,
+      data: status15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsStatusBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_status_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.coerce.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsRunsBad15m() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_runs_bad_15m__v0",
+      parameters: bad15mParameters,
+      data: bad15mShape(z.string()),
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
+  public get dnsRuns45d() {
+    return this.tb.buildPipe({
+      pipe: "endpoint__dns_runs_45d__v0",
+      parameters: runs45dParameters,
+      data: runs45dShape,
+      opts: { next: { revalidate: REVALIDATE } },
+    });
+  }
+
   public get dnsStatus45d() {
     return this.tb.buildPipe({
       pipe: "endpoint__dns_status_45d__v0",
-      parameters: z.object({
-        monitorIds: z.string().array(),
-      }),
+      parameters: status45dParameters,
       data: z.object({
         day: z.string().transform((val) => {
           // That's a hack because clickhouse return the date in UTC but in shitty format (2021-09-01 00:00:00)

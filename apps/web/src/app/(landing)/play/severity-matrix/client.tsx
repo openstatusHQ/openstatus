@@ -209,7 +209,7 @@ export function SeverityMatrixBuilder() {
       {/* Calculator */}
       <div className="space-y-4">
         {/* Result */}
-        <div className={`space-y-3 border-2 p-4 ${SEVERITY_BORDER[severity]}`}>
+        <div className={`space-y-3 border-2 p-3 ${SEVERITY_BORDER[severity]}`}>
           <div className="space-y-1">
             <p className="mt-0! font-mono text-2xl font-medium">
               {meta.emoji} {severity} – {meta.label}
@@ -371,9 +371,9 @@ export function SeverityMatrixBuilder() {
                     thresholdCritical: Number(e.target.value),
                   }))
                 }
-                className="h-auto! rounded-none p-4 pr-8 text-base md:text-base"
+                className="h-auto! rounded-none px-3 py-2 pr-8 text-base md:text-base"
               />
-              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
                 %
               </span>
             </div>
@@ -399,9 +399,9 @@ export function SeverityMatrixBuilder() {
                     thresholdHigh: Number(e.target.value),
                   }))
                 }
-                className="h-auto! rounded-none p-4 pr-8 text-base md:text-base"
+                className="h-auto! rounded-none px-3 py-2 pr-8 text-base md:text-base"
               />
-              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
                 %
               </span>
             </div>
@@ -427,9 +427,9 @@ export function SeverityMatrixBuilder() {
                     thresholdMedium: Number(e.target.value),
                   }))
                 }
-                className="h-auto! rounded-none p-4 pr-8 text-base md:text-base"
+                className="h-auto! rounded-none px-3 py-2 pr-8 text-base md:text-base"
               />
-              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-4 -translate-y-1/2">
+              <span className="text-muted-foreground pointer-events-none absolute top-1/2 right-3 -translate-y-1/2">
                 %
               </span>
             </div>

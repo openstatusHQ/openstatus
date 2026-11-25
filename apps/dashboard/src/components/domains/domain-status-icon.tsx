@@ -1,7 +1,7 @@
 "use client";
 
 import type { DomainVerificationStatusProps } from "@openstatus/api/src/router/domain";
-import { AlertTriangle, Check, LoaderCircle, X } from "lucide-react";
+import { Warning, Check, Loading, Close } from "@openstatus/icons";
 
 export function DomainStatusIcon({
   status,
@@ -11,7 +11,7 @@ export function DomainStatusIcon({
   loading?: boolean;
 }) {
   return loading ? (
-    <LoaderCircle
+    <Loading
       className="text-muted-foreground size-6 animate-spin"
       stroke="currentColor"
     />
@@ -19,13 +19,14 @@ export function DomainStatusIcon({
     <div className="bg-success flex size-6 items-center justify-center rounded-full">
       <Check className="text-background size-3" />
     </div>
-  ) : status === "Pending Verification" ? (
+  ) : status === "Pending Verification" ||
+    status === "Generating SSL Certificate" ? (
     <div className="bg-warning flex size-6 items-center justify-center rounded-full">
-      <AlertTriangle className="text-background size-3" />
+      <Warning className="text-background size-3" />
     </div>
   ) : (
     <div className="bg-destructive flex size-6 items-center justify-center rounded-full">
-      <X className="text-background size-3" />
+      <Close className="text-background size-3" />
     </div>
   );
 }

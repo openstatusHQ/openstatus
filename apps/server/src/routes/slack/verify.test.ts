@@ -1,13 +1,15 @@
 import crypto from "node:crypto";
 
-import { expect } from "@std/expect";
-import { describe, test } from "@std/testing/bdd";
 import { Hono } from "hono";
+import { describe, expect, test } from "vitest";
 
+import {
+  TEST_SIGNING_SECRET as SIGNING_SECRET,
+  withSlackConfig,
+} from "@/libs/test/slack-config";
+
+import type { SlackEnv } from "./config";
 import { verifySlackSignature } from "./verify";
-
-const SIGNING_SECRET = "test-signing-secret";
-process.env.SLACK_SIGNING_SECRET = SIGNING_SECRET;
 
 function signRequest(body: string, timestamp: number): string {
   const basestring = `v0:${timestamp}:${body}`;
@@ -19,7 +21,7 @@ function signRequest(body: string, timestamp: number): string {
 }
 
 function createTestApp() {
-  const app = new Hono<{ Variables: { slackBody: unknown } }>();
+  const app = withSlackConfig(new Hono<SlackEnv>());
   app.post("/test", verifySlackSignature, (c) => {
     return c.json({ body: c.get("slackBody") });
   });

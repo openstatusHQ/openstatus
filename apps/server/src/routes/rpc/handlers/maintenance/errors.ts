@@ -6,6 +6,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 export const ErrorReason = {
   MAINTENANCE_NOT_FOUND: "MAINTENANCE_NOT_FOUND",
   MAINTENANCE_ID_REQUIRED: "MAINTENANCE_ID_REQUIRED",
+  MAINTENANCE_UPDATE_ID_REQUIRED: "MAINTENANCE_UPDATE_ID_REQUIRED",
   MAINTENANCE_CREATE_FAILED: "MAINTENANCE_CREATE_FAILED",
   MAINTENANCE_UPDATE_FAILED: "MAINTENANCE_UPDATE_FAILED",
   INVALID_DATE_FORMAT: "INVALID_DATE_FORMAT",
@@ -59,6 +60,17 @@ export function maintenanceIdRequiredError(): ConnectError {
     "Maintenance ID is required",
     Code.InvalidArgument,
     ErrorReason.MAINTENANCE_ID_REQUIRED,
+  );
+}
+
+/**
+ * Creates a "maintenance update ID required" error.
+ */
+export function maintenanceUpdateIdRequiredError(): ConnectError {
+  return createError(
+    "Maintenance update ID is required",
+    Code.InvalidArgument,
+    ErrorReason.MAINTENANCE_UPDATE_ID_REQUIRED,
   );
 }
 

@@ -1,6 +1,6 @@
+import { Info } from "@openstatus/icons";
 import type { ThemeKey } from "@openstatus/theme-store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 
 import { Link } from "@/components/common/link";
@@ -10,11 +10,13 @@ import { useTRPC } from "@/lib/trpc/client";
 
 import { FormAppearance } from "./form-appearance";
 import { FormCustomDomain } from "./form-custom-domain";
+import { FormCustomTheme } from "./form-custom-theme";
 import { FormDangerZone } from "./form-danger-zone";
 import { FormGeneral } from "./form-general";
 import { FormLinks } from "./form-links";
 import { FormLocale } from "./form-locale";
 import { FormPageAccess } from "./form-page-access";
+import { FormTimezone } from "./form-timezone";
 
 export function FormStatusPageUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -60,15 +62,19 @@ export function FormStatusPageUpdate() {
     trpc.page.delete.mutationOptions({
       onSuccess: () => {
         router.push("/status-pages");
-        // NOTE: invalidate workspace to update the usage
         queryClient.invalidateQueries({
-          queryKey: trpc.workspace.get.queryKey(),
+          queryKey: trpc.workspace.usage.queryKey(),
         });
-        // NOTE: invalidate status page list to update the usage
         queryClient.invalidateQueries({
           queryKey: trpc.page.list.queryKey(),
         });
       },
+    }),
+  );
+
+  const updateCustomThemeMutation = useMutation(
+    trpc.page.updateCustomTheme.mutationOptions({
+      onSuccess: () => refetch(),
     }),
   );
 
@@ -80,6 +86,12 @@ export function FormStatusPageUpdate() {
 
   const updateLocalesMutation = useMutation(
     trpc.page.updateLocales.mutationOptions({
+      onSuccess: () => refetch(),
+    }),
+  );
+
+  const updateTimezoneMutation = useMutation(
+    trpc.page.updateTimezone.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -159,6 +171,17 @@ export function FormStatusPageUpdate() {
           });
         }}
       />
+      <FormCustomTheme
+        locked={workspace.limits["custom-theme"] === false}
+        themeKey={statusPage.configuration?.theme ?? "default"}
+        defaultValue={statusPage.customTheme}
+        onSubmit={async (values) => {
+          await updateCustomThemeMutation.mutateAsync({
+            id: Number.parseInt(id),
+            customTheme: values.customTheme,
+          });
+        }}
+      />
       <FormLocale
         locked={workspace.limits.i18n === false}
         defaultValues={{
@@ -170,6 +193,16 @@ export function FormStatusPageUpdate() {
             id: Number.parseInt(id),
             defaultLocale: values.defaultLocale,
             locales: values.locales,
+          });
+        }}
+      />
+      <FormTimezone
+        locked={workspace.limits.timezone === false}
+        defaultValues={{ defaultTimezone: statusPage.defaultTimezone }}
+        onSubmit={async (values) => {
+          await updateTimezoneMutation.mutateAsync({
+            id: Number.parseInt(id),
+            defaultTimezone: values.defaultTimezone,
           });
         }}
       />

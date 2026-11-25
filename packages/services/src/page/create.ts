@@ -1,4 +1,5 @@
 import {
+  NEW_PAGE_CONFIGURATION_VALUE,
   page,
   pageComponent,
   selectPageSchema,
@@ -7,27 +8,50 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { LimitExceededError } from "../errors";
+import { assertWithinLimit } from "../limits";
 import type { Page } from "../types";
 import {
   assertAccessTypeAllowed,
+  assertCustomDomainAvailable,
   assertSlugAvailable,
-  assertStatusPageQuota,
   validateMonitorIdsActive,
 } from "./internal";
 import { CreatePageInput, NewPageInput } from "./schemas";
 
-/** Full create — mirrors legacy `pageRouter.create` (insertPageSchema input). */
 export async function createPage(args: {
   ctx: ServiceContext;
   input: CreatePageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = CreatePageInput.parse(args.input);
 
+  if (input.customDomain && !ctx.workspace.limits["custom-domain"]) {
+    throw new LimitExceededError("custom-domain", 0);
+  }
+  if (input.customTheme && !ctx.workspace.limits["custom-theme"]) {
+    throw new LimitExceededError("custom-theme", 0);
+  }
+  if (
+    !ctx.workspace.limits.i18n &&
+    (input.defaultLocale !== "en" ||
+      input.locales?.some((locale) => locale !== "en"))
+  ) {
+    throw new LimitExceededError("i18n", 0);
+  }
+  if (!ctx.workspace.limits.timezone && input.defaultTimezone !== "UTC") {
+    throw new LimitExceededError("timezone", 0);
+  }
+
   return withTransaction(ctx, async (tx) => {
-    await assertStatusPageQuota(tx, ctx.workspace);
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "status-pages",
+    });
     await assertSlugAvailable({ tx, slug: input.slug });
+    await assertCustomDomainAvailable({ tx, customDomain: input.customDomain });
     assertAccessTypeAllowed(ctx.workspace, {
       accessType: input.accessType ?? "public",
       passwordProtected: input.passwordProtected ?? null,
@@ -43,6 +67,11 @@ export async function createPage(args: {
       ...pageProps
     } = input;
     const monitorIds = monitors?.map((m) => m.monitorId) ?? [];
+    // the column's zod type is any json; only an object carries settings
+    const stored =
+      typeof configuration === "object" && !Array.isArray(configuration)
+        ? configuration
+        : null;
 
     const row = await tx
       .insert(page)
@@ -52,7 +81,10 @@ export async function createPage(args: {
         // column — drizzle serialises objects automatically. Calling
         // `JSON.stringify` first would double-encode and persist a raw
         // JSON string, breaking downstream reads that expect an object.
-        configuration,
+        configuration: {
+          ...stored,
+          value: stored?.value ?? NEW_PAGE_CONFIGURATION_VALUE,
+        },
         ...pageProps,
         authEmailDomains: pageProps.authEmailDomains?.join(","),
         allowedIpRanges: pageProps.allowedIpRanges?.join(","),
@@ -84,6 +116,12 @@ export async function createPage(args: {
         })
         .filter((v): v is NonNullable<typeof v> => v !== null);
       if (pageComponentValues.length > 0) {
+        await assertWithinLimit({
+          tx,
+          workspaceId: ctx.workspace.id,
+          limit: "page-components",
+          delta: pageComponentValues.length,
+        });
         await tx.insert(pageComponent).values(pageComponentValues).run();
       }
     }
@@ -111,16 +149,20 @@ export async function newPage(args: {
   input: NewPageInput;
 }): Promise<Page> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "pages:write");
   const input = NewPageInput.parse(args.input);
 
   return withTransaction(ctx, async (tx) => {
-    await assertStatusPageQuota(tx, ctx.workspace);
+    await assertWithinLimit({
+      tx,
+      workspaceId: ctx.workspace.id,
+      limit: "status-pages",
+    });
     await assertSlugAvailable({ tx, slug: input.slug });
 
     const defaultConfiguration = {
       type: "absolute",
-      value: "requests",
+      value: NEW_PAGE_CONFIGURATION_VALUE,
       uptime: true,
       theme: "default-rounded",
     };

@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Lock } from "@openstatus/icons";
 import { type Locale, localeDetails, locales } from "@openstatus/locales";
 import { Button } from "@openstatus/ui/components/ui/button";
 import { Checkbox } from "@openstatus/ui/components/ui/checkbox";
@@ -19,7 +20,7 @@ import {
   SelectValue,
 } from "@openstatus/ui/components/ui/select";
 import { isTRPCClientError } from "@trpc/client";
-import { Lock } from "lucide-react";
+import NextLink from "next/link";
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -137,7 +138,7 @@ export function FormLocale({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)}>
-        <FormCard>
+        <FormCard id="locales">
           {locked ? <FormCardUpgrade /> : null}
           <FormCardHeader>
             <FormCardTitle>Locales</FormCardTitle>
@@ -146,12 +147,12 @@ export function FormLocale({
             </FormCardDescription>
           </FormCardHeader>
           <FormCardSeparator />
-          <FormCardContent className="grid gap-4">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="defaultLocale"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Default Locale</FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -177,7 +178,7 @@ export function FormLocale({
                 </FormItem>
               )}
             />
-            <div className="space-y-3">
+            <div className="col-span-full space-y-3">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="multi-locale"
@@ -229,11 +230,16 @@ export function FormLocale({
               .
             </FormCardFooterInfo>
             {locked ? (
-              <Button type="button" asChild>
-                <Link href="/settings/billing">
+              <Button
+                data-track="paywall_viewed"
+                data-limit="i18n"
+                type="button"
+                asChild
+              >
+                <NextLink href="/settings/billing?highlight=i18n#plans">
                   <Lock className="size-4" />
                   Upgrade
-                </Link>
+                </NextLink>
               </Button>
             ) : (
               <Button type="submit" disabled={isPending}>

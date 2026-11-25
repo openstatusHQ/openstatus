@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestTinybirdEventRecordsIsString(t *testing.T) {
@@ -80,5 +82,27 @@ func TestDNSResponseHTTPShapeKeepsObject(t *testing.T) {
 	// records as an object, not a string.
 	if got := raw["records"][0]; got != '{' {
 		t.Errorf("HTTP records is not a JSON object: %s", raw["records"])
+	}
+}
+
+func TestDNSAttemptContextAppliesMonitorTimeout(t *testing.T) {
+	ctx, cancel := dnsAttemptContext(context.Background(), 1500)
+	defer cancel()
+
+	deadline, ok := ctx.Deadline()
+	if !ok {
+		t.Fatal("dnsAttemptContext() set no deadline for a positive timeout")
+	}
+	if left := time.Until(deadline); left <= time.Second || left > 1500*time.Millisecond {
+		t.Fatalf("dnsAttemptContext() deadline in %s, want about 1.5s", left)
+	}
+}
+
+func TestDNSAttemptContextWithoutTimeout(t *testing.T) {
+	ctx, cancel := dnsAttemptContext(context.Background(), 0)
+	defer cancel()
+
+	if _, ok := ctx.Deadline(); ok {
+		t.Fatal("dnsAttemptContext() set a deadline for a zero timeout")
 	}
 }

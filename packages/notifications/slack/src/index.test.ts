@@ -1,9 +1,21 @@
 import { selectNotificationSchema } from "@openstatus/db/src/schema";
 import { COLORS } from "@openstatus/notification-base";
-import { expect } from "@std/expect";
-import { afterEach, beforeEach, describe, test } from "@std/testing/bdd";
-import { assertSpyCalls, stub, type Stub } from "@std/testing/mock";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  type MockInstance,
+} from "vitest";
 
+import {
+  buildAlertBlocks,
+  buildDegradedBlocks,
+  buildRecoveryBlocks,
+  escapeSlackText,
+} from "./blocks";
 import {
   sendAlert,
   sendDegraded,
@@ -12,16 +24,18 @@ import {
 } from "./index";
 
 describe("Slack Notifications", () => {
-  let fetchMock: Stub<typeof globalThis>;
+  let fetchMock: MockInstance;
 
   beforeEach(() => {
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.resolve(new Response(null, { status: 200 })),
-    );
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() =>
+        Promise.resolve(new Response(null, { status: 200 })),
+      );
   });
 
   afterEach(() => {
-    fetchMock.restore();
+    fetchMock.mockRestore();
   });
 
   const createMockMonitor = () => ({
@@ -61,8 +75,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe("https://hooks.slack.com/services/url");
     expect(callArgs[1].method).toBe("POST");
 
@@ -88,8 +102,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments[0].color).toBe(COLORS.red);
     expect(body.attachments[0].blocks[3].fields[0].text).toContain("Unknown");
@@ -110,8 +124,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
     expect(body.attachments[0].color).toBe(COLORS.green);
@@ -133,8 +147,8 @@ describe("Slack Notifications", () => {
       cronTimestamp: Date.now(),
     });
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     const body = JSON.parse(callArgs[1].body);
     expect(body.attachments).toBeDefined();
     expect(body.attachments[0].color).toBe(COLORS.yellow);
@@ -146,8 +160,8 @@ describe("Slack Notifications", () => {
 
     await sendTestSlackMessage(webhookUrl);
 
-    assertSpyCalls(fetchMock, 1);
-    const callArgs = fetchMock.calls[0].args;
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const callArgs = fetchMock.mock.calls[0];
     expect(callArgs[0]).toBe(webhookUrl);
 
     const body = JSON.parse(callArgs[1].body);
@@ -157,20 +171,20 @@ describe("Slack Notifications", () => {
   });
 
   test("Send Test Slack Message throws error on empty webhookUrl", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
-    expect(sendTestSlackMessage("")).rejects.toThrow();
-    assertSpyCalls(fetchMock, 0);
+    await expect(sendTestSlackMessage("")).rejects.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(0);
   });
 
   test("Handle fetch error gracefully", async () => {
-    fetchMock.restore();
-    fetchMock = stub(globalThis, "fetch", () =>
-      Promise.reject(new Error("Network error")),
-    );
+    fetchMock.mockRestore();
+    fetchMock = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(() => Promise.reject(new Error("Network error")));
 
     const monitor = createMockMonitor();
     const notification = selectNotificationSchema.parse(
@@ -188,6 +202,57 @@ describe("Slack Notifications", () => {
       }),
     ).rejects.toThrow();
 
-    assertSpyCalls(fetchMock, 1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+});
+
+describe("Slack title limits", () => {
+  for (const [build, suffix] of [
+    [buildAlertBlocks, " is failing"],
+    [buildRecoveryBlocks, " is recovered"],
+    [buildDegradedBlocks, " is degraded"],
+  ] as const) {
+    test(`${build.name} keeps the status and complete characters within 150 characters`, () => {
+      for (const monitorName of [
+        "API Health",
+        "A".repeat(150 - suffix.length),
+        "A".repeat(255),
+        "A & <B>",
+        "&<>".repeat(20),
+        "&<>".repeat(85),
+        "\u{1F680}".repeat(127),
+        `A${"\u{1F680}".repeat(127)}`,
+      ]) {
+        const data = Object.freeze({
+          monitorName,
+          monitorUrl: "https://example.com/health",
+          monitorJobType: "http",
+          statusCodeFormatted: "503 Service Unavailable",
+          errorMessage: "Connection timeout",
+          timestampFormatted: "Sep 9, 2026 at 00:00 UTC",
+          regionsDisplay: "iad",
+          latencyDisplay: "100ms",
+          dashboardUrl: "https://app.openstatus.dev/monitors/1",
+        });
+        const header = build(data).find((block) => block.type === "header");
+        if (header?.type !== "header") throw new Error("Missing Slack header");
+        const title = header.text.text;
+        expect(title.length).toBeLessThanOrEqual(150);
+        expect(title.endsWith(suffix)).toBe(true);
+        const name = title.slice(0, -suffix.length);
+        expect(name).not.toMatch(/&(?!amp;|lt;|gt;)/);
+        expect(name.isWellFormed()).toBe(true);
+        const decoded = name
+          .replace(/&lt;/g, "<")
+          .replace(/&gt;/g, ">")
+          .replace(/&amp;/g, "&");
+        expect(decoded.length).toBeGreaterThan(0);
+        expect(monitorName.startsWith(decoded)).toBe(true);
+        if (escapeSlackText(monitorName).length <= 150 - suffix.length) {
+          expect(decoded).toBe(monitorName);
+        }
+        expect(data.monitorName).toBe(monitorName);
+      }
+    });
+  }
 });

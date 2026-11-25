@@ -10,13 +10,18 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "env": "bun env.ts",
-    "lint": "oxlint",
+    "lint": "oxlint --report-unused-disable-directives-severity=error",
     "lint:fix": "oxlint --fix",
     "lint:type": "oxlint --type-aware",
     "format": "oxfmt && oxlint --fix",
-    "format:check": "oxfmt --check && oxlint",
+    "format:check": "oxfmt --check && pnpm lint",
     "lint:turbo": "turbo run lint",
     "check": "turbo run check",
+    "check:docs": "node scripts/check-doc-refs.mts",
+    "check:lint-rules": "node tooling/oxlint/check-fixtures.mts",
+    "check:scopes": "node scripts/check-scopes.mts",
+    "verify": "pnpm format:check && pnpm check:docs && pnpm check:lint-rules && pnpm check:scopes && pnpm check",
+    "verify:test": "turbo run test --affected --concurrency=1",
     "dev:web": "turbo run dev --filter='./apps/web' --filter='./packages/db'",
     "dev:status-page": "turbo run dev --filter='./apps/status-page' --filter='./packages/db'",
     "dev:dashboard": "turbo run dev --filter='./apps/dashboard' --filter='./packages/db'",
@@ -25,14 +30,15 @@
     "test": "turbo run test"
   },
   "devDependencies": {
+    "@opentelemetry/api": "catalog:",
     "@turbo/gen": "catalog:",
     "@types/node": "catalog:",
     "knip": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "turbo": "2.9.14",
+    "turbo": "2.11.2",
     "typescript": "catalog:"
   },
-  "packageManager": "pnpm@11.2.1"
+  "packageManager": "pnpm@12.3.4"
 }

@@ -4,14 +4,50 @@
 type SlackCall = { method: string; args: Record<string, unknown> };
 type Override = ((args: Record<string, unknown>) => Promise<unknown>) | null;
 
+export type HistoryArgs = {
+  channel: string;
+  latest?: string;
+  oldest?: string;
+  inclusive?: boolean;
+  limit?: number;
+  cursor?: string;
+};
+export type MembersArgs = { channel: string; cursor?: string; limit?: number };
+export type MembersResult = {
+  ok: boolean;
+  members: string[];
+  response_metadata?: { next_cursor?: string };
+};
+
 export interface SlackTestState {
   resolveWorkspace: (teamId: string) => Promise<unknown>;
   calls: SlackCall[];
   postMessageOverride: Override;
   updateOverride: Override;
   postEphemeralOverride: Override;
-  runAgentOverride: (() => Promise<unknown>) | null;
-  repliesImpl: () => Promise<unknown>;
+  sessionStatusOverride: Override;
+  renameOverride: Override;
+  /** Set to false to simulate a workspace/SDK without message streaming. */
+  chatStreamEnabled: boolean;
+  /** Make appends start throwing once this many have succeeded. */
+  streamAppendFailAfter: number | null;
+  /** Make `stop` reject, as Slack does once it has closed the stream itself. */
+  streamStopFail: boolean;
+  /** Receives runAgent's options and actor, so a test can drive the stream or abort. */
+  runAgentOverride:
+    | ((options?: unknown, actor?: unknown) => Promise<unknown>)
+    | null;
+  repliesImpl: (args?: Record<string, unknown>) => Promise<unknown>;
+  historyImpl: (args?: HistoryArgs) => Promise<unknown>;
+  /** `conversations.members` result; the default lists only U1. */
+  membersImpl: (args: MembersArgs) => Promise<MembersResult>;
+  archiveImpl: (args: { channel: string }) => Promise<{ ok: boolean }>;
+  /** `users.info` result; the default has no email, so no mapping is created. */
+  usersInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
+  /** `reactions.get` result; the default message has no reactions. */
+  reactionsGetImpl: (args: Record<string, unknown>) => Promise<unknown>;
+  /** `conversations.info` result; the default channel has no name. */
+  conversationsInfoImpl: (args: Record<string, unknown>) => Promise<unknown>;
 }
 
 const g = globalThis as Record<string, unknown>;
@@ -22,11 +58,25 @@ if (!g.__slackTestState) {
     postMessageOverride: null,
     updateOverride: null,
     postEphemeralOverride: null,
+    sessionStatusOverride: null,
+    renameOverride: null,
+    chatStreamEnabled: true,
+    streamAppendFailAfter: null,
+    streamStopFail: false,
     runAgentOverride: null,
     repliesImpl: () =>
       Promise.resolve({
         messages: [{ user: "U1", text: "test message", ts: "1.1" }],
       }),
+    historyImpl: () =>
+      Promise.resolve({
+        messages: [{ user: "U1", text: "channel message", ts: "1.1" }],
+      }),
+    usersInfoImpl: () => Promise.resolve({ ok: true, user: { profile: {} } }),
+    reactionsGetImpl: () => Promise.resolve({ ok: true, message: {} }),
+    conversationsInfoImpl: () => Promise.resolve({ ok: true, channel: {} }),
+    membersImpl: () => Promise.resolve({ ok: true, members: ["U1"] }),
+    archiveImpl: () => Promise.resolve({ ok: true }),
   } satisfies SlackTestState;
 }
 

@@ -50,7 +50,7 @@ export async function deleteIntegration(args: {
   input: DeleteIntegrationInput;
 }): Promise<void> {
   const { ctx } = args;
-  requireScope(ctx, "write");
+  requireScope(ctx, "admin");
   const input = DeleteIntegrationInput.parse(args.input);
 
   let revokeBotToken: string | undefined;

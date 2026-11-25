@@ -1,0 +1,13 @@
+NODE aggregate
+SQL >
+
+    SELECT
+        toDateTime(fromUnixTimestamp64Milli(cronTimestamp)) AS time,
+        region,
+        requestStatus,
+        monitorId,
+        workspaceId
+    FROM icmp_response__v0
+
+TYPE materialized
+DATASOURCE mv__icmp_uptime_90d__v0

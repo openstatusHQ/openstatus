@@ -13,9 +13,8 @@ import {
   createMonitor,
   createWorkspace,
 } from "@openstatus/db/src/test/factories";
-import { expect } from "@std/expect";
-import { afterAll, beforeAll, test } from "@std/testing/bdd";
 import { TRPCError } from "@trpc/server";
+import { afterAll, beforeAll, expect, test } from "vitest";
 
 import { edgeRouter } from "../edge";
 import { createInnerTRPCContext } from "../trpc";

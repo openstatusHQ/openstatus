@@ -79,19 +79,19 @@ export function FormRetry({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(submitAction)} {...props}>
-        <FormCard>
+        <FormCard id="retry-policy">
           <FormCardHeader>
             <FormCardTitle>Retry Policy</FormCardTitle>
             <FormCardDescription>
               Configure the retry policy for your monitor.
             </FormCardDescription>
           </FormCardHeader>
-          <FormCardContent className="grid gap-4 sm:grid-cols-2">
+          <FormCardContent className="grid gap-4 sm:grid-cols-3">
             <FormField
               control={form.control}
               name="retry"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="sm:col-span-2">
                   <FormLabel>Retry</FormLabel>
                   <FormControl>
                     <Input

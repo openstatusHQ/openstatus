@@ -1,48 +1,49 @@
+import type { RequiredScope, ScopeGroup } from "@openstatus/db/src/schema";
+import { matchesScope } from "@openstatus/services/auth";
 import type { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 
 import type { Variables } from "@/types";
 
 /**
- * V1 REST middleware that enforces the `'write'` scope on any
- * non-read HTTP method. Mounted on the V1 router, chained after
- * `authMiddleware`.
- *
- * Why a transport-level check on V1 specifically: the V1 routes
- * predate the services-first convention and currently do inline
- * Drizzle queries (zero `@openstatus/services` imports). Service-level
- * `requireScope` would silently skip every V1 write handler. This
- * middleware closes the gap.
- *
- * The HTTP-method-to-scope mapping is correct for V1 because every
- * V1 write route is a `POST`/`PUT`/`PATCH`/`DELETE` and every read
- * route is `GET`/`HEAD`. Includes `POST /v1/check` (on-demand
- * probe) — POST is write per the plan's write-rule definition.
- *
- * After per-route migration to services, this stays as
- * defense-in-depth.
+ * V1 REST transport-level scope check, mounted per sub-router after
+ * `authMiddleware`. `GET`/`HEAD` require `<group>:read`, every other
+ * method `<group>:write`; `"any"` only requires an authenticated key.
+ * V1 handlers still issue inline Drizzle queries, so the service-level
+ * `requireScope` never runs for them and this is the real gate there.
  */
-export function requireWriteScope(): MiddlewareHandler<{
+export function requireGroupScope(
+  group: ScopeGroup | "any",
+): MiddlewareHandler<{ Variables: Variables }> {
+  return async (c, next) => {
+    const apiKey = c.get("apiKey");
+    // `authMiddleware` owns the 401; a missing key is not a 403.
+    if (!apiKey) return next();
+
+    const method = c.req.method;
+    const required: RequiredScope =
+      group === "any"
+        ? "any"
+        : `${group}:${method === "GET" || method === "HEAD" ? "read" : "write"}`;
+
+    if (!matchesScope(apiKey.scopes ?? [], required)) {
+      throw new HTTPException(403, {
+        message: `API key lacks required scope: ${required}`,
+      });
+    }
+    c.set("scopeChecked", true);
+    return next();
+  };
+}
+
+/** Mounted last on `/*`: a route without its own `requireGroupScope` fails closed. */
+export function requireScopeChecked(): MiddlewareHandler<{
   Variables: Variables;
 }> {
   return async (c, next) => {
-    const method = c.req.method;
-    if (method === "GET" || method === "HEAD") return next();
-
-    const apiKey = c.get("apiKey");
-    // `authMiddleware` runs first and rejects requests with no key.
-    // If we still see a missing key here, defer to it — don't 403 a
-    // request that's actually 401.
-    if (!apiKey) return next();
-
-    // `?? []` is belt-and-braces: the type says `scopes` is non-optional,
-    // but if `authMiddleware` ever errors after partially populating
-    // `apiKey` we want fail-closed (no scopes = no write), not a crash
-    // on `.includes`.
-    const scopes = apiKey.scopes ?? [];
-    if (!scopes.includes("write") && !scopes.includes("*")) {
+    if (c.get("apiKey") && !c.get("scopeChecked")) {
       throw new HTTPException(403, {
-        message: "API key lacks write scope",
+        message: "API key lacks required scope for this route",
       });
     }
     return next();

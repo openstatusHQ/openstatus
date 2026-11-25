@@ -11,6 +11,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 
 import { TailwindIndicator } from "@/components/tailwind-indicator";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ScrollToHash } from "@/hooks/use-scroll-to-hash";
 import { auth } from "@/lib/auth";
 import { TRPCReactProvider } from "@/lib/trpc/client";
 
@@ -104,15 +105,18 @@ export default async function RootLayout({
                 disableTransitionOnChange
               >
                 {children}
+                <ScrollToHash />
                 <TailwindIndicator />
                 <Toaster richColors expand />
                 {process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID && (
                   <OpenPanelComponent
                     clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+                    profileId={
+                      session?.user?.id ? `usr_${session.user.id}` : undefined
+                    }
                     trackScreenViews
                     trackOutgoingLinks
                     trackAttributes
-                    sessionReplay={{ enabled: true }}
                   />
                 )}
               </ThemeProvider>

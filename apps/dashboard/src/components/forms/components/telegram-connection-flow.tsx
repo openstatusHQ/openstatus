@@ -37,6 +37,21 @@ export function TelegramConnectionFlow({
     confirmPrivateChat,
   } = useTelegramConnection({ form, mode });
 
+  // Check build-time env var for deployment type
+  const isSelfHosted = process.env.NEXT_PUBLIC_SELF_HOST === "true";
+  const redisAvailable = tokenData?.redisAvailable === true;
+
+  // Biased loading behavior:
+  // - Self-hosted: Hide QR during loading (conservative, prevents flash)
+  // - Cloud: Show QR during loading (optimistic, better UX)
+  // After loading: always check actual redisAvailable value
+  if (
+    (isSelfHosted && isTokenLoading) ||
+    (!isTokenLoading && !redisAvailable)
+  ) {
+    return <TelegramManualInput form={form} />;
+  }
+
   return (
     <Tabs
       value={mode ?? "qr"}
@@ -53,7 +68,7 @@ export function TelegramConnectionFlow({
       <TabsContent value="qr">
         <TelegramQRConnection
           form={form}
-          token={tokenData?.token}
+          token={tokenData?.token ?? undefined}
           isLoading={isTokenLoading}
           isPolling={isPolling}
           flowStep={flowStep}
