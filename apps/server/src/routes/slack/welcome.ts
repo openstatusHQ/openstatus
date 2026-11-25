@@ -36,7 +36,9 @@ export function buildChannelIntroBlocks(botUserId: string): KnownBlock[] {
           "*Try asking me*",
           "• " + bot + " `summarize this thread and draft a status report`",
           "• " + bot + " `are any of my monitors failing right now?`",
-          "• " + bot + " `schedule maintenance on the API tomorrow from 2 to 3am UTC`",
+          "• " +
+            bot +
+            " `schedule maintenance on the API tomorrow from 2 to 3am UTC`",
         ].join("\n"),
       },
     },
