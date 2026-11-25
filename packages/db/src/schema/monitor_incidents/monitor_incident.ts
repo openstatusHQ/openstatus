@@ -4,7 +4,6 @@ import {
   integer,
   sqliteTable,
   text,
-  unique,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
@@ -70,7 +69,10 @@ export const monitorIncidentTable = sqliteTable(
     ),
   },
   (table) => [
-    unique().on(table.monitorId, table.startedAt),
+    uniqueIndex("monitor_incident_monitor_id_started_at_unique").on(
+      table.monitorId,
+      table.startedAt,
+    ),
     index("monitor_incident_workspace_id_started_at_idx").on(
       table.workspaceId,
       table.startedAt,

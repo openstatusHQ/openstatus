@@ -205,7 +205,7 @@
     {
       "columns": ["incident_id", "monitor_id"],
       "nameExplicit": true,
-      "name": null,
+      "name": "incidents_to_monitors_monitor_id_incident_id_pk",
       "table": "incidents_to_monitors",
       "entityType": "pks"
     },
@@ -667,8 +667,8 @@
     },
     {
       "columns": ["monitor_id", "page_id"],
-      "nameExplicit": true,
-      "name": null,
+      "nameExplicit": false,
+      "name": "monitors_to_pages_monitor_id_page_id_pk",
       "table": "monitors_to_pages",
       "entityType": "pks"
     },
@@ -825,8 +825,8 @@
     },
     {
       "columns": ["user_id", "workspace_id"],
-      "nameExplicit": true,
-      "name": null,
+      "nameExplicit": false,
+      "name": "users_to_workspaces_user_id_workspace_id_pk",
       "table": "users_to_workspaces",
       "entityType": "pks"
     },
@@ -1109,8 +1109,8 @@
     },
     {
       "columns": ["monitor_id", "notification_id"],
-      "nameExplicit": true,
-      "name": null,
+      "nameExplicit": false,
+      "name": "notifications_to_monitors_monitor_id_notification_id_pk",
       "table": "notifications_to_monitors",
       "entityType": "pks"
     },

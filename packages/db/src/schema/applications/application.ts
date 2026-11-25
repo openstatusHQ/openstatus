@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { workspace } from "../workspaces";
 
@@ -8,7 +14,7 @@ export const application = sqliteTable(
   {
     id: integer("id").primaryKey(),
     name: text("name"), // friendly name for the project
-    dsn: text("dsn").unique(), // dsn for the source
+    dsn: text("dsn"), // dsn for the source
 
     workspaceId: integer("workspace_id").references(() => workspace.id),
 
@@ -19,5 +25,8 @@ export const application = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => [index("application_workspace_id_idx").on(t.workspaceId)],
+  (t) => [
+    uniqueIndex("application_dsn_unique").on(t.dsn),
+    index("application_workspace_id_idx").on(t.workspaceId),
+  ],
 );

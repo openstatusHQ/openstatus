@@ -1,7 +1,13 @@
 import type { Locale } from "@openstatus/locales";
 import type { CustomTheme } from "@openstatus/theme-store";
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { workspace } from "../workspaces";
 import { pageAccessTypes } from "./constants";
@@ -18,7 +24,7 @@ export const page = sqliteTable(
     title: text("title").notNull(), // title of the page
     description: text("description").notNull(), // description of the page
     icon: text("icon", { length: 256 }).default(""), // icon of the page
-    slug: text("slug", { length: 256 }).notNull().unique(), // which is used for https://slug.openstatus.dev
+    slug: text("slug", { length: 256 }).notNull(), // which is used for https://slug.openstatus.dev
     customDomain: text("custom_domain", { length: 256 }).notNull(),
     published: integer("published", { mode: "boolean" }).default(false),
 
@@ -79,6 +85,7 @@ export const page = sqliteTable(
     ),
   },
   (t) => [
+    uniqueIndex("page_slug_unique").on(t.slug),
     index("page_lower_slug_idx").on(sql`LOWER(${t.slug})`),
     index("page_lower_custom_domain_idx").on(sql`LOWER(${t.customDomain})`),
     index("page_workspace_id_idx").on(t.workspaceId),

@@ -1,4 +1,10 @@
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import type { Scope } from "../api-keys/constants";
 import { user } from "../users";
@@ -10,7 +16,7 @@ export const oauthAuthorizationCode = sqliteTable(
   "oauth_authorization_code",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    hash: text("hash").notNull().unique(),
+    hash: text("hash").notNull(),
     clientId: text("client_id")
       .notNull()
       .references(() => oauthClient.clientId, { onDelete: "cascade" }),
@@ -31,6 +37,7 @@ export const oauthAuthorizationCode = sqliteTable(
     }),
   },
   (t) => [
+    uniqueIndex("oauth_authorization_code_hash_unique").on(t.hash),
     index("oauth_authorization_code_expires_at_idx").on(t.expiresAt),
     index("oauth_authorization_code_client_id_idx").on(t.clientId),
   ],

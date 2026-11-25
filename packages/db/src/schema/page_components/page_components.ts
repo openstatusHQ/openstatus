@@ -6,7 +6,7 @@ import {
   primaryKey,
   sqliteTable,
   text,
-  unique,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import { maintenance } from "../maintenances";
@@ -49,7 +49,7 @@ export const pageComponent = sqliteTable(
     ),
   },
   (t) => [
-    unique("page_component_page_id_monitor_id_unique").on(
+    uniqueIndex("page_component_page_id_monitor_id_unique").on(
       t.pageId,
       t.monitorId,
     ),

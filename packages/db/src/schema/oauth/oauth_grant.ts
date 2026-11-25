@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import type { Scope } from "../api-keys/constants";
 import { user } from "../users";
@@ -22,11 +28,11 @@ export const oauthGrant = sqliteTable(
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
     scope: text("scope", { mode: "json" }).$type<Scope[]>().notNull(),
-    accessTokenHash: text("access_token_hash").notNull().unique(),
+    accessTokenHash: text("access_token_hash").notNull(),
     accessTokenExpiresAt: integer("access_token_expires_at", {
       mode: "timestamp",
     }).notNull(),
-    refreshTokenHash: text("refresh_token_hash").notNull().unique(),
+    refreshTokenHash: text("refresh_token_hash").notNull(),
     refreshTokenExpiresAt: integer("refresh_token_expires_at", {
       mode: "timestamp",
     }).notNull(),
@@ -41,6 +47,8 @@ export const oauthGrant = sqliteTable(
     ),
   },
   (t) => [
+    uniqueIndex("oauth_grant_access_token_hash_unique").on(t.accessTokenHash),
+    uniqueIndex("oauth_grant_refresh_token_hash_unique").on(t.refreshTokenHash),
     index("oauth_grant_workspace_id_idx").on(t.workspaceId),
     // One client id is shared by every user of Claude / Cursor, so the
     // re-consent lookup needs the user in the key.

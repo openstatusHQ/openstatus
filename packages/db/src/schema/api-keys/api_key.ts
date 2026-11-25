@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import { user } from "../users";
 import { workspace } from "../workspaces";
@@ -11,8 +17,8 @@ export const apiKey = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     name: text("name").notNull(),
     description: text("description"),
-    prefix: text("prefix").notNull().unique(),
-    hashedToken: text("hashed_token").notNull().unique(),
+    prefix: text("prefix").notNull(),
+    hashedToken: text("hashed_token").notNull(),
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
@@ -34,6 +40,8 @@ export const apiKey = sqliteTable(
     lastUsedAt: integer("last_used_at", { mode: "timestamp" }),
   },
   (table) => [
+    uniqueIndex("api_key_prefix_unique").on(table.prefix),
+    uniqueIndex("api_key_hashed_token_unique").on(table.hashedToken),
     index("api_key_prefix_idx").on(table.prefix),
     index("api_key_workspace_id_idx").on(table.workspaceId),
   ],

@@ -4,7 +4,7 @@ import {
   integer,
   sqliteTable,
   text,
-  unique,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import { user } from "../users";
@@ -27,7 +27,9 @@ export const slackUser = sqliteTable(
       .default(sql`(strftime('%s', 'now'))`),
   },
   (t) => [
-    unique().on(t.workspaceId, t.slackTeamId, t.slackUserId),
+    uniqueIndex(
+      "slack_user_workspace_id_slack_team_id_slack_user_id_unique",
+    ).on(t.workspaceId, t.slackTeamId, t.slackUserId),
     index("slack_user_user_id_idx").on(t.userId),
   ],
 );

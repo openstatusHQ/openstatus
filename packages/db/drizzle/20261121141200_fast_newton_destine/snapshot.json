@@ -1630,31 +1630,31 @@
       "entityType": "indexes"
     },
     {
+      "table": "page",
+      "name": "page_lower_slug_idx",
       "columns": [
         {
           "value": "LOWER(\"slug\")",
-          "isExpression": false
+          "isExpression": true
         }
       ],
       "isUnique": false,
       "where": null,
       "origin": "manual",
-      "name": "page_lower_slug_idx",
-      "table": "page",
       "entityType": "indexes"
     },
     {
+      "table": "page",
+      "name": "page_lower_custom_domain_idx",
       "columns": [
         {
           "value": "LOWER(\"custom_domain\")",
-          "isExpression": false
+          "isExpression": true
         }
       ],
       "isUnique": false,
       "where": null,
       "origin": "manual",
-      "name": "page_lower_custom_domain_idx",
-      "table": "page",
       "entityType": "indexes"
     },
     {
@@ -2240,10 +2240,12 @@
       "entityType": "indexes"
     },
     {
+      "table": "page_subscriber",
+      "name": "idx_page_subscriber_email_page_active",
       "columns": [
         {
           "value": "LOWER(\"email\")",
-          "isExpression": false
+          "isExpression": true
         },
         {
           "value": "page_id",
@@ -2253,15 +2255,15 @@
       "isUnique": true,
       "where": "\"page_subscriber\".\"unsubscribed_at\" IS NULL AND \"page_subscriber\".\"channel_type\" = 'email'",
       "origin": "manual",
-      "name": "idx_page_subscriber_email_page_active",
-      "table": "page_subscriber",
       "entityType": "indexes"
     },
     {
+      "table": "page_subscriber",
+      "name": "idx_page_subscriber_webhook_page_active",
       "columns": [
         {
           "value": "LOWER(\"webhook_url\")",
-          "isExpression": false
+          "isExpression": true
         },
         {
           "value": "page_id",
@@ -2271,8 +2273,6 @@
       "isUnique": true,
       "where": "\"page_subscriber\".\"unsubscribed_at\" IS NULL AND \"page_subscriber\".\"channel_type\" = 'webhook'",
       "origin": "manual",
-      "name": "idx_page_subscriber_webhook_page_active",
-      "table": "page_subscriber",
       "entityType": "indexes"
     },
     {
@@ -2294,9 +2294,9 @@
       "entityType": "indexes"
     },
     {
-      "value": "(\"page_subscriber\".\"channel_type\" = 'email' AND \"page_subscriber\".\"email\" IS NOT NULL AND \"page_subscriber\".\"webhook_url\" IS NULL) OR (\"page_subscriber\".\"channel_type\" = 'webhook' AND \"page_subscriber\".\"webhook_url\" IS NOT NULL AND \"page_subscriber\".\"email\" IS NULL) OR (\"page_subscriber\".\"channel_type\" = 'slack' AND \"page_subscriber\".\"slack_channel_id\" IS NOT NULL AND \"page_subscriber\".\"email\" IS NULL AND \"page_subscriber\".\"webhook_url\" IS NULL)",
-      "name": "page_subscriber_channel_check",
       "table": "page_subscriber",
+      "name": "page_subscriber_channel_check",
+      "value": "(\"channel_type\" = 'email' AND \"email\" IS NOT NULL AND \"webhook_url\" IS NULL) OR (\"channel_type\" = 'webhook' AND \"webhook_url\" IS NOT NULL AND \"email\" IS NULL) OR (\"channel_type\" = 'slack' AND \"slack_channel_id\" IS NOT NULL AND \"email\" IS NULL AND \"webhook_url\" IS NULL)",
       "entityType": "checks"
     },
     {
@@ -5993,9 +5993,9 @@
       "entityType": "indexes"
     },
     {
-      "value": "\"page_component\".\"type\" = 'monitor' AND \"page_component\".\"monitor_id\" IS NOT NULL OR \"page_component\".\"type\" = 'static' AND \"page_component\".\"monitor_id\" IS NULL",
-      "name": "page_component_type_check",
       "table": "page_component",
+      "name": "page_component_type_check",
+      "value": "\"type\" = 'monitor' AND \"monitor_id\" IS NOT NULL OR \"type\" = 'static' AND \"monitor_id\" IS NULL",
       "entityType": "checks"
     },
     {

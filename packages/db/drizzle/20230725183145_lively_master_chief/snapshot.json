@@ -446,8 +446,8 @@
     },
     {
       "columns": ["monitor_id", "page_id"],
-      "nameExplicit": true,
-      "name": null,
+      "nameExplicit": false,
+      "name": "monitors_to_pages_monitor_id_page_id_pk",
       "table": "monitors_to_pages",
       "entityType": "pks"
     },
@@ -554,8 +554,8 @@
     },
     {
       "columns": ["user_id", "workspace_id"],
-      "nameExplicit": true,
-      "name": null,
+      "nameExplicit": false,
+      "name": "users_to_workspaces_user_id_workspace_id_pk",
       "table": "users_to_workspaces",
       "entityType": "pks"
     },

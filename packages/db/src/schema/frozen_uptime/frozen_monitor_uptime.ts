@@ -4,7 +4,7 @@ import {
   integer,
   sqliteTable,
   text,
-  unique,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors/monitor";
@@ -33,7 +33,7 @@ export const frozenMonitorUptime = sqliteTable(
   },
   (t) => [
     // idempotency key: re-freezing a month is a silent no-op
-    unique("frozen_monitor_uptime_monitor_id_month_unique").on(
+    uniqueIndex("frozen_monitor_uptime_monitor_id_month_unique").on(
       t.monitorId,
       t.month,
     ),
