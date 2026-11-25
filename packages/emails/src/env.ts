@@ -12,9 +12,11 @@ export const env = createEnv({
   server: {
     RESEND_API_KEY: z.string().min(1),
     NODE_ENV: z.string().prefault("development"),
+    SELF_HOST: z.stringbool().prefault("false"),
   },
   runtimeEnv: {
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     NODE_ENV: processEnv.NODE_ENV,
+    SELF_HOST: process.env.SELF_HOST,
   },
 });

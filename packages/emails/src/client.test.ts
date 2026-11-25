@@ -137,6 +137,59 @@ describe("EmailClient.sendPageUpdate - idempotency & chunking", () => {
   });
 });
 
+describe("EmailClient.sendPageUpdate - one-click unsubscribe", () => {
+  // env.ts reads SELF_HOST on import, so each case imports a fresh client
+  async function load(env: Record<string, string>) {
+    vi.resetModules();
+    for (const [key, value] of Object.entries(env)) vi.stubEnv(key, value);
+    const mod = await import("./client");
+    const client = new mod.EmailClient({ apiKey: "re_test_123" });
+    const batchSend = vi
+      .spyOn(client.client.batch, "send")
+      .mockImplementation(() => Promise.resolve(ok));
+    return { client, batchSend };
+  }
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  test("gives each subscriber List-Unsubscribe headers for the API endpoint", async () => {
+    const { client, batchSend } = await load({ SELF_HOST: "false" });
+    await client.sendPageUpdate(
+      baseReq({
+        subscribers: makeSubscribers(2),
+        customDomain: "status.example.com",
+      }),
+    );
+
+    expect(batchSend).toHaveBeenCalledTimes(1);
+    const emails = batchSend.mock.calls[0][0];
+    expect(
+      emails.map((e: { headers: Record<string, string> }) => e.headers),
+    ).toEqual([
+      {
+        "List-Unsubscribe":
+          "<https://api.openstatus.dev/public/unsubscribe/token-0>",
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
+      {
+        "List-Unsubscribe":
+          "<https://api.openstatus.dev/public/unsubscribe/token-1>",
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
+    ]);
+  });
+
+  test("sends no List-Unsubscribe headers from a self-hosted instance", async () => {
+    const { client, batchSend } = await load({ SELF_HOST: "true" });
+    await client.sendPageUpdate(baseReq());
+
+    expect(batchSend).toHaveBeenCalledTimes(1);
+    expect(batchSend.mock.calls[0][0][0]).not.toHaveProperty("headers");
+  });
+});
+
 describe("EmailClient.sendMonitorAlert", () => {
   let client: EmailClient;
   // biome-ignore lint/suspicious/noExplicitAny: stub over the Resend send method
