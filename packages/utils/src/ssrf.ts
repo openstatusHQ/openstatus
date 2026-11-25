@@ -132,6 +132,7 @@ export function raceWithSignal<T>(
 ): Promise<T> {
   if (!signal) return promise;
   if (signal.aborted) {
+    promise.catch(() => {});
     return Promise.reject(
       signal.reason ??
         new DOMException("This operation was aborted", "AbortError"),

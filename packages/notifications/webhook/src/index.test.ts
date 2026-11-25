@@ -183,21 +183,49 @@ describe("Webhook sendTest", () => {
   test("should compose caller signal with default timeout", async () => {
     const url = "https://example.com/webhook";
     const controller = new AbortController();
+    const timeoutController = new AbortController();
+    const timeoutSpy = vi
+      .spyOn(AbortSignal, "timeout")
+      .mockReturnValueOnce(timeoutController.signal);
     fetchMock.mockRestore();
     fetchMock = vi
       .spyOn(globalThis, "fetch")
-      .mockImplementation(() =>
-        Promise.resolve(new Response(null, { status: 200 })),
-      );
+      .mockImplementation((_url, init) => {
+        return new Promise((_resolve, reject) => {
+          const signal = init?.signal;
+          if (signal?.aborted) {
+            return reject(signal.reason);
+          }
+          signal?.addEventListener("abort", () => {
+            reject(signal.reason);
+          });
+        });
+      });
 
-    const result = await sendTest({ url, signal: controller.signal });
+    try {
+      const pending = sendTest({ url, signal: controller.signal });
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
-    expect(result).toBe(true);
-    const init = fetchMock.mock.calls[0][1];
-    expect(init.signal).not.toBe(controller.signal);
-    expect(init.signal.aborted).toBe(false);
-    controller.abort(new DOMException("caller aborted", "AbortError"));
-    expect(init.signal.aborted).toBe(true);
+      expect(timeoutSpy).toHaveBeenCalledWith(WEBHOOK_TIMEOUT_MS);
+      const init = fetchMock.mock.calls[0][1];
+      expect(init.signal).not.toBe(controller.signal);
+      expect(init.signal.aborted).toBe(false);
+
+      timeoutController.abort(new DOMException("timeout", "TimeoutError"));
+      expect(init.signal.aborted).toBe(true);
+      await expect(pending).rejects.toThrow("Failed to send test");
+
+      const controller2 = new AbortController();
+      const pending2 = sendTest({ url, signal: controller2.signal });
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+      const init2 = fetchMock.mock.calls[1][1];
+      expect(init2.signal.aborted).toBe(false);
+      controller2.abort(new DOMException("caller aborted", "AbortError"));
+      expect(init2.signal.aborted).toBe(true);
+      await expect(pending2).rejects.toThrow("Failed to send test");
+    } finally {
+      timeoutSpy.mockRestore();
+    }
   });
 
   test("should fail when timeoutMs is 0", async () => {
