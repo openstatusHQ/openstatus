@@ -180,4 +180,44 @@ describe("buildCurlCommand", () => {
       buildCurlCommand({ url: "https://example.com", timeout: 0 }),
     ).not.toContain("--max-time");
   });
+
+  it("uses -I for HEAD requests without a body", () => {
+    const command = buildCurlCommand({
+      url: "https://example.com",
+      method: "HEAD",
+    });
+    expect(command).toContain(" \\\n  -I \\\n  ");
+    expect(command).not.toContain("-X HEAD");
+
+    const withBody = buildCurlCommand({
+      url: "https://example.com",
+      method: "HEAD",
+      body: "ping",
+    });
+    expect(withBody).toContain("-X HEAD");
+    expect(withBody).toContain("--data-raw 'ping'");
+    expect(withBody).not.toContain(" -I ");
+  });
+
+  it("completes a HEAD request against a server sending Content-Length", async () => {
+    const server = createServer((_req, res) => {
+      res.writeHead(200, { "Content-Length": "42" });
+      res.end();
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    const port = (server.address() as AddressInfo).port;
+    try {
+      const command = buildCurlCommand({
+        url: `http://127.0.0.1:${port}/`,
+        method: "HEAD",
+        timeout: 1500,
+      });
+      const result = await sh(command);
+      expect(result.code).toBe(0);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
 });

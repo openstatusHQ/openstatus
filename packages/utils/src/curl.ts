@@ -33,7 +33,12 @@ export function buildCurlCommand(request: CurlRequest): string {
   const args: string[] = [];
 
   // `--data-raw` on its own makes curl switch to POST, so a body needs `-X`.
-  if (method !== "GET" || body) args.push(`-X ${method}`);
+  // `-I` tells curl not to expect a response body on HEAD requests.
+  if (method === "HEAD" && !body) {
+    args.push("-I");
+  } else if (method !== "GET" || body) {
+    args.push(`-X ${method}`);
+  }
   args.push(quote(request.url));
 
   if (!hasHeader("user-agent")) {
