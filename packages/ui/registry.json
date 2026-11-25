@@ -315,7 +315,7 @@
         "skeleton",
         "use-media-query"
       ],
-      "dependencies": ["date-fns", "lucide-react", "react-day-picker@8"],
+      "dependencies": ["date-fns", "lucide-react", "react-day-picker@10"],
       "files": [
         {
           "path": "src/components/blocks/status-calendar.tsx",

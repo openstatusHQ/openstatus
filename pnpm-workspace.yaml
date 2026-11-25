@@ -158,8 +158,8 @@ catalog:
   clsx: 2.1.1
   cmdk: 1.1.1
   cobe: 0.6.5
-  date-fns: 3.6.0
-  date-fns-tz: 2.0.1
+  date-fns: 4.4.0
+  date-fns-tz: 3.2.0
   dotenv: 18.0.2
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.3
@@ -198,7 +198,7 @@ catalog:
   radix-ui: 1.6.7
   random-word-slugs: 0.1.7
   react: 19.3.0
-  react-day-picker: 8.10.2
+  react-day-picker: 10.0.2
   react-dom: 19.3.0
   react-email: 6.9.5
   react-hook-form: 7.88.0
