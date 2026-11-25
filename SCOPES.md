@@ -59,7 +59,7 @@ key form read it.
 
 ## Service verbs by scope
 
-Generated from `requireScope` calls on 2026-11-24. Regenerate with
+Generated from `requireScope` calls on 2026-11-25. Regenerate with
 `grep -rn 'requireScope(ctx, "' packages/services/src --include='*.ts' | grep -v __tests__`.
 
 | Scope | Verbs |
@@ -68,20 +68,22 @@ Generated from `requireScope` calls on 2026-11-24. Regenerate with
 | `monitors:write` | createMonitor, cloneMonitor, deleteMonitor, deleteMonitors, setMonitorStatus, bulkUpdateMonitors, updateMonitorConfig, updateMonitorGeneral, updateMonitorFollowRedirects, updateMonitorOtel, updateMonitorPublic, updateMonitorResponseTime, updateMonitorRetry, updateMonitorNotifiers, updateMonitorSchedulingRegions, updateMonitorTags, syncMonitorTags, updateMonitorHeartbeat, regenerateHeartbeatToken, triggerMonitorRun, runMonitorCheck, streamMonitorPreview, createPrivateLocation, updatePrivateLocation, deletePrivateLocation, setPrivateLocationStatus, createMonitorIncident, autoResolveMonitorIncidents, acknowledgeMonitorIncident, resolveMonitorIncident, excuseMonitorIncident, unexcuseMonitorIncident, freezeMonitorMonth, attachFrozenBadRanges, createMaintenanceWindow, updateMaintenanceWindow, endMaintenanceWindow, deleteMaintenanceWindow, runImport (with `pages:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
 | `pages:read` | listPages, getPage, getPageRow, getPageCustomDomain, assertCustomDomainInWorkspace, getSlugAvailable, listPageComponents, getPageComponent, getPageComponentDailySummary, listPageComponentGroups, previewImport |
 | `pages:write` | createPage, newPage, deletePage, updatePageGeneral, updatePageAppearance, updatePageConfiguration, updatePageTimezone, updatePageCustomDomain, updatePageCustomTheme, updatePageLinks, updatePageLocales, updatePagePasswordProtection, createPageComponent, updatePageComponent, deletePageComponent, updatePageComponentOrder, createPageComponentGroup, updatePageComponentGroup, deletePageComponentGroup, runImport (with `monitors:write`, `incidents:write`, and `subscribers:write` when subscribers are included) |
-| `incidents:read` | listStatusReports, getStatusReport, listIncidents, getIncident, getIncidentBySlackChannel, getIncidentForStatusReport, listLinkedStatusReportIds, listIncidentEvents, getIncidentEvent, getPostmortem, listMaintenances, getMaintenance, getMaintenanceUpdate |
-| `incidents:write` | createStatusReport, updateStatusReport, deleteStatusReport, addStatusReportUpdate, resolveStatusReport, updateStatusReportUpdate, deleteStatusReportUpdate, notifyStatusReport, declareIncident, updateIncident, setIncidentStatus, acknowledgeIncident, closeIncident, deleteIncident, addIncidentNote, linkIncidentStatusReport, unlinkIncidentStatusReport, bindIncidentSlackChannel, unbindIncidentSlackChannel, draftPostmortem, approvePostmortem, createMaintenance, updateMaintenance, deleteMaintenance, addMaintenanceUpdate, updateMaintenanceUpdate, deleteMaintenanceUpdate, notifyMaintenance |
+| `incidents:read` | incidentSlackReady, listStatusReports, getStatusReport, listIncidents, getIncident, getIncidentBySlackChannel, getIncidentForStatusReport, listLinkedStatusReportIds, listIncidentEvents, getIncidentEvent, getPostmortem, listMaintenances, getMaintenance, getMaintenanceUpdate |
+| `incidents:write` | generatePostmortemDraft, openIncidentSlackChannel, announceIncidentChange, announceInChannel, createStatusReport, updateStatusReport, deleteStatusReport, addStatusReportUpdate, resolveStatusReport, updateStatusReportUpdate, deleteStatusReportUpdate, notifyStatusReport, declareIncident, updateIncident, setIncidentStatus, acknowledgeIncident, closeIncident, deleteIncident, addIncidentNote, linkIncidentStatusReport, unlinkIncidentStatusReport, bindIncidentSlackChannel, unbindIncidentSlackChannel, draftPostmortem, approvePostmortem, createMaintenance, updateMaintenance, deleteMaintenance, addMaintenanceUpdate, updateMaintenanceUpdate, deleteMaintenanceUpdate, notifyMaintenance |
 | `notifications:read` | listNotifications, getNotification, getNotificationLimit |
 | `notifications:write` | createNotification, updateNotification, deleteNotification, sendTestNotification (RPC handler) |
 | `subscribers:read` | listPageSubscribers, countPageSubscribers; `listAuditLogs` / `getAuditLog` hide `page_subscriber` rows without it |
 | `subscribers:write` | createPageSubscriber, subscribeEmailInWorkspace, updatePageSubscriberChannel, unsubscribePageSubscriber, deletePageSubscriber, sendPageSubscriberTestWebhook |
 | `read` | listAuditLogs, getAuditLog (the audit log spans every group) |
-| `admin` | createApiKey, revokeApiKey (except self-revoke), createInvitation, getInvitation, acceptInvitation, deleteInvitation, deleteMember, transferOwnership, enableSso, disableSso, joinSsoWorkspace, syncSsoDomain, removeSsoDomain, createSsoPortalLink, exchangeCode, revokeGrant, revokeGrantAsOwner, installSlackAgent, uninstallSlackAgent, deleteIntegration, createSlackUserMapping, updateWorkspaceName, updateWorkspacePlan, updateWorkspaceLimits, updateWorkspaceStripeId, markWorkspaceTrialed, previewWorkspaceDowngrade, downgradeWorkspaceToFree, deleteAccount |
-| `any` | submitFeedback, hasSubmittedFeedback |
+| `admin` | listApiKeys, listIntegrations, listInvitations, getInvitationByToken, listMembers, listGrants, getSlackUserMapping, listSlackUserMappings, getSsoConfig, reconcileSsoDomains, isTrialEligibleWorkspace, getUser, createChatSession, getChatSession, listChatSessions, deleteChatSession, setChatSessionMessages, createApiKey, revokeApiKey (except self-revoke), createInvitation, getInvitation, acceptInvitation, deleteInvitation, deleteMember, transferOwnership, enableSso, disableSso, joinSsoWorkspace, syncSsoDomain, removeSsoDomain, createSsoPortalLink, exchangeCode, revokeGrant, revokeGrantAsOwner, installSlackAgent, uninstallSlackAgent, deleteIntegration, createSlackUserMapping, updateWorkspaceName, updateWorkspacePlan, updateWorkspaceLimits, updateWorkspaceStripeId, markWorkspaceTrialed, previewWorkspaceDowngrade, downgradeWorkspaceToFree, deleteAccount |
+| `any` | submitFeedback, hasSubmittedFeedback, getWorkspace, listWorkspaces, getWorkspaceUsage |
 
 Read verbs that take no `ctx` (status-page visitor paths, cron jobs, token
-lookups) carry no scope by design; the lint rule
-`openstatus/services-read-verbs-require-scope` covers the exported `list*`,
-`get*`, `search*`, `stream*`, `preview*` verbs that do.
+lookups) carry no scope by design. The lint rule
+`openstatus/services-verbs-require-scope` covers every exported services
+function that takes a `ServiceContext`, whatever its name or folder. Helpers
+taking the caller's `tx` are skipped, since the caller checks, and functions
+that write are left to `openstatus/services-mutation-guards`.
 
 The frozen-uptime sweeps (`runUptimeFreeze`, `refreezeMonitorMonths`,
 `backfillFrozenBuckets`) take no `ctx` either: they run across workspaces and

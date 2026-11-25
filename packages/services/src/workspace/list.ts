@@ -11,6 +11,7 @@ import {
   workspace,
 } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type DB, type ServiceContext, batchReads } from "../context";
 import { NotFoundError } from "../errors";
 import type { Workspace } from "../types";
@@ -41,6 +42,7 @@ export type WorkspaceUsage = {
 export async function getWorkspace(args: {
   ctx: ServiceContext;
 }): Promise<Workspace> {
+  requireScope(args.ctx, "any");
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
 
@@ -111,6 +113,7 @@ export async function getWorkspaceUsage(args: {
   ctx: ServiceContext;
   input?: GetWorkspaceUsageInput;
 }): Promise<WorkspaceUsage> {
+  requireScope(args.ctx, "any");
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
 
@@ -159,6 +162,7 @@ export async function listWorkspaces(args: {
   ctx: ServiceContext;
   input: ListWorkspacesInput;
 }): Promise<Workspace[]> {
+  requireScope(args.ctx, "any");
   const input = ListWorkspacesInput.parse(args.input);
   const db = args.ctx.db ?? defaultDb;
 

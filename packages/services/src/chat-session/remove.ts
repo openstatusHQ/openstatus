@@ -1,6 +1,7 @@
 import { eq } from "@openstatus/db";
 import { chatSession } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import {
   type ServiceContext,
   tryGetActorUserId,
@@ -18,6 +19,7 @@ export async function deleteChatSession(args: {
   ctx: ServiceContext;
   input: DeleteChatSessionInput;
 }): Promise<void> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const input = DeleteChatSessionInput.parse(args.input);
 

@@ -6,6 +6,7 @@ import {
 } from "@openstatus/db/src/schema";
 
 import { displayName } from "../attribution";
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors";
 import { getSlackConnection } from "../integration/slack-connection";
@@ -216,6 +217,7 @@ export async function generatePostmortemDraft(args: {
   generate: GenerateText;
   slackFor?: (botToken: string) => SlackHistoryClient;
 }): Promise<IncidentPostmortem> {
+  requireScope(args.ctx, "incidents:write");
   const { ctx, incidentId, generate } = args;
   if (!ctx.workspace.limits["slack-agent"]) {
     throw new ForbiddenError("Agent drafting is not included in your plan");

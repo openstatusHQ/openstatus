@@ -1,6 +1,7 @@
 import { and, db as defaultDb, eq, isNull } from "@openstatus/db";
 import { user } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { GetUserInput } from "./schemas";
 
@@ -15,6 +16,7 @@ export async function getUser(args: {
   ctx: ServiceContext;
   input: GetUserInput;
 }): Promise<UserRecord | undefined> {
+  requireScope(args.ctx, "admin");
   const input = GetUserInput.parse(args.input);
   const db = args.ctx.db ?? defaultDb;
 

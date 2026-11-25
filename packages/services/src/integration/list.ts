@@ -2,6 +2,7 @@ import { eq, sql } from "@openstatus/db";
 import { integration } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { ListIntegrationsInput } from "./schemas";
 
@@ -52,6 +53,7 @@ export async function listIntegrations(args: {
   ctx: ServiceContext;
   input?: ListIntegrationsInput;
 }): Promise<IntegrationSummary[]> {
+  requireScope(args.ctx, "admin");
   ListIntegrationsInput.parse(args.input ?? {});
   const db = getReadDb(args.ctx);
 

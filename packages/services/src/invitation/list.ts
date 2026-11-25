@@ -23,6 +23,7 @@ export async function listInvitations(args: {
   ctx: ServiceContext;
   input?: ListInvitationsInput;
 }): Promise<Invitation[]> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
 
@@ -53,6 +54,7 @@ export async function getInvitationByToken(args: {
   ctx: ServiceContext;
   input: GetInvitationByTokenInput;
 }): Promise<InvitationWithWorkspace> {
+  requireScope(args.ctx, "admin");
   const input = GetInvitationByTokenInput.parse(args.input);
   const db = args.ctx.db ?? defaultDb;
 

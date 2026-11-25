@@ -35,8 +35,10 @@ audits in the incident's own workspace as a `system` actor.
   `requireScope(ctx, "<group>:read")`, unless they probe or send, which makes
   them writes whatever the name (`streamMonitorPreview` requires
   `monitors:write`); admin verbs with `requireScope(ctx, "admin")`. Lint
-  checks the group against the folder, and that only destructuring the
-  arguments (`const { ctx } = args;`) comes before the first `requireScope`.
+  requires it in every exported function taking a `ServiceContext` (helpers
+  taking the caller's `tx` excepted), checks the group against the folder,
+  and that only destructuring the arguments (`const { ctx } = args;`) comes
+  before the first `requireScope`.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.

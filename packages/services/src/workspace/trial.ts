@@ -39,6 +39,7 @@ export function getTrialDaysLeft(
 export async function isTrialEligibleWorkspace(args: {
   ctx: ServiceContext;
 }): Promise<boolean> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const db = ctx.db ?? defaultDb;
   const userId = "userId" in ctx.actor ? ctx.actor.userId : undefined;

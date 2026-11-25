@@ -265,6 +265,7 @@ export type LoadApprovalBeforeInput = z.infer<typeof LoadApprovalBeforeInput>;
  * or the entity is gone — the card then shows the proposed values only, and
  * Apply surfaces the real error.
  */
+// oxlint-disable-next-line openstatus/services-verbs-require-scope -- dispatches to the tool's loadBefore, and each one checks its group's read scope first
 export async function loadApprovalBefore(args: {
   ctx: ServiceContext;
   input: LoadApprovalBeforeInput;

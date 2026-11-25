@@ -2,6 +2,7 @@ import { and, eq, isNull } from "@openstatus/db";
 import { type Incident, slackUser, user } from "@openstatus/db/src/schema";
 import { incidentAwaitsAcknowledgement } from "@openstatus/db/src/schema/incidents/constants";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import {
   type SlackConnection,
@@ -125,6 +126,7 @@ function errorCode(err: Error | string): string {
 export async function incidentSlackReady(
   ctx: ServiceContext,
 ): Promise<SlackConnection | null> {
+  requireScope(ctx, "incidents:read");
   if (!ctx.workspace.limits["slack-agent"]) return null;
   const connection = await getSlackConnection({ ctx });
   if (!connection || connection.missingScopes.length > 0) return null;
@@ -202,6 +204,7 @@ export async function openIncidentSlackChannel(args: {
   clientFor: SlackClientFactory;
   dashboardUrl: string;
 }): Promise<OpenChannelResult> {
+  requireScope(args.ctx, "incidents:write");
   const { ctx, incidentId, clientFor, dashboardUrl } = args;
   const connection = await incidentSlackReady(ctx);
   if (!connection) return { status: "skipped" };
@@ -402,6 +405,7 @@ export async function announceIncidentChange(args: {
   dashboardUrl: string;
   archive?: boolean;
 }): Promise<void> {
+  requireScope(args.ctx, "incidents:write");
   const { ctx, incidentId, text, clientFor, dashboardUrl } = args;
   try {
     const incident = await getIncidentInWorkspace(
@@ -435,6 +439,7 @@ export async function announceInChannel(args: {
   dashboardUrl: string;
   archive?: boolean;
 }): Promise<void> {
+  requireScope(args.ctx, "incidents:write");
   const { ctx, incident, text, clientFor, dashboardUrl } = args;
   const channel = incident.slackChannelId;
   if (!channel) return;

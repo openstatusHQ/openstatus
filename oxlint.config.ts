@@ -161,18 +161,20 @@ export default defineConfig({
       },
     },
     {
-      // Shape-triggered: an exported list/get/search/stream/preview verb in
-      // one of the five scope groups must check `<group>:read`.
-      files: [
-        "packages/services/src/{monitor,monitor-tag,private-location,monitor-incident,frozen-uptime,maintenance-window}/*.ts",
-        "packages/services/src/{page,page-component,page-component-group,import}/*.ts",
-        "packages/services/src/{status-report,incident,maintenance}/*.ts",
-        "packages/services/src/notification/*.ts",
-        "packages/services/src/page-subscriber/*.ts",
+      // Shape-triggered: any exported function taking `ctx: ServiceContext`
+      // checks a scope first, whatever its name or folder.
+      files: ["packages/services/src/**/*.ts"],
+      excludeFiles: [
+        "**/__tests__/**",
+        "**/*.test.ts",
+        "**/internal.ts",
+        // The scope machinery itself: requireScope, transactions, features.
+        "packages/services/src/auth/**",
+        "packages/services/src/context.ts",
+        "packages/services/src/features.ts",
       ],
-      excludeFiles: ["**/__tests__/**", "**/*.test.ts", "**/internal.ts"],
       rules: {
-        "openstatus/services-read-verbs-require-scope": "error",
+        "openstatus/services-verbs-require-scope": "error",
       },
     },
     {

@@ -1,5 +1,6 @@
 import type { ChatSessionRow } from "@openstatus/db/src/schema";
 
+import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb, tryGetActorUserId } from "../context";
 import { UnauthorizedError } from "../errors";
 import { getChatSessionInWorkspace } from "./internal";
@@ -9,6 +10,7 @@ export async function getChatSession(args: {
   ctx: ServiceContext;
   input: GetChatSessionInput;
 }): Promise<ChatSessionRow> {
+  requireScope(args.ctx, "admin");
   const { ctx } = args;
   const input = GetChatSessionInput.parse(args.input);
 
