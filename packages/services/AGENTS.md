@@ -39,6 +39,12 @@ audits in the incident's own workspace as a `system` actor.
   taking the caller's `tx` excepted), checks the group against the folder,
   and that only destructuring the arguments (`const { ctx } = args;`) comes
   before the first `requireScope`.
+- **Passing the client.** Verbs read `ctx.db` (client or transaction; the
+  default client when absent). A helper that needs one takes it first, named
+  `tx` when it must be the caller's transaction (lint keys off the name) and
+  `db` otherwise. Where the client is optional, it is a `db?` field on the
+  object parameter — the args object, or a trailing `opts` object after a plain
+  first argument — never a bare trailing `db = defaultDb`.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.
@@ -83,6 +89,7 @@ must carry a reason.
 ## Scope enforcement
 
 `SCOPES.md` at the repo root lists every scope value and which verbs, routes and tools require which.
+`pnpm check:scopes` fails when its verb or tool tables drift from the code.
 
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,

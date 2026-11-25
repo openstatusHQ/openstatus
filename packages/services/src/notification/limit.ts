@@ -1,5 +1,3 @@
-import { db as defaultDb } from "@openstatus/db";
-
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { countWorkspaceUsage } from "../limits";
@@ -19,7 +17,7 @@ export async function getNotificationLimit(args: {
   const currentCount = await countWorkspaceUsage(
     ctx.workspace.id,
     "notification-channels",
-    ctx.db ?? defaultDb,
+    { db: ctx.db },
   );
   return { currentCount, maxCount, limitReached: currentCount >= maxCount };
 }

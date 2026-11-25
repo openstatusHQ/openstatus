@@ -40,5 +40,8 @@ jobs:
       - name: 🧷 Lint rule fixtures
         run: pnpm check:lint-rules
 
+      - name: 🔐 Scope tables
+        run: pnpm check:scopes
+
       - name: 🔍 Check
         run: pnpm check

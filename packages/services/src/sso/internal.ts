@@ -37,8 +37,9 @@ export async function requireOwner(tx: DB, ctx: ServiceContext): Promise<void> {
 
 export async function getWorkspaceByWorkosOrganization(
   organizationId: string,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<Workspace> {
+  const db = opts.db ?? defaultDb;
   const row = await db
     .select()
     .from(workspace)
