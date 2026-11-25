@@ -1,3 +1,4 @@
+import { withBusyRetry } from "../busy-retry";
 // Test data factories: create fresh, uniquely-identified resources so suites
 // don't collide on shared seed IDs (workspace 1, monitors 1-3, …). Each call
 // inserts a row with an auto-increment id and unique slug/name, then returns
@@ -41,59 +42,6 @@ type SlackUserInsert = typeof slackUser.$inferInsert;
 type IncidentPostmortemInsert = typeof incidentPostmortem.$inferInsert;
 
 const unique = () => crypto.randomUUID().slice(0, 8);
-
-// SQLite returns SQLITE_BUSY / SQLITE_LOCKED when a concurrent test file holds
-// the write lock, which surfaces as "database is locked" on bare inserts.
-// Retry briefly instead of failing the whole suite; mirrors the retryable-error
-// rules in @openstatus/services (which db cannot depend on — services depends on db).
-const RETRYABLE_CODES = new Set(["SQLITE_BUSY", "SQLITE_LOCKED"]);
-const RETRYABLE_MESSAGE = /database is (locked|busy)/i;
-const MAX_ATTEMPTS = 5;
-const BASE_DELAY_MS = 25;
-
-const MAX_CAUSE_DEPTH = 10;
-
-// Drizzle wraps driver errors in DrizzleQueryError ("Failed query: ...") with
-// the LibsqlError on `cause`, so walk the chain rather than checking the top.
-function isBusyError(err: unknown): boolean {
-  let current: unknown = err;
-  for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
-    if (typeof current !== "object" || current === null) return false;
-    if (
-      "code" in current &&
-      typeof current.code === "string" &&
-      RETRYABLE_CODES.has(current.code)
-    ) {
-      return true;
-    }
-    if (
-      "message" in current &&
-      typeof current.message === "string" &&
-      RETRYABLE_MESSAGE.test(current.message)
-    ) {
-      return true;
-    }
-    if (!("cause" in current) || current.cause === current) return false;
-    current = current.cause;
-  }
-  return false;
-}
-
-async function withBusyRetry<T>(fn: () => Promise<T>): Promise<T> {
-  let lastErr: unknown;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (!isBusyError(err)) throw err;
-      lastErr = err;
-      await new Promise((resolve) =>
-        setTimeout(resolve, BASE_DELAY_MS * 2 ** attempt),
-      );
-    }
-  }
-  throw lastErr;
-}
 
 export async function createWorkspace(
   overrides: Partial<WorkspaceInsert> = {},
