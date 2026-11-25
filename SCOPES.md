@@ -28,7 +28,7 @@ mount. Lint (`openstatus/services-no-legacy-scope`) rejects a bare `"read"` /
 | `notifications:write` | yes | itself, `write`, `*` | create, update, delete channels; send a test notification |
 | `subscribers:read` | yes | itself, `subscribers:write`, `read`, `write`, `*` | list and count subscribers (emails, webhook targets) |
 | `subscribers:write` | yes | itself, `write`, `*` | create, update, unsubscribe, delete subscribers; test webhooks |
-| `read` | yes, legacy | itself, `write`, `*` | every `<group>:read`; audit-log tools (snapshots span every group) |
+| `read` | yes, legacy | itself, `write`, `*` | every `<group>:read`; the audit-log verbs and tools (snapshots span every group) |
 | `write` | yes, legacy | itself, `*` | every `<group>:read` and `<group>:write`. Full access for Terraform, the CLI and CI |
 | `*` | no | itself | super-admin token and dev keys only. Satisfies everything, including `admin` |
 | `admin` | never held | `*` | required by workspace, billing, members, invitations, API keys, OAuth clients, SSO, integrations and account deletion. No key or grant can reach these |
@@ -74,6 +74,7 @@ Generated from `requireScope` calls on 2026-11-24. Regenerate with
 | `notifications:write` | createNotification, updateNotification, deleteNotification, sendTestNotification (RPC handler) |
 | `subscribers:read` | listPageSubscribers, countPageSubscribers; `listAuditLogs` / `getAuditLog` hide `page_subscriber` rows without it |
 | `subscribers:write` | createPageSubscriber, subscribeEmailInWorkspace, updatePageSubscriberChannel, unsubscribePageSubscriber, deletePageSubscriber, sendPageSubscriberTestWebhook |
+| `read` | listAuditLogs, getAuditLog (the audit log spans every group) |
 | `admin` | createApiKey, revokeApiKey (except self-revoke), createInvitation, getInvitation, acceptInvitation, deleteInvitation, deleteMember, transferOwnership, enableSso, disableSso, joinSsoWorkspace, syncSsoDomain, removeSsoDomain, createSsoPortalLink, exchangeCode, revokeGrant, revokeGrantAsOwner, installSlackAgent, uninstallSlackAgent, deleteIntegration, createSlackUserMapping, updateWorkspaceName, updateWorkspacePlan, updateWorkspaceLimits, updateWorkspaceStripeId, markWorkspaceTrialed, previewWorkspaceDowngrade, downgradeWorkspaceToFree, deleteAccount |
 | `any` | submitFeedback, hasSubmittedFeedback |
 

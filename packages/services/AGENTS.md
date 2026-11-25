@@ -94,6 +94,8 @@ Credentials still hold the legacy umbrellas: `write` covers every group scope,
 `read` covers every `<group>:read`. Never require a
 bare `read` / `write` in a verb — `matchesScope` in `src/auth` is the one
 place that knows what the umbrellas expand to, and lint rejects the literals.
+The audit-log reads are the one exception: the log spans every group, so they
+require `read` with an inline disable.
 
 `requireScope` is a no-op for `user` / `system` / `slack` / `webhook` /
 `subscriber` actors and active for `apiKey` and `mcp`. MCP tools declare
