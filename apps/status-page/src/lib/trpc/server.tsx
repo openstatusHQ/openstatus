@@ -15,5 +15,5 @@ export const {
   // Lazy: `../auth` imports this module, so referencing `auth` eagerly would
   // hit a circular-init TDZ.
   makeQueryClient,
-  auth: () => auth(),
+  viewerAuth: () => auth(),
 });

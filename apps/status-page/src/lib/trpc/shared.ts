@@ -1,4 +1,4 @@
-import type { AppRouter } from "@openstatus/api";
+import type { StatusPageAppRouter } from "@openstatus/api/src/status-page";
 import * as Sentry from "@sentry/nextjs";
 import type { HTTPBatchLinkOptions, HTTPHeaders, TRPCLink } from "@trpc/client";
 import { httpBatchLink, loggerLink } from "@trpc/client";
@@ -12,8 +12,8 @@ import superjson from "superjson";
  * Only the operation `path` is attached — never `input`, which can carry
  * secrets (page passwords, subscriber tokens, emails).
  */
-export const sentryLoggerLink = (): TRPCLink<AppRouter> =>
-  loggerLink<AppRouter>({
+export const sentryLoggerLink = (): TRPCLink<StatusPageAppRouter> =>
+  loggerLink<StatusPageAppRouter>({
     enabled: (opts) =>
       process.env.NODE_ENV === "development" ||
       (opts.direction === "down" && opts.result instanceof Error),
@@ -74,7 +74,7 @@ export const endingLink =
   (opts?: {
     fetch?: typeof fetch;
     headers?: HTTPHeaders | (() => HTTPHeaders | Promise<HTTPHeaders>);
-  }): TRPCLink<AppRouter> =>
+  }): TRPCLink<StatusPageAppRouter> =>
   (runtime) =>
     httpBatchLink({
       headers: opts?.headers,

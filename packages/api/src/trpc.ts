@@ -18,13 +18,16 @@ import {
   resolveUserWorkspaces,
 } from "./auth/resolve-active-workspace";
 
-// Generic session type that works with both User and Viewer
 type Session = {
   user?: {
     id?: string | null;
     email?: string | null;
   } | null;
 } | null;
+
+// Viewer ids share a numeric space with dashboard user ids, so only the email
+// crosses into the context — a viewer must never be resolvable as a user.
+type Viewer = { email?: string | null };
 
 /**
  * 1. CONTEXT
@@ -37,6 +40,7 @@ type Session = {
  */
 type CreateContextOptions = {
   session: Session | null;
+  viewer?: Viewer | null;
   workspace?: Workspace | null;
   workspaces?: Workspace[] | null;
   user?: User | null;
@@ -82,10 +86,16 @@ export const createInnerTRPCContext = (opts: CreateContextOptions) => {
 export const createTRPCContext = async (opts: {
   req: NextRequest;
   serverSideCall?: boolean;
+  /** Dashboard user session. Never pass a status-page viewer session here. */
   auth?: () => Promise<Session>;
+  /** Status-page viewer session; only its email reaches `ctx.viewer`. */
+  viewerAuth?: () => Promise<Session>;
 }) => {
-  // Use provided auth function or return null session
   const session = opts.auth ? await opts.auth() : null;
+  const viewerEmail = opts.viewerAuth
+    ? (await opts.viewerAuth())?.user?.email
+    : null;
+  const viewer = viewerEmail ? { email: viewerEmail } : null;
   const workspace = null;
   const workspaces = null;
   const user = null;
@@ -103,6 +113,7 @@ export const createTRPCContext = async (opts: {
 
   return createInnerTRPCContext({
     session,
+    viewer,
     workspace,
     workspaces,
     user,

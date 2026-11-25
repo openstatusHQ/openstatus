@@ -1,4 +1,4 @@
-import type { AppRouter } from "@openstatus/api";
+import type { StatusPageAppRouter } from "@openstatus/api/src/status-page";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createTRPCClient } from "@trpc/client";
 import { createTRPCOptionsProxy } from "@trpc/tanstack-react-query";
@@ -56,8 +56,8 @@ function render({
 }) {
   const cardType = barType === "manual" ? "manual" : "requests";
   const queryClient = new QueryClient();
-  const trpcClient = createTRPCClient<AppRouter>({ links: [] });
-  const trpc = createTRPCOptionsProxy<AppRouter>({
+  const trpcClient = createTRPCClient<StatusPageAppRouter>({ links: [] });
+  const trpc = createTRPCOptionsProxy<StatusPageAppRouter>({
     client: trpcClient,
     queryClient,
   });

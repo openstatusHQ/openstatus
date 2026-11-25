@@ -34,7 +34,8 @@ function caller(opts?: { headers?: Record<string, string>; email?: string }) {
   return appRouter.createCaller(
     createInnerTRPCContext({
       req: new NextRequest("http://rsc.internal", { headers: opts?.headers }),
-      session: opts?.email ? { user: { email: opts.email } } : null,
+      session: null,
+      viewer: opts?.email ? { email: opts.email } : null,
     }),
   );
 }

@@ -22,6 +22,11 @@ with a visitor from `visitorFromCtx` (`packages/api/src/lib/page-access.ts`),
 which carries the password rate limit (a no-op without Redis). `guardTRPCSource` filters on a spoofable
 header and is not a security boundary.
 
+The HTTP endpoint mounts `statusPageAppRouter` only, and the viewer session is
+passed as `viewerAuth`, which puts just the email on `ctx.viewer`. Never mount
+`appRouter` here or pass a viewer session as `auth` — viewer ids and dashboard
+user ids share a numeric space.
+
 Never log or report tRPC `input` — it carries page passwords and subscriber
 tokens. `sentryLoggerLink` attaches the operation `path` only.
 
