@@ -476,11 +476,19 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
     const slack = new WebClient(resolved.botToken);
     // Without the plan the agent can't answer, so don't advertise it to the channel.
     if (slackAgentAllowed(resolved.workspace)) {
-      await slack.chat.postMessage({
-        channel,
-        text: CHANNEL_INTRO_TEXT,
-        blocks: buildChannelIntroBlocks(resolved.botUserId),
-      });
+      try {
+        await slack.chat.postMessage({
+          channel,
+          text: CHANNEL_INTRO_TEXT,
+          blocks: buildChannelIntroBlocks(resolved.botUserId),
+        });
+      } catch (error) {
+        logger.warn("slack failed to send channel intro", {
+          error,
+          teamId,
+          channel,
+        });
+      }
     }
     await slack.chat.postEphemeral({
       channel,
