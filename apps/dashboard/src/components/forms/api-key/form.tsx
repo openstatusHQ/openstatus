@@ -212,7 +212,7 @@ export function ApiKeyForm({
                         compareDate.setHours(0, 0, 0, 0);
                         return compareDate < today;
                       }}
-                      initialFocus
+                      autoFocus
                     />
                   </PopoverContent>
                 </Popover>

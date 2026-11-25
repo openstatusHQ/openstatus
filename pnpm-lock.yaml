@@ -122,9 +122,6 @@ catalogs:
     '@auth/drizzle-adapter':
       specifier: 1.11.3
       version: 1.11.3
-    '@aws-sdk/client-s3':
-      specifier: 3.1137.0
-      version: 3.1137.0
     '@bufbuild/buf':
       specifier: 1.73.0
       version: 1.73.0
@@ -453,11 +450,11 @@ catalogs:
       specifier: 0.6.5
       version: 0.6.5
     date-fns:
-      specifier: 3.6.0
-      version: 3.6.0
+      specifier: 4.4.0
+      version: 4.4.0
     date-fns-tz:
-      specifier: 2.0.1
-      version: 2.0.1
+      specifier: 3.2.0
+      version: 3.2.0
     dotenv:
       specifier: 18.0.2
       version: 18.0.2
@@ -554,9 +551,6 @@ catalogs:
     percentile:
       specifier: 1.6.0
       version: 1.6.0
-    playwright:
-      specifier: 1.63.0
-      version: 1.63.0
     postcss:
       specifier: 8.5.28
       version: 8.5.28
@@ -573,8 +567,8 @@ catalogs:
       specifier: 19.3.0
       version: 19.3.0
     react-day-picker:
-      specifier: 8.10.2
-      version: 8.10.2
+      specifier: 10.0.2
+      version: 10.0.2
     react-dom:
       specifier: 19.3.0
       version: 19.3.0
@@ -930,7 +924,7 @@ importers:
         version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       date-fns:
         specifier: 'catalog:'
-        version: 3.6.0
+        version: 4.4.0
       lucide-react:
         specifier: 'catalog:'
         version: 0.525.0(react@19.3.0)
@@ -957,7 +951,7 @@ importers:
         version: 19.3.0
       react-day-picker:
         specifier: 'catalog:'
-        version: 8.10.2(date-fns@3.6.0)(react@19.3.0)
+        version: 10.0.2(@types/react@19.3.0)(react@19.3.0)
       react-dom:
         specifier: 'catalog:'
         version: 19.3.0(react@19.3.0)
@@ -1122,46 +1116,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.2)(jsdom@30.1.1)(msw@2.15.0(@types/node@26.6.2)(typescript@7.0.2))(vite@8.3.4(@types/node@26.6.2)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
-
-  apps/screenshot-service:
-    dependencies:
-      '@aws-sdk/client-s3':
-        specifier: 'catalog:'
-        version: 3.1137.0
-      '@hono/zod-validator':
-        specifier: 'catalog:'
-        version: 0.8.0(hono@4.13.8)(zod@4.6.5)
-      '@openstatus/services':
-        specifier: workspace:*
-        version: link:../../packages/services
-      '@openstatus/utils':
-        specifier: workspace:^
-        version: link:../../packages/utils
-      '@t3-oss/env-core':
-        specifier: 'catalog:'
-        version: 0.13.11(typescript@7.0.2)(zod@4.6.5)
-      '@upstash/qstash':
-        specifier: 'catalog:'
-        version: 2.11.3
-      hono:
-        specifier: 'catalog:'
-        version: 4.13.8
-      playwright:
-        specifier: 'catalog:'
-        version: 1.63.0
-      zod:
-        specifier: 'catalog:'
-        version: 4.6.5
-    devDependencies:
-      '@openstatus/tsconfig':
-        specifier: workspace:*
-        version: link:../../packages/tsconfig
-      '@types/node':
-        specifier: 'catalog:'
-        version: 26.6.2
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
 
   apps/server:
     dependencies:
@@ -1531,7 +1485,7 @@ importers:
         version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       date-fns:
         specifier: 'catalog:'
-        version: 3.6.0
+        version: 4.4.0
       feed:
         specifier: 'catalog:'
         version: 4.2.2
@@ -1564,7 +1518,7 @@ importers:
         version: 19.3.0
       react-day-picker:
         specifier: 'catalog:'
-        version: 8.10.2(date-fns@3.6.0)(react@19.3.0)
+        version: 10.0.2(@types/react@19.3.0)(react@19.3.0)
       react-dom:
         specifier: 'catalog:'
         version: 19.3.0(react@19.3.0)
@@ -1790,10 +1744,10 @@ importers:
         version: 0.6.5
       date-fns:
         specifier: 'catalog:'
-        version: 3.6.0
+        version: 4.4.0
       date-fns-tz:
         specifier: 'catalog:'
-        version: 2.0.1(date-fns@3.6.0)
+        version: 3.2.0(date-fns@4.4.0)
       feed:
         specifier: 'catalog:'
         version: 4.2.2
@@ -1832,7 +1786,7 @@ importers:
         version: 19.3.0
       react-day-picker:
         specifier: 'catalog:'
-        version: 8.10.2(date-fns@3.6.0)(react@19.3.0)
+        version: 10.0.2(@types/react@19.3.0)(react@19.3.0)
       react-dom:
         specifier: 'catalog:'
         version: 19.3.0(react@19.3.0)
@@ -2253,7 +2207,7 @@ importers:
         version: 7.0.109(zod@4.6.5)
       date-fns:
         specifier: 'catalog:'
-        version: 3.6.0
+        version: 4.4.0
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.3(@libsql/client@0.17.4)(@opentelemetry/api@1.9.1)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.4.2)
@@ -2521,7 +2475,7 @@ importers:
     dependencies:
       date-fns:
         specifier: 'catalog:'
-        version: 3.6.0
+        version: 4.4.0
     devDependencies:
       '@openstatus/tsconfig':
         specifier: workspace:*
@@ -3420,7 +3374,7 @@ importers:
         version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       date-fns:
         specifier: 'catalog:'
-        version: 3.6.0
+        version: 4.4.0
       lucide-react:
         specifier: 'catalog:'
         version: 0.525.0(react@19.3.0)
@@ -3444,7 +3398,7 @@ importers:
         version: 19.3.0
       react-day-picker:
         specifier: 'catalog:'
-        version: 8.10.2(date-fns@3.6.0)(react@19.3.0)
+        version: 10.0.2(@types/react@19.3.0)(react@19.3.0)
       react-hook-form:
         specifier: 'catalog:'
         version: 7.88.0(react@19.3.0)
@@ -3668,78 +3622,6 @@ packages:
 
   '@auth/drizzle-adapter@1.11.3':
     resolution: {integrity: sha512-TxqVasPVuf7LDAT1Yuu6bftpuet8o0tjdXW+mXpnXWdSRPQsomdzMoz9RsXkFN/JfdK+/DwdgOEmOTv1gbiFNw==}
-
-  '@aws-sdk/checksums@3.1001.0':
-    resolution: {integrity: sha512-6uTniZc87q+B5eXouGTl+7Tmc482rEeCcvxpsvREP8EfF0gvloRZ41UOA9sbSJlyy8TbqIBXb3kKfKarEArUQA==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/client-s3@3.1137.0':
-    resolution: {integrity: sha512-ppiYnDyy2qCDT3PIV83XJwAi0BhVUZ/jOHxUgC5tlMCaFeKRL8PVVub8A0pUMkF1yvZtzNOp3ClbmTCcIa9w3g==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/core@3.978.0':
-    resolution: {integrity: sha512-2yX9LUmxPklVjSGTb8dfnWRJSiFQ3TeH2nn7G1mdKHTfnabzF0+gfrS8rYfLWmZrQ8A3mEcxMJjRc51dL5KWaA==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-env@3.972.71':
-    resolution: {integrity: sha512-JN+JHruYZw3GUZB8YGAlDk4wTDPOEAEEdEzj5nS0xodWR4smzHsN7PnK2j6IeOsDIj2aqua5DSbhXl9Gtf90FQ==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-http@3.972.73':
-    resolution: {integrity: sha512-uyYYnJOnlis8uQzaYGPd7N1JoioCoNpXgnkXYixsWJXHXgXyYi8WXJSDfofxJeWfQIGWLe2Nwyq60Uc7MZdVOg==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-ini@3.973.16':
-    resolution: {integrity: sha512-i++ly+0Uxa+u3ebSSyr0S/3CFhFJDxCXT3+Zj+mW2bXenEx5bKGCdTIKFu39SgXBNhWDjex/8cXUx9MUTMCrTw==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-login@3.972.78':
-    resolution: {integrity: sha512-eUtswnXu0+Ii9ieRK+0L7aPFV3Z/dnW2VntJzjBP9xs8s+8p5nBNuymIXtXwZ+5r5+XJP3e32nMkuZ/r0HozEA==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-node@3.972.83':
-    resolution: {integrity: sha512-jdso7ejzfRnatxMUZK4S/U6KbaDPCvfIV4XL+IQAPFDBt5rj5Fq595euqlK8Le4lNCMFR9oUpt+1l0aMgaayOQ==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-process@3.972.71':
-    resolution: {integrity: sha512-lYmXJa4gvq4xN1lrT5NiP5vIYYKcGWAdj8y+8o6dlcateB5eF3Dn8DtmjjHKfMBrTPAMr2pebIiX/UOj8c1/UA==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-sso@3.973.15':
-    resolution: {integrity: sha512-6Jhcf4v0pSFdjk1EW2kvzuEBKD+UZ2uNcHUIglKKLndD20YhvkL2kdmDOV5/j4mYuWWwe/a1FQ1aomU86/Cg5Q==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/credential-provider-web-identity@3.972.77':
-    resolution: {integrity: sha512-uylIQSUWpfLuH2LovxEEfwzJGM/SabLOfLMg6YXu/E8jJEKUdpdILCVCQCdFvHyu/7dLJOHPMfrSwduxO56NkQ==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/middleware-sdk-s3@3.972.76':
-    resolution: {integrity: sha512-NfnTkVUTBKTBuBgqaapFK9r3YdkKt1b2oRvgLzZq91bwNKh6ZS0S7sEcheguttREaL4iyfs/xQnqD7Z7AsWSsA==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/nested-clients@3.997.45':
-    resolution: {integrity: sha512-mooq9Q+jLa18VoM7HouczmslZU60iiB0aKc/Ztnq/luIL1ud0z4DnYprLR/ZO1gp331S9tJctM1HZr7u6YKBXQ==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/signature-v4-multi-region@3.996.46':
-    resolution: {integrity: sha512-L+2xZTye/2T96f3lwCws0Zw6GG2JHZW9e8FpVgGBeeExSKyeoZ6CWRpBml/7DNiK/O26jrgPM9F+Ay8VkgzUWQ==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/token-providers@3.1129.0':
-    resolution: {integrity: sha512-Sbl3rpzQdsG4ZK2zh0JWUYyZPKKorJlVOddA2T0DVbKJFrsW8J6wgnslxxUH04+WaBMr4A1HzJZvZX0xUvkniA==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/types@3.974.5':
-    resolution: {integrity: sha512-LkwLL2BLbC6wNNm4JaH9mbEqBMdOZCct6VAYqhdN4U1xrWM+fUJQEfbHwQgDypapOWTRtlk25akb5afM0P8CIQ==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws-sdk/xml-builder@3.972.40':
-    resolution: {integrity: sha512-wlFmCIGUlwF4zx/kncw+bmxTQh1HeSJq4mYV/V5cZUSJadDP3kXvGW8Rn21cimj/7y9ju+47oYWXi97vF7czaA==}
-    engines: {node: '>=20.0.0'}
-
-  '@aws/lambda-invoke-store@0.3.0':
-    resolution: {integrity: sha512-sl4Bm6yiMNYrZKkqqDFWN0UfnWhlS8ivKxrYl+6t0gCLrqr8y3B2IqZZbFRkfaVVp7C/baApyh71P+LeE1A2sQ==}
-    engines: {node: '>=18.0.0'}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -8331,33 +8213,6 @@ packages:
     resolution: {integrity: sha512-am/z/LLbEC7gNQp6FpaGT0l4XnWqcXetpwdgZHzS7Nbb96q9R9QwWA3lo0ZXGuAHDkct0MvFnouzuc2Y4XNmow==}
     engines: {node: '>= 20', npm: '>=9.6.4'}
 
-  '@smithy/core@3.34.1':
-    resolution: {integrity: sha512-dLcOUxz8YCv1RZUMKq6GbyUf95pLbrqh34bPvpCZ1+CByFF31BEAFewZjsGCnVsZTKdThNENfGyAgk2TJqVwSw==}
-    engines: {node: '>=18.0.0'}
-    deprecated: |-
-      Deprecated due to a bug in custom logger data redaction. Upgrade to the latest version. If you used a custom logger with this
-        version, review your logs and rotate any credentials or other secrets. See https://github.com/aws/aws-sdk-js-v3/issues/8393.
-
-  '@smithy/credential-provider-imds@4.5.2':
-    resolution: {integrity: sha512-A9uSdn72ozbRUSit0eib0TW7nXuNPlaeM0zcGkJ+nE6tFcSDbnmtwoxbTCFBukVQcszDAyvsd7+rTduPTXpygg==}
-    engines: {node: '>=18.0.0'}
-
-  '@smithy/fetch-http-handler@5.8.0':
-    resolution: {integrity: sha512-ycSJu3tFAQ4v04CBB0agqFMVsSQ1iG3yw+SpgxRqKfaURpQD4CZ8Wn0zPMmSnOuTpTh65Vz+EA0rMrw089wvkA==}
-    engines: {node: '>=18.0.0'}
-
-  '@smithy/node-http-handler@4.12.1':
-    resolution: {integrity: sha512-ThMkboGeONWXAelq9FvGsuJC4rOi+qyC4/zhUF58xYpxUg5sQKx2VXZYJmtNjr4dSuBJ1HeJXETQILCz3wOHvw==}
-    engines: {node: '>=18.0.0'}
-
-  '@smithy/signature-v4@5.7.3':
-    resolution: {integrity: sha512-7ImGm+FkHRLcBaRttIAMZ6bzJZWb2cJGoYjq46F2UjycujWzrL9GEN9h4w7eQyXJYnltrUhxbbieBAIRrdqpow==}
-    engines: {node: '>=18.0.0'}
-
-  '@smithy/types@4.18.0':
-    resolution: {integrity: sha512-CgB6HHWer/vrKps24ulRIbpcpb7K4xAU7SkZ7YHzBPlwHsvsrCJFEXK421s+cJzX+ZrqtA/TuU5w1HzI7k9N8A==}
-    engines: {node: '>=18.0.0'}
-
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
 
@@ -9583,9 +9438,6 @@ packages:
   boolbase@1.0.0:
     resolution: {integrity: sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==}
 
-  bowser@2.14.1:
-    resolution: {integrity: sha512-tzPjzCxygAKWFOJP011oxFHs57HzIhOEracIgAePE4pqB3LikALKnSzUyU4MGs9/iCEUuHlAJTjTc5M+u7YEGg==}
-
   brace-expansion@5.0.12:
     resolution: {integrity: sha512-YovQ3rzhaLMIrDjNDMkNS01tea93qhEhG5xy8f6+R0l+dw3Ki+5sCoIoI942iuLZTHWogWktgwVDhU09iNEimQ==}
     engines: {node: 20 || >=22}
@@ -9928,13 +9780,13 @@ packages:
     resolution: {integrity: sha512-23XHcCF+coGYevirZceTVD7NdJOqVn+49IHyxgszm+JIiHLoB2TkmPtsYkNWT1pvRSGkc35L6NHs0yHkN2SumA==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
 
-  date-fns-tz@2.0.1:
-    resolution: {integrity: sha512-fJCG3Pwx8HUoLhkepdsP7Z5RsucUi+ZBOxyM5d0ZZ6c4SdYustq0VMmOu6Wf7bli+yS/Jwp91TOCqn9jMcVrUA==}
+  date-fns-tz@3.2.0:
+    resolution: {integrity: sha512-sg8HqoTEulcbbbVXeg84u5UnlsQa8GS5QXMqjjYIhS4abEVVKIUwe0/l/UhrZdKaL/W5eWZNlbTeEIiOXTcsBQ==}
     peerDependencies:
-      date-fns: 2.x
+      date-fns: ^3.0.0 || ^4.0.0
 
-  date-fns@3.6.0:
-    resolution: {integrity: sha512-fRHTG8g/Gif+kSh50gaGEdToemgfj74aRX3swtiouboip5JDLAyDE9F11nHMIcvOaXeOC6D7SpNhi7uFyB7Uww==}
+  date-fns@4.4.0:
+    resolution: {integrity: sha512-+1UMbeh68lH1SegH83CGWwpb6OHHbpSgr3+s5Eww5M4CAgswBpoWS0AjTOfEJ33HiYKz1hdj/KTFprzXHmq/6w==}
 
   dayjs@1.11.23:
     resolution: {integrity: sha512-QDTCU0M0MxR3hQfnlDJfwekQiaanm1ubOD231u73WBckQ/fsamwRLiE2GBz6D3a/xF1NgfiDLJjXBa1hYOYTtQ==}
@@ -12128,16 +11980,6 @@ packages:
     resolution: {integrity: sha512-nDywThFk1i4BQK4twPQ6TA4RT8bDY96yeuCVBWL3ePARCiEKDRSrNGbFIgUJpLp+XeIR65v8ra7WuJOFUBtkMA==}
     engines: {node: '>=8'}
 
-  playwright-core@1.63.0:
-    resolution: {integrity: sha512-rYCsBF/M5HjUch52bbtVONEFjv6Xu8sm8h72dNlR5bzIE1fvC/bxgspzkjSfU+MweEMmPM8KJebG6nnyxo5mCg==}
-    engines: {node: '>=20'}
-    hasBin: true
-
-  playwright@1.63.0:
-    resolution: {integrity: sha512-+7ziBLidS4NaNCdt57SUDT+wYmmd5fmiQejUic/kb+YsYSCPyOOE9sebzMjNmQrsnNpDJqd4WHvV/8lfKfUDUg==}
-    engines: {node: '>=20'}
-    hasBin: true
-
   po-parser@2.2.0:
     resolution: {integrity: sha512-NdTrKgh0oO7+y+RFX8KKhOB438x/j94UGXEFzl/7pHH0JjWSn42iJ9tgmPksIO6n1JKDHmNDcejPJfKspljB9g==}
 
@@ -12331,11 +12173,15 @@ packages:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
 
-  react-day-picker@8.10.2:
-    resolution: {integrity: sha512-LK68OTbHB3oJNhl9cA0qVizzp3o26w61YSjAFkYi67N86iro32wx86kSNeFU/hq+gI8m1yzWhnomMLfZ041RzQ==}
+  react-day-picker@10.0.2:
+    resolution: {integrity: sha512-QetiKtZWE9Uaw/pM/SYNv6WPYOTRnSJ2puL0GgwkmUFMIwiY0dtjH1W4B7DOVXVNQM0ZOClGpH/heOfBSzWeiA==}
+    engines: {node: '>=18'}
     peerDependencies:
-      date-fns: ^2.28.0 || ^3.0.0
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      '@types/react': '>=16.8.0'
+      react: '>=16.8.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   react-dom@19.3.0:
     resolution: {integrity: sha512-JDk8dgif51OjFoDE70+OT9ICyYr+69HlmihNwp1+Nsfbna3t5sIiCa9ZJktDmQ4/1b/rn26hIAR2uYXDMr5r0Q==}
@@ -13690,12 +13536,15 @@ packages:
 
   yuku-ast@0.10.2:
     resolution: {integrity: sha512-UnG9mA6giglCvSErft2/40TVFX750Sj1xgwddPLpG7J7rlr/P1wPADg9G2RK+d/1tNLtRVoLdMMOMVBB9561TQ==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-codegen@0.10.2:
     resolution: {integrity: sha512-hentl2dtrF6cPjiAirtkfxfFZBA6Hdm61UqRJ7cA0qrlDNMk9PZGOjw5w1mx3E0hu/6pHcJF4dJW+D0SXHPZOA==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   yuku-parser@0.10.2:
     resolution: {integrity: sha512-CgaU0/PPjCAIEZ3WQroosOxTY3eeKldAN3h+vk8pMNz4+jl1CZzBR4pW+K/rRPF112VooCL5FdjJoiMNjDrL2A==}
+    deprecated: 'Yuku is now one package with one core. Use "yuku" instead: https://yuku.fyi/javascript/. Existing installs keep working but get no more fixes.'
 
   zod-to-json-schema@3.25.2:
     resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
@@ -13818,171 +13667,6 @@ snapshots:
       - '@simplewebauthn/browser'
       - '@simplewebauthn/server'
       - nodemailer
-
-  '@aws-sdk/checksums@3.1001.0':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/client-s3@3.1137.0':
-    dependencies:
-      '@aws-sdk/checksums': 3.1001.0
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/credential-provider-node': 3.972.83
-      '@aws-sdk/middleware-sdk-s3': 3.972.76
-      '@aws-sdk/signature-v4-multi-region': 3.996.46
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/fetch-http-handler': 5.8.0
-      '@smithy/node-http-handler': 4.12.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/core@3.978.0':
-    dependencies:
-      '@aws-sdk/types': 3.974.5
-      '@aws-sdk/xml-builder': 3.972.40
-      '@aws/lambda-invoke-store': 0.3.0
-      '@smithy/core': 3.34.1
-      '@smithy/signature-v4': 5.7.3
-      '@smithy/types': 4.18.0
-      bowser: 2.14.1
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-env@3.972.71':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-http@3.972.73':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/fetch-http-handler': 5.8.0
-      '@smithy/node-http-handler': 4.12.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-ini@3.973.16':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/credential-provider-env': 3.972.71
-      '@aws-sdk/credential-provider-http': 3.972.73
-      '@aws-sdk/credential-provider-login': 3.972.78
-      '@aws-sdk/credential-provider-process': 3.972.71
-      '@aws-sdk/credential-provider-sso': 3.973.15
-      '@aws-sdk/credential-provider-web-identity': 3.972.77
-      '@aws-sdk/nested-clients': 3.997.45
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/credential-provider-imds': 4.5.2
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-login@3.972.78':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/nested-clients': 3.997.45
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-node@3.972.83':
-    dependencies:
-      '@aws-sdk/credential-provider-env': 3.972.71
-      '@aws-sdk/credential-provider-http': 3.972.73
-      '@aws-sdk/credential-provider-ini': 3.973.16
-      '@aws-sdk/credential-provider-process': 3.972.71
-      '@aws-sdk/credential-provider-sso': 3.973.15
-      '@aws-sdk/credential-provider-web-identity': 3.972.77
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/credential-provider-imds': 4.5.2
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-process@3.972.71':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-sso@3.973.15':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/nested-clients': 3.997.45
-      '@aws-sdk/token-providers': 3.1129.0
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/credential-provider-web-identity@3.972.77':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/nested-clients': 3.997.45
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/middleware-sdk-s3@3.972.76':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/signature-v4-multi-region': 3.996.46
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/nested-clients@3.997.45':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/signature-v4-multi-region': 3.996.46
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/fetch-http-handler': 5.8.0
-      '@smithy/node-http-handler': 4.12.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/signature-v4-multi-region@3.996.46':
-    dependencies:
-      '@aws-sdk/types': 3.974.5
-      '@smithy/signature-v4': 5.7.3
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/token-providers@3.1129.0':
-    dependencies:
-      '@aws-sdk/core': 3.978.0
-      '@aws-sdk/nested-clients': 3.997.45
-      '@aws-sdk/types': 3.974.5
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/types@3.974.5':
-    dependencies:
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws-sdk/xml-builder@3.972.40':
-    dependencies:
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@aws/lambda-invoke-store@0.3.0': {}
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -18015,39 +17699,6 @@ snapshots:
       p-retry: 4.6.2
       retry: 0.13.1
 
-  '@smithy/core@3.34.1':
-    dependencies:
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@smithy/credential-provider-imds@4.5.2':
-    dependencies:
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@smithy/fetch-http-handler@5.8.0':
-    dependencies:
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@smithy/node-http-handler@4.12.1':
-    dependencies:
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@smithy/signature-v4@5.7.3':
-    dependencies:
-      '@smithy/core': 3.34.1
-      '@smithy/types': 4.18.0
-      tslib: 2.8.1
-
-  '@smithy/types@4.18.0':
-    dependencies:
-      tslib: 2.8.1
-
   '@socket.io/component-emitter@3.1.2': {}
 
   '@solid-primitives/event-listener@2.4.6(solid-js@1.9.15)':
@@ -19085,8 +18736,6 @@ snapshots:
 
   boolbase@1.0.0: {}
 
-  bowser@2.14.1: {}
-
   brace-expansion@5.0.12:
     dependencies:
       balanced-match: 4.0.4
@@ -19397,11 +19046,11 @@ snapshots:
     transitivePeerDependencies:
       - '@noble/hashes'
 
-  date-fns-tz@2.0.1(date-fns@3.6.0):
+  date-fns-tz@3.2.0(date-fns@4.4.0):
     dependencies:
-      date-fns: 3.6.0
+      date-fns: 4.4.0
 
-  date-fns@3.6.0: {}
+  date-fns@4.4.0: {}
 
   dayjs@1.11.23: {}
 
@@ -21887,12 +21536,6 @@ snapshots:
     dependencies:
       find-up: 3.0.0
 
-  playwright-core@1.63.0: {}
-
-  playwright@1.63.0:
-    dependencies:
-      playwright-core: 1.63.0
-
   po-parser@2.2.0: {}
 
   postal-mime@2.7.6: {}
@@ -22122,10 +21765,13 @@ snapshots:
       iconv-lite: 0.7.3
       unpipe: 1.0.0
 
-  react-day-picker@8.10.2(date-fns@3.6.0)(react@19.3.0):
+  react-day-picker@10.0.2(@types/react@19.3.0)(react@19.3.0):
     dependencies:
-      date-fns: 3.6.0
+      '@date-fns/tz': 1.5.0
+      date-fns: 4.4.0
       react: 19.3.0
+    optionalDependencies:
+      '@types/react': 19.3.0
 
   react-dom@19.3.0(react@19.3.0):
     dependencies:

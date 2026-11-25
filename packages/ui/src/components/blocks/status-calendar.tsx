@@ -395,31 +395,22 @@ export function StatusCalendar({
       <div className="border-t">
         <ActiveDayContext.Provider value={activeDayKey}>
           <DayPicker
-            mode="default"
             month={currentMonth}
             weekStartsOn={weekStartsOn}
             showOutsideDays={false}
+            hideNavigation
             locale={locale}
             className="w-full"
             classNames={{
               months: "flex flex-col",
               month: "flex flex-col w-full",
-              caption: "hidden",
-              table: "w-full border-collapse",
-              head_row: "flex w-full border-b",
-              head_cell:
+              month_caption: "hidden",
+              month_grid: "w-full border-collapse",
+              weekdays: "flex w-full border-b",
+              weekday:
                 "flex-1 text-muted-foreground font-mono font-normal text-[0.7rem] uppercase tracking-wide py-1.5 border-r last:border-r-0",
-              row: "flex w-full border-b last:border-b-0",
-              cell: "flex-1 relative p-0 text-center text-sm border-r last:border-r-0 focus-within:relative focus-within:z-20",
-              day: cn(
-                "text-foreground/80 inline-flex h-12 w-full items-center justify-center text-sm font-normal transition-colors",
-                "hover:bg-accent hover:text-accent-foreground",
-                "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
-              ),
-              day_today: "text-foreground font-semibold",
-              day_outside: "text-muted-foreground/50",
-              day_disabled: "text-muted-foreground/40 cursor-not-allowed",
-              day_hidden: "invisible",
+              week: "flex w-full border-b last:border-b-0",
+              day: "flex-1 relative p-0 text-center text-sm border-r last:border-r-0 focus-within:relative focus-within:z-20",
             }}
             components={dayPickerComponents}
           />
@@ -429,7 +420,7 @@ export function StatusCalendar({
   );
 }
 
-interface CalendarDayProps extends DayProps {
+interface CalendarDayOptions {
   markersByDay: Map<string, StatusCalendarMarker[]>;
   isTouch: boolean;
   onClickDay: (key: string) => void;
@@ -448,175 +439,212 @@ interface CalendarDayProps extends DayProps {
   maxDay: Date | null;
 }
 
-const CalendarDay = forwardRef<HTMLElement, CalendarDayProps>(
-  function CalendarDay(
-    {
-      date,
-      displayMonth,
-      markersByDay,
-      isTouch,
-      onClickDay,
-      onHoverStart,
-      onHoverEnd,
-      onHoverCardEnter,
-      onHoverCardLeave,
-      onFocusDay,
-      onBlurDay,
-      onClose,
-      renderMarkerRowRef,
-      renderDayCardRef,
-      maxDay,
-    },
-    forwardedRef,
-  ) {
-    // With `mode="default"`, useDayRender returns `isButton: false` for every
-    // day — DayPicker only generates click handlers under a selection mode.
-    // We don't need DayPicker's interactivity (we drive our own hover popover),
-    // so we skip useDayRender entirely and render our own trigger.
-    const activeDayKey = useContext(ActiveDayContext);
-    const thisDayKey = dayKey(startOfDay(date));
-    const isOutside =
-      startOfMonth(date).getTime() !== startOfMonth(displayMonth).getTime();
+type CalendarDayProps = DayProps & CalendarDayOptions;
 
-    // Overriding `components.Day` bypasses DayPicker's own hide-outside-days
-    // logic — we have to drop these cells ourselves so the grid only shows the
-    // current month.
-    if (isOutside) {
-      return (
-        <div data-day-state="outside" className="bg-muted/30 h-12 w-full" />
-      );
-    }
+// DayPicker's `Day` is the grid cell itself; our content replaces its children.
+function CalendarDay({
+  day,
+  modifiers: _modifiers,
+  children: _children,
+  markersByDay,
+  isTouch,
+  onClickDay,
+  onHoverStart,
+  onHoverEnd,
+  onHoverCardEnter,
+  onHoverCardLeave,
+  onFocusDay,
+  onBlurDay,
+  onClose,
+  renderMarkerRowRef,
+  renderDayCardRef,
+  maxDay,
+  ...cellProps
+}: CalendarDayProps) {
+  return (
+    <td {...cellProps}>
+      <CalendarDayContent
+        date={day.date}
+        isOutside={day.outside}
+        markersByDay={markersByDay}
+        isTouch={isTouch}
+        onClickDay={onClickDay}
+        onHoverStart={onHoverStart}
+        onHoverEnd={onHoverEnd}
+        onHoverCardEnter={onHoverCardEnter}
+        onHoverCardLeave={onHoverCardLeave}
+        onFocusDay={onFocusDay}
+        onBlurDay={onBlurDay}
+        onClose={onClose}
+        renderMarkerRowRef={renderMarkerRowRef}
+        renderDayCardRef={renderDayCardRef}
+        maxDay={maxDay}
+      />
+    </td>
+  );
+}
 
-    // Past the status-history cutoff: render a dimmed, non-interactive cell.
-    const isBlocked =
-      maxDay !== null && startOfDay(date).getTime() > maxDay.getTime();
-    if (isBlocked) {
-      return (
-        <div
-          ref={forwardedRef as RefObject<HTMLDivElement>}
-          data-day={thisDayKey}
-          data-day-state="disabled"
-          aria-disabled
-          tabIndex={-1}
-          className="text-muted-foreground/40 inline-flex h-12 w-full items-center justify-center font-mono text-sm"
-        >
-          {format(date, "d")}
-        </div>
-      );
-    }
+const CalendarDayContent = forwardRef<
+  HTMLElement,
+  CalendarDayOptions & { date: Date; isOutside: boolean }
+>(function CalendarDayContent(
+  {
+    date,
+    isOutside,
+    markersByDay,
+    isTouch,
+    onClickDay,
+    onHoverStart,
+    onHoverEnd,
+    onHoverCardEnter,
+    onHoverCardLeave,
+    onFocusDay,
+    onBlurDay,
+    onClose,
+    renderMarkerRowRef,
+    renderDayCardRef,
+    maxDay,
+  },
+  forwardedRef,
+) {
+  const activeDayKey = useContext(ActiveDayContext);
+  const thisDayKey = dayKey(startOfDay(date));
 
-    const isToday = isSameDay(date, new Date());
-    const dayMarkers = markersByDay.get(thisDayKey) ?? [];
-    const filled = dayMarkers.filter((m) => !m.hatched);
-    const severity = filled.length > 0 ? worstSeverity(filled) : undefined;
-    const open = activeDayKey === thisDayKey;
+  // Overriding `components.Day` bypasses DayPicker's own hide-outside-days
+  // logic, so outside cells get a neutral placeholder here.
+  if (isOutside) {
+    return <div data-day-state="outside" className="bg-muted/30 h-12 w-full" />;
+  }
 
-    // `cond && <X />` returns false; any falsy card means no card
-    const dayCard = renderDayCardRef.current?.(date) || null;
-    // a row that renders null only tints the day and stays out of the card
-    const rowFn = renderMarkerRowRef.current;
-    const rows = dayMarkers
-      .map((marker) => ({ marker, node: rowFn ? rowFn(marker) : undefined }))
-      .filter(({ node }) => node !== null);
-    const hasMarkers = rows.length > 0 || dayCard !== null;
-    // Tinted-field: severity days get a soft fill that owns the hover state,
-    // empty days fall back to the neutral accent hover.
-    const dayClass = cn(
-      "text-foreground/80 inline-flex h-12 w-full items-center justify-center font-mono text-sm font-normal transition-colors",
-      "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
-      isToday && "text-foreground font-semibold",
-      severity
-        ? SEVERITY_FILL[severity]
-        : dayMarkers.length > 0
-          ? HATCHED_FILL[worstSeverity(dayMarkers)]
-          : "hover:bg-accent hover:text-accent-foreground",
-      hasMarkers && "cursor-pointer",
-    );
-
-    // Days without events render a plain trigger — no HoverCard, no popover.
-    if (!hasMarkers) {
-      return (
-        <div
-          ref={forwardedRef as RefObject<HTMLDivElement>}
-          data-day={thisDayKey}
-          data-day-state="empty"
-          tabIndex={-1}
-          className={dayClass}
-        >
-          {format(date, "d")}
-        </div>
-      );
-    }
-
-    const barItem: StatusBarData = {
-      day: format(date, "yyyy-MM-dd"),
-      bar: [],
-      // one placeholder so the card section renders; renderCard draws dayCard
-      card: dayCard ? [{ status: "empty", value: "" }] : [],
-      events: rows.map(({ marker }) => markerToBarEvent(marker)),
-    };
-    const indexByEventId = new Map<BarEvent["id"], number>(
-      barItem.events.map((e, i) => [e.id, i]),
-    );
-
+  // Past the status-history cutoff: render a dimmed, non-interactive cell.
+  const isBlocked =
+    maxDay !== null && startOfDay(date).getTime() > maxDay.getTime();
+  if (isBlocked) {
     return (
-      // No `onOpenChange`: open state is fully controlled by our handlers (see
-      // parent), matching `status-bar.tsx`. Radix's hover/dismiss listeners fire
-      // into a no-op, so they can't fight the pin/toggle model.
-      <HoverCard openDelay={0} closeDelay={0} open={open}>
-        <HoverCardTrigger asChild>
-          <button
-            type="button"
-            ref={forwardedRef as RefObject<HTMLButtonElement>}
-            data-day={thisDayKey}
-            data-day-state="interactive"
-            aria-pressed={open}
-            className={dayClass}
-            onClick={() => onClickDay(thisDayKey)}
-            onMouseEnter={() => onHoverStart(thisDayKey)}
-            onMouseLeave={onHoverEnd}
-            onFocus={() => onFocusDay(thisDayKey)}
-            onBlur={onBlurDay}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") onClose();
-            }}
-          >
-            {format(date, "d")}
-          </button>
-        </HoverCardTrigger>
-        <HoverCardContent
-          side="top"
-          align="center"
-          className="w-auto min-w-40 p-0"
-          onMouseEnter={onHoverCardEnter}
-          onMouseLeave={onHoverCardLeave}
-          // On touch, the opening tap's emulated pointer sequence would trip
-          // Radix's dismiss-on-outside and close the card immediately. Suppress
-          // it here; the parent's document listener handles real outside taps.
-          onPointerDownOutside={(e) => {
-            if (isTouch) e.preventDefault();
+      <div
+        ref={forwardedRef as RefObject<HTMLDivElement>}
+        data-day={thisDayKey}
+        data-day-state="disabled"
+        aria-disabled
+        tabIndex={-1}
+        className="text-muted-foreground/40 inline-flex h-12 w-full items-center justify-center font-mono text-sm"
+      >
+        {format(date, "d")}
+      </div>
+    );
+  }
+
+  const isToday = isSameDay(date, new Date());
+  const dayMarkers = markersByDay.get(thisDayKey) ?? [];
+  const filled = dayMarkers.filter((m) => !m.hatched);
+  const severity = filled.length > 0 ? worstSeverity(filled) : undefined;
+  const open = activeDayKey === thisDayKey;
+
+  // `cond && <X />` returns false; any falsy card means no card
+  const dayCard = renderDayCardRef.current?.(date) || null;
+  // a row that renders null only tints the day and stays out of the card
+  const rowFn = renderMarkerRowRef.current;
+  const rows = dayMarkers
+    .map((marker) => ({ marker, node: rowFn ? rowFn(marker) : undefined }))
+    .filter(({ node }) => node !== null);
+  const hasMarkers = rows.length > 0 || dayCard !== null;
+  // Tinted-field: severity days get a soft fill that owns the hover state,
+  // empty days fall back to the neutral accent hover.
+  const dayClass = cn(
+    "text-foreground/80 inline-flex h-12 w-full items-center justify-center font-mono text-sm font-normal transition-colors",
+    "focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-inset",
+    isToday && "text-foreground font-semibold",
+    severity
+      ? SEVERITY_FILL[severity]
+      : dayMarkers.length > 0
+        ? HATCHED_FILL[worstSeverity(dayMarkers)]
+        : "hover:bg-accent hover:text-accent-foreground",
+    hasMarkers && "cursor-pointer",
+  );
+
+  // Days without events render a plain trigger — no HoverCard, no popover.
+  if (!hasMarkers) {
+    return (
+      <div
+        ref={forwardedRef as RefObject<HTMLDivElement>}
+        data-day={thisDayKey}
+        data-day-state="empty"
+        tabIndex={-1}
+        className={dayClass}
+      >
+        {format(date, "d")}
+      </div>
+    );
+  }
+
+  const barItem: StatusBarData = {
+    day: format(date, "yyyy-MM-dd"),
+    bar: [],
+    // one placeholder so the card section renders; renderCard draws dayCard
+    card: dayCard ? [{ status: "empty", value: "" }] : [],
+    events: rows.map(({ marker }) => markerToBarEvent(marker)),
+  };
+  const indexByEventId = new Map<BarEvent["id"], number>(
+    barItem.events.map((e, i) => [e.id, i]),
+  );
+
+  return (
+    // No `onOpenChange`: open state is fully controlled by our handlers (see
+    // parent), matching `status-bar.tsx`. Radix's hover/dismiss listeners fire
+    // into a no-op, so they can't fight the pin/toggle model.
+    <HoverCard openDelay={0} closeDelay={0} open={open}>
+      <HoverCardTrigger asChild>
+        <button
+          type="button"
+          ref={forwardedRef as RefObject<HTMLButtonElement>}
+          data-day={thisDayKey}
+          data-day-state="interactive"
+          aria-pressed={open}
+          className={dayClass}
+          onClick={() => onClickDay(thisDayKey)}
+          onMouseEnter={() => onHoverStart(thisDayKey)}
+          onMouseLeave={onHoverEnd}
+          onFocus={() => onFocusDay(thisDayKey)}
+          onBlur={onBlurDay}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") onClose();
           }}
         >
-          <StatusBarCard
-            item={barItem}
-            renderCard={() => <div key="day-card">{dayCard}</div>}
-            renderEvent={(event, eventIndex) => {
-              const idx = indexByEventId.get(event.id) ?? 0;
-              return (
-                <div key={`${event.id}-${event.type}`}>
-                  {eventIndex > 0 && (
-                    <Separator className="-mx-2 my-2 data-[orientation=horizontal]:w-auto" />
-                  )}
-                  {rows[idx]?.node ?? <StatusBarEvent {...event} />}
-                </div>
-              );
-            }}
-          />
-        </HoverCardContent>
-      </HoverCard>
-    );
-  },
-);
+          {format(date, "d")}
+        </button>
+      </HoverCardTrigger>
+      <HoverCardContent
+        side="top"
+        align="center"
+        className="w-auto min-w-40 p-0"
+        onMouseEnter={onHoverCardEnter}
+        onMouseLeave={onHoverCardLeave}
+        // On touch, the opening tap's emulated pointer sequence would trip
+        // Radix's dismiss-on-outside and close the card immediately. Suppress
+        // it here; the parent's document listener handles real outside taps.
+        onPointerDownOutside={(e) => {
+          if (isTouch) e.preventDefault();
+        }}
+      >
+        <StatusBarCard
+          item={barItem}
+          renderCard={() => <div key="day-card">{dayCard}</div>}
+          renderEvent={(event, eventIndex) => {
+            const idx = indexByEventId.get(event.id) ?? 0;
+            return (
+              <div key={`${event.id}-${event.type}`}>
+                {eventIndex > 0 && (
+                  <Separator className="-mx-2 my-2 data-[orientation=horizontal]:w-auto" />
+                )}
+                {rows[idx]?.node ?? <StatusBarEvent {...event} />}
+              </div>
+            );
+          }}
+        />
+      </HoverCardContent>
+    </HoverCard>
+  );
+});
 
 function markerToBarEvent(m: StatusCalendarMarker): BarEvent {
   return {

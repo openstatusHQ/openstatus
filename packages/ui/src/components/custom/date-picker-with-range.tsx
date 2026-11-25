@@ -136,16 +136,14 @@ export function DatePickerWithRange({
             </div>
             <Separator orientation="vertical" className="h-auto w-px" />
             <Calendar
-              // This repo pins react-day-picker 8, where the prop is still
-              // `initialFocus` — `autoFocus` only lands in 10.
-              initialFocus
+              autoFocus
               mode="range"
               defaultMonth={date?.from}
               selected={date}
               onSelect={onCalendarSelect}
               numberOfMonths={1}
-              fromDate={min}
-              toDate={max}
+              startMonth={min}
+              endMonth={max}
               disabled={[
                 ...(min ? [{ before: min }] : []),
                 ...(max ? [{ after: max }] : []),

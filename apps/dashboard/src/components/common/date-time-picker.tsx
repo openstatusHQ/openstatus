@@ -86,7 +86,7 @@ export function DateTimePicker({
           disabled={(day) =>
             (min ? day < startOfDay(min) : false) || (max ? day > max : false)
           }
-          initialFocus
+          autoFocus
         />
         <div className="flex items-center gap-3 border-t p-3">
           <Label htmlFor={id} className="text-xs">
