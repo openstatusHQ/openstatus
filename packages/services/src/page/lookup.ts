@@ -15,8 +15,9 @@ export interface ResolvedPage {
 /** Slug and custom domain of a page in any workspace, to build its public URL. */
 export async function getPagePublicDomain(
   pageId: number,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<{ slug: string; customDomain: string } | undefined> {
+  const db = opts.db ?? defaultDb;
   return db
     .select({ slug: page.slug, customDomain: page.customDomain })
     .from(page)
@@ -58,8 +59,9 @@ function hostFromInput(raw: string): string | null {
  */
 export async function resolvePageFromUrl(
   raw: string,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<ResolvedPage | null> {
+  const db = opts.db ?? defaultDb;
   const host = hostFromInput(raw);
   if (!host) return null;
 

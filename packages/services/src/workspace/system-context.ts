@@ -8,8 +8,9 @@ import { NotFoundError } from "../errors";
 export async function systemContext(
   workspaceId: number | null,
   job: string,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<ServiceContext> {
+  const db = opts.db ?? defaultDb;
   const row =
     workspaceId === null
       ? undefined

@@ -41,8 +41,9 @@ function parseScopes(raw: string | null): string {
  */
 export async function resolveSlackTeamWorkspace(
   teamId: string,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<SlackWorkspace | null> {
+  const db = opts.db ?? defaultDb;
   const row = await db
     .select({
       workspaceId: integration.workspaceId,

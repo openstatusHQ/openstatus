@@ -148,8 +148,9 @@ export async function getWorkspaceByStripeId(args: {
  */
 export async function getWorkspaceRowById(
   id: number,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<typeof workspace.$inferSelect | undefined> {
+  const db = opts.db ?? defaultDb;
   return db.select().from(workspace).where(eq(workspace.id, id)).get();
 }
 

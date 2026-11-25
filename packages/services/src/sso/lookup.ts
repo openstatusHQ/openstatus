@@ -26,8 +26,9 @@ export function normalizeSsoDomain(input: string): string | null {
  */
 export async function getWorkspaceByVerifiedSsoDomain(
   emailOrDomain: string,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<Workspace | null> {
+  const db = opts.db ?? defaultDb;
   const domain = normalizeSsoDomain(emailOrDomain);
   if (!domain) return null;
 
@@ -58,8 +59,9 @@ export async function getWorkspaceByVerifiedSsoDomain(
 export async function isEmailAllowedForWorkspace(
   workspaceId: number,
   email: string,
-  db: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<boolean> {
+  const db = opts.db ?? defaultDb;
   const domain = normalizeSsoDomain(email);
   if (!domain) return false;
 

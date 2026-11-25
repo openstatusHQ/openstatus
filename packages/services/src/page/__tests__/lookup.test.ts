@@ -23,7 +23,7 @@ describe("resolvePageFromUrl", () => {
         `${slug}.openstatus.dev`,
         ` https://${slug}.openstatus.dev/events `,
       ]) {
-        expect((await resolvePageFromUrl(raw, tx))?.id).toBe(page.id);
+        expect((await resolvePageFromUrl(raw, { db: tx }))?.id).toBe(page.id);
       }
     });
   });
@@ -38,7 +38,7 @@ describe("resolvePageFromUrl", () => {
         tx,
       );
       for (const raw of [domain, `https://www.${domain}/x`]) {
-        const resolved = await resolvePageFromUrl(raw, tx);
+        const resolved = await resolvePageFromUrl(raw, { db: tx });
         expect(resolved?.id).toBe(page.id);
         expect(resolved?.title).toBe(page.title);
       }
@@ -53,7 +53,7 @@ describe("resolvePageFromUrl", () => {
         ".openstatus.dev",
         `missing-${unique()}.example.com`,
       ]) {
-        expect(await resolvePageFromUrl(raw, tx)).toBeNull();
+        expect(await resolvePageFromUrl(raw, { db: tx })).toBeNull();
       }
     });
   });
@@ -88,11 +88,11 @@ describe("page lookups", () => {
         { customDomain: "status.example.org" },
         tx,
       );
-      expect(await getPagePublicDomain(page.id, tx)).toEqual({
+      expect(await getPagePublicDomain(page.id, { db: tx })).toEqual({
         slug: page.slug,
         customDomain: "status.example.org",
       });
-      expect(await getPagePublicDomain(-1, tx)).toBeUndefined();
+      expect(await getPagePublicDomain(-1, { db: tx })).toBeUndefined();
     });
   });
 });

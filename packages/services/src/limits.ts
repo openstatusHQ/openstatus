@@ -96,8 +96,9 @@ export async function getWorkspaceLimit(
 export async function countWorkspaceUsage(
   workspaceId: number,
   limit: LimitKey,
-  tx: DB = defaultDb,
+  opts: { db?: DB } = {},
 ): Promise<number> {
+  const tx = opts.db ?? defaultDb;
   switch (limit) {
     // Soft-deleted monitors don't consume quota; `active`/`status` are
     // irrelevant to the cap.
@@ -163,7 +164,7 @@ export async function assertWithinLimit(args: {
   const { tx, workspaceId, limit, delta = 1 } = args;
 
   const max = await getWorkspaceLimit(tx, workspaceId, limit);
-  const current = await countWorkspaceUsage(workspaceId, limit, tx);
+  const current = await countWorkspaceUsage(workspaceId, limit, { db: tx });
   if (current + delta > max) {
     throw new LimitExceededError(limit, max, current);
   }

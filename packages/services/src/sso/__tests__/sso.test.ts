@@ -584,7 +584,7 @@ describe("reconcileSsoDomains", () => {
       const allowed = await isEmailAllowedForWorkspace(
         scaleCtx.workspace.id,
         "jane@acme.test",
-        tx,
+        { db: tx },
       );
       expect(allowed).toBe(true);
     });
@@ -649,16 +649,15 @@ describe("domain lookup", () => {
         },
       });
 
-      const found = await getWorkspaceByVerifiedSsoDomain(
-        "jane@pending.test",
-        tx,
-      );
+      const found = await getWorkspaceByVerifiedSsoDomain("jane@pending.test", {
+        db: tx,
+      });
       expect(found).toBe(null);
 
       const allowed = await isEmailAllowedForWorkspace(
         scaleCtx.workspace.id,
         "jane@pending.test",
-        tx,
+        { db: tx },
       );
       expect(allowed).toBe(false);
     });
@@ -680,20 +679,22 @@ describe("domain lookup", () => {
         },
       });
 
-      const found = await getWorkspaceByVerifiedSsoDomain("jane@acme.test", tx);
+      const found = await getWorkspaceByVerifiedSsoDomain("jane@acme.test", {
+        db: tx,
+      });
       expect(found?.id).toBe(scaleCtx.workspace.id);
 
       const allowed = await isEmailAllowedForWorkspace(
         scaleCtx.workspace.id,
         "jane@acme.test",
-        tx,
+        { db: tx },
       );
       expect(allowed).toBe(true);
 
       const foreign = await isEmailAllowedForWorkspace(
         scaleCtx.workspace.id,
         "ceo@bigcorp.test",
-        tx,
+        { db: tx },
       );
       expect(foreign).toBe(false);
     });
@@ -715,7 +716,9 @@ describe("domain lookup", () => {
       });
       await disableSso({ ctx: { ...scaleCtx, db: tx } });
 
-      const found = await getWorkspaceByVerifiedSsoDomain("jane@acme.test", tx);
+      const found = await getWorkspaceByVerifiedSsoDomain("jane@acme.test", {
+        db: tx,
+      });
       expect(found).toBe(null);
     });
   });

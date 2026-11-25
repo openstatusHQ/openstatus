@@ -13,7 +13,9 @@ const newTeamId = () => `T_RESOLVE_${crypto.randomUUID()}`;
 describe("resolveSlackTeamWorkspace", () => {
   test("returns null for a team without an install", async () => {
     await withTestTransaction(async (tx) => {
-      expect(await resolveSlackTeamWorkspace(newTeamId(), tx)).toBeNull();
+      expect(
+        await resolveSlackTeamWorkspace(newTeamId(), { db: tx }),
+      ).toBeNull();
     });
   });
 
@@ -29,7 +31,7 @@ describe("resolveSlackTeamWorkspace", () => {
         data: { scopes: "chat:write" },
       });
 
-      const resolved = await resolveSlackTeamWorkspace(teamId, tx);
+      const resolved = await resolveSlackTeamWorkspace(teamId, { db: tx });
       expect(resolved?.workspace.id).toBe(team.workspace.id);
       expect(resolved?.botToken).toBe("xoxb-a");
       expect(resolved?.botUserId).toBe("B_A");
@@ -61,7 +63,7 @@ describe("resolveSlackTeamWorkspace", () => {
         },
       ]);
 
-      const resolved = await resolveSlackTeamWorkspace(teamId, tx);
+      const resolved = await resolveSlackTeamWorkspace(teamId, { db: tx });
       expect(resolved?.workspace.id).toBe(newer.workspace.id);
       expect(resolved?.botToken).toBe("xoxb-new");
     });
@@ -78,7 +80,7 @@ describe("resolveSlackTeamWorkspace", () => {
         credential: { botUserId: "B" },
         data: {},
       });
-      expect(await resolveSlackTeamWorkspace(teamId, tx)).toBeNull();
+      expect(await resolveSlackTeamWorkspace(teamId, { db: tx })).toBeNull();
     });
   });
 
@@ -94,7 +96,7 @@ describe("resolveSlackTeamWorkspace", () => {
         data: sql`'{not json'`,
       });
 
-      const resolved = await resolveSlackTeamWorkspace(teamId, tx);
+      const resolved = await resolveSlackTeamWorkspace(teamId, { db: tx });
       expect(resolved?.scopes).toBe("");
       expect(resolved?.botUserId).toBe("");
     });
