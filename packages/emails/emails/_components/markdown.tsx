@@ -49,7 +49,7 @@ const renderer = new Renderer();
 renderer.html = ({ text, block }) =>
   block ? `<p>${escapeHtml(text.trim())}</p>\n` : escapeHtml(text);
 // mail clients strip <input>
-renderer.checkbox = ({ checked }) => (checked ? "☑" : "☐");
+renderer.checkbox = ({ checked }) => (checked ? "☑ " : "☐ ");
 renderer.link = function ({ href, tokens }) {
   const label = this.parser.parseInline(tokens);
   if (!SAFE_URL.test(href.trim())) return label;

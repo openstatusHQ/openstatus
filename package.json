@@ -30,6 +30,7 @@
     "test": "turbo run test"
   },
   "devDependencies": {
+    "@opentelemetry/api": "catalog:",
     "@turbo/gen": "catalog:",
     "@types/node": "catalog:",
     "knip": "catalog:",

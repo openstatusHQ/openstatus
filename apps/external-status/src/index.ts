@@ -34,15 +34,15 @@ const loggerProvider = new LoggerProvider({
     [ATTR_DEPLOYMENT_ENVIRONMENT_NAME]: NODE_ENV,
   }),
   processors: [
-    new BatchLogRecordProcessor(
-      new OTLPLogExporter({
+    new BatchLogRecordProcessor({
+      exporter: new OTLPLogExporter({
         url: "https://eu-central-1.aws.edge.axiom.co/v1/logs",
         headers: {
           Authorization: `Bearer ${AXIOM_TOKEN}`,
           "X-Axiom-Dataset": AXIOM_DATASET,
         },
       }),
-    ),
+    }),
   ],
 });
 
