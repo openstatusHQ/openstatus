@@ -1,16 +1,15 @@
 import type { FetchError } from "@openstatus/status-fetcher";
+import { sentryPrivacyDefaults } from "@openstatus/utils/src/sentry";
 import * as Sentry from "@sentry/node";
 import type { SeverityLevel } from "@sentry/node";
 
 import { env } from "../env";
 
 Sentry.init({
+  ...sentryPrivacyDefaults,
   dsn: env().SENTRY_DSN,
   environment: env().NODE_ENV,
   tracesSampleRate: 0,
-  // Tracing is off; the ESM hooks only feed auto-instrumentation and use the
-  // deprecated module.register() (DEP0205).
-  registerEsmLoaderHooks: false,
 });
 
 export type SentryMonitorConfig = NonNullable<

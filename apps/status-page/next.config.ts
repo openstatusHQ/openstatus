@@ -1,4 +1,4 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
@@ -93,9 +93,6 @@ const sentryConfig = {
 
   // Upload a larger set of source maps for improved stack trace accuracy (increases build time)
   widenClientFileUpload: true,
-
-  // If set to true, transpiles Sentry SDK to be compatible with IE11 (increases bundle size)
-  transpileClientSDK: false,
 
   // Tree-shake Sentry logger statements to reduce bundle size
   webpack: {
