@@ -83,6 +83,7 @@ must carry a reason.
 ## Scope enforcement
 
 `SCOPES.md` at the repo root lists every scope value and which verbs, routes and tools require which.
+`pnpm check:scopes` fails when its verb or tool tables drift from the code.
 
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,
