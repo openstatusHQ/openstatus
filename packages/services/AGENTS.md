@@ -57,6 +57,11 @@ or destructured from its args) named as the transaction: `tx`, `rtx` or
   `.returning()` row); `changed_fields` is diffed automatically and no-op updates
   are skipped. Creates pass only `after`, deletes only `before`.
 - **Strip secrets from snapshots** — credentials, bot tokens, raw API keys.
+  A secret kept on the row itself (page password, notification config,
+  subscriber token and webhook URL) is listed in `SECRET_FIELDS` in
+  `src/audit/redact.ts`; `emitAudit` replaces it with a fingerprint, so a
+  rotation still diffs. `audit/__tests__/no-secrets.test.ts` writes each one
+  and fails if it reaches a row.
 - Action names are `{entity}.{verb}`; new variants go in the discriminated union
   at `packages/db/src/schema/audit_logs/validation.ts`.
 - An entity type the dashboard can show also gets an `entityKinds` entry in

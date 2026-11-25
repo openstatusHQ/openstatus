@@ -7,6 +7,7 @@ import {
   extractActorId,
   tryGetActorUserId,
 } from "../context";
+import { redactSecrets } from "./redact";
 
 /** Keys excluded from the top-level diff — always churny, never informative. */
 const DIFF_IGNORE = new Set(["updatedAt", "createdAt"]);
@@ -106,8 +107,10 @@ export async function emitAudit(
 ): Promise<void> {
   const parsed = auditEntrySchema.parse(entry);
 
-  const before = parsed.before;
-  const after = parsed.after;
+  const before =
+    parsed.before && (await redactSecrets(parsed.entityType, parsed.before));
+  const after =
+    parsed.after && (await redactSecrets(parsed.entityType, parsed.after));
   const metadata = "metadata" in parsed ? parsed.metadata : undefined;
 
   const changedFields =

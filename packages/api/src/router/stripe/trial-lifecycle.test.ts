@@ -1,4 +1,4 @@
-import { and, db, desc, eq } from "@openstatus/db";
+import { and, db, desc, eq, isNotNull } from "@openstatus/db";
 import {
   auditLog,
   selectUserSchema,
@@ -106,6 +106,8 @@ async function lastPlanAuditReason(workspaceId: number) {
         eq(auditLog.workspaceId, workspaceId),
         eq(auditLog.entityType, "workspace"),
         eq(auditLog.action, "workspace.update"),
+        // Plan changes carry a reason; marking the trial does not.
+        isNotNull(auditLog.metadata),
       ),
     )
     .orderBy(desc(auditLog.id))

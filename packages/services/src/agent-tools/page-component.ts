@@ -356,6 +356,8 @@ export const updatePageComponentTool: AgentTool<
   // Scope and audit come from the verbs inside; the transaction only makes them atomic.
   // oxlint-disable-next-line openstatus/services-mutation-guards
   async run({ ctx, input }) {
+    // The target is read below before the verb checks the scope.
+    requireScope(ctx, "pages:write");
     const updated = await withTransaction(ctx, async (tx) => {
       const txCtx = { ...ctx, db: tx };
       const target = await getPageComponentInWorkspace({

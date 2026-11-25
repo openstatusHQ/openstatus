@@ -22,6 +22,7 @@ import {
 } from "@openstatus/db/src/schema/constants";
 import { regionDict } from "@openstatus/regions";
 
+import { auditFingerprint } from "../audit/redact";
 import type { DB, ServiceContext } from "../context";
 import {
   ForbiddenError,
@@ -305,13 +306,7 @@ export async function monitorAuditSnapshot<
   T extends { heartbeatToken: string | null },
 >(row: T): Promise<T> {
   if (!row.heartbeatToken) return row;
-  const data = new TextEncoder().encode(row.heartbeatToken);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  const fingerprint = Array.from(new Uint8Array(hash))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-    .slice(0, 16);
-  return { ...row, heartbeatToken: `sha256:${fingerprint}` };
+  return { ...row, heartbeatToken: await auditFingerprint(row.heartbeatToken) };
 }
 
 // Ping details are private and a heartbeat has no latency to chart, so the
