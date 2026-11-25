@@ -113,7 +113,6 @@ TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 ### **External Services (Optional)**
 ```bash
 OPENSTATUS_INGEST_URL=https://openstatus-private-location.fly.dev
-SCREENSHOT_SERVICE_URL=your_screenshot_service_url
 ```
 
 ### **Development & Testing (Optional)**
@@ -143,7 +142,7 @@ WORKSPACES_HIDE_URL=false
 - **Payments**: `STRIPE_*`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - **Vercel**: `PROJECT_ID_VERCEL`, `TEAM_ID_VERCEL`, `VERCEL_*`
 - **Observability**: `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_*`, `OPENPANEL_*`
-- **External**: `OPENSTATUS_INGEST_URL`, `SCREENSHOT_SERVICE_URL`
+- **External**: `OPENSTATUS_INGEST_URL`
 - **Development**: `TURBO_ENV_MODE`, `PLAYGROUND_*`, `WORKSPACES_*`
 
 ## 🚨 Troubleshooting

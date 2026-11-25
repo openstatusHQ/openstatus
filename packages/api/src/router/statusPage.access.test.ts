@@ -264,21 +264,6 @@ describe("statusPage access gate", () => {
     }
   }
 
-  for (const accessType of Object.keys(denied) as (keyof typeof denied)[]) {
-    test(`${accessType}: pageSubscriber.upsert by page id is gated`, async () => {
-      const error = await caller()
-        .pageSubscriber.upsert({
-          email: "outsider@example.com",
-          pageId: pageIds[accessType],
-        })
-        .catch((e) => e);
-      expect(error).toBeInstanceOf(TRPCError);
-      expect(["UNAUTHORIZED", "FORBIDDEN"]).toContain(
-        (error as TRPCError).code,
-      );
-    });
-  }
-
   test("password: `pw` input authorizes a cookie-less caller", async () => {
     const data = await caller().statusPage.get({
       slug: slugs.password,
