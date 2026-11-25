@@ -148,7 +148,6 @@ export const relations = defineRelations(schema, (r) => ({
     workspace: r.one.workspace({
       from: r.notification.workspaceId,
       to: r.workspace.id,
-      optional: false,
     }),
     monitor: r.many.notificationsToMonitors(),
     monitors: r.many.monitor({
@@ -231,12 +230,10 @@ export const relations = defineRelations(schema, (r) => ({
     page: r.one.page({
       from: r.maintenance.pageId,
       to: r.page.id,
-      optional: false,
     }),
     workspace: r.one.workspace({
       from: r.maintenance.workspaceId,
       to: r.workspace.id,
-      optional: false,
     }),
     createdByUser: r.one.user({
       from: r.maintenance.createdBy,
@@ -263,7 +260,6 @@ export const relations = defineRelations(schema, (r) => ({
     workspace: r.one.workspace({
       from: r.privateLocation.workspaceId,
       to: r.workspace.id,
-      optional: false,
     }),
     monitors: r.many.monitor({
       from: r.privateLocation.id.through(
@@ -393,7 +389,6 @@ export const relations = defineRelations(schema, (r) => ({
     workspace: r.one.workspace({
       from: r.monitor.workspaceId,
       to: r.workspace.id,
-      optional: false,
     }),
     monitorsToNotifications: r.many.notificationsToMonitors(),
     monitorIncidents: r.many.monitorIncidentTable(),

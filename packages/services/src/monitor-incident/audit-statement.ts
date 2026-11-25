@@ -1,4 +1,4 @@
-import { type SQL, getTableColumns, sql } from "@openstatus/db";
+import { type SQL, getColumns, sql } from "@openstatus/db";
 import {
   type AuditActionName,
   auditLog,
@@ -8,7 +8,7 @@ import {
 import { type Actor, extractActorId, tryGetActorUserId } from "../context";
 import type { MonitorIncident } from "../types";
 
-const columns = Object.entries(getTableColumns(monitorIncidentTable));
+const columns = Object.entries(getColumns(monitorIncidentTable));
 
 // Mirrors what `emitAudit` stores for a selected row: timestamps (all
 // second-precision here) as ISO strings, booleans as JSON booleans.
