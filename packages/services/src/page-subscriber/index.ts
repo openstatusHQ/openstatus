@@ -49,6 +49,3 @@ export {
   UpsertSelfSignupSubscriberInput,
   VerifySelfSignupSubscriberInput,
 } from "./schemas";
-// Exposed so the (router-side) public procedures can use the same
-// allow-list as the protected procedures going through `toTRPCError`.
-export { SAFE_SUBSCRIPTION_MESSAGES } from "./internal";

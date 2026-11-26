@@ -51,7 +51,6 @@ catalog:
   "@ai-sdk/react": 4.0.185
   "@auth/core": 0.41.3
   "@auth/drizzle-adapter": 1.11.3
-  "@aws-sdk/client-s3": 3.1175.0
   "@bufbuild/buf": 1.75.0
   "@bufbuild/protobuf": 2.17.0
   "@bufbuild/protoc-gen-es": 2.17.0

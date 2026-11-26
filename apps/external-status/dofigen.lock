@@ -2,7 +2,6 @@ effective: |
   ignore:
   - node_modules
   - /apps/docs
-  - /apps/screenshot-service
   - /apps/server
   - /apps/web
   - /apps/dashboard
@@ -13,38 +12,6 @@ effective: |
   - /packages/error
   - /packages/tracker
   builders:
-    build:
-      fromImage:
-        path: node
-        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
-      label:
-        org.opencontainers.image.stage: build
-        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
-        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
-      workdir: /app/apps/external-status
-      env:
-        NODE_ENV: production
-      copy:
-      - paths:
-        - .
-        target: /app/
-      - fromBuilder: install
-        paths:
-        - /app/node_modules
-        target: /app/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/apps/external-status/node_modules
-        target: /app/apps/external-status/node_modules
-      - fromBuilder: install
-        paths:
-        - /app/packages
-        target: /app/packages
-      run:
-      - ./node_modules/.bin/tsdown
-      - mkdir -p /tmp/sc
-      - node scripts/sidecar-package.mjs /tmp/sc/package.json
-      - npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
     install:
       fromImage:
         path: node
@@ -99,18 +66,50 @@ effective: |
         source: packages/tsconfig/package.json
       - target: packages/utils/package.json
         source: packages/utils/package.json
+    build:
+      fromImage:
+        path: node
+        digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+      label:
+        org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
+        org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+        org.opencontainers.image.stage: build
+      workdir: /app/apps/external-status
+      env:
+        NODE_ENV: production
+      copy:
+      - paths:
+        - .
+        target: /app/
+      - fromBuilder: install
+        paths:
+        - /app/node_modules
+        target: /app/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/apps/external-status/node_modules
+        target: /app/apps/external-status/node_modules
+      - fromBuilder: install
+        paths:
+        - /app/packages
+        target: /app/packages
+      run:
+      - ./node_modules/.bin/tsdown
+      - mkdir -p /tmp/sc
+      - node scripts/sidecar-package.mjs /tmp/sc/package.json
+      - npm install --prefix /tmp/sc --omit=dev --no-package-lock --no-audit --no-fund
   fromImage:
     path: node
     digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
   label:
     io.dofigen.version: 2.8.0
-    org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
-    org.opencontainers.image.vendor: OpenStatus
-    org.opencontainers.image.title: OpenStatus External Status
-    org.opencontainers.image.description: Polls third-party status pages for OpenStatus
-    org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
-    org.opencontainers.image.authors: OpenStatus Team
     org.opencontainers.image.source: https://github.com/openstatusHQ/openstatus
+    org.opencontainers.image.base.name: docker.io/node:26.8.1-slim
+    org.opencontainers.image.base.digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
+    org.opencontainers.image.title: OpenStatus External Status
+    org.opencontainers.image.authors: OpenStatus Team
+    org.opencontainers.image.description: Polls third-party status pages for OpenStatus
+    org.opencontainers.image.vendor: OpenStatus
   user:
     user: '1000'
     group: '1000'
@@ -150,12 +149,11 @@ images:
           digest: sha256:c0753125a3789977aefe869cbebccf70e3cfd7ea84ca48547458f02e4f1d7146
 resources:
   dofigen.yml:
-    hash: 2c5087acec43002888409edeb3852824334b9c51283409121f43b7ee3f7f4d76
+    hash: 5425faebd20c5ddaef5e3103512daa974596f265393c9193637e1eeac345cbe6
     content: |
       ignore:
         - node_modules
         - /apps/docs
-        - /apps/screenshot-service
         - /apps/server
         - /apps/web
         - /apps/dashboard
