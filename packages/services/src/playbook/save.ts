@@ -1,5 +1,5 @@
 import { eq } from "@openstatus/db";
-import { type Playbook, playbook } from "@openstatus/db/src/schema";
+import { playbook } from "@openstatus/db/src/schema";
 import { PLAYBOOK_MAX_CHARS } from "@openstatus/db/src/schema/playbooks/constants";
 import {
   type PlaybookVariables,
@@ -15,7 +15,11 @@ import {
   withTransaction,
 } from "../context";
 import { ValidationError } from "../errors";
-import { getPlaybookOfType } from "./internal";
+import {
+  getPlaybookBySlug,
+  type PlaybookWithDefaults,
+  withDefaults,
+} from "./internal";
 import { SavePlaybookInput } from "./schemas";
 
 /** Keeps the non-empty values of variables the text uses, in order of use. */
@@ -30,11 +34,11 @@ function usedVariables(
   return entries.length ? Object.fromEntries(entries) : null;
 }
 
-/** Writes the workspace's one playbook of this type, creating it when the slot is empty. */
+/** Writes the workspace's one playbook of this slug, creating it when the slot is empty. */
 export async function savePlaybook(args: {
   ctx: ServiceContext;
   input: SavePlaybookInput;
-}): Promise<Playbook> {
+}): Promise<PlaybookWithDefaults> {
   const { ctx } = args;
   requireScope(ctx, "incidents:write");
   const input = SavePlaybookInput.parse(args.input);
@@ -47,13 +51,23 @@ export async function savePlaybook(args: {
   }
 
   return withTransaction(ctx, async (tx) => {
-    const existing = await getPlaybookOfType(tx, ctx.workspace.id, input.type);
+    const existing = await getPlaybookBySlug(tx, ctx.workspace.id, input.slug);
+    const title =
+      input.title === undefined
+        ? (existing?.title ?? null)
+        : input.title || null;
+    const description =
+      input.description === undefined
+        ? (existing?.description ?? null)
+        : input.description || null;
     if (!existing) {
       const created = await tx
         .insert(playbook)
         .values({
           workspaceId: ctx.workspace.id,
-          type: input.type,
+          slug: input.slug,
+          title,
+          description,
           content: input.content,
           variables,
           createdBy: actorUserId,
@@ -67,18 +81,22 @@ export async function savePlaybook(args: {
         entityId: created.id,
         after: created,
       });
-      return created;
+      return withDefaults(created);
     }
     if (
+      existing.title === title &&
+      existing.description === description &&
       existing.content === input.content &&
       JSON.stringify(existing.variables) === JSON.stringify(variables)
     ) {
-      return existing;
+      return withDefaults(existing);
     }
 
     const updated = await tx
       .update(playbook)
       .set({
+        title,
+        description,
         content: input.content,
         variables,
         updatedBy: actorUserId,
@@ -94,6 +112,6 @@ export async function savePlaybook(args: {
       before: existing,
       after: updated,
     });
-    return updated;
+    return withDefaults(updated);
   });
 }

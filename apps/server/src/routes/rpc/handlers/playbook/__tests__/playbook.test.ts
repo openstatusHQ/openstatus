@@ -12,7 +12,6 @@ import {
   DeletePlaybookResponseSchema,
   GetPlaybookResponseSchema,
   ListPlaybooksResponseSchema,
-  PlaybookType,
   UpdatePlaybookResponseSchema,
 } from "@openstatus/proto/playbook/v1";
 import { clearAuditLogFor } from "@openstatus/services/test/helpers";
@@ -94,14 +93,15 @@ describe("PlaybookService", () => {
       UpdatePlaybookResponseSchema,
       "UpdatePlaybook",
       {
-        type: "PLAYBOOK_TYPE_STATUS_PAGE",
+        slug: "status-page",
         content: "Sign off as {{team_name}}. Contact {{support}}.",
         variables: { team_name: "Platform", unused: "x" },
       },
       key,
     );
     await trackIds();
-    expect(created.playbook?.type).toBe(PlaybookType.STATUS_PAGE);
+    expect(created.playbook?.slug).toBe("status-page");
+    expect(created.playbook?.title).toBe("Status page");
     // only values the text uses are kept; the text keeps its variables
     expect(created.playbook?.variables).toEqual({ team_name: "Platform" });
     expect(created.playbook?.content).toContain("{{team_name}}");
@@ -110,7 +110,7 @@ describe("PlaybookService", () => {
       UpdatePlaybookResponseSchema,
       "UpdatePlaybook",
       {
-        type: "PLAYBOOK_TYPE_STATUS_PAGE",
+        slug: "status-page",
         content: "No ETAs. Contact {{support}}.",
         variables: { support: "help@acme.com" },
       },
@@ -122,7 +122,7 @@ describe("PlaybookService", () => {
     const got = await rpc(
       GetPlaybookResponseSchema,
       "GetPlaybook",
-      { type: "PLAYBOOK_TYPE_STATUS_PAGE" },
+      { slug: "status-page" },
       key,
     );
     expect(got.playbook?.content).toBe("No ETAs. Contact {{support}}.");
@@ -133,36 +133,32 @@ describe("PlaybookService", () => {
       {},
       key,
     );
-    expect((listed.playbooks ?? []).map((p) => p.type)).toEqual([
-      PlaybookType.STATUS_PAGE,
+    expect((listed.playbooks ?? []).map((p) => p.slug)).toEqual([
+      "status-page",
     ]);
 
     const deleted = await rpc(
       DeletePlaybookResponseSchema,
       "DeletePlaybook",
-      { type: "PLAYBOOK_TYPE_STATUS_PAGE" },
+      { slug: "status-page" },
       key,
     );
     expect(deleted.success).toBe(true);
-    expect(
-      await rpcError("GetPlaybook", { type: "PLAYBOOK_TYPE_STATUS_PAGE" }, key),
-    ).toEqual({ status: 404, code: "not_found" });
+    expect(await rpcError("GetPlaybook", { slug: "status-page" }, key)).toEqual(
+      { status: 404, code: "not_found" },
+    );
   });
 
   test("a playbook is not visible from another workspace", async () => {
     await rpc(
       UpdatePlaybookResponseSchema,
       "UpdatePlaybook",
-      { type: "PLAYBOOK_TYPE_POSTMORTEM", content: "## Summary" },
+      { slug: "postmortem", content: "## Summary" },
       key,
     );
     await trackIds();
     expect(
-      await rpcError(
-        "GetPlaybook",
-        { type: "PLAYBOOK_TYPE_POSTMORTEM" },
-        otherKey,
-      ),
+      await rpcError("GetPlaybook", { slug: "postmortem" }, otherKey),
     ).toEqual({ status: 404, code: "not_found" });
     const listed = await rpc(
       ListPlaybooksResponseSchema,
@@ -172,23 +168,22 @@ describe("PlaybookService", () => {
     );
     expect(listed.playbooks ?? []).toEqual([]);
     expect(
-      await rpcError(
-        "DeletePlaybook",
-        { type: "PLAYBOOK_TYPE_POSTMORTEM" },
-        otherKey,
-      ),
+      await rpcError("DeletePlaybook", { slug: "postmortem" }, otherKey),
     ).toEqual({ status: 404, code: "not_found" });
   });
 
-  test("rejects a missing type, empty content and a bad variable name", async () => {
+  test("rejects a missing or unknown slug, empty content and a bad variable name", async () => {
     expect((await rpcError("GetPlaybook", {}, key)).code).toBe(
+      "invalid_argument",
+    );
+    expect((await rpcError("GetPlaybook", { slug: "runbook" }, key)).code).toBe(
       "invalid_argument",
     );
     expect(
       (
         await rpcError(
           "UpdatePlaybook",
-          { type: "PLAYBOOK_TYPE_POSTMORTEM", content: "" },
+          { slug: "postmortem", content: "" },
           key,
         )
       ).code,
@@ -198,7 +193,7 @@ describe("PlaybookService", () => {
         await rpcError(
           "UpdatePlaybook",
           {
-            type: "PLAYBOOK_TYPE_POSTMORTEM",
+            slug: "postmortem",
             content: "x",
             variables: { "Team Name": "x" },
           },

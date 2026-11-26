@@ -12,7 +12,7 @@ import { getRpcContext } from "../../interceptors";
 import {
   playbookSummaryToProto,
   playbookToProto,
-  protoTypeToDb,
+  protoSlugToDb,
 } from "./converters";
 import { playbookNotFoundError } from "./errors";
 
@@ -30,12 +30,12 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
 
   async getPlaybook(req, ctx) {
     try {
-      const type = protoTypeToDb(req.type);
+      const slug = protoSlugToDb(req.slug);
       const row = await getPlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
-        input: { type },
+        input: { slug },
       });
-      if (!row) throw playbookNotFoundError(type);
+      if (!row) throw playbookNotFoundError(slug);
       return { playbook: playbookToProto(row) };
     } catch (err) {
       toConnectError(err);
@@ -47,7 +47,9 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
       const row = await savePlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
         input: {
-          type: protoTypeToDb(req.type),
+          slug: protoSlugToDb(req.slug),
+          title: req.title,
+          description: req.description,
           content: req.content,
           variables: req.variables,
         },
@@ -60,10 +62,9 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
 
   async deletePlaybook(req, ctx) {
     try {
-      const type = protoTypeToDb(req.type);
       await clearPlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
-        input: { type },
+        input: { slug: protoSlugToDb(req.slug) },
       });
       return { success: true };
     } catch (err) {

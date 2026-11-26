@@ -452,18 +452,18 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) => itemsCountSummary(o.playbooks),
   },
   get_playbook: {
-    summary: (o) => (o.error ? o.error : `read ${o.type}`),
+    summary: (o) => (o.error ? o.error : `read ${o.slug}`),
   },
   update_playbook: {
     renderDraft: (input) => [
-      { field: "type", after: input.type },
+      { field: "slug", after: input.slug },
       { field: "content", after: input.content },
       ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
         field: name,
         after: value,
       })),
     ],
-    summary: (o) => `${o.created ? "created" : "updated"} ${o.type}`,
+    summary: (o) => `${o.created ? "created" : "updated"} ${o.slug}`,
   },
   search_docs: {
     renderResult: ({ output }) => <ResultTable {...searchDocsTable(output)} />,

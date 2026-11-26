@@ -1,14 +1,29 @@
 import { createSelectSchema } from "drizzle-zod";
 import { z } from "zod";
 
-import { PLAYBOOK_MAX_CHARS, playbookType } from "./constants";
+import {
+  PLAYBOOK_DESCRIPTION_MAX_CHARS,
+  PLAYBOOK_MAX_CHARS,
+  PLAYBOOK_TITLE_MAX_CHARS,
+  playbookSlugs,
+} from "./constants";
 import { playbook } from "./playbook";
 import {
   PLAYBOOK_VARIABLE_NAME,
   PLAYBOOK_VARIABLE_VALUE_MAX_CHARS,
 } from "./variables";
 
-export const playbookTypeSchema = z.enum(playbookType);
+export const playbookSlugSchema = z.enum(playbookSlugs);
+
+export const playbookTitleSchema = z
+  .string()
+  .trim()
+  .max(PLAYBOOK_TITLE_MAX_CHARS);
+
+export const playbookDescriptionSchema = z
+  .string()
+  .trim()
+  .max(PLAYBOOK_DESCRIPTION_MAX_CHARS);
 
 export const playbookContentSchema = z
   .string()

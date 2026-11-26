@@ -139,9 +139,9 @@ The team's own rules for incidents, status page updates, maintenance and postmor
 
 | Tool              | Scope | Purpose |
 |-------------------|----------|---------|
-| `list_playbooks`  | `incidents:read` | Which playbook types the workspace has written (`incident_response`, `status_page`, `maintenance_windows`, `postmortem`), with `updatedAt`. Never returns their text. |
-| `get_playbook`    | `incidents:read` | One playbook's text by `type`, with its variables filled in. When the playbook uses `{{name}}` variables it also returns `source` (the text as written) and `variables` (the values set). An unwritten type returns an empty `content` and an `error`. |
-| `update_playbook` | `incidents:write` | Write a playbook: `type`, the complete `content` in markdown (it replaces the whole text) and optional `variables`. Creates the playbook when there is none of that type. Variables left out keep their stored value. |
+| `list_playbooks`  | `incidents:read` | Which playbooks the workspace has written (`incident-response`, `status-page`, `maintenance-windows`, `postmortem`), each with `slug`, `title`, `description` and `updatedAt`. Never returns their text. |
+| `get_playbook`    | `incidents:read` | One playbook's text by `slug`, with its variables filled in. When the playbook uses `{{name}}` variables it also returns `source` (the text as written) and `variables` (the values set). An unwritten slug returns an empty `content` and an `error`. |
+| `update_playbook` | `incidents:write` | Write a playbook: `slug`, the complete `content` in markdown (it replaces the whole text) and optional `variables`. Creates the playbook when there is none for that slug. Variables left out keep their stored value. |
 
 There is no delete tool: a playbook is deleted in the dashboard. The server instructions tell the model to read the relevant playbook before it drafts a status report, a maintenance notice or a postmortem, and the description of each of those tools says the same.
 

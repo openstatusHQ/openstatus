@@ -23,24 +23,24 @@ test("a variable's value survives save, a value-only save and a reload", async (
   const content = "Contact {{support}} first.";
 
   await own.playbook.save({
-    type: "maintenance_windows",
+    slug: "maintenance-windows",
     content,
     variables: { support: "the support desk" },
   });
   expect(
-    (await own.playbook.get({ type: "maintenance_windows" }))?.variables,
+    (await own.playbook.get({ slug: "maintenance-windows" }))?.variables,
   ).toEqual({ support: "the support desk" });
 
   await own.playbook.save({
-    type: "maintenance_windows",
+    slug: "maintenance-windows",
     content,
     variables: { support: "help@acme.com" },
   });
-  const reloaded = await own.playbook.get({ type: "maintenance_windows" });
+  const reloaded = await own.playbook.get({ slug: "maintenance-windows" });
   expect(reloaded?.variables).toEqual({ support: "help@acme.com" });
   expect(reloaded?.content).toBe(content);
   expect(reloaded?.createdByUser?.id).toBe(f.user.id);
 
-  await own.playbook.clear({ type: "maintenance_windows" });
-  expect(await own.playbook.get({ type: "maintenance_windows" })).toBeNull();
+  await own.playbook.clear({ slug: "maintenance-windows" });
+  expect(await own.playbook.get({ slug: "maintenance-windows" })).toBeNull();
 });

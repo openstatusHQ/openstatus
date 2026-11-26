@@ -207,7 +207,7 @@ export const declareIncidentTool: AgentTool<
   name: "declare_incident",
   description:
     "Declare a managed incident: the team's internal record of an outage, with a timeline and a commander. Internal only — nothing is published; use create_status_report for public communication." +
-    playbookHint("incident_response"),
+    playbookHint("incident-response"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: DeclareIncidentInput,

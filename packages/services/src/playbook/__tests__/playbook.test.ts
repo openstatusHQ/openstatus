@@ -39,7 +39,7 @@ describe("savePlaybook", () => {
       const c = { ...ctx, db: tx };
       const created = await savePlaybook({
         ctx: c,
-        input: { type: "status_page", content: "No ETAs." },
+        input: { slug: "status-page", content: "No ETAs." },
       });
       expect(created.createdBy).toBe(userId);
       expect(created.updatedBy).toBe(userId);
@@ -53,7 +53,7 @@ describe("savePlaybook", () => {
 
       const updated = await savePlaybook({
         ctx: c,
-        input: { type: "status_page", content: "  No ETAs. Ever.  " },
+        input: { slug: "status-page", content: "  No ETAs. Ever.  " },
       });
       expect(updated.id).toBe(created.id);
       expect(updated.createdBy).toBe(userId);
@@ -67,13 +67,13 @@ describe("savePlaybook", () => {
       const c = { ...ctx, db: tx };
       const row = await savePlaybook({
         ctx: c,
-        input: { type: "postmortem", content: "v1" },
+        input: { slug: "postmortem", content: "v1" },
       });
       await savePlaybook({
         ctx: c,
-        input: { type: "postmortem", content: "v2" },
+        input: { slug: "postmortem", content: "v2" },
       });
-      await clearPlaybook({ ctx: c, input: { type: "postmortem" } });
+      await clearPlaybook({ ctx: c, input: { slug: "postmortem" } });
 
       const rows = await readAuditLog({
         workspaceId: ctx.workspace.id,
@@ -102,11 +102,11 @@ describe("savePlaybook", () => {
       const c = { ...ctx, db: tx };
       const row = await savePlaybook({
         ctx: c,
-        input: { type: "postmortem", content: "same" },
+        input: { slug: "postmortem", content: "same" },
       });
       await savePlaybook({
         ctx: c,
-        input: { type: "postmortem", content: "same" },
+        input: { slug: "postmortem", content: "same" },
       });
       const rows = await readAuditLog({
         workspaceId: ctx.workspace.id,
@@ -118,17 +118,60 @@ describe("savePlaybook", () => {
     });
   });
 
+  test("title and description default to the slug's, keep an edit and reset when emptied", async () => {
+    await withTestTransaction(async (tx) => {
+      const c = { ...ctx, db: tx };
+      const created = await savePlaybook({
+        ctx: c,
+        input: { slug: "postmortem", content: "x" },
+      });
+      expect(created.title).toBe("Postmortem");
+      expect(created.description).toBe(
+        "The sections of your postmortems and what goes in each.",
+      );
+
+      const renamed = await savePlaybook({
+        ctx: c,
+        input: {
+          slug: "postmortem",
+          content: "x",
+          title: "  Reviews  ",
+          description: "How we review.",
+        },
+      });
+      expect(renamed.title).toBe("Reviews");
+      expect(renamed.description).toBe("How we review.");
+
+      // left out, both are kept
+      const kept = await savePlaybook({
+        ctx: c,
+        input: { slug: "postmortem", content: "y" },
+      });
+      expect(kept.title).toBe("Reviews");
+      expect(kept.description).toBe("How we review.");
+
+      const reset = await savePlaybook({
+        ctx: c,
+        input: { slug: "postmortem", content: "y", description: "" },
+      });
+      expect(reset.title).toBe("Reviews");
+      expect(reset.description).toBe(
+        "The sections of your postmortems and what goes in each.",
+      );
+    });
+  });
+
   test("rejects empty and oversized content", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
       await expect(
-        savePlaybook({ ctx: c, input: { type: "postmortem", content: "  " } }),
+        savePlaybook({ ctx: c, input: { slug: "postmortem", content: "  " } }),
       ).rejects.toThrow();
       await expect(
         savePlaybook({
           ctx: c,
           input: {
-            type: "postmortem",
+            slug: "postmortem",
             content: "x".repeat(PLAYBOOK_MAX_CHARS + 1),
           },
         }),
@@ -144,11 +187,11 @@ describe("savePlaybook", () => {
     await expect(
       savePlaybook({
         ctx: readOnly,
-        input: { type: "postmortem", content: "x" },
+        input: { slug: "postmortem", content: "x" },
       }),
     ).rejects.toThrow(ForbiddenError);
     await expect(
-      clearPlaybook({ ctx: readOnly, input: { type: "postmortem" } }),
+      clearPlaybook({ ctx: readOnly, input: { slug: "postmortem" } }),
     ).rejects.toThrow(ForbiddenError);
   });
 
@@ -160,7 +203,7 @@ describe("savePlaybook", () => {
     await expect(
       savePlaybook({
         ctx: monitorsOnly,
-        input: { type: "postmortem", content: "x" },
+        input: { slug: "postmortem", content: "x" },
       }),
     ).rejects.toThrow(ForbiddenError);
     await expect(listPlaybooks({ ctx: monitorsOnly })).rejects.toThrow(
@@ -176,7 +219,7 @@ describe("variables", () => {
       const row = await savePlaybook({
         ctx: c,
         input: {
-          type: "status_page",
+          slug: "status-page",
           content: "Sign off as {{team_name}}. Contact {{ support_email }}.",
           variables: { team_name: "Platform", unused: "x", support_email: "" },
         },
@@ -185,7 +228,7 @@ describe("variables", () => {
 
       const out = await getPlaybookTool.run({
         ctx: c,
-        input: { type: "status_page" },
+        input: { slug: "status-page" },
       });
       expect(out.content).toContain("Sign off as Platform.");
       // an unset variable stays visible instead of vanishing
@@ -199,11 +242,11 @@ describe("variables", () => {
       const content = "Sign off as {{team_name}}.";
       const row = await savePlaybook({
         ctx: c,
-        input: { type: "status_page", content, variables: { team_name: "A" } },
+        input: { slug: "status-page", content, variables: { team_name: "A" } },
       });
       const updated = await savePlaybook({
         ctx: c,
-        input: { type: "status_page", content, variables: { team_name: "B" } },
+        input: { slug: "status-page", content, variables: { team_name: "B" } },
       });
       expect(updated.variables).toEqual({ team_name: "B" });
       const rows = await readAuditLog({
@@ -225,7 +268,7 @@ describe("variables", () => {
         savePlaybook({
           ctx: { ...ctx, db: tx },
           input: {
-            type: "status_page",
+            slug: "status-page",
             content: `${"x".repeat(PLAYBOOK_MAX_CHARS - 10)}{{a}}`,
             variables: { a: "y".repeat(100) },
           },
@@ -240,7 +283,7 @@ describe("variables", () => {
         savePlaybook({
           ctx: { ...ctx, db: tx },
           input: {
-            type: "status_page",
+            slug: "status-page",
             content: "x",
             variables: { "Team Name": "x" },
           },
@@ -257,43 +300,44 @@ describe("reads", () => {
       const o = { ...otherCtx, db: tx };
       await savePlaybook({
         ctx: c,
-        input: { type: "incident_response", content: "ours" },
+        input: { slug: "incident-response", content: "ours" },
       });
       expect(
-        await getPlaybook({ ctx: o, input: { type: "incident_response" } }),
+        await getPlaybook({ ctx: o, input: { slug: "incident-response" } }),
       ).toBeNull();
       expect(await listPlaybooks({ ctx: o })).toHaveLength(0);
 
       await savePlaybook({
         ctx: o,
-        input: { type: "incident_response", content: "theirs" },
+        input: { slug: "incident-response", content: "theirs" },
       });
       const mine = await getPlaybook({
         ctx: c,
-        input: { type: "incident_response" },
+        input: { slug: "incident-response" },
       });
       expect(mine?.content).toBe("ours");
       expect(mine?.updatedByUser?.id).toBe(userId);
     });
   });
 
-  test("listed in type order, whatever the write order", async () => {
+  test("listed in slug order, whatever the write order", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
-      for (const type of [
+      for (const slug of [
         "postmortem",
-        "incident_response",
-        "maintenance_windows",
+        "incident-response",
+        "maintenance-windows",
       ] as const) {
-        await savePlaybook({ ctx: c, input: { type, content: type } });
+        await savePlaybook({ ctx: c, input: { slug, content: slug } });
       }
-      expect((await listPlaybooks({ ctx: c })).map((r) => r.type)).toEqual([
-        "incident_response",
-        "maintenance_windows",
+      expect((await listPlaybooks({ ctx: c })).map((r) => r.slug)).toEqual([
+        "incident-response",
+        "maintenance-windows",
         "postmortem",
       ]);
-      expect(await loadPlaybookSection({ ctx: c })).toContain(
-        "incident_response, maintenance_windows, postmortem",
+      const section = await loadPlaybookSection({ ctx: c });
+      expect(section.indexOf("- incident-response:")).toBeLessThan(
+        section.indexOf("- postmortem:"),
       );
     });
   });
@@ -303,7 +347,7 @@ describe("reads", () => {
       await expect(
         clearPlaybook({
           ctx: { ...ctx, db: tx },
-          input: { type: "postmortem" },
+          input: { slug: "postmortem" },
         }),
       ).rejects.toThrow(NotFoundError);
     });
@@ -315,23 +359,27 @@ describe("buildPlaybookSection", () => {
     expect(buildPlaybookSection([])).toBe("");
   });
 
-  test("names the filled types and the tool", () => {
-    const section = buildPlaybookSection(["status_page"]);
-    expect(section).toContain("playbooks for: status_page.");
+  test("names the filled slugs, what each covers and the tool", () => {
+    const section = buildPlaybookSection([
+      { slug: "status-page", description: "Our public\n## voice" },
+    ]);
+    // a description stays on its line
+    expect(section).toContain("- status-page: Our public ## voice\n");
     expect(section).toContain("get_playbook");
   });
 });
 
 describe("agent tools", () => {
-  test("list_playbooks returns types without content", async () => {
+  test("list_playbooks returns slugs without content", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
       await savePlaybook({
         ctx: c,
-        input: { type: "status_page", content: "SECRET-TONE" },
+        input: { slug: "status-page", content: "SECRET-TONE" },
       });
       const out = await listPlaybooksTool.run({ ctx: c, input: {} });
-      expect(out.playbooks.map((p) => p.type)).toEqual(["status_page"]);
+      expect(out.playbooks.map((p) => p.slug)).toEqual(["status-page"]);
+      expect(out.playbooks[0]?.title).toBe("Status page");
       expect(JSON.stringify(out)).not.toContain("SECRET-TONE");
     });
   });
@@ -342,15 +390,15 @@ describe("agent tools", () => {
       const content = `# Style\n${"rule\n".repeat(1500)}`.trim();
       await savePlaybook({
         ctx: c,
-        input: { type: "status_page", content },
+        input: { slug: "status-page", content },
       });
       const out = await getPlaybookTool.run({
         ctx: c,
-        input: { type: "status_page" },
+        input: { slug: "status-page" },
       });
       expect(out.error).toBeUndefined();
       expect(out.content).toBe(
-        `<playbook type="status_page">\n${content}\n</playbook>`,
+        `<playbook slug="status-page">\n${content}\n</playbook>`,
       );
     });
   });
@@ -359,7 +407,7 @@ describe("agent tools", () => {
     await withTestTransaction(async (tx) => {
       const out = await getPlaybookTool.run({
         ctx: { ...ctx, db: tx },
-        input: { type: "postmortem" },
+        input: { slug: "postmortem" },
       });
       expect(out.content).toBe("");
       expect(out.error).toContain("postmortem");
@@ -372,7 +420,7 @@ describe("agent tools", () => {
       const created = await updatePlaybookTool.run({
         ctx: c,
         input: {
-          type: "status_page",
+          slug: "status-page",
           content: "Sign off as {{team_name}}.",
           variables: { team_name: "Platform" },
         },
@@ -381,7 +429,7 @@ describe("agent tools", () => {
 
       const read = await getPlaybookTool.run({
         ctx: c,
-        input: { type: "status_page" },
+        input: { slug: "status-page" },
       });
       expect(read.content).toContain("Sign off as Platform.");
       // the text to edit is the one with the variable still in it
@@ -391,12 +439,12 @@ describe("agent tools", () => {
       const updated = await updatePlaybookTool.run({
         ctx: c,
         input: {
-          type: "status_page",
+          slug: "status-page",
           content: "No ETAs. Sign off as {{team_name}}.",
         },
       });
       expect(updated.created).toBe(false);
-      const row = await getPlaybook({ ctx: c, input: { type: "status_page" } });
+      const row = await getPlaybook({ ctx: c, input: { slug: "status-page" } });
       expect(row?.variables).toEqual({ team_name: "Platform" });
     });
   });
@@ -406,11 +454,11 @@ describe("agent tools", () => {
       const c = { ...ctx, db: tx };
       await savePlaybook({
         ctx: c,
-        input: { type: "postmortem", content: "## Summary" },
+        input: { slug: "postmortem", content: "## Summary" },
       });
       const read = await getPlaybookTool.run({
         ctx: c,
-        input: { type: "postmortem" },
+        input: { slug: "postmortem" },
       });
       expect(read.source).toBeUndefined();
       expect(read.variables).toBeUndefined();
@@ -425,7 +473,7 @@ describe("agent tools", () => {
     await expect(
       updatePlaybookTool.run({
         ctx: readOnly,
-        input: { type: "postmortem", content: "x" },
+        input: { slug: "postmortem", content: "x" },
       }),
     ).rejects.toThrow(ForbiddenError);
   });

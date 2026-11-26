@@ -2,15 +2,15 @@
 // @generated from file openstatus/playbook/v1/playbook.proto (package openstatus.playbook.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenEnum, GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
-import { enumDesc, fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
+import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file openstatus/playbook/v1/playbook.proto.
  */
 export const file_openstatus_playbook_v1_playbook: GenFile = /*@__PURE__*/
-  fileDesc("CiVvcGVuc3RhdHVzL3BsYXlib29rL3YxL3BsYXlib29rLnByb3RvEhZvcGVuc3RhdHVzLnBsYXlib29rLnYxIm0KD1BsYXlib29rU3VtbWFyeRIyCgR0eXBlGAEgASgOMiQub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9va1R5cGUSEgoKY3JlYXRlZF9hdBgCIAEoCRISCgp1cGRhdGVkX2F0GAMgASgJIu0BCghQbGF5Ym9vaxIyCgR0eXBlGAEgASgOMiQub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9va1R5cGUSDwoHY29udGVudBgCIAEoCRJCCgl2YXJpYWJsZXMYAyADKAsyLy5vcGVuc3RhdHVzLnBsYXlib29rLnYxLlBsYXlib29rLlZhcmlhYmxlc0VudHJ5EhIKCmNyZWF0ZWRfYXQYBCABKAkSEgoKdXBkYXRlZF9hdBgFIAEoCRowCg5WYXJpYWJsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBKrYBCgxQbGF5Ym9va1R5cGUSHQoZUExBWUJPT0tfVFlQRV9VTlNQRUNJRklFRBAAEiMKH1BMQVlCT09LX1RZUEVfSU5DSURFTlRfUkVTUE9OU0UQARIdChlQTEFZQk9PS19UWVBFX1NUQVRVU19QQUdFEAISJQohUExBWUJPT0tfVFlQRV9NQUlOVEVOQU5DRV9XSU5ET1dTEAMSHAoYUExBWUJPT0tfVFlQRV9QT1NUTU9SVEVNEARCVVpTZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3BsYXlib29rL3YxO3BsYXlib29rdjFiBnByb3RvMw");
+  fileDesc("CiVvcGVuc3RhdHVzL3BsYXlib29rL3YxL3BsYXlib29rLnByb3RvEhZvcGVuc3RhdHVzLnBsYXlib29rLnYxImsKD1BsYXlib29rU3VtbWFyeRIMCgRzbHVnGAEgASgJEg0KBXRpdGxlGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhIKCmNyZWF0ZWRfYXQYBCABKAkSEgoKdXBkYXRlZF9hdBgFIAEoCSLrAQoIUGxheWJvb2sSDAoEc2x1ZxgBIAEoCRINCgV0aXRsZRgCIAEoCRITCgtkZXNjcmlwdGlvbhgDIAEoCRIPCgdjb250ZW50GAQgASgJEkIKCXZhcmlhYmxlcxgFIAMoCzIvLm9wZW5zdGF0dXMucGxheWJvb2sudjEuUGxheWJvb2suVmFyaWFibGVzRW50cnkSEgoKY3JlYXRlZF9hdBgGIAEoCRISCgp1cGRhdGVkX2F0GAcgASgJGjAKDlZhcmlhYmxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCVVpTZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3BsYXlib29rL3YxO3BsYXlib29rdjFiBnByb3RvMw");
 
 /**
  * PlaybookSummary is a playbook without its text (used in list responses).
@@ -19,60 +19,25 @@ export const file_openstatus_playbook_v1_playbook: GenFile = /*@__PURE__*/
  */
 export type PlaybookSummary = Message<"openstatus.playbook.v1.PlaybookSummary"> & {
   /**
-   * What the playbook covers.
+   * Identifies the playbook. A workspace has at most one playbook per slug.
    *
-   * @generated from field: openstatus.playbook.v1.PlaybookType type = 1;
+   * @generated from field: string slug = 1;
    */
-  type: PlaybookType;
+  slug: string;
 
   /**
-   * Timestamp when the playbook was first written (RFC 3339 format).
+   * Name of the playbook.
    *
-   * @generated from field: string created_at = 2;
+   * @generated from field: string title = 2;
    */
-  createdAt: string;
+  title: string;
 
-  /**
-   * Timestamp when the playbook was last changed (RFC 3339 format).
-   *
-   * @generated from field: string updated_at = 3;
-   */
-  updatedAt: string;
-};
-
-/**
- * Describes the message openstatus.playbook.v1.PlaybookSummary.
- * Use `create(PlaybookSummarySchema)` to create a new message.
- */
-export const PlaybookSummarySchema: GenMessage<PlaybookSummary> = /*@__PURE__*/
-  messageDesc(file_openstatus_playbook_v1_playbook, 0);
-
-/**
- * Playbook is the team's written rules for one type.
- *
- * @generated from message openstatus.playbook.v1.Playbook
- */
-export type Playbook = Message<"openstatus.playbook.v1.Playbook"> & {
   /**
    * What the playbook covers.
    *
-   * @generated from field: openstatus.playbook.v1.PlaybookType type = 1;
+   * @generated from field: string description = 3;
    */
-  type: PlaybookType;
-
-  /**
-   * The playbook in markdown, as written. {{name}} marks a variable.
-   *
-   * @generated from field: string content = 2;
-   */
-  content: string;
-
-  /**
-   * Values set for the variables in the content, by name.
-   *
-   * @generated from field: map<string, string> variables = 3;
-   */
-  variables: { [key: string]: string };
+  description: string;
 
   /**
    * Timestamp when the playbook was first written (RFC 3339 format).
@@ -90,55 +55,72 @@ export type Playbook = Message<"openstatus.playbook.v1.Playbook"> & {
 };
 
 /**
+ * Describes the message openstatus.playbook.v1.PlaybookSummary.
+ * Use `create(PlaybookSummarySchema)` to create a new message.
+ */
+export const PlaybookSummarySchema: GenMessage<PlaybookSummary> = /*@__PURE__*/
+  messageDesc(file_openstatus_playbook_v1_playbook, 0);
+
+/**
+ * Playbook is the team's written rules for one slug.
+ *
+ * @generated from message openstatus.playbook.v1.Playbook
+ */
+export type Playbook = Message<"openstatus.playbook.v1.Playbook"> & {
+  /**
+   * Identifies the playbook. A workspace has at most one playbook per slug.
+   *
+   * @generated from field: string slug = 1;
+   */
+  slug: string;
+
+  /**
+   * Name of the playbook.
+   *
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * What the playbook covers.
+   *
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * The playbook in markdown, as written. {{name}} marks a variable.
+   *
+   * @generated from field: string content = 4;
+   */
+  content: string;
+
+  /**
+   * Values set for the variables in the content, by name.
+   *
+   * @generated from field: map<string, string> variables = 5;
+   */
+  variables: { [key: string]: string };
+
+  /**
+   * Timestamp when the playbook was first written (RFC 3339 format).
+   *
+   * @generated from field: string created_at = 6;
+   */
+  createdAt: string;
+
+  /**
+   * Timestamp when the playbook was last changed (RFC 3339 format).
+   *
+   * @generated from field: string updated_at = 7;
+   */
+  updatedAt: string;
+};
+
+/**
  * Describes the message openstatus.playbook.v1.Playbook.
  * Use `create(PlaybookSchema)` to create a new message.
  */
 export const PlaybookSchema: GenMessage<Playbook> = /*@__PURE__*/
   messageDesc(file_openstatus_playbook_v1_playbook, 1);
-
-/**
- * PlaybookType is what a playbook covers. A workspace has at most one playbook per type.
- *
- * @generated from enum openstatus.playbook.v1.PlaybookType
- */
-export enum PlaybookType {
-  /**
-   * @generated from enum value: PLAYBOOK_TYPE_UNSPECIFIED = 0;
-   */
-  UNSPECIFIED = 0,
-
-  /**
-   * How the team runs an incident: severities, roles, steps, cadence, escalation.
-   *
-   * @generated from enum value: PLAYBOOK_TYPE_INCIDENT_RESPONSE = 1;
-   */
-  INCIDENT_RESPONSE = 1,
-
-  /**
-   * How the team writes on the status page: tone, what to say and never say.
-   *
-   * @generated from enum value: PLAYBOOK_TYPE_STATUS_PAGE = 2;
-   */
-  STATUS_PAGE = 2,
-
-  /**
-   * What a maintenance window means, when it is scheduled and how it is announced.
-   *
-   * @generated from enum value: PLAYBOOK_TYPE_MAINTENANCE_WINDOWS = 3;
-   */
-  MAINTENANCE_WINDOWS = 3,
-
-  /**
-   * The sections of a postmortem and what goes in each.
-   *
-   * @generated from enum value: PLAYBOOK_TYPE_POSTMORTEM = 4;
-   */
-  POSTMORTEM = 4,
-}
-
-/**
- * Describes the enum openstatus.playbook.v1.PlaybookType.
- */
-export const PlaybookTypeSchema: GenEnum<PlaybookType> = /*@__PURE__*/
-  enumDesc(file_openstatus_playbook_v1_playbook, 0);
 

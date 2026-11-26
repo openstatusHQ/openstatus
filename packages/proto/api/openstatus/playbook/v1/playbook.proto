@@ -4,45 +4,44 @@ package openstatus.playbook.v1;
 
 option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/playbook/v1;playbookv1";
 
-// PlaybookType is what a playbook covers. A workspace has at most one playbook per type.
-enum PlaybookType {
-  PLAYBOOK_TYPE_UNSPECIFIED = 0;
-  // How the team runs an incident: severities, roles, steps, cadence, escalation.
-  PLAYBOOK_TYPE_INCIDENT_RESPONSE = 1;
-  // How the team writes on the status page: tone, what to say and never say.
-  PLAYBOOK_TYPE_STATUS_PAGE = 2;
-  // What a maintenance window means, when it is scheduled and how it is announced.
-  PLAYBOOK_TYPE_MAINTENANCE_WINDOWS = 3;
-  // The sections of a postmortem and what goes in each.
-  PLAYBOOK_TYPE_POSTMORTEM = 4;
-}
-
 // PlaybookSummary is a playbook without its text (used in list responses).
 message PlaybookSummary {
+  // Identifies the playbook. A workspace has at most one playbook per slug.
+  string slug = 1;
+
+  // Name of the playbook.
+  string title = 2;
+
   // What the playbook covers.
-  PlaybookType type = 1;
-
-  // Timestamp when the playbook was first written (RFC 3339 format).
-  string created_at = 2;
-
-  // Timestamp when the playbook was last changed (RFC 3339 format).
-  string updated_at = 3;
-}
-
-// Playbook is the team's written rules for one type.
-message Playbook {
-  // What the playbook covers.
-  PlaybookType type = 1;
-
-  // The playbook in markdown, as written. {{name}} marks a variable.
-  string content = 2;
-
-  // Values set for the variables in the content, by name.
-  map<string, string> variables = 3;
+  string description = 3;
 
   // Timestamp when the playbook was first written (RFC 3339 format).
   string created_at = 4;
 
   // Timestamp when the playbook was last changed (RFC 3339 format).
   string updated_at = 5;
+}
+
+// Playbook is the team's written rules for one slug.
+message Playbook {
+  // Identifies the playbook. A workspace has at most one playbook per slug.
+  string slug = 1;
+
+  // Name of the playbook.
+  string title = 2;
+
+  // What the playbook covers.
+  string description = 3;
+
+  // The playbook in markdown, as written. {{name}} marks a variable.
+  string content = 4;
+
+  // Values set for the variables in the content, by name.
+  map<string, string> variables = 5;
+
+  // Timestamp when the playbook was first written (RFC 3339 format).
+  string created_at = 6;
+
+  // Timestamp when the playbook was last changed (RFC 3339 format).
+  string updated_at = 7;
 }

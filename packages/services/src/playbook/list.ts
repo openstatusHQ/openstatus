@@ -1,14 +1,18 @@
 import { eq } from "@openstatus/db";
 import { type Playbook, playbook } from "@openstatus/db/src/schema";
-import { playbookType } from "@openstatus/db/src/schema/playbooks/constants";
+import { playbookSlugs } from "@openstatus/db/src/schema/playbooks/constants";
 
 import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import { getPlaybookOfType } from "./internal";
-import { PlaybookTypeInput } from "./schemas";
+import {
+  getPlaybookBySlug,
+  type PlaybookWithDefaults,
+  withDefaults,
+} from "./internal";
+import { PlaybookSlugInput } from "./schemas";
 
-export type PlaybookWithUser = Playbook & {
+export type PlaybookWithUser = PlaybookWithDefaults & {
   createdByUser: AttributedUserDetail | null;
   updatedByUser: AttributedUserDetail | null;
 };
@@ -18,7 +22,7 @@ function withUsers(
   users: Map<number, AttributedUserDetail>,
 ): PlaybookWithUser {
   return {
-    ...row,
+    ...withDefaults(row),
     createdByUser:
       row.createdBy != null ? (users.get(row.createdBy) ?? null) : null,
     updatedByUser:
@@ -26,7 +30,7 @@ function withUsers(
   };
 }
 
-/** The workspace's filled slots, in `playbookType` order. */
+/** The workspace's filled slots, in `playbookSlugs` order. */
 export async function listPlaybooks(args: {
   ctx: ServiceContext;
 }): Promise<PlaybookWithUser[]> {
@@ -44,21 +48,23 @@ export async function listPlaybooks(args: {
     rows.flatMap((r) => [r.createdBy, r.updatedBy]),
   );
   return rows
-    .sort((a, b) => playbookType.indexOf(a.type) - playbookType.indexOf(b.type))
+    .sort(
+      (a, b) => playbookSlugs.indexOf(a.slug) - playbookSlugs.indexOf(b.slug),
+    )
     .map((r) => withUsers(r, users));
 }
 
 /** `null` for an empty slot. */
 export async function getPlaybook(args: {
   ctx: ServiceContext;
-  input: PlaybookTypeInput;
+  input: PlaybookSlugInput;
 }): Promise<PlaybookWithUser | null> {
   const { ctx } = args;
   requireScope(ctx, "incidents:read");
-  const input = PlaybookTypeInput.parse(args.input);
+  const input = PlaybookSlugInput.parse(args.input);
   const db = getReadDb(ctx);
 
-  const row = await getPlaybookOfType(db, ctx.workspace.id, input.type);
+  const row = await getPlaybookBySlug(db, ctx.workspace.id, input.slug);
   if (!row) return null;
   const users = await loadAttributedUsers(db, [row.createdBy, row.updatedBy]);
   return withUsers(row, users);

@@ -12,7 +12,7 @@ import { type ServiceContext, getReadDb } from "../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors";
 import { getSlackConnection } from "../integration/slack-connection";
 import { delimitPlaybook } from "../playbook/context";
-import { getPlaybookOfType } from "../playbook/internal";
+import { getPlaybookBySlug } from "../playbook/internal";
 import { getIncident } from "./list";
 import { listIncidentEvents } from "./list-events";
 import { draftPostmortem, getPostmortem } from "./postmortem";
@@ -323,7 +323,7 @@ ${publicUpdates || "(none)"}
 
 Source note: ${transcriptNote}${channelSection}`;
 
-  const playbook = await getPlaybookOfType(
+  const playbook = await getPlaybookBySlug(
     getReadDb(ctx),
     ctx.workspace.id,
     "postmortem",

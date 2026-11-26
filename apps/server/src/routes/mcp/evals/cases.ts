@@ -239,7 +239,7 @@ export const cases: EvalCase[] = [
     prompt:
       "What does our incident response playbook say about when something is critical?",
     expectedTool: "get_playbook",
-    argEquals: { type: "incident_response" },
+    argEquals: { slug: "incident-response" },
   },
   {
     id: "select.no_playbook_for_monitor_health",

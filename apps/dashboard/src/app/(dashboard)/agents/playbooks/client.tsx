@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  playbookDescription,
-  playbookLabel,
-  playbookType,
+  playbookDefaultDescription,
+  playbookDefaultTitle,
+  playbookSlugs,
 } from "@openstatus/db/src/schema/playbooks/constants";
 import { useQuery } from "@tanstack/react-query";
 
@@ -27,7 +27,6 @@ import {
   SectionTitle,
 } from "@/components/content/section";
 import { PlaybookRowActions } from "@/components/data-table/playbooks/data-table-row-actions";
-import { playbookSlug } from "@/data/playbooks.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function Client() {
@@ -46,10 +45,10 @@ export function Client() {
           </SectionDescription>
         </SectionHeader>
         <EventList>
-          {playbookType.map((type) => {
-            const playbook = playbooks?.find((p) => p.type === type);
+          {playbookSlugs.map((slug) => {
+            const playbook = playbooks?.find((p) => p.slug === slug);
             return (
-              <EventRow key={type}>
+              <EventRow key={slug}>
                 {playbook ? (
                   <EventRowDate date={playbook.updatedAt} />
                 ) : (
@@ -62,13 +61,14 @@ export function Client() {
                   <span>{playbook ? "Written" : "Empty"}</span>
                 </EventRowStatus>
                 <EventRowContent>
-                  <EventRowTitle
-                    href={`/agents/playbooks/${playbookSlug(type)}`}
-                  >
-                    {playbookLabel[type]}
+                  <EventRowTitle href={`/agents/playbooks/${slug}`}>
+                    {playbook?.title ?? playbookDefaultTitle[slug]}
                   </EventRowTitle>
                   <EventRowMeta>
-                    <span>{playbookDescription[type]}</span>
+                    <span>
+                      {playbook?.description ??
+                        playbookDefaultDescription[slug]}
+                    </span>
                   </EventRowMeta>
                 </EventRowContent>
                 <EventRowActor
@@ -77,7 +77,7 @@ export function Client() {
                   optional
                 />
                 <EventRowMenu>
-                  <PlaybookRowActions type={type} written={Boolean(playbook)} />
+                  <PlaybookRowActions slug={slug} written={Boolean(playbook)} />
                 </EventRowMenu>
               </EventRow>
             );

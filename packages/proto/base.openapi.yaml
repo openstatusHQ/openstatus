@@ -48,7 +48,7 @@ tags:
   - name: PlaybookService
     description: |
       Read and write the team's playbooks: how they run incidents, write on the status
-      page, schedule maintenance and write postmortems. One playbook per type.
+      page, schedule maintenance and write postmortems. One playbook per slug.
   - name: MaintenanceService
     description: |
       Schedule maintenance windows for status page components. Subscribers can be

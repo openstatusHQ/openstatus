@@ -1,6 +1,6 @@
 import { Events } from "@openstatus/analytics";
 import {
-  PlaybookTypeInput,
+  PlaybookSlugInput,
   SavePlaybookInput,
   clearPlaybook,
   getPlaybook,
@@ -21,7 +21,7 @@ export const playbookRouter = createTRPCRouter({
   }),
 
   get: protectedProcedure
-    .input(PlaybookTypeInput)
+    .input(PlaybookSlugInput)
     .query(async ({ ctx, input }) => {
       try {
         return await getPlaybook({ ctx: toServiceCtx(ctx), input });
@@ -31,7 +31,7 @@ export const playbookRouter = createTRPCRouter({
     }),
 
   save: protectedProcedure
-    .meta({ track: Events.SavePlaybook, trackProps: ["type"] })
+    .meta({ track: Events.SavePlaybook, trackProps: ["slug"] })
     .input(SavePlaybookInput)
     .mutation(async ({ ctx, input }) => {
       try {
@@ -42,8 +42,8 @@ export const playbookRouter = createTRPCRouter({
     }),
 
   clear: protectedProcedure
-    .meta({ track: Events.ClearPlaybook, trackProps: ["type"] })
-    .input(PlaybookTypeInput)
+    .meta({ track: Events.ClearPlaybook, trackProps: ["slug"] })
+    .input(PlaybookSlugInput)
     .mutation(async ({ ctx, input }) => {
       try {
         await clearPlaybook({ ctx: toServiceCtx(ctx), input });

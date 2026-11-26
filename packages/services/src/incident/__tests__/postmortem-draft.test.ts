@@ -330,7 +330,7 @@ describe("generatePostmortemDraft", () => {
       await savePlaybook({
         ctx,
         input: {
-          type: "postmortem",
+          slug: "postmortem",
           content: "## What broke\n## Customer impact",
         },
       });

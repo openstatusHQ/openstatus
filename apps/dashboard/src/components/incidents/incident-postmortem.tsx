@@ -24,7 +24,6 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
-import { playbookSlug } from "@/data/playbooks.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -64,7 +63,7 @@ export function IncidentPostmortem({
     enabled: incident.status === "resolved",
   });
   const { data: playbook } = useQuery({
-    ...trpc.playbook.get.queryOptions({ type: "postmortem" }),
+    ...trpc.playbook.get.queryOptions({ slug: "postmortem" }),
     enabled: agentAllowed && incident.status === "resolved",
   });
   // null = pristine: the editor follows the server copy, so a background
@@ -168,7 +167,7 @@ export function IncidentPostmortem({
           {showAgent && playbook !== undefined ? (
             <span>
               {playbook ? "Agent follows your " : null}
-              <Link href={`/agents/playbooks/${playbookSlug("postmortem")}`}>
+              <Link href="/agents/playbooks/postmortem">
                 {playbook ? "playbook" : "Write a playbook"}
               </Link>
               {playbook ? null : " for the agent"}

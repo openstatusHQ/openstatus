@@ -16,16 +16,16 @@ service PlaybookService {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  // GetPlaybook retrieves the playbook of a type.
+  // GetPlaybook retrieves the playbook of a slug.
   rpc GetPlaybook(GetPlaybookRequest) returns (GetPlaybookResponse) {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  // UpdatePlaybook writes the playbook of a type: it is created when the
-  // workspace has none of that type, otherwise its text and variables are replaced.
+  // UpdatePlaybook writes the playbook of a slug: it is created when the
+  // workspace has none for that slug, otherwise its text and variables are replaced.
   rpc UpdatePlaybook(UpdatePlaybookRequest) returns (UpdatePlaybookResponse);
 
-  // DeletePlaybook removes the playbook of a type.
+  // DeletePlaybook removes the playbook of a slug.
   rpc DeletePlaybook(DeletePlaybookRequest) returns (DeletePlaybookResponse);
 }
 
@@ -38,13 +38,23 @@ message ListPlaybooksResponse {
   repeated PlaybookSummary playbooks = 1;
 }
 
-// GetPlaybookRequest is the request to get the playbook of a type.
+// GetPlaybookRequest is the request to get the playbook of a slug.
 message GetPlaybookRequest {
-  // Type of the playbook to retrieve (required).
-  PlaybookType type = 1 [(buf.validate.field).enum = {
-    defined_only: true
-    not_in: [0]
-  }];
+  // Slug of the playbook to retrieve (required): incident-response (how the
+  // team runs an incident), status-page (how the team writes on the status
+  // page), maintenance-windows (when a maintenance is scheduled and how it is
+  // announced) or postmortem (the sections of a postmortem).
+  string slug = 1 [
+    (buf.validate.field).string = {
+      in: [
+        "incident-response",
+        "status-page",
+        "maintenance-windows",
+        "postmortem"
+      ]
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"status-page\""}}
+  ];
 }
 
 // GetPlaybookResponse is the response containing the playbook.
@@ -53,13 +63,23 @@ message GetPlaybookResponse {
   Playbook playbook = 1;
 }
 
-// UpdatePlaybookRequest is the request to write the playbook of a type.
+// UpdatePlaybookRequest is the request to write the playbook of a slug.
 message UpdatePlaybookRequest {
-  // Type of the playbook to write (required).
-  PlaybookType type = 1 [(buf.validate.field).enum = {
-    defined_only: true
-    not_in: [0]
-  }];
+  // Slug of the playbook to write (required): incident-response (how the
+  // team runs an incident), status-page (how the team writes on the status
+  // page), maintenance-windows (when a maintenance is scheduled and how it is
+  // announced) or postmortem (the sections of a postmortem).
+  string slug = 1 [
+    (buf.validate.field).string = {
+      in: [
+        "incident-response",
+        "status-page",
+        "maintenance-windows",
+        "postmortem"
+      ]
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"status-page\""}}
+  ];
 
   // The complete playbook in markdown (required, 1-10000 characters). It
   // replaces the existing text. {{name}} marks a variable; names use lowercase
@@ -83,6 +103,14 @@ message UpdatePlaybookRequest {
       string: {max_len: 500}
     }
   }];
+
+  // Name of the playbook (max 100 characters). Left out, the stored title is
+  // kept; an empty string goes back to the default for the slug.
+  optional string title = 4 [(buf.validate.field).string.max_len = 100];
+
+  // What the playbook covers (max 500 characters). Left out, the stored
+  // description is kept; an empty string goes back to the default for the slug.
+  optional string description = 5 [(buf.validate.field).string.max_len = 500];
 }
 
 // UpdatePlaybookResponse is the response after writing a playbook.
@@ -91,13 +119,23 @@ message UpdatePlaybookResponse {
   Playbook playbook = 1;
 }
 
-// DeletePlaybookRequest is the request to delete the playbook of a type.
+// DeletePlaybookRequest is the request to delete the playbook of a slug.
 message DeletePlaybookRequest {
-  // Type of the playbook to delete (required).
-  PlaybookType type = 1 [(buf.validate.field).enum = {
-    defined_only: true
-    not_in: [0]
-  }];
+  // Slug of the playbook to delete (required): incident-response (how the
+  // team runs an incident), status-page (how the team writes on the status
+  // page), maintenance-windows (when a maintenance is scheduled and how it is
+  // announced) or postmortem (the sections of a postmortem).
+  string slug = 1 [
+    (buf.validate.field).string = {
+      in: [
+        "incident-response",
+        "status-page",
+        "maintenance-windows",
+        "postmortem"
+      ]
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"status-page\""}}
+  ];
 }
 
 // DeletePlaybookResponse is the response after deleting a playbook.

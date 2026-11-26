@@ -1,27 +1,16 @@
-import {
-  type PlaybookType,
-  playbookType,
-} from "@openstatus/db/src/schema/playbooks/constants";
-
-export function playbookSlug(type: PlaybookType): string {
-  return type.replaceAll("_", "-");
-}
-
-export function playbookTypeFromSlug(slug: string): PlaybookType | undefined {
-  return playbookType.find((type) => playbookSlug(type) === slug);
-}
+import type { PlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
 
 /** What the agent consults this playbook for. */
-export const playbookUsedFor: Record<PlaybookType, string> = {
-  incident_response: "Declaring incidents",
-  status_page: "Status reports",
-  maintenance_windows: "Maintenance notices",
+export const playbookUsedFor: Record<PlaybookSlug, string> = {
+  "incident-response": "Declaring incidents",
+  "status-page": "Status reports",
+  "maintenance-windows": "Maintenance notices",
   postmortem: "Postmortem drafts",
 };
 
 /** Starting text a team can save as is and edit later; written to work without changes. */
-export const playbookTemplate: Record<PlaybookType, string> = {
-  incident_response: `# Incident response
+export const playbookTemplate: Record<PlaybookSlug, string> = {
+  "incident-response": `# Incident response
 
 ## When to declare
 Declare an incident as soon as customers are affected or are about to be. When in doubt, declare. A canceled incident costs nothing; a late one costs trust.
@@ -54,7 +43,7 @@ Pick the higher severity when unsure. Lower it once the impact is understood.
 - major: page the on-call engineer; inform the engineering lead within 30 minutes.
 - minor: handle during working hours.`,
 
-  status_page: `# Status page communication
+  "status-page": `# Status page communication
 
 ## Audience
 The status page is read by customers. Write for someone who uses the product and does not know how it is built.
@@ -90,7 +79,7 @@ Use the component names exactly as they appear on the status page.
 ## Maintenance notices
 Say what will happen, when (in UTC), what customers will notice and whether they need to do anything.`,
 
-  maintenance_windows: `# Maintenance windows
+  "maintenance-windows": `# Maintenance windows
 
 ## What it is
 Planned work that customers may notice: a deploy with downtime, a database upgrade, a provider migration. It is announced on the status page before it starts. Work that customers cannot notice needs no window.

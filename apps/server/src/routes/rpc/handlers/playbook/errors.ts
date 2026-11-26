@@ -2,7 +2,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 
 export const ErrorReason = {
   PLAYBOOK_NOT_FOUND: "PLAYBOOK_NOT_FOUND",
-  INVALID_ENUM: "INVALID_ENUM",
+  INVALID_SLUG: "INVALID_SLUG",
 } as const;
 
 export type ErrorReason = (typeof ErrorReason)[keyof typeof ErrorReason];
@@ -27,20 +27,20 @@ function createError(
   return new ConnectError(message, code, headers);
 }
 
-export function playbookNotFoundError(type: string): ConnectError {
+export function playbookNotFoundError(slug: string): ConnectError {
   return createError(
-    `The workspace has no ${type} playbook`,
+    `The workspace has no ${slug} playbook`,
     Code.NotFound,
     ErrorReason.PLAYBOOK_NOT_FOUND,
-    { "playbook-type": type },
+    { "playbook-slug": slug },
   );
 }
 
-export function invalidPlaybookTypeError(): ConnectError {
+export function invalidPlaybookSlugError(slug: string): ConnectError {
   return createError(
-    "Invalid playbook type",
+    `Unknown playbook slug "${slug}"`,
     Code.InvalidArgument,
-    ErrorReason.INVALID_ENUM,
-    { field: "type" },
+    ErrorReason.INVALID_SLUG,
+    { field: "slug" },
   );
 }

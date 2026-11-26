@@ -1,27 +1,17 @@
 import {
   PLAYBOOK_MAX_CHARS,
-  playbookType,
+  playbookSlugs,
 } from "@openstatus/db/src/schema/playbooks/constants";
 import { describe, expect, it } from "vitest";
 
-import {
-  playbookSlug,
-  playbookTemplate,
-  playbookTypeFromSlug,
-} from "./playbooks.client";
+import { playbookTemplate } from "./playbooks.client";
 
 describe("playbookTemplate", () => {
-  it.each(playbookType)("%s fits the cap and needs no filling in", (type) => {
-    const template = playbookTemplate[type];
+  it.each(playbookSlugs)("%s fits the cap and needs no filling in", (slug) => {
+    const template = playbookTemplate[slug];
     expect(template.trim()).toBe(template);
     expect(template.length).toBeLessThanOrEqual(PLAYBOOK_MAX_CHARS);
     // `- [ ]` checklists are fine; a `[bracketed]` blank is not
     expect(template.replaceAll("- [ ]", "")).not.toMatch(/\[[^\]]+\]/);
-  });
-});
-
-describe("playbookSlug", () => {
-  it.each(playbookType)("%s round-trips", (type) => {
-    expect(playbookTypeFromSlug(playbookSlug(type))).toBe(type);
   });
 });

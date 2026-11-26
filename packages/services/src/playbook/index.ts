@@ -7,4 +7,4 @@ export {
 export { getPlaybook, listPlaybooks, type PlaybookWithUser } from "./list";
 export { savePlaybook } from "./save";
 
-export { PlaybookTypeInput, SavePlaybookInput } from "./schemas";
+export { PlaybookSlugInput, SavePlaybookInput } from "./schemas";

@@ -1,20 +1,22 @@
 "use client";
 
-import type { PlaybookType } from "@openstatus/db/src/schema/playbooks/constants";
+import type { PlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
 import { Edit } from "@openstatus/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
 import { QuickActions } from "@/components/dropdowns/quick-actions";
-import { playbookSlug } from "@/data/playbooks.client";
 import { useTRPC } from "@/lib/trpc/client";
 
 export function PlaybookRowActions({
-  type,
+  slug,
   written,
+  edit = true,
 }: {
-  type: PlaybookType;
+  slug: PlaybookSlug;
   written: boolean;
+  /** Off on the playbook's own page. */
+  edit?: boolean;
 }) {
   const trpc = useTRPC();
   const router = useRouter();
@@ -31,22 +33,26 @@ export function PlaybookRowActions({
 
   return (
     <QuickActions
-      actions={[
-        {
-          id: "edit",
-          label: "Edit",
-          icon: Edit,
-          variant: "default",
-          onClick: () => router.push(`/agents/playbooks/${playbookSlug(type)}`),
-        },
-      ]}
+      actions={
+        edit
+          ? [
+              {
+                id: "edit",
+                label: "Edit",
+                icon: Edit,
+                variant: "default",
+                onClick: () => router.push(`/agents/playbooks/${slug}`),
+              },
+            ]
+          : undefined
+      }
       deleteAction={
         written
           ? {
               description:
                 "The agent stops following this playbook and the editor goes back to the default template. The text stays in the audit log.",
               submitAction: async () => {
-                await clearMutation.mutateAsync({ type });
+                await clearMutation.mutateAsync({ slug });
               },
             }
           : undefined

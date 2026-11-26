@@ -8,7 +8,7 @@ import {
 
 import { user } from "../users";
 import { workspace } from "../workspaces";
-import { playbookType } from "./constants";
+import { playbookSlugs } from "./constants";
 import type { PlaybookVariables } from "./variables";
 
 // Autoincrement: audit rows are the history of a cleared playbook, so its id must never be reused.
@@ -19,7 +19,10 @@ export const playbook = sqliteTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
-    type: text("type", { enum: playbookType }).notNull(),
+    slug: text("slug", { enum: playbookSlugs }).notNull(),
+    // null = the slug's default
+    title: text("title"),
+    description: text("description"),
     content: text("content").notNull(),
     variables: text("variables", { mode: "json" }).$type<PlaybookVariables>(),
     createdBy: integer("created_by").references(() => user.id, {
@@ -36,7 +39,7 @@ export const playbook = sqliteTable(
       .default(sql`(strftime('%s', 'now'))`),
   },
   (t) => [
-    uniqueIndex("playbook_workspace_id_type_idx").on(t.workspaceId, t.type),
+    uniqueIndex("playbook_workspace_id_slug_idx").on(t.workspaceId, t.slug),
   ],
 );
 

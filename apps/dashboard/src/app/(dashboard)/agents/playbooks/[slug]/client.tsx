@@ -1,10 +1,12 @@
 "use client";
 
 import {
+  PLAYBOOK_DESCRIPTION_MAX_CHARS,
   PLAYBOOK_MAX_CHARS,
-  type PlaybookType,
-  playbookDescription,
-  playbookLabel,
+  PLAYBOOK_TITLE_MAX_CHARS,
+  type PlaybookSlug,
+  playbookDefaultDescription,
+  playbookDefaultTitle,
 } from "@openstatus/db/src/schema/playbooks/constants";
 import {
   PLAYBOOK_VARIABLE_VALUE_MAX_CHARS,
@@ -40,14 +42,17 @@ import {
   ComposerTextarea,
 } from "@/components/content/composer";
 import {
+  DetailActions,
   DetailAside,
   DetailContent,
   DetailDescription,
   DetailHeader,
+  DetailInput,
   DetailMain,
   DetailSection,
   DetailSectionTitle,
   DetailTitle,
+  DetailTitleRow,
 } from "@/components/content/detail";
 import {
   Property,
@@ -57,19 +62,22 @@ import {
   PropertyValue,
 } from "@/components/content/property-list";
 import { SectionGroup } from "@/components/content/section";
+import { PlaybookRowActions } from "@/components/data-table/playbooks/data-table-row-actions";
 import { playbookTemplate, playbookUsedFor } from "@/data/playbooks.client";
 import { formatDistanceToNowShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
-export function Client({ type }: { type: PlaybookType }) {
+type Heading = { title?: string; description?: string };
+
+export function Client({ slug }: { slug: PlaybookSlug }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const { data: playbook } = useQuery(trpc.playbook.get.queryOptions({ type }));
+  const { data: playbook } = useQuery(trpc.playbook.get.queryOptions({ slug }));
   // null = pristine: the editor follows the server copy, so a background
   // refetch never clobbers unsaved edits.
   const [draft, setDraft] = useState<string | null>(null);
-  const template = playbookTemplate[type];
+  const template = playbookTemplate[slug];
   // An empty slot opens on the template, which can be saved as is.
   const server = playbook?.content ?? template;
   const content = draft ?? server;
@@ -77,11 +85,19 @@ export function Client({ type }: { type: PlaybookType }) {
   const [values, setValues] = useState<PlaybookVariables | null>(null);
   const serverValues = playbook?.variables ?? {};
   const variables = values ?? serverValues;
+  // Edits made before the playbook exists; they go with the first Save.
+  const [heading, setHeading] = useState<Heading>({});
+  const title = heading.title ?? playbook?.title ?? playbookDefaultTitle[slug];
+  const description =
+    heading.description ||
+    playbook?.description ||
+    playbookDefaultDescription[slug];
+  const [descriptionResets, setDescriptionResets] = useState(0);
 
   const refresh = () =>
     Promise.all([
       queryClient.invalidateQueries({
-        queryKey: trpc.playbook.get.queryKey({ type }),
+        queryKey: trpc.playbook.get.queryKey({ slug }),
       }),
       queryClient.invalidateQueries({
         queryKey: trpc.playbook.list.queryKey(),
@@ -89,6 +105,7 @@ export function Client({ type }: { type: PlaybookType }) {
     ]).then(() => {
       setDraft(null);
       setValues(null);
+      setHeading({});
     });
   const onError = (error: unknown) => {
     toast.error(errorMessage(error));
@@ -103,8 +120,8 @@ export function Client({ type }: { type: PlaybookType }) {
       onError,
     }),
   );
-  // A value saves on its own, like the properties of an incident; the text does not.
-  const saveVariable = useMutation(
+  // The heading and a value save on their own, like the properties of an incident; the text does not.
+  const saveProperty = useMutation(
     trpc.playbook.save.mutationOptions({
       onSuccess: () =>
         queryClient.invalidateQueries({ queryKey: trpc.playbook.pathKey() }),
@@ -119,10 +136,21 @@ export function Client({ type }: { type: PlaybookType }) {
     }
     const value = (variables[name] ?? "").trim();
     if (value === (serverValues[name] ?? "")) return;
-    saveVariable.mutate({
-      type,
+    saveProperty.mutate({
+      slug,
       content: playbook.content,
       variables: { ...serverValues, [name]: value },
+    });
+  };
+  const saveHeading = (patch: Heading) => {
+    // emptied, the description goes back to the default: remount to show it
+    if (patch.description === "") setDescriptionResets((n) => n + 1);
+    if (!playbook) return setHeading({ ...heading, ...patch });
+    saveProperty.mutate({
+      slug,
+      content: playbook.content,
+      variables: serverValues,
+      ...patch,
     });
   };
 
@@ -142,7 +170,7 @@ export function Client({ type }: { type: PlaybookType }) {
     );
   const busy = save.isPending;
   const canSave = !busy && (dirty || !playbook) && length > 0 && !tooLong;
-  const submit = () => save.mutate({ type, content, variables });
+  const submit = () => save.mutate({ slug, content, variables, ...heading });
 
   const status = dirty
     ? { label: "Unsaved changes", variant: "warning" as const }
@@ -153,14 +181,40 @@ export function Client({ type }: { type: PlaybookType }) {
   return (
     <SectionGroup>
       <DetailHeader>
-        <DetailTitle>{playbookLabel[type]}</DetailTitle>
-        <DetailDescription>{playbookDescription[type]}</DetailDescription>
+        <DetailTitleRow>
+          <DetailTitle>
+            <DetailInput
+              aria-label="Title"
+              required
+              maxLength={PLAYBOOK_TITLE_MAX_CHARS}
+              disabled={saveProperty.isPending}
+              value={title}
+              onCommit={(title) => saveHeading({ title })}
+            />
+          </DetailTitle>
+          {playbook ? (
+            <DetailActions>
+              <PlaybookRowActions slug={slug} written edit={false} />
+            </DetailActions>
+          ) : null}
+        </DetailTitleRow>
+        <DetailDescription>
+          <DetailInput
+            key={descriptionResets}
+            multiline
+            aria-label="Description"
+            maxLength={PLAYBOOK_DESCRIPTION_MAX_CHARS}
+            disabled={saveProperty.isPending}
+            value={description}
+            onCommit={(description) => saveHeading({ description })}
+          />
+        </DetailDescription>
       </DetailHeader>
       <DetailContent>
         <DetailMain>
           <Composer size="lg" defaultValue={playbook ? "preview" : "write"}>
             <ComposerTextarea
-              aria-label={`${playbookLabel[type]} playbook`}
+              aria-label={`${title} playbook`}
               className="max-h-[60vh] overflow-y-auto"
               value={content}
               onChange={(e) => setDraft(e.target.value)}
@@ -234,7 +288,7 @@ export function Client({ type }: { type: PlaybookType }) {
               <Property>
                 <PropertyLabel>Used for</PropertyLabel>
                 <PropertyValue>
-                  <span className="truncate">{playbookUsedFor[type]}</span>
+                  <span className="truncate">{playbookUsedFor[slug]}</span>
                 </PropertyValue>
               </Property>
               <Property>

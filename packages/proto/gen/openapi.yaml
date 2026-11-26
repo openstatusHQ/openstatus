@@ -4024,16 +4024,24 @@ components:
     openstatus.playbook.v1.DeletePlaybookRequest:
       type: object
       properties:
-        type:
-          not:
-            enum:
-              - PLAYBOOK_TYPE_UNSPECIFIED
-          title: type
-          description: Type of the playbook to delete (required).
-          $ref: '#/components/schemas/openstatus.playbook.v1.PlaybookType'
+        slug:
+          type: string
+          examples:
+            - status-page
+          title: slug
+          enum:
+            - incident-response
+            - status-page
+            - maintenance-windows
+            - postmortem
+          description: |-
+            Slug of the playbook to delete (required): incident-response (how the
+             team runs an incident), status-page (how the team writes on the status
+             page), maintenance-windows (when a maintenance is scheduled and how it is
+             announced) or postmortem (the sections of a postmortem).
       title: DeletePlaybookRequest
       additionalProperties: false
-      description: DeletePlaybookRequest is the request to delete the playbook of a type.
+      description: DeletePlaybookRequest is the request to delete the playbook of a slug.
     openstatus.playbook.v1.DeletePlaybookResponse:
       type: object
       properties:
@@ -4047,16 +4055,24 @@ components:
     openstatus.playbook.v1.GetPlaybookRequest:
       type: object
       properties:
-        type:
-          not:
-            enum:
-              - PLAYBOOK_TYPE_UNSPECIFIED
-          title: type
-          description: Type of the playbook to retrieve (required).
-          $ref: '#/components/schemas/openstatus.playbook.v1.PlaybookType'
+        slug:
+          type: string
+          examples:
+            - status-page
+          title: slug
+          enum:
+            - incident-response
+            - status-page
+            - maintenance-windows
+            - postmortem
+          description: |-
+            Slug of the playbook to retrieve (required): incident-response (how the
+             team runs an incident), status-page (how the team writes on the status
+             page), maintenance-windows (when a maintenance is scheduled and how it is
+             announced) or postmortem (the sections of a postmortem).
       title: GetPlaybookRequest
       additionalProperties: false
-      description: GetPlaybookRequest is the request to get the playbook of a type.
+      description: GetPlaybookRequest is the request to get the playbook of a slug.
     openstatus.playbook.v1.GetPlaybookResponse:
       type: object
       properties:
@@ -4087,10 +4103,18 @@ components:
     openstatus.playbook.v1.Playbook:
       type: object
       properties:
-        type:
-          title: type
+        slug:
+          type: string
+          title: slug
+          description: Identifies the playbook. A workspace has at most one playbook per slug.
+        title:
+          type: string
+          title: title
+          description: Name of the playbook.
+        description:
+          type: string
+          title: description
           description: What the playbook covers.
-          $ref: '#/components/schemas/openstatus.playbook.v1.PlaybookType'
         content:
           type: string
           title: content
@@ -4112,7 +4136,7 @@ components:
           description: Timestamp when the playbook was last changed (RFC 3339 format).
       title: Playbook
       additionalProperties: false
-      description: Playbook is the team's written rules for one type.
+      description: Playbook is the team's written rules for one slug.
     openstatus.playbook.v1.Playbook.VariablesEntry:
       type: object
       properties:
@@ -4127,10 +4151,18 @@ components:
     openstatus.playbook.v1.PlaybookSummary:
       type: object
       properties:
-        type:
-          title: type
+        slug:
+          type: string
+          title: slug
+          description: Identifies the playbook. A workspace has at most one playbook per slug.
+        title:
+          type: string
+          title: title
+          description: Name of the playbook.
+        description:
+          type: string
+          title: description
           description: What the playbook covers.
-          $ref: '#/components/schemas/openstatus.playbook.v1.PlaybookType'
         createdAt:
           type: string
           title: created_at
@@ -4142,26 +4174,24 @@ components:
       title: PlaybookSummary
       additionalProperties: false
       description: PlaybookSummary is a playbook without its text (used in list responses).
-    openstatus.playbook.v1.PlaybookType:
-      type: string
-      title: PlaybookType
-      enum:
-        - PLAYBOOK_TYPE_UNSPECIFIED
-        - PLAYBOOK_TYPE_INCIDENT_RESPONSE
-        - PLAYBOOK_TYPE_STATUS_PAGE
-        - PLAYBOOK_TYPE_MAINTENANCE_WINDOWS
-        - PLAYBOOK_TYPE_POSTMORTEM
-      description: PlaybookType is what a playbook covers. A workspace has at most one playbook per type.
     openstatus.playbook.v1.UpdatePlaybookRequest:
       type: object
       properties:
-        type:
-          not:
-            enum:
-              - PLAYBOOK_TYPE_UNSPECIFIED
-          title: type
-          description: Type of the playbook to write (required).
-          $ref: '#/components/schemas/openstatus.playbook.v1.PlaybookType'
+        slug:
+          type: string
+          examples:
+            - status-page
+          title: slug
+          enum:
+            - incident-response
+            - status-page
+            - maintenance-windows
+            - postmortem
+          description: |-
+            Slug of the playbook to write (required): incident-response (how the
+             team runs an incident), status-page (how the team writes on the status
+             page), maintenance-windows (when a maintenance is scheduled and how it is
+             announced) or postmortem (the sections of a postmortem).
         content:
           type: string
           examples:
@@ -4184,9 +4214,27 @@ components:
             Values for the variables in the content, by name. This replaces the stored
              values: a variable left out is unset, and names the content does not use
              are dropped.
+        title:
+          type:
+            - string
+            - "null"
+          title: title
+          maxLength: 100
+          description: |-
+            Name of the playbook (max 100 characters). Left out, the stored title is
+             kept; an empty string goes back to the default for the slug.
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 500
+          description: |-
+            What the playbook covers (max 500 characters). Left out, the stored
+             description is kept; an empty string goes back to the default for the slug.
       title: UpdatePlaybookRequest
       additionalProperties: false
-      description: UpdatePlaybookRequest is the request to write the playbook of a type.
+      description: UpdatePlaybookRequest is the request to write the playbook of a slug.
     openstatus.playbook.v1.UpdatePlaybookRequest.VariablesEntry:
       type: object
       properties:
@@ -6718,7 +6766,7 @@ tags:
   - name: PlaybookService
     description: |
       Read and write the team's playbooks: how they run incidents, write on the status
-      page, schedule maintenance and write postmortems. One playbook per type.
+      page, schedule maintenance and write postmortems. One playbook per slug.
   - name: MaintenanceService
     description: |
       Schedule maintenance windows for status page components. Subscribers can be
@@ -8617,7 +8665,7 @@ paths:
       tags:
         - PlaybookService
       summary: DeletePlaybook
-      description: DeletePlaybook removes the playbook of a type.
+      description: DeletePlaybook removes the playbook of a slug.
       operationId: PlaybookService_DeletePlaybook
       requestBody:
         content:
@@ -8645,7 +8693,7 @@ paths:
       tags:
         - PlaybookService
       summary: GetPlaybook
-      description: GetPlaybook retrieves the playbook of a type.
+      description: GetPlaybook retrieves the playbook of a slug.
       operationId: PlaybookService_GetPlaybook.get
       parameters:
         - name: message
@@ -8673,7 +8721,7 @@ paths:
       tags:
         - PlaybookService
       summary: GetPlaybook
-      description: GetPlaybook retrieves the playbook of a type.
+      description: GetPlaybook retrieves the playbook of a slug.
       operationId: PlaybookService_GetPlaybook
       requestBody:
         content:
@@ -8758,8 +8806,8 @@ paths:
         - PlaybookService
       summary: UpdatePlaybook
       description: |-
-        UpdatePlaybook writes the playbook of a type: it is created when the
-         workspace has none of that type, otherwise its text and variables are replaced.
+        UpdatePlaybook writes the playbook of a slug: it is created when the
+         workspace has none for that slug, otherwise its text and variables are replaced.
       operationId: PlaybookService_UpdatePlaybook
       requestBody:
         content:

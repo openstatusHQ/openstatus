@@ -6,25 +6,34 @@ description: Technical specification for playbooks - the team's written rules fo
 
 A playbook is a markdown document that says how your team does something: run an incident, write on the status page, schedule maintenance, write a postmortem. People read it during an incident, and the agent reads it when you ask how the team works and before it drafts public text.
 
-A workspace has at most one playbook per type. Playbooks are internal: nothing in them is published.
+A workspace has at most one playbook per slug. Playbooks are internal: nothing in them is published.
 
-## Types
+## Slugs
 
-| Type | Covers | The agent reads it |
+| Slug | Covers | The agent reads it |
 |---|---|---|
-| `incident_response` | Severities, roles, steps, update cadence, escalation | When asked about the process, and before declaring an incident |
-| `status_page` | Tone, what to say and never say, public names for internal systems | Before a status report, a status report update or a maintenance notice |
-| `maintenance_windows` | What a window means, when it is scheduled, notice period, what the notice says | Before creating or changing a maintenance |
+| `incident-response` | Severities, roles, steps, update cadence, escalation | When asked about the process, and before declaring an incident |
+| `status-page` | Tone, what to say and never say, public names for internal systems | Before a status report, a status report update or a maintenance notice |
+| `maintenance-windows` | What a window means, when it is scheduled, notice period, what the notice says | Before creating or changing a maintenance |
 | `postmortem` | The sections of a postmortem and what goes in each | Before drafting a postmortem |
 
 ## Writing a playbook
 
-Open [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbooks) and pick a type.
+Open [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbooks) and pick a playbook.
 
 - An empty playbook opens with a default template in the editor. Save it as is, or change it first. Nothing is stored until you save.
 - **Reset template** puts the default text back in the editor.
 - The text is markdown, up to 10,000 characters.
-- Delete a playbook from the **⋯** menu on its row. The editor then opens on the template again.
+- Delete a playbook from the **⋯** menu on its row or next to its title. The editor then opens on the template again.
+
+### Title and description
+
+Every playbook comes with a default title and description. Click either one on the playbook's page to change it. The agent is told the description, so write it as what the playbook covers. Empty the description to go back to the default.
+
+| Field | Limit |
+|---|---|
+| Title | Up to 100 characters |
+| Description | Up to 500 characters |
 
 Any workspace member can write, change and delete playbooks.
 
@@ -44,16 +53,16 @@ The preview shows the playbook with its variables filled in, each value marked a
 
 ## How the agent uses playbooks
 
-The agent is told which playbooks exist, not what they say. It reads one with `get_playbook` when you ask how the team does something, and before it drafts a status report, a maintenance notice or a postmortem. It is asked to read first; it is not forced to, so check a draft before you approve it.
+The agent is told which playbooks exist and the description of each, not what they say. It reads one with `get_playbook` when you ask how the team does something, and before it drafts a status report, a maintenance notice or a postmortem. It is asked to read first; it is not forced to, so check a draft before you approve it.
 
-- **Slack and the dashboard assistant**: the agent knows which types are written and reads the relevant one on its own.
+- **Slack and the dashboard assistant**: the agent knows which playbooks are written and reads the relevant one on its own.
 - **MCP**: the server instructions and the tool descriptions point the client's model at `list_playbooks` and `get_playbook`. See the [MCP server reference](/docs/reference/mcp-server#playbooks).
 
 A playbook decides wording, structure, severity and process. It never overrides the approval step, and it cannot give the agent permissions it does not have.
 
 ### Changing a playbook from the agent
 
-Ask the agent to write or change a playbook and it calls `update_playbook`, which creates the playbook when there is none of that type and otherwise replaces its text. Like every write, it needs your approval first. The agent cannot delete a playbook.
+Ask the agent to write or change a playbook and it calls `update_playbook`, which creates the playbook when there is none for that slug and otherwise replaces its text. Like every write, it needs your approval first. The agent cannot delete a playbook.
 
 ## Postmortem drafts
 
@@ -63,27 +72,27 @@ Without a `postmortem` playbook, drafts are unchanged.
 
 ## API
 
-`PlaybookService` is part of the [API](https://api.openstatus.dev/openapi), under `/rpc/openstatus.playbook.v1.PlaybookService/`. Playbooks are addressed by type.
+`PlaybookService` is part of the [API](https://api.openstatus.dev/openapi), under `/rpc/openstatus.playbook.v1.PlaybookService/`. Playbooks are addressed by slug.
 
 | Method | What it does | Scope |
 |---|---|---|
-| `ListPlaybooks` | The playbooks the workspace has written, without their text | `incidents:read` |
-| `GetPlaybook` | One playbook: the text as written, its variable values and timestamps | `incidents:read` |
-| `UpdatePlaybook` | Creates the playbook when there is none of that type, otherwise replaces its text and variables | `incidents:write` |
-| `DeletePlaybook` | Removes the playbook of a type | `incidents:write` |
+| `ListPlaybooks` | The playbooks the workspace has written, with title and description, without their text | `incidents:read` |
+| `GetPlaybook` | One playbook: title, description, the text as written, its variable values and timestamps | `incidents:read` |
+| `UpdatePlaybook` | Creates the playbook when there is none for that slug, otherwise replaces its text and variables. `title` and `description` are optional | `incidents:write` |
+| `DeletePlaybook` | Removes the playbook of a slug | `incidents:write` |
 
 ```bash
 curl https://api.openstatus.dev/rpc/openstatus.playbook.v1.PlaybookService/UpdatePlaybook \
   -H "x-openstatus-key: $OPENSTATUS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "type": "PLAYBOOK_TYPE_STATUS_PAGE",
+    "slug": "status-page",
     "content": "Never promise a time for the fix. Sign off as {{team_name}}.",
     "variables": { "team_name": "The Acme platform team" }
   }'
 ```
 
-`variables` replaces the stored values: a variable you leave out is unset, and names the text does not use are dropped. `GetPlaybook` returns `not_found` when the workspace has no playbook of that type.
+`variables` replaces the stored values: a variable you leave out is unset, and names the text does not use are dropped. `title` and `description` are kept when you leave them out; an empty string goes back to the default. `GetPlaybook` returns `not_found` when the workspace has no playbook for that slug.
 
 ## Audit log
 
