@@ -862,6 +862,19 @@ describe("page component visibility", () => {
         }),
       ).rejects.toThrow();
 
+      await expect(
+        updatePageComponentOrder({
+          ctx,
+          input: {
+            pageId: testPageId,
+            components: [
+              { order: 0, name: "Static", type: "static", public: true },
+            ],
+            groups: [],
+          },
+        }),
+      ).rejects.toThrow();
+
       const created = await createPageComponent({
         ctx,
         input: { pageId: testPageId, type: "static", name: "Static" },

@@ -7,17 +7,8 @@ category: "statuspage"
 author: "openstatus"
 ---
 
-Making a monitor's stats public used to be a monitor setting. Turn it on and the latency, response time and uptime showed up on every status page the monitor was attached to. A monitor shared between a customer page and an internal page could not be public on one and private on the other.
+Monitor visibility is now set per status page. The same monitor can show its stats on your customer page and keep them private on an internal one.
 
-Visibility now lives on the page component. Each monitor component on [**Status Pages > Components**](https://app.openstatus.dev/status-pages/_/components) has a toggle next to it:
-
-- **Public** (eye): visitors see the monitor's stats and can open its detail page from the status page.
-- **Private** (crossed-out eye): the component still shows its status, but the stats stay in your dashboard.
-
-New components start private. Static components have no stats to share, and heartbeat monitors cannot be made public.
-
-Nothing changes on your existing pages. Every monitor component copied the old setting of its monitor, so a monitor that was public is still public on each page it is on. The **Visibility** card in the monitor settings is now read-only and points to the components page.
-
-The API follows the same model: `public` is on `PageComponent`, `AddMonitorComponent` and `UpdateComponent`, and on the MCP page component tools. The monitor-level `public` field is deprecated. It is still accepted so existing scripts and Terraform configs keep working, but status pages no longer read it.
+Use the eye toggle next to each monitor component under [**Status Pages > Components**](https://app.openstatus.dev/status-pages/_/components). Existing pages keep their current visibility.
 
 Read the [page components reference](/docs/reference/page-components#visibility) for the details.
