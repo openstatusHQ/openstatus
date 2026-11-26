@@ -600,7 +600,7 @@ Manages a component on a status page. Components can be linked to a monitor or b
 | `order`       | `number` | No       | Display order on the status page.                                            |
 | `group_id`    | `string` | No       | Component group ID this belongs to.                                          |
 | `group_order` | `number` | No       | Display order within its group.                                              |
-| `public`      | `bool`   | No       | Show the monitor's stats on this page (default `false`). Only for `type = "monitor"`; heartbeat monitors cannot be public. See [Visibility](/docs/reference/page-components#visibility). |
+| `public`      | `bool`   | No       | Show the monitor's stats on this page. New components default to `false`; leaving it unset keeps the current value. Only for `type = "monitor"`; heartbeat monitors cannot be public. See [Visibility](/docs/reference/page-components#visibility). |
 
 **Read-only attributes:** `id` (string), `created_at` (string), `updated_at` (string).
 
