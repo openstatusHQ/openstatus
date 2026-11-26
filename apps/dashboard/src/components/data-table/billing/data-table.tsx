@@ -17,6 +17,16 @@ import {
   getPriceConfig,
 } from "@openstatus/db/src/schema/plan/utils";
 import { Check, ChevronRight } from "@openstatus/icons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@openstatus/ui/components/ui/alert-dialog";
 import { Badge } from "@openstatus/ui/components/ui/badge";
 import { Button } from "@openstatus/ui/components/ui/button";
 import {
@@ -55,6 +65,10 @@ function getQuantitySuffix(addon: keyof Addons, interval: BillingInterval) {
 }
 
 type Plan = (typeof plans)[WorkspacePlan];
+type PlanChange = {
+  id: WorkspacePlan;
+  kind: "upgrade" | "downgrade" | "interval";
+};
 type Feature = (typeof featureGroups)[string]["features"][number];
 
 const allFeatures = Object.values(featureGroups).flatMap(
@@ -166,6 +180,72 @@ function FeatureCells({
   );
 }
 
+function ConfirmPlanChangeDialog({
+  change,
+  currentPlan,
+  interval,
+  currency,
+  isTrialing,
+  onOpenChange,
+  onConfirm,
+}: {
+  change: PlanChange | null;
+  currentPlan: WorkspacePlan;
+  interval: BillingInterval;
+  currency: string;
+  isTrialing: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: (id: WorkspacePlan) => void;
+}) {
+  // Keep the last change while the dialog animates out.
+  const [last, setLast] = useState(change);
+  if (change && change !== last) setLast(change);
+  const shown = change ?? last;
+  if (!shown) return null;
+
+  const target = plans[shown.id];
+  const price = getPriceConfig(shown.id, currency, interval);
+  const formatted = `${new Intl.NumberFormat(price.locale, {
+    style: "currency",
+    currency: price.currency,
+  }).format(price.value)}${interval === "yearly" ? "/year" : "/month"}`;
+
+  const title =
+    shown.kind === "interval"
+      ? `Switch to ${interval} billing?`
+      : shown.kind === "upgrade"
+        ? `Upgrade to ${target.title}?`
+        : `Downgrade to ${target.title}?`;
+  const description = isTrialing
+    ? `Your trial ends now and your card is charged ${formatted} today.`
+    : shown.kind === "downgrade"
+      ? `You give up ${plans[currentPlan].title} for ${target.title} at ${formatted} right away, along with its higher limits. The unused time is credited to your next invoice.`
+      : `Your subscription changes to ${target.title} at ${formatted} right away. The difference is prorated on your next invoice.`;
+  const action =
+    shown.kind === "interval"
+      ? `Switch to ${interval}`
+      : shown.kind === "upgrade"
+        ? "Upgrade"
+        : "Downgrade";
+
+  return (
+    <AlertDialog open={change !== null} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={() => onConfirm(shown.id)}>
+            {action}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
 export function DataTable({
   restrictTo,
   surface = "plan_table",
@@ -183,6 +263,7 @@ export function DataTable({
 }) {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const [interval, setInterval] = useState<BillingInterval>("monthly");
+  const [confirm, setConfirm] = useState<PlanChange | null>(null);
   const [currency] = useCookieState("x-currency", "USD");
   const trpc = useTRPC();
   const router = useRouter();
@@ -257,6 +338,52 @@ export function DataTable({
         group.features.includes(pinned),
       )?.[0]
     : Object.keys(featureGroups)[0];
+
+  // A paid workspace has its subscription re-priced in place, with no Stripe
+  // checkout in between to confirm the charge.
+  const isPaidWorkspace = workspace.plan !== "free";
+
+  function choosePlan(id: WorkspacePlan, trial = false) {
+    if (!workspace) return;
+    startTransition(async () => {
+      try {
+        if (trial) {
+          await checkoutSessionMutation.mutateAsync({
+            trial: true,
+            plan: "starter",
+            interval: "monthly",
+            surface,
+            currency: currency || "USD",
+            workspaceSlug: workspace.slug,
+            successUrl: `${BASE_URL}/settings/billing?trial=true`,
+            cancelUrl: `${BASE_URL}/settings/billing`,
+          });
+          return;
+        }
+        if (id === "free") {
+          await customerPortalMutation.mutateAsync({
+            workspaceSlug: workspace.slug,
+            returnUrl: `${BASE_URL}/settings/billing`,
+          });
+          return;
+        }
+        await checkoutSessionMutation.mutateAsync({
+          currency: currency || "USD",
+          plan: id,
+          interval,
+          workspaceSlug: workspace.slug,
+          successUrl: `${BASE_URL}/settings/billing?success=true`,
+          cancelUrl: `${BASE_URL}/settings/billing`,
+        });
+      } catch (error) {
+        toast.error(
+          isTRPCClientError(error)
+            ? error.message
+            : "Failed to update your plan",
+        );
+      }
+    });
+  }
 
   return (
     <div className={cn("flex min-w-0 flex-col gap-4", className)}>
@@ -359,43 +486,18 @@ export function DataTable({
                         type="button"
                         variant={id === recommended ? "default" : "outline"}
                         onClick={() => {
-                          startTransition(async () => {
-                            try {
-                              if (isTrialOffer) {
-                                await checkoutSessionMutation.mutateAsync({
-                                  trial: true,
-                                  plan: "starter",
-                                  interval: "monthly",
-                                  surface,
-                                  currency: currency || "USD",
-                                  workspaceSlug: workspace.slug,
-                                  successUrl: `${BASE_URL}/settings/billing?trial=true`,
-                                  cancelUrl: `${BASE_URL}/settings/billing`,
-                                });
-                                return;
-                              }
-                              if (id === "free") {
-                                await customerPortalMutation.mutateAsync({
-                                  workspaceSlug: workspace.slug,
-                                  returnUrl: `${BASE_URL}/settings/billing`,
-                                });
-                                return;
-                              }
-                              await checkoutSessionMutation.mutateAsync({
-                                currency: currency || "USD",
-                                plan: id,
-                                interval,
-                                workspaceSlug: workspace.slug,
-                                successUrl: `${BASE_URL}/settings/billing?success=true`,
-                                cancelUrl: `${BASE_URL}/settings/billing`,
-                              });
-                            } catch (error) {
-                              toast.error(
-                                isTRPCClientError(error)
-                                  ? error.message
-                                  : "Failed to update your plan",
-                              );
-                            }
+                          if (isTrialOffer || isFreePlan || !isPaidWorkspace) {
+                            choosePlan(id, isTrialOffer);
+                            return;
+                          }
+                          setConfirm({
+                            id,
+                            kind: isIntervalSwitch
+                              ? "interval"
+                              : planOrder.indexOf(id) >
+                                  planOrder.indexOf(workspace.plan)
+                                ? "upgrade"
+                                : "downgrade",
                           });
                         }}
                         disabled={
@@ -491,6 +593,20 @@ export function DataTable({
           </TableBody>
         </table>
       </div>
+      <ConfirmPlanChangeDialog
+        change={confirm}
+        currentPlan={workspace.plan}
+        interval={interval}
+        currency={currency || "USD"}
+        isTrialing={isTrialing}
+        onOpenChange={(open) => {
+          if (!open) setConfirm(null);
+        }}
+        onConfirm={(id) => {
+          setConfirm(null);
+          choosePlan(id);
+        }}
+      />
     </div>
   );
 }
