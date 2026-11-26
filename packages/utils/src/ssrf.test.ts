@@ -20,6 +20,8 @@ describe("assertSafeUrlSync", () => {
       "http://example.com/webhook",
       "https://172.32.0.1/webhook", // 172.32 is NOT private (only 172.16-31)
       "https://172.15.255.255/webhook", // 172.15 is NOT private
+      "https://localhost.example.com/webhook",
+      "https://notlocalhost.com/webhook",
     ];
 
     for (const url of allowed) {
@@ -71,8 +73,15 @@ describe("assertSafeUrlSync", () => {
       "http://localhost/",
       "http://localhost:8080/test",
       "http://LOCALHOST/", // case insensitive
+      "http://localhost./", // trailing dot FQDN
+      "http://sub.localhost/", // RFC 6761 subdomain
+      "http://sub.localhost./",
       "http://metadata.google.internal/computeMetadata/v1/",
+      "http://metadata.google.internal./computeMetadata/v1/",
       "http://metadata.internal/",
+      "http://metadata.internal./",
+      "http://127.0.0.1./",
+      "http://169.254.169.254./latest/meta-data/",
     ];
 
     for (const url of blocked) {
@@ -89,6 +98,8 @@ describe("assertSafeUrlSync", () => {
       "http://[fc00::1]/", // unique local
       "http://[fd12:3456::1]/", // unique local
       "http://[fe80::1]/", // link-local
+      "http://[fe90::1]/", // link-local fe80::/10
+      "http://[febf::1]/", // link-local fe80::/10
     ];
 
     for (const url of blocked) {
