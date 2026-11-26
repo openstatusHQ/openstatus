@@ -3,6 +3,16 @@ import { Cause, Effect, Exit, Schedule } from "effect";
 const RETRYABLE_CODES = new Set(["SQLITE_BUSY", "SQLITE_LOCKED"]);
 const RETRYABLE_MESSAGE = /database is (locked|busy)/i;
 const TRANSIENT_SERVER_MESSAGE = /Server returned HTTP status 5\d\d/i;
+// Connection never produced a response: undici connect/socket failures and the
+// Node codes they wrap ("fetch failed" → AggregateError ETIMEDOUT).
+const TRANSIENT_NETWORK_CODES = new Set([
+  "ETIMEDOUT",
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "EAI_AGAIN",
+  "UND_ERR_CONNECT_TIMEOUT",
+  "UND_ERR_SOCKET",
+]);
 const MAX_ATTEMPTS = 5;
 const BASE_DELAY_MS = 25;
 const MAX_CAUSE_DEPTH = 10;
@@ -62,6 +72,22 @@ export function isTransientServerError(err: unknown): boolean {
   return false;
 }
 
+// Safe to retry only for idempotent reads — a reset may land after a write
+// reached the server.
+export function isTransientNetworkError(err: unknown): boolean {
+  let current: unknown = err;
+  for (let depth = 0; depth < MAX_CAUSE_DEPTH; depth++) {
+    if (typeof current !== "object" || current === null) return false;
+
+    if (hasCode(current) && typeof current.code === "string") {
+      if (TRANSIENT_NETWORK_CODES.has(current.code)) return true;
+    }
+    if (!hasCause(current) || current.cause === current) return false;
+    current = current.cause;
+  }
+  return false;
+}
+
 const retrySchedule = Schedule.exponential(`${BASE_DELAY_MS} millis`).pipe(
   Schedule.jittered,
 );
@@ -84,6 +110,12 @@ export async function withBusyRetry<T>(
   return exit.value;
 }
 
-// Idempotent reads only: also retries transient Turso 5xx (see isTransientServerError).
+// Idempotent reads only: also retries transient Turso 5xx and failed connections.
 export const retryRead = <T>(fn: () => Promise<T>): Promise<T> =>
-  withBusyRetry(fn, (e) => isRetryableDbError(e) || isTransientServerError(e));
+  withBusyRetry(
+    fn,
+    (e) =>
+      isRetryableDbError(e) ||
+      isTransientServerError(e) ||
+      isTransientNetworkError(e),
+  );
