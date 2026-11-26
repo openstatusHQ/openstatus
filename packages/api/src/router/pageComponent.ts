@@ -1,8 +1,6 @@
 import { Events } from "@openstatus/analytics";
-import { NotFoundError } from "@openstatus/services";
 import {
   UpdatePageComponentOrderInput,
-  deletePageComponent,
   listPageComponents,
   updatePageComponentOrder,
 } from "@openstatus/services/page-component";
@@ -31,26 +29,6 @@ export const pageComponentRouter = createTRPCRouter({
           },
         });
       } catch (err) {
-        toTRPCError(err);
-      }
-    }),
-
-  delete: protectedProcedure
-    .meta({ track: Events.DeletePageComponent, trackProps: ["id"] })
-    .input(z.object({ id: z.number() }))
-    .mutation(async ({ ctx, input }) => {
-      try {
-        await deletePageComponent({
-          ctx: toServiceCtx(ctx),
-          input: { id: input.id },
-        });
-        // Old contract returned drizzle `.returning()` — callers today
-        // ignore the payload, only `.mutate` success/failure matters.
-        return [] as Array<never>;
-      } catch (err) {
-        // Preserve the pre-migration idempotent behaviour — the old tRPC
-        // delete silently succeeded when the row was already gone.
-        if (err instanceof NotFoundError) return [] as Array<never>;
         toTRPCError(err);
       }
     }),

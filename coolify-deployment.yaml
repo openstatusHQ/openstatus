@@ -81,7 +81,6 @@ x-common-variables: &common-env # Database Configuration
 
   # External Services
   OPENSTATUS_INGEST_URL: ${OPENSTATUS_INGEST_URL:-https://openstatus-private-location.fly.dev}
-  SCREENSHOT_SERVICE_URL: ${SCREENSHOT_SERVICE_URL:-}
 
   # Development & Testing
   TURBO_ENV_MODE: ${TURBO_ENV_MODE:-loose}
