@@ -496,6 +496,8 @@ function Home({
   );
 }
 
+const TOP_RESULTS = 5;
+
 // Bucket, preserving the server's rank order — first key seen is the best-scoring one.
 function bucket<K>(list: SearchResult[], keyOf: (item: SearchResult) => K) {
   const groups: { key: K; items: SearchResult[] }[] = [];
@@ -568,12 +570,20 @@ function SearchResults({
       ? (item) => CORPUS_LABELS[item.type]
       : (item) => item.metadata.category || CORPUS_LABELS[item.type];
 
+  // Grouping reorders by corpus, so the best-ranked hits get a flat group of
+  // their own first. Each row renders once: cmdk selects by `value`.
+  const fullItems = items.filter((i) => i.tier !== "partial");
+  const top = search.trim()
+    ? (fullItems.length > 0 ? fullItems : items).slice(0, TOP_RESULTS)
+    : [];
+  const rest = items.filter((i) => !top.includes(i));
+
   const full = bucket(
-    items.filter((i) => i.tier !== "partial"),
+    rest.filter((i) => i.tier !== "partial"),
     keyOf,
   );
   const partial = bucket(
-    items.filter((i) => i.tier === "partial"),
+    rest.filter((i) => i.tier === "partial"),
     keyOf,
   );
 
@@ -592,6 +602,14 @@ function SearchResults({
 
   return (
     <>
+      {top.length > 0 ? (
+        <>
+          <CommandGroup heading="Top results">
+            {top.map(renderRow)}
+          </CommandGroup>
+          {rest.length > 0 ? <CommandSeparator /> : null}
+        </>
+      ) : null}
       {renderGroups(full, "full")}
       {partial.length > 0 ? renderGroups(partial, "partial") : null}
     </>
