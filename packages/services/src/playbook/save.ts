@@ -1,6 +1,10 @@
 import { eq } from "@openstatus/db";
 import { playbook } from "@openstatus/db/src/schema";
-import { PLAYBOOK_MAX_CHARS } from "@openstatus/db/src/schema/playbooks/constants";
+import {
+  isBuiltinPlaybookSlug,
+  PLAYBOOK_MAX_CHARS,
+  PLAYBOOK_MAX_CUSTOM,
+} from "@openstatus/db/src/schema/playbooks/constants";
 import {
   type PlaybookVariables,
   playbookVariableNames,
@@ -14,7 +18,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ValidationError } from "../errors";
+import { LimitExceededError, ValidationError } from "../errors";
 import {
   getPlaybookBySlug,
   type PlaybookWithDefaults,
@@ -61,6 +65,24 @@ export async function savePlaybook(args: {
         ? (existing?.description ?? null)
         : input.description || null;
     if (!existing) {
+      if (!isBuiltinPlaybookSlug(input.slug)) {
+        if (!title) {
+          throw new ValidationError("A custom playbook needs a title.");
+        }
+        const slugs = await tx
+          .select({ slug: playbook.slug })
+          .from(playbook)
+          .where(eq(playbook.workspaceId, ctx.workspace.id))
+          .all();
+        const custom = slugs.filter((r) => !isBuiltinPlaybookSlug(r.slug));
+        if (custom.length >= PLAYBOOK_MAX_CUSTOM) {
+          throw new LimitExceededError(
+            "custom-playbooks",
+            PLAYBOOK_MAX_CUSTOM,
+            custom.length,
+          );
+        }
+      }
       const created = await tx
         .insert(playbook)
         .values({

@@ -1,7 +1,7 @@
-import type { PlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
+import type { BuiltinPlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
 
 /** What the agent consults this playbook for. */
-export const playbookUsedFor: Record<PlaybookSlug, string> = {
+export const playbookUsedFor: Record<BuiltinPlaybookSlug, string> = {
   "incident-response": "Declaring incidents",
   "status-page": "Status reports",
   "maintenance-windows": "Maintenance notices",
@@ -9,7 +9,7 @@ export const playbookUsedFor: Record<PlaybookSlug, string> = {
 };
 
 /** Starting text a team can save as is and edit later; written to work without changes. */
-export const playbookTemplate: Record<PlaybookSlug, string> = {
+export const playbookTemplate: Record<BuiltinPlaybookSlug, string> = {
   "incident-response": `# Incident response
 
 ## When to declare

@@ -4732,13 +4732,9 @@
             "type": "string",
             "examples": ["status-page"],
             "title": "slug",
-            "enum": [
-              "incident-response",
-              "status-page",
-              "maintenance-windows",
-              "postmortem"
-            ],
-            "description": "Slug of the playbook to delete (required): incident-response (how the\n team runs an incident), status-page (how the team writes on the status\n page), maintenance-windows (when a maintenance is scheduled and how it is\n announced) or postmortem (the sections of a postmortem)."
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Slug of the playbook to delete (required): lowercase letters,\n digits and single hyphens, max 64 characters. Built-in slugs come with a\n default title and description: incident-response, status-page,\n maintenance-windows, postmortem. Any other slug is a custom playbook."
           }
         },
         "title": "DeletePlaybookRequest",
@@ -4765,13 +4761,9 @@
             "type": "string",
             "examples": ["status-page"],
             "title": "slug",
-            "enum": [
-              "incident-response",
-              "status-page",
-              "maintenance-windows",
-              "postmortem"
-            ],
-            "description": "Slug of the playbook to retrieve (required): incident-response (how the\n team runs an incident), status-page (how the team writes on the status\n page), maintenance-windows (when a maintenance is scheduled and how it is\n announced) or postmortem (the sections of a postmortem)."
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Slug of the playbook to retrieve (required): lowercase letters,\n digits and single hyphens, max 64 characters. Built-in slugs come with a\n default title and description: incident-response, status-page,\n maintenance-windows, postmortem. Any other slug is a custom playbook."
           }
         },
         "title": "GetPlaybookRequest",
@@ -4915,13 +4907,9 @@
             "type": "string",
             "examples": ["status-page"],
             "title": "slug",
-            "enum": [
-              "incident-response",
-              "status-page",
-              "maintenance-windows",
-              "postmortem"
-            ],
-            "description": "Slug of the playbook to write (required): incident-response (how the\n team runs an incident), status-page (how the team writes on the status\n page), maintenance-windows (when a maintenance is scheduled and how it is\n announced) or postmortem (the sections of a postmortem)."
+            "maxLength": 64,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "description": "Slug of the playbook to write (required): lowercase letters,\n digits and single hyphens, max 64 characters. Built-in slugs come with a\n default title and description: incident-response, status-page,\n maintenance-windows, postmortem. Any other slug is a custom playbook."
           },
           "content": {
             "type": "string",
@@ -4945,7 +4933,7 @@
             "type": ["string", "null"],
             "title": "title",
             "maxLength": 100,
-            "description": "Name of the playbook (max 100 characters). Left out, the stored title is\n kept; an empty string goes back to the default for the slug."
+            "description": "Name of the playbook (max 100 characters). Left out, the stored title is\n kept; an empty string goes back to the default for the slug. Required to\n create a playbook under a custom slug."
           },
           "description": {
             "type": ["string", "null"],

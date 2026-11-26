@@ -172,13 +172,13 @@ describe("PlaybookService", () => {
     ).toEqual({ status: 404, code: "not_found" });
   });
 
-  test("rejects a missing or unknown slug, empty content and a bad variable name", async () => {
+  test("rejects a missing or malformed slug, empty content and a bad variable name", async () => {
     expect((await rpcError("GetPlaybook", {}, key)).code).toBe(
       "invalid_argument",
     );
-    expect((await rpcError("GetPlaybook", { slug: "runbook" }, key)).code).toBe(
-      "invalid_argument",
-    );
+    expect(
+      (await rpcError("GetPlaybook", { slug: "Run_Book" }, key)).code,
+    ).toBe("invalid_argument");
     expect(
       (
         await rpcError(
@@ -201,6 +201,52 @@ describe("PlaybookService", () => {
         )
       ).code,
     ).toBe("invalid_argument");
+  });
+
+  test("a custom slug needs a title, then behaves like any playbook", async () => {
+    expect(
+      (
+        await rpcError(
+          "UpdatePlaybook",
+          { slug: "database-failover", content: "x" },
+          key,
+        )
+      ).code,
+    ).toBe("invalid_argument");
+
+    const created = await rpc(
+      UpdatePlaybookResponseSchema,
+      "UpdatePlaybook",
+      {
+        slug: "database-failover",
+        title: "Database failover",
+        description: "Read before touching the primary.",
+        content: "Promote the replica.",
+      },
+      key,
+    );
+    await trackIds();
+    expect(created.playbook?.title).toBe("Database failover");
+
+    const listed = await rpc(
+      ListPlaybooksResponseSchema,
+      "ListPlaybooks",
+      {},
+      key,
+    );
+    expect((listed.playbooks ?? []).map((p) => p.slug)).toContain(
+      "database-failover",
+    );
+
+    await rpc(
+      DeletePlaybookResponseSchema,
+      "DeletePlaybook",
+      { slug: "database-failover" },
+      key,
+    );
+    expect(
+      await rpcError("GetPlaybook", { slug: "database-failover" }, key),
+    ).toEqual({ status: 404, code: "not_found" });
   });
 
   test("requires credentials", async () => {

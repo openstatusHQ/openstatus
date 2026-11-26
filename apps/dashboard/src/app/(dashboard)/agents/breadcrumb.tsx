@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  playbookDefaultTitle,
-  playbookSlugs,
-} from "@openstatus/db/src/schema/playbooks/constants";
+import { playbookDefaultTitle } from "@openstatus/db/src/schema/playbooks/constants";
 import { Agent } from "@openstatus/icons";
 import { useQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
@@ -17,10 +14,7 @@ export function Breadcrumb() {
   const pathname = usePathname();
   const [, , segment = "", child] = pathname.split("/");
   const currentTab = AGENT_TABS.find((tab) => tab.value === segment);
-  const slug =
-    segment === "playbooks"
-      ? playbookSlugs.find((s) => s === child)
-      : undefined;
+  const slug = segment === "playbooks" ? child : undefined;
   const trpc = useTRPC();
   const { data: playbooks } = useQuery({
     ...trpc.playbook.list.queryOptions(),
@@ -43,7 +37,7 @@ export function Breadcrumb() {
                 type: "page" as const,
                 label:
                   playbooks?.find((p) => p.slug === slug)?.title ??
-                  playbookDefaultTitle[slug],
+                  playbookDefaultTitle(slug),
               },
             ]
           : currentTab

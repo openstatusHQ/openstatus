@@ -8,7 +8,6 @@ import {
 
 import { user } from "../users";
 import { workspace } from "../workspaces";
-import { playbookSlugs } from "./constants";
 import type { PlaybookVariables } from "./variables";
 
 // Autoincrement: audit rows are the history of a cleared playbook, so its id must never be reused.
@@ -19,8 +18,8 @@ export const playbook = sqliteTable(
     workspaceId: integer("workspace_id")
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
-    slug: text("slug", { enum: playbookSlugs }).notNull(),
-    // null = the slug's default
+    slug: text("slug").notNull(),
+    // null = the default of a built-in slug
     title: text("title"),
     description: text("description"),
     content: text("content").notNull(),

@@ -1,10 +1,13 @@
 import {
   playbookDefaultDescription,
   playbookDefaultTitle,
-  playbookSlugs,
+  builtinPlaybookSlugs,
 } from "@openstatus/db/src/schema/playbooks/constants";
 import {
   playbookContentSchema,
+  playbookDescriptionSchema,
+  playbookSlugSchema,
+  playbookTitleSchema,
   playbookVariablesSchema,
 } from "@openstatus/db/src/schema/playbooks/validation";
 import {
@@ -21,16 +24,18 @@ import {
 } from "../playbook";
 import type { AgentTool } from "./types";
 
-const slugList = playbookSlugs
-  .map((s) => `${s} (${playbookDefaultDescription[s]})`)
-  .join(" ");
+const slugList = `${builtinPlaybookSlugs
+  .map((s) => `${s} (${playbookDefaultDescription(s)})`)
+  .join(
+    " ",
+  )} The team may also have written custom playbooks under their own slugs; list_playbooks names them.`;
 
 const ListPlaybooksInput = z.object({}).strict();
 
 const ListPlaybooksOutput = z.object({
   playbooks: z.array(
     z.object({
-      slug: z.enum(playbookSlugs),
+      slug: z.string(),
       title: z.string(),
       description: z.string().describe("What the playbook covers."),
       updatedAt: z.string(),
@@ -61,10 +66,10 @@ export const listPlaybooksTool: AgentTool<
   },
 };
 
-const GetPlaybookInput = z.object({ slug: z.enum(playbookSlugs) }).strict();
+const GetPlaybookInput = z.object({ slug: playbookSlugSchema }).strict();
 
 const GetPlaybookOutput = z.object({
-  slug: z.enum(playbookSlugs),
+  slug: z.string(),
   content: z.string(),
   source: z
     .string()
@@ -114,7 +119,17 @@ export const getPlaybookTool: AgentTool<
 
 const UpdatePlaybookInput = z
   .object({
-    slug: z.enum(playbookSlugs),
+    slug: playbookSlugSchema,
+    title: playbookTitleSchema
+      .optional()
+      .describe(
+        "Name of the playbook. Required when creating a playbook under a custom slug; otherwise leave it out to keep the current one.",
+      ),
+    description: playbookDescriptionSchema
+      .optional()
+      .describe(
+        "What the playbook covers and when to read it. Leave it out to keep the current one.",
+      ),
     content: playbookContentSchema.describe(
       "The complete playbook in markdown. It replaces the whole playbook, so include every section that should stay. {{name}} (lowercase letters, digits, underscores) marks a variable.",
     ),
@@ -127,7 +142,7 @@ const UpdatePlaybookInput = z
   .strict();
 
 const UpdatePlaybookOutput = z.object({
-  slug: z.enum(playbookSlugs),
+  slug: z.string(),
   created: z.boolean().describe("True when the playbook did not exist before."),
   updatedAt: z.string(),
 });
@@ -148,7 +163,7 @@ export const updatePlaybookTool: AgentTool<
   outputSchema: UpdatePlaybookOutput,
   approval: {
     summarize: (input) => ({
-      title: `Write the ${playbookDefaultTitle[input.slug]} playbook`,
+      title: `Write the ${input.title ?? playbookDefaultTitle(input.slug)} playbook`,
       lines: [
         { label: "Playbook", value: summaryText(input.content) },
         ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
@@ -165,6 +180,8 @@ export const updatePlaybookTool: AgentTool<
       ctx,
       input: {
         slug: input.slug,
+        title: input.title,
+        description: input.description,
         content: input.content,
         variables: { ...existing?.variables, ...input.variables },
       },

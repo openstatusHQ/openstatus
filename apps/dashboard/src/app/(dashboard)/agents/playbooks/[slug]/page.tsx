@@ -1,4 +1,5 @@
-import { playbookSlugs } from "@openstatus/db/src/schema/playbooks/constants";
+import { isBuiltinPlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
+import { playbookSlugSchema } from "@openstatus/db/src/schema/playbooks/validation";
 import { notFound } from "next/navigation";
 
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
@@ -10,12 +11,15 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const param = (await params).slug;
-  const slug = playbookSlugs.find((s) => s === param);
-  if (!slug) return notFound();
+  const { slug } = await params;
+  if (!playbookSlugSchema.safeParse(slug).success) return notFound();
 
   const queryClient = getQueryClient();
-  await queryClient.prefetchQuery(trpc.playbook.get.queryOptions({ slug }));
+  const playbook = await queryClient.fetchQuery(
+    trpc.playbook.get.queryOptions({ slug }),
+  );
+  // a built-in slug has a page before it is written; a custom one does not
+  if (!playbook && !isBuiltinPlaybookSlug(slug)) return notFound();
 
   return (
     <HydrateClient>

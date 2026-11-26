@@ -4,7 +4,7 @@ import {
   PLAYBOOK_DESCRIPTION_MAX_CHARS,
   PLAYBOOK_MAX_CHARS,
   PLAYBOOK_TITLE_MAX_CHARS,
-  type PlaybookSlug,
+  isBuiltinPlaybookSlug,
   playbookDefaultDescription,
   playbookDefaultTitle,
 } from "@openstatus/db/src/schema/playbooks/constants";
@@ -70,14 +70,16 @@ import { errorMessage } from "@/lib/trpc/error";
 
 type Heading = { title?: string; description?: string };
 
-export function Client({ slug }: { slug: PlaybookSlug }) {
+export function Client({ slug }: { slug: string }) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { data: playbook } = useQuery(trpc.playbook.get.queryOptions({ slug }));
   // null = pristine: the editor follows the server copy, so a background
   // refetch never clobbers unsaved edits.
   const [draft, setDraft] = useState<string | null>(null);
-  const template = playbookTemplate[slug];
+  const builtin = isBuiltinPlaybookSlug(slug);
+  // a custom playbook has no template to start from or go back to
+  const template = builtin ? playbookTemplate[slug] : "";
   // An empty slot opens on the template, which can be saved as is.
   const server = playbook?.content ?? template;
   const content = draft ?? server;
@@ -87,11 +89,11 @@ export function Client({ slug }: { slug: PlaybookSlug }) {
   const variables = values ?? serverValues;
   // Edits made before the playbook exists; they go with the first Save.
   const [heading, setHeading] = useState<Heading>({});
-  const title = heading.title ?? playbook?.title ?? playbookDefaultTitle[slug];
+  const title = heading.title ?? playbook?.title ?? playbookDefaultTitle(slug);
   const description =
     heading.description ||
     playbook?.description ||
-    playbookDefaultDescription[slug];
+    playbookDefaultDescription(slug);
   const [descriptionResets, setDescriptionResets] = useState(0);
 
   const refresh = () =>
@@ -155,7 +157,8 @@ export function Client({ slug }: { slug: PlaybookSlug }) {
   };
 
   // The default tab depends on the server copy; mounting earlier would pin it.
-  if (playbook === undefined) return null;
+  // A custom playbook that was just deleted has nothing left to show.
+  if (playbook === undefined || (!playbook && !builtin)) return null;
 
   const names = playbookVariableNames(content);
   const rendered = renderPlaybook(content, variables);
@@ -203,6 +206,7 @@ export function Client({ slug }: { slug: PlaybookSlug }) {
             key={descriptionResets}
             multiline
             aria-label="Description"
+            placeholder="Add a description…"
             maxLength={PLAYBOOK_DESCRIPTION_MAX_CHARS}
             disabled={saveProperty.isPending}
             value={description}
@@ -238,34 +242,36 @@ export function Client({ slug }: { slug: PlaybookSlug }) {
               <ComposerActions>
                 <ComposerPreviewToggle />
                 <div className="flex items-center gap-2">
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={busy || content.trim() === template}
-                      >
-                        Reset template
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          Reset to the template?
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          The text in the editor is replaced by the default
-                          template. Nothing is saved until you click Save.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => setDraft(template)}>
-                          Reset
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  {builtin ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={busy || content.trim() === template}
+                        >
+                          Reset template
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>
+                            Reset to the template?
+                          </AlertDialogTitle>
+                          <AlertDialogDescription>
+                            The text in the editor is replaced by the default
+                            template. Nothing is saved until you click Save.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => setDraft(template)}>
+                            Reset
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : null}
                   <Button size="sm" disabled={!canSave} onClick={submit}>
                     Save
                   </Button>
@@ -285,10 +291,18 @@ export function Client({ slug }: { slug: PlaybookSlug }) {
                   <span className="truncate">{status.label}</span>
                 </PropertyValue>
               </Property>
+              {builtin ? (
+                <Property>
+                  <PropertyLabel>Used for</PropertyLabel>
+                  <PropertyValue>
+                    <span className="truncate">{playbookUsedFor[slug]}</span>
+                  </PropertyValue>
+                </Property>
+              ) : null}
               <Property>
-                <PropertyLabel>Used for</PropertyLabel>
+                <PropertyLabel>Slug</PropertyLabel>
                 <PropertyValue>
-                  <span className="truncate">{playbookUsedFor[slug]}</span>
+                  <span className="truncate font-mono">{slug}</span>
                 </PropertyValue>
               </Property>
               <Property>

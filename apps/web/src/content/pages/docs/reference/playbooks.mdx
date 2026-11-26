@@ -8,7 +8,9 @@ A playbook is a markdown document that says how your team does something: run an
 
 A workspace has at most one playbook per slug. Playbooks are internal: nothing in them is published.
 
-## Slugs
+## Built-in playbooks
+
+Four playbooks come with a default title, description and template:
 
 | Slug | Covers | The agent reads it |
 |---|---|---|
@@ -17,6 +19,19 @@ A workspace has at most one playbook per slug. Playbooks are internal: nothing i
 | `maintenance-windows` | What a window means, when it is scheduled, notice period, what the notice says | Before creating or changing a maintenance |
 | `postmortem` | The sections of a postmortem and what goes in each | Before drafting a postmortem |
 
+## Custom playbooks
+
+For anything else your team does its own way, such as a database failover or a customer escalation, create a custom playbook: open [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbooks), click **Create playbook** and set a title, a slug and a description.
+
+| Rule | |
+|---|---|
+| Slug | Lowercase letters, digits and single hyphens, up to 64 characters: `database-failover`. It cannot be changed later. |
+| Title | Required |
+| Description | What the playbook covers. The agent is told the description and uses it to decide when to read the playbook, so say when it applies. |
+| Limit | 20 custom playbooks per workspace |
+
+A custom playbook has no template: it starts with its title as a heading. Deleting it removes it from the list.
+
 ## Writing a playbook
 
 Open [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbooks) and pick a playbook.
@@ -24,11 +39,11 @@ Open [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbo
 - An empty playbook opens with a default template in the editor. Save it as is, or change it first. Nothing is stored until you save.
 - **Reset template** puts the default text back in the editor.
 - The text is markdown, up to 10,000 characters.
-- Delete a playbook from the **⋯** menu on its row or next to its title. The editor then opens on the template again.
+- Delete a playbook from the **⋯** menu on its row or next to its title. For a built-in playbook, the editor then opens on the template again.
 
 ### Title and description
 
-Every playbook comes with a default title and description. Click either one on the playbook's page to change it. The agent is told the description, so write it as what the playbook covers. Empty the description to go back to the default.
+Click the title or the description on the playbook's page to change it. The agent is told the description, so write it as what the playbook covers. For a built-in playbook, empty the description to go back to the default.
 
 | Field | Limit |
 |---|---|
@@ -78,7 +93,7 @@ Without a `postmortem` playbook, drafts are unchanged.
 |---|---|---|
 | `ListPlaybooks` | The playbooks the workspace has written, with title and description, without their text | `incidents:read` |
 | `GetPlaybook` | One playbook: title, description, the text as written, its variable values and timestamps | `incidents:read` |
-| `UpdatePlaybook` | Creates the playbook when there is none for that slug, otherwise replaces its text and variables. `title` and `description` are optional | `incidents:write` |
+| `UpdatePlaybook` | Creates the playbook when there is none for that slug, otherwise replaces its text and variables. `title` and `description` are optional, except `title` when creating a custom slug | `incidents:write` |
 | `DeletePlaybook` | Removes the playbook of a slug | `incidents:write` |
 
 ```bash

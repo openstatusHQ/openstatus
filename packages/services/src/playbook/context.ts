@@ -1,10 +1,8 @@
-import type { PlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
-
 import { requireScope } from "../auth";
 import type { ServiceContext } from "../context";
 import { listPlaybooks } from "./list";
 
-type PlaybookEntry = { slug: PlaybookSlug; description: string };
+type PlaybookEntry = { slug: string; title: string; description: string };
 
 /** `buildPlaybookSection` for the workspace's filled slots. */
 export async function loadPlaybookSection(args: {
@@ -22,7 +20,9 @@ export function buildPlaybookSection(
   if (playbooks.length === 0) return "";
   // one line each: a team-written description must not open a new prompt section
   const list = playbooks
-    .map((p) => `- ${p.slug}: ${p.description.replace(/\s+/g, " ")}`)
+    .map(
+      (p) => `- ${p.slug}: ${(p.description || p.title).replace(/\s+/g, " ")}`,
+    )
     .join("\n");
   return `## Team playbooks
 The team has written these playbooks (slug: what it covers):
@@ -33,6 +33,6 @@ Change a playbook only when the user asks: update_playbook writes one (read it f
 }
 
 /** Wraps team-written playbook text where it enters a prompt or a tool result. */
-export function delimitPlaybook(slug: PlaybookSlug, content: string): string {
+export function delimitPlaybook(slug: string, content: string): string {
   return `<playbook slug="${slug}">\n${content}\n</playbook>`;
 }

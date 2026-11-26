@@ -9,11 +9,7 @@ import {
 
 import { toConnectError, toServiceCtx } from "../../adapter";
 import { getRpcContext } from "../../interceptors";
-import {
-  playbookSummaryToProto,
-  playbookToProto,
-  protoSlugToDb,
-} from "./converters";
+import { playbookSummaryToProto, playbookToProto } from "./converters";
 import { playbookNotFoundError } from "./errors";
 
 export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
@@ -30,12 +26,11 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
 
   async getPlaybook(req, ctx) {
     try {
-      const slug = protoSlugToDb(req.slug);
       const row = await getPlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
-        input: { slug },
+        input: { slug: req.slug },
       });
-      if (!row) throw playbookNotFoundError(slug);
+      if (!row) throw playbookNotFoundError(req.slug);
       return { playbook: playbookToProto(row) };
     } catch (err) {
       toConnectError(err);
@@ -47,7 +42,7 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
       const row = await savePlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
         input: {
-          slug: protoSlugToDb(req.slug),
+          slug: req.slug,
           title: req.title,
           description: req.description,
           content: req.content,
@@ -64,7 +59,7 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
     try {
       await clearPlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
-        input: { slug: protoSlugToDb(req.slug) },
+        input: { slug: req.slug },
       });
       return { success: true };
     } catch (err) {

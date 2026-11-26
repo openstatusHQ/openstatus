@@ -12,7 +12,7 @@ export type PlaybookSlugInput = z.infer<typeof PlaybookSlugInput>;
 
 export const SavePlaybookInput = z.object({
   slug: playbookSlugSchema,
-  /** Omitted keeps the stored title; empty goes back to the slug's default. */
+  /** Omitted keeps the stored title; empty goes back to the slug's default. Required to create a custom slug. */
   title: playbookTitleSchema.nullish(),
   /** Omitted keeps the stored description; empty goes back to the slug's default. */
   description: playbookDescriptionSchema.nullish(),

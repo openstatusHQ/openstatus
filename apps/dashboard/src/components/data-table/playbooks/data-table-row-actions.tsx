@@ -1,6 +1,6 @@
 "use client";
 
-import type { PlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
+import { isBuiltinPlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
 import { Edit } from "@openstatus/icons";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,7 @@ export function PlaybookRowActions({
   written,
   edit = true,
 }: {
-  slug: PlaybookSlug;
+  slug: string;
   written: boolean;
   /** Off on the playbook's own page. */
   edit?: boolean;
@@ -21,10 +21,13 @@ export function PlaybookRowActions({
   const trpc = useTRPC();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const builtin = isBuiltinPlaybookSlug(slug);
   const clearMutation = useMutation(
     trpc.playbook.clear.mutationOptions({
-      onSuccess: () => {
-        queryClient.invalidateQueries({
+      onSuccess: async () => {
+        // a deleted custom playbook has no page left to stay on
+        if (!edit && !builtin) router.push("/agents/playbooks");
+        await queryClient.invalidateQueries({
           queryKey: trpc.playbook.pathKey(),
         });
       },
@@ -49,8 +52,9 @@ export function PlaybookRowActions({
       deleteAction={
         written
           ? {
-              description:
-                "The agent stops following this playbook and the editor goes back to the default template. The text stays in the audit log.",
+              description: builtin
+                ? "The agent stops following this playbook and the editor goes back to the default template. The text stays in the audit log."
+                : "The playbook is removed and the agent stops following it. The text stays in the audit log.",
               submitAction: async () => {
                 await clearMutation.mutateAsync({ slug });
               },

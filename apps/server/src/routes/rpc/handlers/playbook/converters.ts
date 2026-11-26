@@ -1,17 +1,5 @@
-import {
-  type PlaybookSlug,
-  playbookSlugs,
-} from "@openstatus/db/src/schema/playbooks/constants";
 import type { PlaybookVariables } from "@openstatus/db/src/schema/playbooks/variables";
 import type { Playbook, PlaybookSummary } from "@openstatus/proto/playbook/v1";
-
-import { invalidPlaybookSlugError } from "./errors";
-
-export function protoSlugToDb(slug: string): PlaybookSlug {
-  const value = playbookSlugs.find((s) => s === slug);
-  if (!value) throw invalidPlaybookSlugError(slug);
-  return value;
-}
 
 type DBPlaybook = {
   slug: string;

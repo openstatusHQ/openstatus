@@ -1,7 +1,6 @@
 import { and, eq } from "@openstatus/db";
 import { type Playbook, playbook } from "@openstatus/db/src/schema";
 import {
-  type PlaybookSlug,
   playbookDefaultDescription,
   playbookDefaultTitle,
 } from "@openstatus/db/src/schema/playbooks/constants";
@@ -17,15 +16,15 @@ export type PlaybookWithDefaults = Omit<Playbook, "title" | "description"> & {
 export function withDefaults(row: Playbook): PlaybookWithDefaults {
   return {
     ...row,
-    title: row.title ?? playbookDefaultTitle[row.slug],
-    description: row.description ?? playbookDefaultDescription[row.slug],
+    title: row.title ?? playbookDefaultTitle(row.slug),
+    description: row.description ?? playbookDefaultDescription(row.slug),
   };
 }
 
 export async function getPlaybookBySlug(
   tx: DB,
   workspaceId: number,
-  slug: PlaybookSlug,
+  slug: string,
 ): Promise<Playbook | undefined> {
   return tx
     .select()

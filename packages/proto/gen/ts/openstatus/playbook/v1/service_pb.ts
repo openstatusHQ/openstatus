@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/playbook/v1/service.proto.
  */
 export const file_openstatus_playbook_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CiRvcGVuc3RhdHVzL3BsYXlib29rL3YxL3NlcnZpY2UucHJvdG8SFm9wZW5zdGF0dXMucGxheWJvb2sudjEiFgoUTGlzdFBsYXlib29rc1JlcXVlc3QiUwoVTGlzdFBsYXlib29rc1Jlc3BvbnNlEjoKCXBsYXlib29rcxgBIAMoCzInLm9wZW5zdGF0dXMucGxheWJvb2sudjEuUGxheWJvb2tTdW1tYXJ5In4KEkdldFBsYXlib29rUmVxdWVzdBJoCgRzbHVnGAEgASgJQlq6RxE6DxINInN0YXR1cy1wYWdlIrpIQ3JBUhFpbmNpZGVudC1yZXNwb25zZVILc3RhdHVzLXBhZ2VSE21haW50ZW5hbmNlLXdpbmRvd3NSCnBvc3Rtb3J0ZW0iSQoTR2V0UGxheWJvb2tSZXNwb25zZRIyCghwbGF5Ym9vaxgBIAEoCzIgLm9wZW5zdGF0dXMucGxheWJvb2sudjEuUGxheWJvb2si1AMKFVVwZGF0ZVBsYXlib29rUmVxdWVzdBJoCgRzbHVnGAEgASgJQlq6RxE6DxINInN0YXR1cy1wYWdlIrpIQ3JBUhFpbmNpZGVudC1yZXNwb25zZVILc3RhdHVzLXBhZ2VSE21haW50ZW5hbmNlLXdpbmRvd3NSCnBvc3Rtb3J0ZW0STQoHY29udGVudBgCIAEoCUI8ukcvOi0SKyJTaWduIG9mZiBldmVyeSB1cGRhdGUgd2l0aCB7e3RlYW1fbmFtZX19LiK6SAdyBRABGJBOEnUKCXZhcmlhYmxlcxgDIAMoCzI8Lm9wZW5zdGF0dXMucGxheWJvb2sudjEuVXBkYXRlUGxheWJvb2tSZXF1ZXN0LlZhcmlhYmxlc0VudHJ5QiS6SCGaAR4iFXITMhFeW2EtejAtOV9dezEsNjR9JCoFcgMY9AMSGwoFdGl0bGUYBCABKAlCB7pIBHICGGRIAIgBARIiCgtkZXNjcmlwdGlvbhgFIAEoCUIIukgFcgMY9ANIAYgBARowCg5WYXJpYWJsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBQggKBl90aXRsZUIOCgxfZGVzY3JpcHRpb24iTAoWVXBkYXRlUGxheWJvb2tSZXNwb25zZRIyCghwbGF5Ym9vaxgBIAEoCzIgLm9wZW5zdGF0dXMucGxheWJvb2sudjEuUGxheWJvb2sigQEKFURlbGV0ZVBsYXlib29rUmVxdWVzdBJoCgRzbHVnGAEgASgJQlq6RxE6DxINInN0YXR1cy1wYWdlIrpIQ3JBUhFpbmNpZGVudC1yZXNwb25zZVILc3RhdHVzLXBhZ2VSE21haW50ZW5hbmNlLXdpbmRvd3NSCnBvc3Rtb3J0ZW0iKQoWRGVsZXRlUGxheWJvb2tSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIMtMDCg9QbGF5Ym9va1NlcnZpY2UScQoNTGlzdFBsYXlib29rcxIsLm9wZW5zdGF0dXMucGxheWJvb2sudjEuTGlzdFBsYXlib29rc1JlcXVlc3QaLS5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkxpc3RQbGF5Ym9va3NSZXNwb25zZSIDkAIBEmsKC0dldFBsYXlib29rEioub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5HZXRQbGF5Ym9va1JlcXVlc3QaKy5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkdldFBsYXlib29rUmVzcG9uc2UiA5ACARJvCg5VcGRhdGVQbGF5Ym9vaxItLm9wZW5zdGF0dXMucGxheWJvb2sudjEuVXBkYXRlUGxheWJvb2tSZXF1ZXN0Gi4ub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5VcGRhdGVQbGF5Ym9va1Jlc3BvbnNlEm8KDkRlbGV0ZVBsYXlib29rEi0ub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5EZWxldGVQbGF5Ym9va1JlcXVlc3QaLi5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkRlbGV0ZVBsYXlib29rUmVzcG9uc2VCVVpTZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3BsYXlib29rL3YxO3BsYXlib29rdjFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_playbook_v1_playbook]);
+  fileDesc("CiRvcGVuc3RhdHVzL3BsYXlib29rL3YxL3NlcnZpY2UucHJvdG8SFm9wZW5zdGF0dXMucGxheWJvb2sudjEiFgoUTGlzdFBsYXlib29rc1JlcXVlc3QiUwoVTGlzdFBsYXlib29rc1Jlc3BvbnNlEjoKCXBsYXlib29rcxgBIAMoCzInLm9wZW5zdGF0dXMucGxheWJvb2sudjEuUGxheWJvb2tTdW1tYXJ5IlkKEkdldFBsYXlib29rUmVxdWVzdBJDCgRzbHVnGAEgASgJQjW6RxE6DxINInN0YXR1cy1wYWdlIrpIHnIcGEAyGF5bYS16MC05XSsoLVthLXowLTldKykqJCJJChNHZXRQbGF5Ym9va1Jlc3BvbnNlEjIKCHBsYXlib29rGAEgASgLMiAub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9vayKvAwoVVXBkYXRlUGxheWJvb2tSZXF1ZXN0EkMKBHNsdWcYASABKAlCNbpHEToPEg0ic3RhdHVzLXBhZ2UiukgechwYQDIYXlthLXowLTldKygtW2EtejAtOV0rKSokEk0KB2NvbnRlbnQYAiABKAlCPLpHLzotEisiU2lnbiBvZmYgZXZlcnkgdXBkYXRlIHdpdGgge3t0ZWFtX25hbWV9fS4iukgHcgUQARiQThJ1Cgl2YXJpYWJsZXMYAyADKAsyPC5vcGVuc3RhdHVzLnBsYXlib29rLnYxLlVwZGF0ZVBsYXlib29rUmVxdWVzdC5WYXJpYWJsZXNFbnRyeUIkukghmgEeIhVyEzIRXlthLXowLTlfXXsxLDY0fSQqBXIDGPQDEhsKBXRpdGxlGAQgASgJQge6SARyAhhkSACIAQESIgoLZGVzY3JpcHRpb24YBSABKAlCCLpIBXIDGPQDSAGIAQEaMAoOVmFyaWFibGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZfdGl0bGVCDgoMX2Rlc2NyaXB0aW9uIkwKFlVwZGF0ZVBsYXlib29rUmVzcG9uc2USMgoIcGxheWJvb2sYASABKAsyIC5vcGVuc3RhdHVzLnBsYXlib29rLnYxLlBsYXlib29rIlwKFURlbGV0ZVBsYXlib29rUmVxdWVzdBJDCgRzbHVnGAEgASgJQjW6RxE6DxINInN0YXR1cy1wYWdlIrpIHnIcGEAyGF5bYS16MC05XSsoLVthLXowLTldKykqJCIpChZEZWxldGVQbGF5Ym9va1Jlc3BvbnNlEg8KB3N1Y2Nlc3MYASABKAgy0wMKD1BsYXlib29rU2VydmljZRJxCg1MaXN0UGxheWJvb2tzEiwub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5MaXN0UGxheWJvb2tzUmVxdWVzdBotLm9wZW5zdGF0dXMucGxheWJvb2sudjEuTGlzdFBsYXlib29rc1Jlc3BvbnNlIgOQAgESawoLR2V0UGxheWJvb2sSKi5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkdldFBsYXlib29rUmVxdWVzdBorLm9wZW5zdGF0dXMucGxheWJvb2sudjEuR2V0UGxheWJvb2tSZXNwb25zZSIDkAIBEm8KDlVwZGF0ZVBsYXlib29rEi0ub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5VcGRhdGVQbGF5Ym9va1JlcXVlc3QaLi5vcGVuc3RhdHVzLnBsYXlib29rLnYxLlVwZGF0ZVBsYXlib29rUmVzcG9uc2USbwoORGVsZXRlUGxheWJvb2sSLS5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkRlbGV0ZVBsYXlib29rUmVxdWVzdBouLm9wZW5zdGF0dXMucGxheWJvb2sudjEuRGVsZXRlUGxheWJvb2tSZXNwb25zZUJVWlNnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvcGxheWJvb2svdjE7cGxheWJvb2t2MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_playbook_v1_playbook]);
 
 /**
  * ListPlaybooksRequest is the request to list playbooks.
@@ -59,10 +59,10 @@ export const ListPlaybooksResponseSchema: GenMessage<ListPlaybooksResponse> = /*
  */
 export type GetPlaybookRequest = Message<"openstatus.playbook.v1.GetPlaybookRequest"> & {
   /**
-   * Slug of the playbook to retrieve (required): incident-response (how the
-   * team runs an incident), status-page (how the team writes on the status
-   * page), maintenance-windows (when a maintenance is scheduled and how it is
-   * announced) or postmortem (the sections of a postmortem).
+   * Slug of the playbook to retrieve (required): lowercase letters,
+   * digits and single hyphens, max 64 characters. Built-in slugs come with a
+   * default title and description: incident-response, status-page,
+   * maintenance-windows, postmortem. Any other slug is a custom playbook.
    *
    * @generated from field: string slug = 1;
    */
@@ -104,10 +104,10 @@ export const GetPlaybookResponseSchema: GenMessage<GetPlaybookResponse> = /*@__P
  */
 export type UpdatePlaybookRequest = Message<"openstatus.playbook.v1.UpdatePlaybookRequest"> & {
   /**
-   * Slug of the playbook to write (required): incident-response (how the
-   * team runs an incident), status-page (how the team writes on the status
-   * page), maintenance-windows (when a maintenance is scheduled and how it is
-   * announced) or postmortem (the sections of a postmortem).
+   * Slug of the playbook to write (required): lowercase letters,
+   * digits and single hyphens, max 64 characters. Built-in slugs come with a
+   * default title and description: incident-response, status-page,
+   * maintenance-windows, postmortem. Any other slug is a custom playbook.
    *
    * @generated from field: string slug = 1;
    */
@@ -133,7 +133,8 @@ export type UpdatePlaybookRequest = Message<"openstatus.playbook.v1.UpdatePlaybo
 
   /**
    * Name of the playbook (max 100 characters). Left out, the stored title is
-   * kept; an empty string goes back to the default for the slug.
+   * kept; an empty string goes back to the default for the slug. Required to
+   * create a playbook under a custom slug.
    *
    * @generated from field: optional string title = 4;
    */
@@ -183,10 +184,10 @@ export const UpdatePlaybookResponseSchema: GenMessage<UpdatePlaybookResponse> = 
  */
 export type DeletePlaybookRequest = Message<"openstatus.playbook.v1.DeletePlaybookRequest"> & {
   /**
-   * Slug of the playbook to delete (required): incident-response (how the
-   * team runs an incident), status-page (how the team writes on the status
-   * page), maintenance-windows (when a maintenance is scheduled and how it is
-   * announced) or postmortem (the sections of a postmortem).
+   * Slug of the playbook to delete (required): lowercase letters,
+   * digits and single hyphens, max 64 characters. Built-in slugs come with a
+   * default title and description: incident-response, status-page,
+   * maintenance-windows, postmortem. Any other slug is a custom playbook.
    *
    * @generated from field: string slug = 1;
    */

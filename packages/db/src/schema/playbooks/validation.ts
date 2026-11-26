@@ -4,8 +4,9 @@ import { z } from "zod";
 import {
   PLAYBOOK_DESCRIPTION_MAX_CHARS,
   PLAYBOOK_MAX_CHARS,
+  PLAYBOOK_SLUG,
+  PLAYBOOK_SLUG_MAX_CHARS,
   PLAYBOOK_TITLE_MAX_CHARS,
-  playbookSlugs,
 } from "./constants";
 import { playbook } from "./playbook";
 import {
@@ -13,7 +14,13 @@ import {
   PLAYBOOK_VARIABLE_VALUE_MAX_CHARS,
 } from "./variables";
 
-export const playbookSlugSchema = z.enum(playbookSlugs);
+export const playbookSlugSchema = z
+  .string()
+  .max(PLAYBOOK_SLUG_MAX_CHARS)
+  .regex(
+    PLAYBOOK_SLUG,
+    "A slug uses lowercase letters, digits and single hyphens.",
+  );
 
 export const playbookTitleSchema = z
   .string()

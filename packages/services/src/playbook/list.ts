@@ -1,6 +1,6 @@
 import { eq } from "@openstatus/db";
 import { type Playbook, playbook } from "@openstatus/db/src/schema";
-import { playbookSlugs } from "@openstatus/db/src/schema/playbooks/constants";
+import { builtinPlaybookSlugs } from "@openstatus/db/src/schema/playbooks/constants";
 
 import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
@@ -17,6 +17,11 @@ export type PlaybookWithUser = PlaybookWithDefaults & {
   updatedByUser: AttributedUserDetail | null;
 };
 
+function rank(slug: string): number {
+  const index = builtinPlaybookSlugs.findIndex((s) => s === slug);
+  return index === -1 ? builtinPlaybookSlugs.length : index;
+}
+
 function withUsers(
   row: Playbook,
   users: Map<number, AttributedUserDetail>,
@@ -30,7 +35,7 @@ function withUsers(
   };
 }
 
-/** The workspace's filled slots, in `playbookSlugs` order. */
+/** The workspace's playbooks: built-in slugs in their order, then custom ones by age. */
 export async function listPlaybooks(args: {
   ctx: ServiceContext;
 }): Promise<PlaybookWithUser[]> {
@@ -48,9 +53,7 @@ export async function listPlaybooks(args: {
     rows.flatMap((r) => [r.createdBy, r.updatedBy]),
   );
   return rows
-    .sort(
-      (a, b) => playbookSlugs.indexOf(a.slug) - playbookSlugs.indexOf(b.slug),
-    )
+    .sort((a, b) => rank(a.slug) - rank(b.slug) || a.id - b.id)
     .map((r) => withUsers(r, users));
 }
 

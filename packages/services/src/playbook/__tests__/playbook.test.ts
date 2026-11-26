@@ -1,4 +1,7 @@
-import { PLAYBOOK_MAX_CHARS } from "@openstatus/db/src/schema/playbooks/constants";
+import {
+  PLAYBOOK_MAX_CHARS,
+  PLAYBOOK_MAX_CUSTOM,
+} from "@openstatus/db/src/schema/playbooks/constants";
 import { beforeAll, describe, expect, test } from "vitest";
 
 import {
@@ -15,7 +18,12 @@ import {
   updatePlaybookTool,
 } from "../../agent-tools/playbook";
 import type { ServiceContext } from "../../context";
-import { ForbiddenError, NotFoundError } from "../../errors";
+import {
+  ForbiddenError,
+  LimitExceededError,
+  NotFoundError,
+  ValidationError,
+} from "../../errors";
 import { clearPlaybook } from "../clear";
 import { buildPlaybookSection, loadPlaybookSection } from "../context";
 import { getPlaybook, listPlaybooks } from "../list";
@@ -158,6 +166,58 @@ describe("savePlaybook", () => {
       expect(reset.description).toBe(
         "The sections of your postmortems and what goes in each.",
       );
+    });
+  });
+
+  test("a custom slug needs a title, is listed after the built-ins and is capped", async () => {
+    await withTestTransaction(async (tx) => {
+      const c = { ...ctx, db: tx };
+      await expect(
+        savePlaybook({ ctx: c, input: { slug: "runbook", content: "x" } }),
+      ).rejects.toThrow(ValidationError);
+      await expect(
+        savePlaybook({
+          ctx: c,
+          input: { slug: "Run_Book", title: "Runbook", content: "x" },
+        }),
+      ).rejects.toThrow();
+
+      const created = await savePlaybook({
+        ctx: c,
+        input: { slug: "runbook", title: "Runbook", content: "x" },
+      });
+      expect(created.title).toBe("Runbook");
+      expect(created.description).toBe("");
+      await savePlaybook({
+        ctx: c,
+        input: { slug: "postmortem", content: "x" },
+      });
+      expect((await listPlaybooks({ ctx: c })).map((r) => r.slug)).toEqual([
+        "postmortem",
+        "runbook",
+      ]);
+      // without a description, the title says what it covers
+      expect(await loadPlaybookSection({ ctx: c })).toContain(
+        "- runbook: Runbook\n",
+      );
+
+      for (let i = 1; i < PLAYBOOK_MAX_CUSTOM; i++) {
+        await savePlaybook({
+          ctx: c,
+          input: { slug: `runbook-${i}`, title: `Runbook ${i}`, content: "x" },
+        });
+      }
+      await expect(
+        savePlaybook({
+          ctx: c,
+          input: { slug: "one-too-many", title: "No", content: "x" },
+        }),
+      ).rejects.toThrow(LimitExceededError);
+      // the cap is on custom slugs only
+      await savePlaybook({
+        ctx: c,
+        input: { slug: "status-page", content: "x" },
+      });
     });
   });
 
@@ -361,7 +421,11 @@ describe("buildPlaybookSection", () => {
 
   test("names the filled slugs, what each covers and the tool", () => {
     const section = buildPlaybookSection([
-      { slug: "status-page", description: "Our public\n## voice" },
+      {
+        slug: "status-page",
+        title: "Status page",
+        description: "Our public\n## voice",
+      },
     ]);
     // a description stays on its line
     expect(section).toContain("- status-page: Our public ## voice\n");
