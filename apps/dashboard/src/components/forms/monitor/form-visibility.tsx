@@ -42,9 +42,9 @@ export function FormVisibility({ monitorId }: { monitorId: number }) {
               A monitor can be attached to several status pages, so you now
               choose on each page whether its stats are public. Use the
               visibility toggle next to the component under{" "}
-              <NextLink href="/status-pages" className="text-foreground">
+              <Link href="/status-pages/_/components">
                 Status Pages &gt; Components
-              </NextLink>
+              </Link>
               .
             </p>
           </div>
@@ -63,19 +63,11 @@ export function FormVisibility({ monitorId }: { monitorId: number }) {
       <FormCardFooter>
         <FormCardFooterInfo>
           Read the{" "}
-          <Link
-            href="https://www.openstatus.dev/changelog/page-component-visibility"
-            rel="noreferrer"
-            target="_blank"
-          >
+          <Link href="https://www.openstatus.dev/changelog/page-component-visibility">
             changelog
           </Link>{" "}
           or the{" "}
-          <Link
-            href="https://www.openstatus.dev/docs/reference/page-components#visibility"
-            rel="noreferrer"
-            target="_blank"
-          >
+          <Link href="https://www.openstatus.dev/docs/reference/page-components#visibility">
             page components docs
           </Link>
           .

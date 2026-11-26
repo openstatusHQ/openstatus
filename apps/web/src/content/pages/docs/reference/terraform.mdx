@@ -71,7 +71,7 @@ Manages an HTTP monitor with support for custom headers, request bodies, and res
 | `retry`            | `number`        | No       | `3`      | Number of retries on failure (0–10).                                        |
 | `follow_redirects` | `bool`          | No       | `true`   | Whether to follow HTTP redirects.                                           |
 | `active`           | `bool`          | No       | `false`  | Whether the monitor is active.                                              |
-| `public`           | `bool`          | No       | `false`  | Whether the monitor is visible on your public status page.                  |
+| `public`           | `bool`          | No       | `false`  | Deprecated: status pages no longer read it. Visibility is set per [page component](/docs/reference/page-components#visibility). |
 | `description`      | `string`        | No       |          | Monitor description (max 1024 chars).                                       |
 | `regions`          | `set(string)`   | No       |          | Regions to monitor from. See [Available Regions](#available-regions).       |
 
@@ -600,6 +600,7 @@ Manages a component on a status page. Components can be linked to a monitor or b
 | `order`       | `number` | No       | Display order on the status page.                                            |
 | `group_id`    | `string` | No       | Component group ID this belongs to.                                          |
 | `group_order` | `number` | No       | Display order within its group.                                              |
+| `public`      | `bool`   | No       | Show the monitor's stats on this page (default `false`). Only for `type = "monitor"`; heartbeat monitors cannot be public. See [Visibility](/docs/reference/page-components#visibility). |
 
 **Read-only attributes:** `id` (string), `created_at` (string), `updated_at` (string).
 
@@ -612,6 +613,7 @@ resource "openstatus_status_page_component" "api" {
   monitor_id = openstatus_http_monitor.api.id
   name       = "API"
   order      = 1
+  public     = true
 }
 ```
 
