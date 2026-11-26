@@ -149,6 +149,7 @@ describe("addPageComponentChanges", () => {
         monitorId: 12,
         name: "API",
         order: 4,
+        public: false,
       }),
     ).toEqual([
       { field: "id", after: 9 },

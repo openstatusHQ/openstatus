@@ -23,6 +23,9 @@ export function addPageComponentChanges(
   if (input.description) {
     changes.push({ field: "description", after: input.description });
   }
+  if (input.public !== undefined) {
+    changes.push({ field: "public", after: applied?.public ?? input.public });
+  }
   if (applied) changes.push({ field: "order", after: applied.order });
   return changes;
 }

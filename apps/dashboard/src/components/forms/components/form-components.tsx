@@ -54,6 +54,7 @@ import {
   FormMessage,
 } from "@openstatus/ui/components/ui/form";
 import { Input } from "@openstatus/ui/components/ui/input";
+import { Toggle } from "@openstatus/ui/components/ui/toggle";
 import {
   Tooltip,
   TooltipContent,
@@ -110,6 +111,7 @@ const componentSchema = z.object({
   name: z.string().trim().min(1, { message: "Name is required" }),
   description: z.string().optional(),
   type: z.enum(["monitor", "static"]),
+  public: z.boolean(),
 });
 
 const schema = z.object({
@@ -361,6 +363,7 @@ export function FormComponents({
             name: existingComponent?.name ?? item.name,
             description: existingComponent?.description ?? "",
             type: item.type,
+            public: existingComponent?.public ?? item.public ?? false,
           };
         });
       form.setValue("components", components);
@@ -545,6 +548,7 @@ export function FormComponents({
                                   name: "",
                                   description: "",
                                   type: "static" as const,
+                                  public: false,
                                 },
                               ]);
                             }}
@@ -604,6 +608,7 @@ export function FormComponents({
                                                   description:
                                                     monitor.description,
                                                   type: "monitor" as const,
+                                                  public: false,
                                                 },
                                               ]);
                                             }
@@ -738,6 +743,62 @@ interface ComponentRowProps extends Omit<
   fieldNamePrefix?: string;
 }
 
+function ComponentVisibility({
+  component,
+  form,
+  fieldNamePrefix,
+}: Pick<ComponentRowProps, "component" | "form" | "fieldNamePrefix">) {
+  const isHeartbeat = component.monitor?.jobType === "heartbeat";
+
+  const renderToggle = (
+    pressed: boolean,
+    onPressedChange?: (pressed: boolean) => void,
+  ) => (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {/* wrapper keeps the tooltip reachable while the toggle is disabled */}
+          <span tabIndex={isHeartbeat ? 0 : -1}>
+            <Toggle
+              size="sm"
+              aria-label="Public"
+              pressed={pressed}
+              onPressedChange={onPressedChange}
+              disabled={!onPressedChange || isHeartbeat}
+            >
+              {pressed ? <Show /> : <Hide />}
+            </Toggle>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>
+          {isHeartbeat
+            ? "Heartbeat monitors can't be public"
+            : pressed
+              ? "Public"
+              : "Private"}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+
+  if (!fieldNamePrefix) return renderToggle(component.public ?? false);
+
+  return (
+    <FormField
+      control={form.control}
+      name={`${fieldNamePrefix}.public` as "components.0.public"}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel className="sr-only">Public</FormLabel>
+          <FormControl>
+            {renderToggle(field.value ?? false, field.onChange)}
+          </FormControl>
+        </FormItem>
+      )}
+    />
+  );
+}
+
 function ComponentRow({
   component,
   className,
@@ -837,25 +898,11 @@ function ComponentRow({
         <div className="flex justify-between">
           <div className="flex flex-1 items-center gap-2.5">
             {component.monitor && component.type === "monitor" ? (
-              <div className="flex items-center gap-2">
-                <TooltipProvider delayDuration={0}>
-                  {component.monitor.public ? (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Show className="text-muted-foreground size-4" />
-                      </TooltipTrigger>
-                      <TooltipContent>Public</TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Hide className="text-muted-foreground size-4" />
-                      </TooltipTrigger>
-                      <TooltipContent>Private</TooltipContent>
-                    </Tooltip>
-                  )}
-                </TooltipProvider>
-              </div>
+              <ComponentVisibility
+                component={component}
+                form={form}
+                fieldNamePrefix={fieldNamePrefix}
+              />
             ) : null}
             {component.monitor && component.type === "monitor" ? (
               <TooltipProvider delayDuration={0}>
@@ -963,6 +1010,7 @@ function ComponentGroupRow({
             name: existingComponent?.name ?? c.name,
             description: existingComponent?.description ?? "",
             type: c.type,
+            public: existingComponent?.public ?? c.public ?? false,
           };
         }),
       );
@@ -1067,6 +1115,7 @@ function ComponentGroupRow({
                             name: "",
                             description: "",
                             type: "static" as const,
+                            public: false,
                           },
                         ]);
                       }}
@@ -1124,6 +1173,7 @@ function ComponentGroupRow({
                                               name: monitor.name,
                                               description: monitor.description,
                                               type: "monitor" as const,
+                                              public: false,
                                             },
                                           ],
                                         );

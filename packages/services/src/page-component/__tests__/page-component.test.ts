@@ -21,6 +21,7 @@ import {
   ForbiddenError,
   LimitExceededError,
   NotFoundError,
+  ValidationError,
 } from "../../errors";
 import { createPageComponent } from "../create";
 import { deletePageComponent } from "../delete";
@@ -804,6 +805,186 @@ describe("page component group scoping", () => {
         input: { id: created.id, groupId: null },
       });
       expect(updated.groupId).toBe(null);
+    });
+  });
+});
+
+describe("page component visibility", () => {
+  async function insertHeartbeat(tx: DrizzleTx) {
+    return tx
+      .insert(monitor)
+      .values({
+        workspaceId: teamCtx.workspace.id,
+        jobType: "heartbeat",
+        active: true,
+        url: "",
+        name: `${TEST_PREFIX}-heartbeat`,
+        periodicity: "10m",
+        regions: "",
+      })
+      .returning()
+      .get();
+  }
+
+  test("monitor components default to private and can be made public", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const created = await createPageComponent({
+        ctx,
+        input: {
+          pageId: testPageId,
+          type: "monitor",
+          monitorId: teamMonitorId,
+        },
+      });
+      expect(created.public).toBe(false);
+
+      const updated = await updatePageComponent({
+        ctx,
+        input: { id: created.id, public: true },
+      });
+      expect(updated.public).toBe(true);
+    });
+  });
+
+  test("rejects public on a static component", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      await expect(
+        createPageComponent({
+          ctx,
+          input: {
+            pageId: testPageId,
+            type: "static",
+            name: "Static",
+            public: true,
+          },
+        }),
+      ).rejects.toThrow();
+
+      const created = await createPageComponent({
+        ctx,
+        input: { pageId: testPageId, type: "static", name: "Static" },
+      });
+      await expect(
+        updatePageComponent({ ctx, input: { id: created.id, public: true } }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  test("the database rejects a public static component", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        tx.insert(pageComponent).values({
+          workspaceId: teamCtx.workspace.id,
+          pageId: testPageId,
+          type: "static",
+          name: "Static",
+          public: true,
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  test("rejects public heartbeat components on every write path", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const heartbeat = await insertHeartbeat(tx);
+
+      await expect(
+        createPageComponent({
+          ctx,
+          input: {
+            pageId: testPageId,
+            type: "monitor",
+            monitorId: heartbeat.id,
+            public: true,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+
+      await expect(
+        updatePageComponentOrder({
+          ctx,
+          input: {
+            pageId: testPageId,
+            components: [
+              {
+                order: 0,
+                name: "Heartbeat",
+                type: "monitor",
+                monitorId: heartbeat.id,
+                public: true,
+              },
+            ],
+            groups: [],
+          },
+        }),
+      ).rejects.toBeInstanceOf(ValidationError);
+
+      const created = await createPageComponent({
+        ctx,
+        input: { pageId: testPageId, type: "monitor", monitorId: heartbeat.id },
+      });
+      await expect(
+        updatePageComponent({ ctx, input: { id: created.id, public: true } }),
+      ).rejects.toBeInstanceOf(ValidationError);
+    });
+  });
+
+  test("updatePageComponentOrder keeps the stored value when public is omitted", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...teamCtx, db: tx };
+      const component = (isPublic?: boolean) => ({
+        order: 0,
+        name: `${TEST_PREFIX}-visibility`,
+        type: "monitor" as const,
+        monitorId: teamMonitorId,
+        ...(isPublic === undefined ? {} : { public: isPublic }),
+      });
+      const read = () =>
+        tx
+          .select({ public: pageComponent.public })
+          .from(pageComponent)
+          .where(
+            and(
+              eq(pageComponent.pageId, testPageId),
+              eq(pageComponent.monitorId, teamMonitorId),
+            ),
+          )
+          .get();
+
+      await updatePageComponentOrder({
+        ctx,
+        input: { pageId: testPageId, components: [component()], groups: [] },
+      });
+      expect((await read())?.public).toBe(false);
+
+      await updatePageComponentOrder({
+        ctx,
+        input: {
+          pageId: testPageId,
+          components: [component(true)],
+          groups: [],
+        },
+      });
+      expect((await read())?.public).toBe(true);
+
+      await updatePageComponentOrder({
+        ctx,
+        input: { pageId: testPageId, components: [component()], groups: [] },
+      });
+      expect((await read())?.public).toBe(true);
+
+      await updatePageComponentOrder({
+        ctx,
+        input: {
+          pageId: testPageId,
+          components: [component(false)],
+          groups: [],
+        },
+      });
+      expect((await read())?.public).toBe(false);
     });
   });
 });

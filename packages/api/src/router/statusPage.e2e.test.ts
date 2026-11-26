@@ -1422,7 +1422,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "https://example.com",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1438,6 +1437,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         name: componentName,
         description: componentDescription,
         order: 0,
+        public: true,
       })
       .returning()
       .get();
@@ -1453,7 +1453,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "https://example.com",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1468,6 +1467,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         monitorId: noDescriptionMonitorId,
         name: "No Description Component",
         order: 1,
+        public: true,
       })
       .returning()
       .get();
@@ -1483,7 +1483,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "https://example.com",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1499,6 +1498,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         name: "Cleared Description Component",
         description: "",
         order: 2,
+        public: true,
       })
       .returning()
       .get();
@@ -1515,7 +1515,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "api.example.com:443",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1530,6 +1529,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         monitorId: grpcMonitorId,
         name: "gRPC component",
         order: 3,
+        public: true,
       })
       .returning()
       .get();
@@ -1692,6 +1692,36 @@ describe("statusPage exposes page component names, not internal monitor names", 
 
     expect(result?.name).toBe(componentName);
     expect(result?.description).toBe(componentDescription);
+  });
+
+  test("visibility comes from the page component, not the monitor", async () => {
+    await db
+      .update(monitor)
+      .set({ public: true })
+      .where(eq(monitor.id, publicNameMonitorId));
+    await db
+      .update(pageComponent)
+      .set({ public: false })
+      .where(eq(pageComponent.id, publicNameComponentId));
+    try {
+      const caller = await createCaller();
+      const detail = await caller.statusPage.getMonitor({
+        slug: publicNameSlug,
+        id: publicNameMonitorId,
+      });
+      expect(detail).toBeNull();
+
+      const list = await caller.statusPage.getMonitors({
+        slug: publicNameSlug,
+      });
+      expect(list?.map((m) => m.id)).not.toContain(publicNameMonitorId);
+      expect(list?.map((m) => m.id)).toContain(grpcMonitorId);
+    } finally {
+      await db
+        .update(pageComponent)
+        .set({ public: true })
+        .where(eq(pageComponent.id, publicNameComponentId));
+    }
   });
 });
 

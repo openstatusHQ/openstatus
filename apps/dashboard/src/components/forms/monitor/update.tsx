@@ -20,7 +20,6 @@ import { FormResponseTime } from "./form-response-time";
 import { FormRetry, RETRY_DEFAULT } from "./form-retry";
 import { FormSchedulingRegions } from "./form-scheduling-regions";
 import { FormTags } from "./form-tags";
-import { FormVisibility } from "./form-visibility";
 
 export function FormMonitorUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -45,11 +44,6 @@ export function FormMonitorUpdate() {
   );
   const updateOtelMutation = useMutation(
     trpc.monitor.updateOtel.mutationOptions({
-      onSuccess: () => refetch(),
-    }),
-  );
-  const updatePublicMutation = useMutation(
-    trpc.monitor.updatePublic.mutationOptions({
       onSuccess: () => refetch(),
     }),
   );
@@ -278,17 +272,6 @@ export function FormMonitorUpdate() {
                 id: Number.parseInt(id),
                 otelEndpoint: values.endpoint,
                 otelHeaders: values.headers,
-              });
-            }}
-          />
-          <FormVisibility
-            defaultValues={{
-              visibility: monitor.public ?? false,
-            }}
-            onSubmit={async (values) => {
-              await updatePublicMutation.mutateAsync({
-                id: Number.parseInt(id),
-                public: values.visibility,
               });
             }}
           />

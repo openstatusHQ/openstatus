@@ -87,6 +87,7 @@ export function FormComponentsUpdate() {
         name: c.name,
         description: c.description ?? "",
         type: c.type,
+        public: c.public,
       })),
     };
   });
@@ -100,6 +101,7 @@ export function FormComponentsUpdate() {
       name: c.name,
       description: c.description ?? "",
       type: c.type,
+      public: c.public,
     })),
     groups,
   };

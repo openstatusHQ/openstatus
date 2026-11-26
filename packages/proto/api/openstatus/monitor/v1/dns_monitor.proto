@@ -65,8 +65,9 @@ message DNSMonitor {
   // Whether the monitor is active (defaults to false).
   optional bool active = 10;
 
-  // Whether the monitor is publicly visible (defaults to false).
-  optional bool public = 11;
+  // Deprecated: visibility is set per status page component
+  // (PageComponent.public). This field is stored but no longer read.
+  optional bool public = 11 [deprecated = true];
 
   // Geographic regions to run checks from.
   repeated Region regions = 12 [(buf.validate.field).repeated = {

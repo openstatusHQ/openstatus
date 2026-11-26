@@ -40,6 +40,7 @@ export const pageComponent = sqliteTable(
       onDelete: "set null",
     }),
     groupOrder: integer("group_order").default(0),
+    public: integer("public", { mode: "boolean" }).notNull().default(false),
 
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`(strftime('%s', 'now'))`,
@@ -58,6 +59,10 @@ export const pageComponent = sqliteTable(
       "page_component_type_check",
       //   NOTE: This check ensures that either the component is a monitor or a static component, but not both.
       sql`${t.type} = 'monitor' AND ${t.monitorId} IS NOT NULL OR ${t.type} = 'static' AND ${t.monitorId} IS NULL`,
+    ),
+    check(
+      "page_component_public_check",
+      sql`${t.public} = 0 OR ${t.type} = 'monitor'`,
     ),
   ],
 );

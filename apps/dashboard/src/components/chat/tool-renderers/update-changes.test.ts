@@ -92,7 +92,15 @@ describe("updatePageComponentChanges", () => {
   it("appends the page once applied", () => {
     const rows = updatePageComponentChanges(
       as<Input>({ componentId: 9, name: "API" }),
-      { id: 9, pageId: 3, monitorId: 4, name: "API", order: 1, groupId: 2 },
+      {
+        id: 9,
+        pageId: 3,
+        monitorId: 4,
+        name: "API",
+        order: 1,
+        groupId: 2,
+        public: false,
+      },
     );
     expect(rows.at(-1)).toEqual({ field: "pageId", after: 3 });
   });

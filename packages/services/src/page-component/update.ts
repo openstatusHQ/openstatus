@@ -4,7 +4,12 @@ import { pageComponent } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { assertGroupOnPage, getPageComponentInWorkspace } from "./internal";
+import { ValidationError } from "../errors";
+import {
+  assertGroupOnPage,
+  assertNoPublicHeartbeat,
+  getPageComponentInWorkspace,
+} from "./internal";
 import { UpdatePageComponentInput } from "./schemas";
 
 export async function updatePageComponent(args: {
@@ -31,6 +36,17 @@ export async function updatePageComponent(args: {
       });
     }
 
+    if (input.public) {
+      if (existing.type !== "monitor" || existing.monitorId == null) {
+        throw new ValidationError("Only monitor components can be public.");
+      }
+      await assertNoPublicHeartbeat({
+        tx,
+        workspaceId: ctx.workspace.id,
+        monitorIds: [existing.monitorId],
+      });
+    }
+
     const values: Record<string, unknown> = { updatedAt: new Date() };
     if (input.name !== undefined) values.name = input.name;
     if (input.description !== undefined) {
@@ -39,6 +55,7 @@ export async function updatePageComponent(args: {
     if (input.order !== undefined) values.order = input.order;
     if (input.groupId !== undefined) values.groupId = input.groupId;
     if (input.groupOrder !== undefined) values.groupOrder = input.groupOrder;
+    if (input.public !== undefined) values.public = input.public;
 
     const updated = await tx
       .update(pageComponent)

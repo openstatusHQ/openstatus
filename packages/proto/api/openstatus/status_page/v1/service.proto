@@ -355,6 +355,10 @@ message AddMonitorComponentRequest {
 
   // ID of the group to add this component to (optional).
   optional string group_id = 6;
+
+  // Show the monitor's stats on this page (optional, defaults to false).
+  // Heartbeat monitors cannot be public.
+  optional bool public = 7;
 }
 
 // AddMonitorComponentResponse is the response after adding a monitor component.
@@ -421,6 +425,10 @@ message UpdateComponentRequest {
 
   // New order within the group (optional).
   optional int32 group_order = 6;
+
+  // Show the monitor's stats on this page (optional). Only monitor
+  // components can be public; heartbeat monitors cannot.
+  optional bool public = 7;
 }
 
 // UpdateComponentResponse is the response after updating a component.

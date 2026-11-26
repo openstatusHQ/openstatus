@@ -63,6 +63,7 @@ type DBPageComponent = {
   order: number | null;
   groupId: number | null;
   groupOrder: number | null;
+  public: boolean;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -420,6 +421,7 @@ export function dbComponentToProto(component: DBPageComponent): PageComponent {
     order: component.order ?? 0,
     groupId: component.groupId != null ? String(component.groupId) : "",
     groupOrder: component.groupOrder ?? 0,
+    public: component.public,
     createdAt: component.createdAt?.toISOString() ?? "",
     updatedAt: component.updatedAt?.toISOString() ?? "",
   };

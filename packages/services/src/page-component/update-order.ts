@@ -5,7 +5,11 @@ import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { LimitExceededError, ValidationError } from "../errors";
-import { assertPageInWorkspace, validateMonitorIds } from "./internal";
+import {
+  assertNoPublicHeartbeat,
+  assertPageInWorkspace,
+  validateMonitorIds,
+} from "./internal";
 import { UpdatePageComponentOrderInput } from "./schemas";
 
 /**
@@ -118,6 +122,15 @@ export async function updatePageComponentOrder(args: {
       tx,
       workspaceId: ctx.workspace.id,
       monitorIds: inputMonitorIds,
+    });
+
+    await assertNoPublicHeartbeat({
+      tx,
+      workspaceId: ctx.workspace.id,
+      monitorIds: [
+        ...input.components,
+        ...input.groups.flatMap((g) => g.components),
+      ].flatMap((c) => (c.public && c.monitorId ? [c.monitorId] : [])),
     });
 
     const inputStaticComponentIds = [
@@ -330,6 +343,7 @@ export async function updatePageComponentOrder(args: {
         description: c.description,
         type: c.type,
         monitorId: c.monitorId,
+        public: c.public,
         order: g.order,
         groupId: newGroups[i]?.id,
         groupOrder: c.order,
@@ -344,6 +358,7 @@ export async function updatePageComponentOrder(args: {
       description: c.description,
       type: c.type,
       monitorId: c.monitorId,
+      public: c.public,
       order: c.order,
       groupId: null as number | null,
       groupOrder: null as number | null,
@@ -381,7 +396,15 @@ export async function updatePageComponentOrder(args: {
       // rowid. The `onConflictDoUpdate` SET clause doesn't touch `id`, so
       // existing rows keep their real ids either way.
       const monitorInsertValues = monitorComponents.map(
-        ({ id: _id, ...rest }) => rest,
+        ({ id: _id, ...rest }) => ({
+          ...rest,
+          public:
+            rest.public ??
+            (rest.monitorId != null
+              ? existingByMonitorId.get(rest.monitorId)?.public
+              : undefined) ??
+            false,
+        }),
       );
       const upserted = await tx
         .insert(pageComponent)
@@ -394,6 +417,7 @@ export async function updatePageComponentOrder(args: {
             order: sql.raw("excluded.`order`"),
             groupId: sql.raw("excluded.`group_id`"),
             groupOrder: sql.raw("excluded.`group_order`"),
+            public: sql.raw("excluded.`public`"),
             updatedAt: sql`(strftime('%s', 'now'))`,
           },
         })

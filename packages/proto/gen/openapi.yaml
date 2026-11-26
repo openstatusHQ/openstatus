@@ -1584,7 +1584,10 @@ components:
             - boolean
             - "null"
           title: public
-          description: Whether the monitor is publicly visible (defaults to false).
+          description: |-
+            Deprecated: visibility is set per status page component
+             (PageComponent.public). This field is stored but no longer read.
+          deprecated: true
         regions:
           type: array
           items:
@@ -1709,7 +1712,10 @@ components:
             - boolean
             - "null"
           title: public
-          description: Whether the monitor is publicly visible (defaults to false).
+          description: |-
+            Deprecated: visibility is set per status page component
+             (PageComponent.public). This field is stored but no longer read.
+          deprecated: true
         regions:
           type: array
           items:
@@ -2084,7 +2090,10 @@ components:
             - boolean
             - "null"
           title: public
-          description: Whether the monitor is publicly visible (defaults to false).
+          description: |-
+            Deprecated: visibility is set per status page component
+             (PageComponent.public). This field is stored but no longer read.
+          deprecated: true
         regions:
           type: array
           items:
@@ -2390,7 +2399,10 @@ components:
             - boolean
             - "null"
           title: public
-          description: Whether the monitor is publicly visible (defaults to false).
+          description: |-
+            Deprecated: visibility is set per status page component
+             (PageComponent.public). This field is stored but no longer read.
+          deprecated: true
         pingUrl:
           type: string
           title: ping_url
@@ -2579,7 +2591,10 @@ components:
             - boolean
             - "null"
           title: public
-          description: Whether the monitor is publicly visible (defaults to false).
+          description: |-
+            Deprecated: visibility is set per status page component
+             (PageComponent.public). This field is stored but no longer read.
+          deprecated: true
         regions:
           type: array
           items:
@@ -3137,7 +3152,10 @@ components:
             - boolean
             - "null"
           title: public
-          description: Whether the monitor is publicly visible (defaults to false).
+          description: |-
+            Deprecated: visibility is set per status page component
+             (PageComponent.public). This field is stored but no longer read.
+          deprecated: true
         regions:
           type: array
           items:
@@ -4372,6 +4390,14 @@ components:
             - "null"
           title: group_id
           description: ID of the group to add this component to (optional).
+        public:
+          type:
+            - boolean
+            - "null"
+          title: public
+          description: |-
+            Show the monitor's stats on this page (optional, defaults to false).
+             Heartbeat monitors cannot be public.
       title: AddMonitorComponentRequest
       additionalProperties: false
       description: AddMonitorComponentRequest is the request to add a monitor-based component to a status page.
@@ -5304,6 +5330,12 @@ components:
           type: string
           title: updated_at
           description: Timestamp when the component was last updated (RFC 3339 format).
+        public:
+          type: boolean
+          title: public
+          description: |-
+            Whether the monitor's stats (latency, uptime) are shown on this page.
+             Always false for static components.
       title: PageComponent
       additionalProperties: false
       description: PageComponent represents a component displayed on a status page.
@@ -5807,6 +5839,14 @@ components:
           title: group_order
           format: int32
           description: New order within the group (optional).
+        public:
+          type:
+            - boolean
+            - "null"
+          title: public
+          description: |-
+            Show the monitor's stats on this page (optional). Only monitor
+             components can be public; heartbeat monitors cannot.
       title: UpdateComponentRequest
       additionalProperties: false
       description: UpdateComponentRequest is the request to update a component.

@@ -1553,6 +1553,37 @@ describe("StatusPageService.DeleteStatusPage", () => {
 // ==========================================================================
 
 describe("StatusPageService.AddMonitorComponent", () => {
+  test("adds a public monitor component and toggles it back to private", async () => {
+    const res = await connectRequest(
+      "AddMonitorComponent",
+      {
+        pageId: String(testPageId),
+        monitorId: String(testMonitorId),
+        name: `${TEST_PREFIX}-public-monitor-component`,
+        public: true,
+      },
+      { "x-openstatus-key": "1" },
+    );
+    expect(res.status).toBe(200);
+    const { component } = await res.json();
+    try {
+      expect(component.public).toBe(true);
+
+      const updated = await connectRequest(
+        "UpdateComponent",
+        { id: component.id, public: false },
+        { "x-openstatus-key": "1" },
+      );
+      expect(updated.status).toBe(200);
+      // proto3 JSON omits a false bool
+      expect((await updated.json()).component.public ?? false).toBe(false);
+    } finally {
+      await db
+        .delete(pageComponent)
+        .where(eq(pageComponent.id, Number(component.id)));
+    }
+  });
+
   test("adds monitor component to page", async () => {
     const res = await connectRequest(
       "AddMonitorComponent",
@@ -1950,6 +1981,16 @@ describe("StatusPageService.UpdateComponent", () => {
       .update(pageComponent)
       .set({ groupId: null })
       .where(eq(pageComponent.id, testComponentToUpdateId));
+  });
+
+  test("rejects public on a static component", async () => {
+    const res = await connectRequest(
+      "UpdateComponent",
+      { id: String(testComponentToUpdateId), public: true },
+      { "x-openstatus-key": "1" },
+    );
+
+    expect(res.status).toBe(400);
   });
 
   test("returns 401 when no auth key provided", async () => {

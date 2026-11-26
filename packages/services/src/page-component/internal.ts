@@ -1,12 +1,13 @@
-import { and, eq } from "@openstatus/db";
+import { and, eq, inArray } from "@openstatus/db";
 import {
+  monitor,
   page,
   pageComponent,
   pageComponentGroup,
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
-import { ForbiddenError, NotFoundError } from "../errors";
+import { ForbiddenError, NotFoundError, ValidationError } from "../errors";
 import { findMissingMonitorId } from "../monitor/internal";
 
 /** Assert a page is in the workspace. Throws `ForbiddenError` otherwise. */
@@ -82,4 +83,28 @@ export async function validateMonitorIds(args: {
     ids: [...args.monitorIds],
   });
   if (missing !== undefined) throw new NotFoundError("monitor", missing);
+}
+
+// Ping details are private and a heartbeat has no latency to chart, so the
+// public monitor pages never show one.
+export async function assertNoPublicHeartbeat(args: {
+  tx: DB;
+  workspaceId: number;
+  monitorIds: ReadonlyArray<number>;
+}): Promise<void> {
+  if (args.monitorIds.length === 0) return;
+  const row = await args.tx
+    .select({ id: monitor.id })
+    .from(monitor)
+    .where(
+      and(
+        eq(monitor.workspaceId, args.workspaceId),
+        eq(monitor.jobType, "heartbeat"),
+        inArray(monitor.id, [...args.monitorIds]),
+      ),
+    )
+    .get();
+  if (row) {
+    throw new ValidationError("Heartbeat monitors cannot be public");
+  }
 }

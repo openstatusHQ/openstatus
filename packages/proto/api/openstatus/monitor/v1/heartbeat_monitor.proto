@@ -57,8 +57,9 @@ message HeartbeatMonitor {
   // Whether the monitor is active (defaults to false).
   optional bool active = 6;
 
-  // Whether the monitor is publicly visible (defaults to false).
-  optional bool public = 7;
+  // Deprecated: visibility is set per status page component
+  // (PageComponent.public). This field is stored but no longer read.
+  optional bool public = 7 [deprecated = true];
 
   // URL your job pings. Read-only.
   string ping_url = 8 [(gnostic.openapi.v3.property) = {read_only: true}];

@@ -45,6 +45,10 @@ message PageComponent {
 
   // Timestamp when the component was last updated (RFC 3339 format).
   string updated_at = 11;
+
+  // Whether the monitor's stats (latency, uptime) are shown on this page.
+  // Always false for static components.
+  bool public = 12;
 }
 
 // PageComponentGroup represents a group of components on a status page.

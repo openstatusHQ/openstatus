@@ -74,6 +74,17 @@ const PUBLIC_STATUS_TTL = 60;
 // 7-day charts barely move within a few minutes.
 const PUBLIC_METRICS_TTL = 300;
 
+// Visibility is per page: project the component's flag onto its monitor so
+// nothing downstream reads the deprecated `monitor.public` column.
+function parsePageComponents(raw: unknown) {
+  return selectPageComponentWithMonitorRelation
+    .array()
+    .parse(raw)
+    .map((c) =>
+      c.monitor ? { ...c, monitor: { ...c.monitor, public: c.public } } : c,
+    );
+}
+
 function monitorMetricsProcedures(
   type: "http" | "tcp" | "dns" | "icmp" | "grpc",
 ) {
@@ -226,9 +237,7 @@ export const statusPageRouter = createTRPCRouter({
       const { page: _page, privateLocationCounts } = result;
 
       const ws = selectWorkspaceSchema.safeParse(_page.workspace);
-      const pageComponents = selectPageComponentWithMonitorRelation
-        .array()
-        .parse(_page.pageComponents);
+      const pageComponents = parsePageComponents(_page.pageComponents);
 
       const configuration = pageConfigurationSchema.safeParse(
         _page.configuration ?? {},
@@ -324,6 +333,7 @@ export const statusPageRouter = createTRPCRouter({
                 : "success"));
         return {
           ...c.monitor,
+          public: c.public,
           status,
           events,
           monitorGroupId: c.groupId,
@@ -605,6 +615,7 @@ export const statusPageRouter = createTRPCRouter({
       const monitors = monitorComponents
         .map((c) => ({
           ...c.monitor,
+          public: c.public,
           // the page component carries the public-facing name/description;
           // clear externalName so the schema transform keeps the override.
           // description: NULL means never backfilled → fall back to the
@@ -716,9 +727,7 @@ export const statusPageRouter = createTRPCRouter({
       if (!result) return null;
       const { page: _page, privateLocationCounts } = result;
 
-      const pageComponents = selectPageComponentWithMonitorRelation
-        .array()
-        .parse(_page.pageComponents);
+      const pageComponents = parsePageComponents(_page.pageComponents);
 
       // Early return if no components to process
       if (pageComponents.length === 0) return [];
@@ -837,6 +846,7 @@ export const statusPageRouter = createTRPCRouter({
           name: c.name,
           description: c.description,
           type: c.type,
+          public: c.public,
           // For monitor-type components, include monitor fields
           ...(c.monitor ? { monitor: c.monitor } : {}),
           data: processedData,
@@ -927,6 +937,7 @@ export const statusPageRouter = createTRPCRouter({
             order: 1,
             groupId: null,
             groupOrder: null,
+            public: false,
             description: "Main API endpoint",
             createdAt: new Date(new Date().setDate(new Date().getDate() - 30)),
             updatedAt: new Date(new Date().setDate(new Date().getDate() - 30)),
@@ -994,13 +1005,11 @@ export const statusPageRouter = createTRPCRouter({
       );
       if (!components) return null;
 
-      const pageComponents = selectPageComponentWithMonitorRelation
-        .array()
-        .parse(components);
+      const pageComponents = parsePageComponents(components);
 
       const publicMonitors = pageComponents
         .filter(isMonitorComponent)
-        .filter((c) => c.monitor?.public);
+        .filter((c) => c.public);
 
       // Slow/erroring Tinybird → empty latency data so the page still renders.
       const metrics = await withTinybirdFallback(() =>
@@ -1046,18 +1055,17 @@ export const statusPageRouter = createTRPCRouter({
       );
       if (!components) return null;
 
-      const pageComponents = selectPageComponentWithMonitorRelation
-        .array()
-        .parse(components);
+      const pageComponents = parsePageComponents(components);
 
       const monitorComponents = pageComponents.filter(isMonitorComponent);
 
-      const _monitor = monitorComponents.find(
+      const component = monitorComponents.find(
         (c) => c.monitor.id === opts.input.id,
-      )?.monitor;
+      );
+      const _monitor = component?.monitor;
 
-      if (!_monitor) return null;
-      if (!_monitor.public) return null;
+      if (!component || !_monitor) return null;
+      if (!component.public) return null;
       if (_monitor.deletedAt) return null;
 
       const proceduresByType = {

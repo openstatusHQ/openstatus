@@ -11,7 +11,7 @@ import { fieldChanges, idRow } from "./before-diff";
 type Input = AgentToolInput<"update_page_component">;
 type Output = AgentToolOutput<"update_page_component">;
 
-const fields = ["name", "description", "order", "groupId"] as const;
+const fields = ["name", "description", "order", "groupId", "public"] as const;
 
 export function updatePageComponentChanges(
   input: Input,

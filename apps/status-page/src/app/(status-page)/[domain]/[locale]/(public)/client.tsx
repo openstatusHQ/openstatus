@@ -145,7 +145,7 @@ export function Client() {
   const buildLatency = (
     row: NonNullable<typeof uptimeData>[number] | undefined,
   ) => {
-    if (!row?.monitor?.public) return undefined;
+    if (!row?.public || !row.monitor) return undefined;
     const monitorId = row.monitor.id.toString();
     return {
       label: t("last day"),

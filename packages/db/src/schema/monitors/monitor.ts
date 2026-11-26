@@ -59,6 +59,7 @@ export const monitor = sqliteTable(
 
     otelHeaders: text("otel_headers"),
 
+    /** @deprecated Visibility lives on `page_component.public`; nothing reads this any more. */
     public: integer("public", { mode: "boolean" }).default(false),
 
     retry: integer("retry").default(3),
