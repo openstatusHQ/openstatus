@@ -8,6 +8,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { Link } from "@/components/common/link";
 import { StatusDot } from "@/components/common/status-dot";
 import {
   Composer,
@@ -23,6 +24,7 @@ import {
   EmptyStateDescription,
   EmptyStateTitle,
 } from "@/components/content/empty-state";
+import { playbookSlug } from "@/data/playbooks.client";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
 
@@ -60,6 +62,10 @@ export function IncidentPostmortem({
   const { data: postmortem } = useQuery({
     ...trpc.incident.getPostmortem.queryOptions({ id: incident.id }),
     enabled: incident.status === "resolved",
+  });
+  const { data: playbook } = useQuery({
+    ...trpc.playbook.get.queryOptions({ type: "postmortem" }),
+    enabled: agentAllowed && incident.status === "resolved",
   });
   // null = pristine: the editor follows the server copy, so a background
   // refetch never clobbers unsaved edits.
@@ -151,7 +157,7 @@ export function IncidentPostmortem({
       <ComposerPreview value={content} />
       <ComposerFooter>
         {/* px-2 like a ghost control so the dot sits on the text column */}
-        <div className="flex items-center gap-2 px-2">
+        <div className="flex flex-wrap items-center gap-x-2 px-2 whitespace-nowrap">
           {postmortem ? (
             <span className="text-foreground flex items-center gap-2 font-mono">
               <StatusDot variant={approved ? "success" : "default"} />
@@ -159,6 +165,15 @@ export function IncidentPostmortem({
             </span>
           ) : null}
           {hint ? <span>{hint}</span> : null}
+          {showAgent && playbook !== undefined ? (
+            <span>
+              {playbook ? "Agent follows your " : null}
+              <Link href={`/agents/playbooks/${playbookSlug("postmortem")}`}>
+                {playbook ? "playbook" : "Write a playbook"}
+              </Link>
+              {playbook ? null : " for the agent"}
+            </span>
+          ) : null}
         </div>
         <ComposerActions>
           <div className="flex items-center gap-1">

@@ -222,6 +222,10 @@ const tools = [
     ],
   },
   {
+    group: "Playbooks",
+    items: ["list_playbooks", "get_playbook", "update_playbook"],
+  },
+  {
     group: "Monitors",
     items: [
       "list_monitors",

@@ -1,6 +1,7 @@
 import {
   Agent,
   ApiKey,
+  BookOpen,
   Chat,
   Code,
   Globe,
@@ -103,6 +104,12 @@ export const NAV = {
     icon: ModelContextProtocolIcon,
     keywords: ["model context protocol", "claude", "cursor"],
   },
+  playbooks: {
+    label: "Playbooks",
+    href: "/agents/playbooks",
+    icon: BookOpen,
+    keywords: ["runbook", "process", "style guide", "postmortem template"],
+  },
   developers: {
     label: "Developers",
     href: "/developers/api-keys",
@@ -147,7 +154,7 @@ export const NAV_MENU_ITEMS: NavItem[] = [
   NAV.chat,
   ...NAV_GROUPS.flatMap((group) => group.items).flatMap((item) =>
     item === NAV.agents
-      ? [item, NAV.slackAgent, NAV.mcp]
+      ? [item, NAV.slackAgent, NAV.mcp, NAV.playbooks]
       : item === NAV.developers
         ? [item, NAV.apiKeys, NAV.cli]
         : [item],

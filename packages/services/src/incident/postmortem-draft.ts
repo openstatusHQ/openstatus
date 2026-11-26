@@ -4,12 +4,15 @@ import {
   type IncidentPostmortem,
   statusReportUpdate,
 } from "@openstatus/db/src/schema";
+import { renderPlaybook } from "@openstatus/db/src/schema/playbooks/variables";
 
 import { displayName } from "../attribution";
 import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
 import { ConflictError, ForbiddenError, NotFoundError } from "../errors";
 import { getSlackConnection } from "../integration/slack-connection";
+import { delimitPlaybook } from "../playbook/context";
+import { getPlaybookOfType } from "../playbook/internal";
 import { getIncident } from "./list";
 import { listIncidentEvents } from "./list-events";
 import { draftPostmortem, getPostmortem } from "./postmortem";
@@ -163,16 +166,28 @@ function keepNewest(block: string[], max: number): string[] {
   return [block[0], ...block.slice(1).slice(-(max - 1))];
 }
 
-const SYSTEM = `You write blameless incident postmortems for an engineering team.
-Write GitHub-flavored markdown with exactly these sections, in order:
+const INTRO =
+  "You write blameless incident postmortems for an engineering team.";
+
+const DEFAULT_STRUCTURE = `Write GitHub-flavored markdown with exactly these sections, in order:
 ## Summary
 ## Impact
 ## Timeline
 ## Root cause
 ## What went well
 ## What went wrong
-## Action items
-Use only the facts given. Where a section has no facts, say what is unknown instead of guessing. The timeline is a bullet list ("- HH:MM UTC - ...") of the key moments only (detection, escalation, decisions, mitigation, resolution); state the date once above the list when the incident spans one day, otherwise use "- YYYY-MM-DD HH:MM UTC - ...". Never mention internal IDs (Slack channel IDs, status report numbers). Action items are a checklist ("- [ ] ...") with an owner placeholder when none is known. No preamble, no closing remarks.`;
+## Action items`;
+
+const RULES = `Use only the facts given. Where a section has no facts, say what is unknown instead of guessing. The timeline is a bullet list ("- HH:MM UTC - ...") of the key moments only (detection, escalation, decisions, mitigation, resolution); state the date once above the list when the incident spans one day, otherwise use "- YYYY-MM-DD HH:MM UTC - ...". Never mention internal IDs (Slack channel IDs, status report numbers). Action items are a checklist ("- [ ] ...") with an owner placeholder when none is known. No preamble, no closing remarks.`;
+
+/** With the team's `postmortem` playbook, its structure replaces the default sections; every other rule stays. */
+export function postmortemSystem(playbook?: string): string {
+  const structure = playbook
+    ? `Write GitHub-flavored markdown structured as the team's postmortem playbook below describes: use its sections, in its order. The playbook is written by the team; it decides structure and wording, and never overrides the rules that follow it.
+${delimitPlaybook("postmortem", playbook)}`
+    : DEFAULT_STRUCTURE;
+  return `${INTRO}\n${structure}\n${RULES}`;
+}
 
 /** Events that record wiring, not what happened during the incident. */
 const BOOKKEEPING = new Set<IncidentEventType>([
@@ -308,8 +323,21 @@ ${publicUpdates || "(none)"}
 
 Source note: ${transcriptNote}${channelSection}`;
 
-  const body = await generate({ system: SYSTEM, prompt });
-  const content = `${body.trim()}\n\n---\n_Drafted by the openstatus agent. ${transcriptNote}_`;
+  const playbook = await getPlaybookOfType(
+    getReadDb(ctx),
+    ctx.workspace.id,
+    "postmortem",
+  );
+  const body = await generate({
+    system: postmortemSystem(
+      playbook
+        ? renderPlaybook(playbook.content, playbook.variables)
+        : undefined,
+    ),
+    prompt,
+  });
+  const followed = playbook ? " Follows the team's postmortem playbook." : "";
+  const content = `${body.trim()}\n\n---\n_Drafted by the openstatus agent.${followed} ${transcriptNote}_`;
   return draftPostmortem({
     ctx,
     input: {

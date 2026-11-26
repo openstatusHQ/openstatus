@@ -1,0 +1,1 @@
+ALTER TABLE `playbook` ADD `variables` text;

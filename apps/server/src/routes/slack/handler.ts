@@ -4,6 +4,7 @@ import {
   missingSlackScopes,
   uninstallSlackTeam,
 } from "@openstatus/services/integration";
+import { loadPlaybookSection } from "@openstatus/services/playbook";
 import { WebClient } from "@slack/web-api";
 import type { Context } from "hono";
 import { z } from "zod";
@@ -900,6 +901,10 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
       teamId,
       channelId: isAgentThread ? contextChannel : event.channel,
     });
+    // A failed lookup costs the agent its playbooks, never the turn.
+    const playbookNote = await loadPlaybookSection({
+      ctx: { workspace: resolved.workspace, actor },
+    }).catch(() => "");
 
     logger.info("slack agent invoked", {
       teamId,
@@ -926,6 +931,7 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
             linksNote,
             memoryNote,
             incidentNote,
+            playbookNote,
           ]
             .filter(Boolean)
             .join("\n\n") || undefined,

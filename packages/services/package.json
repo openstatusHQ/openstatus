@@ -109,6 +109,10 @@
       "import": "./src/sso/index.ts",
       "types": "./src/sso/index.ts"
     },
+    "./playbook": {
+      "import": "./src/playbook/index.ts",
+      "types": "./src/playbook/index.ts"
+    },
     "./maintenance-window": {
       "import": "./src/maintenance-window/index.ts",
       "types": "./src/maintenance-window/index.ts"

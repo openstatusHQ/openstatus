@@ -1,10 +1,19 @@
+"use client";
+
 import { ArrowUpRight, ChevronDown } from "@openstatus/icons";
 import { Input } from "@openstatus/ui/components/ui/input";
 import { SelectTrigger } from "@openstatus/ui/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@openstatus/ui/components/ui/tooltip";
 import { cn } from "@openstatus/ui/lib/utils";
+import { useRef, useState } from "react";
 
 import { DateTimePicker } from "@/components/common/date-time-picker";
 import { Link } from "@/components/common/link";
+import { useComposedRefs } from "@/lib/composition";
 
 export function PropertyList({
   children,
@@ -144,20 +153,45 @@ export function PropertyMenuTrigger({
   );
 }
 
-// The native date picker icon is pinned right to line up with select chevrons.
+/**
+ * Hovering shows the full value when the input clips it. The native date
+ * picker icon is pinned right to line up with select chevrons.
+ */
 export function PropertyInput({
   className,
+  ref,
   ...props
 }: React.ComponentProps<typeof Input>) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const composedRef = useComposedRefs(ref, inputRef);
+  const [clipped, setClipped] = useState<string | null>(null);
   return (
-    <Input
-      className={cn(
-        propertyControlClassName,
-        "relative md:text-sm [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-50",
-        className,
-      )}
-      {...props}
-    />
+    <Tooltip
+      open={clipped !== null}
+      onOpenChange={(open) => {
+        const input = inputRef.current;
+        setClipped(
+          open && input && input.scrollWidth > input.clientWidth
+            ? input.value
+            : null,
+        );
+      }}
+    >
+      <TooltipTrigger asChild>
+        <Input
+          ref={composedRef}
+          className={cn(
+            propertyControlClassName,
+            "relative md:text-sm [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:right-2 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-50",
+            className,
+          )}
+          {...props}
+        />
+      </TooltipTrigger>
+      <TooltipContent side="left" className="max-w-xs break-words">
+        {clipped}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

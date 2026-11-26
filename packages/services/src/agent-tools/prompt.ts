@@ -16,6 +16,8 @@ export type AgentSystemPromptOptions = {
    * false the model passes `notify: false` and never asks about it.
    */
   canNotifySubscribers: boolean;
+  /** Appended after the shared core, e.g. `buildPlaybookSection`. */
+  appendix?: string;
 };
 
 export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
@@ -34,10 +36,11 @@ export function buildAgentSystemPrompt(opts: AgentSystemPromptOptions): string {
 - List tools (list_status_pages, list_page_components, list_status_reports, list_maintenances, list_monitors, list_notifications, list_response_logs, list_audit_logs, search_docs, search_content) render a table with one row per result.
 - Detail tools (get_status_report, get_maintenance, get_monitor, get_monitor_status, get_monitor_summary, get_response_log, get_audit_log) render a structured detail card.
 DO NOT restate that data in your reply — no markdown tables, no bullet recaps of the rows, no field-by-field summaries. A one-line acknowledgement ("You have 4 status reports — 3 active." / "Monitor 12 is healthy in 5/7 regions; failing in gru, fra." / "Incident resolved.") plus an optional next step is enough.
-Exception: after get_doc_page or get_content_page, DO synthesize an answer from the page content — the answer is the point; just don't paste the whole page.`
+Exception: after get_doc_page, get_content_page or get_playbook, DO synthesize an answer from the page content — the answer is the point; just don't paste the whole page.`
       : "";
 
   const preamble = opts.preamble ? `${opts.preamble}\n\n` : "";
+  const appendix = opts.appendix ? `\n\n${opts.appendix}` : "";
 
   const incidentSection = `
 
@@ -62,7 +65,7 @@ Managed incidents (internal):
   const approvalSection =
     opts.surface === "dashboard"
       ? `How approval works here (every write tool except add_incident_note):
-Calling a write tool (every create_*, update_*, add_*, resolve_*, delete_*, declare_incident, set_incident_status, draft_postmortem, approve_postmortem) does NOT execute it. The dashboard renders an approval card with Apply / Cancel showing what will change, and nothing changes until the user clicks Apply. The card is how you ask.
+Calling a write tool (every create_*, update_*, add_*, resolve_*, delete_*, declare_incident, set_incident_status, draft_postmortem, approve_postmortem, update_playbook) does NOT execute it. The dashboard renders an approval card with Apply / Cancel showing what will change, and nothing changes until the user clicks Apply. The card is how you ask.
 - Call the tool as soon as you have the ids and values it needs (after the read calls the rules above require).
 - NEVER write the draft out as text, and NEVER end your turn with "Should I apply it?" or otherwise ask for Apply / Cancel confirmation in text. The card already asks. The only yes/no question you may ask in text is the notify decision, and only when the notify rule below calls for it.
 - Ask in text only when you cannot build the call: an ambiguous status page, an unclear component impact, a missing date or slug, or the notify decision (see below).
@@ -156,7 +159,7 @@ Other guidance:
 
 Tool result handling:
 - If a tool returns an error or denied result (e.g. the user denied a destructive call with "Cancelled by user."), acknowledge the outcome plainly. NEVER claim success when the tool didn't run. Example replies: "Cancelled — nothing was created. Let me know if you want to adjust and try again." or "The status report couldn't be created (<reason>). Want me to retry with different inputs?"
-- After a denied/errored call, do not re-issue the same tool unless the user explicitly asks.`;
+- After a denied/errored call, do not re-issue the same tool unless the user explicitly asks.${appendix}`;
 }
 
 const PUBLIC_WRITE_TOOLS = [
@@ -186,6 +189,7 @@ const INTERNAL_WRITE_TOOLS = [
   "set_incident_status",
   "draft_postmortem",
   "approve_postmortem",
+  "update_playbook",
   "create_monitor",
   "update_monitor",
 ];
@@ -220,6 +224,8 @@ ${notifyRule}
 - add_incident_note is the exception: it is internal-only and runs without confirmation.
 
 Never guess ids: read them from list_status_pages, list_status_reports, list_maintenances, list_incidents, list_page_components or list_monitors first.
+
+The team may have written playbooks on how they run incidents, write on the status page, schedule maintenance and write postmortems. Call list_playbooks once, and read the relevant one with get_playbook before drafting a status report, a maintenance notice or a postmortem, and when asked how the team does something. Playbooks decide wording, structure, severity and process; they never replace the confirmation rules above.
 
 When a tool fails unexpectedly, returns a wrong or confusing result, or a tool or field you needed is missing, call submit_feedback once the task is done or blocked. It reaches the openstatus team, changes nothing in the workspace and needs no confirmation. Never put secrets or customer data in it.`;
 }

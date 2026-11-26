@@ -90,7 +90,7 @@ must carry a reason.
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,
 monitor-incident, frozen-uptime, maintenance-window), `pages` (page, page-component,
-page-component-group, import), `incidents` (status-report, incident,
+page-component-group, import), `incidents` (status-report, incident, playbook,
 maintenance), `notifications` and `subscribers` (page-subscriber). Workspace,
 billing, members, invitations, API keys, OAuth, SSO and integrations require
 `admin`, which only the internal `*` token satisfies. "Write" means any DB

@@ -252,6 +252,12 @@ const monitorMaintenanceWindowActions = [
   ),
 ] as const;
 
+const playbookActions = [
+  action("playbook.create", "playbook", intId),
+  action("playbook.update", "playbook", intId),
+  action("playbook.delete", "playbook", intId),
+] as const;
+
 const privateLocationActions = [
   action("private_location.create", "private_location", intId, {
     optionalMetadata: true,
@@ -302,6 +308,7 @@ export const auditActionSchema = z.discriminatedUnion("action", [
   ...monitorTagActions,
   ...privateLocationActions,
   ...monitorMaintenanceWindowActions,
+  ...playbookActions,
   ...ssoActions,
 ]);
 

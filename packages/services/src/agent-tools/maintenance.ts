@@ -17,6 +17,7 @@ import {
 } from "../maintenance";
 import { getMaintenanceInWorkspace } from "../maintenance/internal";
 import { beforeSnapshot } from "./approval-before";
+import { playbookHint } from "./playbook-hint";
 import type { AgentTool } from "./types";
 
 const PER_PAGE_DEFAULT = 50;
@@ -215,7 +216,8 @@ export const createMaintenanceTool: AgentTool<
 > = {
   name: "create_maintenance",
   description:
-    "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The maintenance row persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page.",
+    "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The maintenance row persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page." +
+    playbookHint("maintenance_windows", "status_page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: CreateMaintenanceInputShape,
@@ -314,7 +316,8 @@ export const addMaintenanceUpdateTool: AgentTool<
 > = {
   name: "add_maintenance_update",
   description:
-    "Append a public update to an existing maintenance. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. The maintenanceId MUST come from list_maintenances. Subscriber notification is only available during this call.",
+    "Append a public update to an existing maintenance. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS. The maintenanceId MUST come from list_maintenances. Subscriber notification is only available during this call." +
+    playbookHint("status_page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: AddMaintenanceUpdateInputShape,
@@ -392,7 +395,8 @@ export const updateMaintenanceUpdateTool: AgentTool<
 > = {
   name: "update_maintenance_update",
   description:
-    "Edit an existing maintenance timeline entry. PUBLIC and AUDIT-LOGGED. Does not notify subscribers. The update id MUST come from list_maintenances (or a prior create/add result).",
+    "Edit an existing maintenance timeline entry. PUBLIC and AUDIT-LOGGED. Does not notify subscribers. The update id MUST come from list_maintenances (or a prior create/add result)." +
+    playbookHint("status_page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateMaintenanceUpdateInputShape,
@@ -517,7 +521,8 @@ export const updateMaintenanceTool: AgentTool<
 > = {
   name: "update_maintenance",
   description:
-    "Change a maintenance window: title, time range, affected components or the newest message. PUBLIC and AUDIT-LOGGED; does not notify subscribers. Call get_maintenance first and send only the fields that change. `message` rewrites the newest timeline entry (it does not append — use add_maintenance_update for progress). `from` must stay before `to`.",
+    "Change a maintenance window: title, time range, affected components or the newest message. PUBLIC and AUDIT-LOGGED; does not notify subscribers. Call get_maintenance first and send only the fields that change. `message` rewrites the newest timeline entry (it does not append — use add_maintenance_update for progress). `from` must stay before `to`." +
+    playbookHint("maintenance_windows", "status_page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateMaintenanceInputShape,

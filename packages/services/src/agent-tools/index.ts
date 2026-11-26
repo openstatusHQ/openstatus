@@ -53,6 +53,11 @@ import {
   createComponentGroupTool,
   updateComponentGroupTool,
 } from "./page-component-group";
+import {
+  getPlaybookTool,
+  listPlaybooksTool,
+  updatePlaybookTool,
+} from "./playbook";
 import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
@@ -116,6 +121,11 @@ export {
   createComponentGroupTool,
   updateComponentGroupTool,
 } from "./page-component-group";
+export {
+  getPlaybookTool,
+  listPlaybooksTool,
+  updatePlaybookTool,
+} from "./playbook";
 export { listPrivateLocationsTool } from "./private-location";
 export { getWorkspaceTool } from "./workspace";
 export {
@@ -190,6 +200,9 @@ export const agentTools = {
   add_maintenance_update: addMaintenanceUpdateTool,
   update_maintenance_update: updateMaintenanceUpdateTool,
   delete_maintenance_update: deleteMaintenanceUpdateTool,
+  list_playbooks: listPlaybooksTool,
+  get_playbook: getPlaybookTool,
+  update_playbook: updatePlaybookTool,
   list_monitors: listMonitorsTool,
   create_monitor: createMonitorTool,
   update_monitor: updateMonitorTool,
