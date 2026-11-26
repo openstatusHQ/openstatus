@@ -61,10 +61,6 @@ AUTH_GOOGLE_SECRET=your_google_oauth_secret
 ```bash
 UPSTASH_REDIS_REST_URL=http://localhost:6379
 UPSTASH_REDIS_REST_TOKEN=your_redis_token
-QSTASH_CURRENT_SIGNING_KEY=your_qstash_key
-QSTASH_NEXT_SIGNING_KEY=your_qstash_key
-QSTASH_TOKEN=your_qstash_token
-QSTASH_URL=https://qstash.upstash.io/v1/publish/
 ```
 
 ### **Google Cloud (Optional)**
@@ -136,7 +132,7 @@ WORKSPACES_HIDE_URL=false
 - **Email**: `RESEND_API_KEY`
 - **Analytics**: `TINY_BIRD_API_KEY`, `TINYBIRD_URL`
 - **OAuth**: `AUTH_GITHUB_*`, `AUTH_GOOGLE_*`
-- **Queue**: `UPSTASH_*`, `QSTASH_*`
+- **Queue**: `UPSTASH_*`
 - **Cloud**: `GCP_*`, `CRON_SECRET`
 - **API Keys**: `UNKEY_*`, `SUPER_ADMIN_TOKEN`, `FLY_REGION`
 - **Payments**: `STRIPE_*`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`

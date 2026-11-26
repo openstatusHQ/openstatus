@@ -47,7 +47,6 @@
     "@opentelemetry/semantic-conventions": "catalog:",
     "@sentry/node": "catalog:",
     "@slack/web-api": "catalog:",
-    "@upstash/qstash": "catalog:",
     "drizzle-orm": "catalog:",
     "effect": "catalog:",
     "hono": "catalog:",

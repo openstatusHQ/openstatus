@@ -8,7 +8,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@upstash/qstash": "catalog:",
     "@upstash/redis": "catalog:"
   },
   "devDependencies": {

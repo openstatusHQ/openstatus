@@ -41,10 +41,6 @@ x-common-variables: &common-env # Database Configuration
   # Redis/Queue (Optional)
   UPSTASH_REDIS_REST_URL: ${UPSTASH_REDIS_REST_URL:-http://localhost:6379}
   UPSTASH_REDIS_REST_TOKEN: ${UPSTASH_REDIS_REST_TOKEN:-}
-  QSTASH_CURRENT_SIGNING_KEY: ${QSTASH_CURRENT_SIGNING_KEY:-}
-  QSTASH_NEXT_SIGNING_KEY: ${QSTASH_NEXT_SIGNING_KEY:-}
-  QSTASH_TOKEN: ${QSTASH_TOKEN:-}
-  QSTASH_URL: ${QSTASH_URL:-https://qstash.upstash.io/v1/publish/}
 
   # Google Cloud (Optional)
   GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}

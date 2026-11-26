@@ -10,17 +10,12 @@
   "dependencies": {
     "@openstatus/db": "workspace:*",
     "@openstatus/notification-base": "workspace:*",
-    "@t3-oss/env-core": "catalog:",
-    "@types/validator": "catalog:",
-    "validator": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@openstatus/test-utils": "workspace:*",
     "@openstatus/tsconfig": "workspace:*",
     "@types/node": "catalog:",
-    "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
