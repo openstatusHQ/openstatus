@@ -34,6 +34,7 @@ const homepageLinkHeader = [
   '</.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json"',
   '</.well-known/agent-skills/index.json>; rel="agent-skills"; type="application/json"',
   '</.well-known/mcp.json>; rel="mcp-server"; type="application/json"',
+  '</.well-known/search>; rel="search"; type="text/markdown"',
   '<https://www.openstatus.dev/docs>; rel="service-doc"; type="text/html"',
   '<https://www.openstatus.dev/openapi.json>; rel="service-desc"; type="application/json"',
   '<https://www.openstatus.dev/llms.txt>; rel="describedby"; type="text/plain"',

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 
+import { agentSearchFrontmatter } from "./agent-search";
 import { canonicalUrl, frontmatter } from "./frontmatter";
 
 describe("canonicalUrl", () => {
@@ -23,21 +24,21 @@ describe("canonicalUrl", () => {
 describe("frontmatter", () => {
   test("renders a fenced block with one quoted field per line, in order", () => {
     expect(frontmatter({ title: "T", url: "/u", description: "D" })).toBe(
-      '---\ntitle: "T"\nurl: "/u"\ndescription: "D"\n---\n\n',
+      `---\ntitle: "T"\nurl: "/u"\ndescription: "D"\n${agentSearchFrontmatter}\n---\n\n`,
     );
   });
 
   test("drops undefined fields instead of printing them", () => {
     expect(frontmatter({ title: "T", updated: undefined, author: "A" })).toBe(
-      '---\ntitle: "T"\nauthor: "A"\n---\n\n',
+      `---\ntitle: "T"\nauthor: "A"\n${agentSearchFrontmatter}\n---\n\n`,
     );
   });
 
   test("escapes quotes, backslashes and newlines so the YAML stays valid", () => {
     const out = frontmatter({ title: 'Say "hi"\\now\nlater' });
-    expect(out).toBe('---\ntitle: "Say \\"hi\\"\\\\now\\nlater"\n---\n\n');
     // One field is still one line.
-    expect(out.split("\n")).toHaveLength(5);
+    expect(out.split("\n")[1]).toBe('title: "Say \\"hi\\"\\\\now\\nlater"');
+    expect(out.split("\n")[2]).toBe("agent:");
   });
 
   test("keeps a date-looking value as a string", () => {

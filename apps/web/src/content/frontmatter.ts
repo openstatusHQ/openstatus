@@ -1,3 +1,5 @@
+import { agentSearchFrontmatter } from "./agent-search";
+
 const SITE_URL = "https://www.openstatus.dev";
 
 // Markdown leaves the site, so frontmatter links are absolute.
@@ -10,5 +12,6 @@ export function frontmatter(fields: Record<string, string | undefined>) {
   const lines = Object.entries(fields)
     .filter((entry): entry is [string, string] => entry[1] != null)
     .map(([key, value]) => `${key}: ${JSON.stringify(value)}`);
-  return `---\n${lines.join("\n")}\n---\n\n`;
+  // Every markdown page tells an agent where the site search is.
+  return `---\n${[...lines, agentSearchFrontmatter].join("\n")}\n---\n\n`;
 }
