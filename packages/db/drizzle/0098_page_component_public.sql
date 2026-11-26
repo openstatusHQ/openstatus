@@ -21,9 +21,11 @@ CREATE TABLE `__new_page_component` (
 	CONSTRAINT "page_component_public_check" CHECK("__new_page_component"."public" = 0 OR "__new_page_component"."type" = 'monitor')
 );
 --> statement-breakpoint
-INSERT INTO `__new_page_component`("id", "workspace_id", "page_id", "type", "monitor_id", "name", "description", "order", "group_id", "group_order", "public", "created_at", "updated_at") SELECT "id", "workspace_id", "page_id", "type", "monitor_id", "name", "description", "order", "group_id", "group_order", CASE WHEN "type" = 'monitor' THEN COALESCE((SELECT "public" FROM `monitor` WHERE `monitor`."id" = `page_component`."monitor_id" AND `monitor`."job_type" != 'heartbeat'), 0) ELSE 0 END, "created_at", "updated_at" FROM `page_component`;--> statement-breakpoint
+INSERT INTO `__new_page_component`("id", "workspace_id", "page_id", "type", "monitor_id", "name", "description", "order", "group_id", "group_order", "created_at", "updated_at") SELECT "id", "workspace_id", "page_id", "type", "monitor_id", "name", "description", "order", "group_id", "group_order", "created_at", "updated_at" FROM `page_component`;--> statement-breakpoint
 DROP TABLE `page_component`;--> statement-breakpoint
 ALTER TABLE `__new_page_component` RENAME TO `page_component`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;--> statement-breakpoint
 CREATE INDEX `page_component_workspace_id_idx` ON `page_component` (`workspace_id`);--> statement-breakpoint
-CREATE UNIQUE INDEX `page_component_page_id_monitor_id_unique` ON `page_component` (`page_id`,`monitor_id`);
+CREATE UNIQUE INDEX `page_component_page_id_monitor_id_unique` ON `page_component` (`page_id`,`monitor_id`);--> statement-breakpoint
+-- backfill: visibility moves from the monitor to its components (heartbeats stay private)
+UPDATE `page_component` SET `public` = 1 WHERE `type` = 'monitor' AND `monitor_id` IN (SELECT `id` FROM `monitor` WHERE `public` = 1 AND `job_type` != 'heartbeat');
