@@ -91,7 +91,11 @@ function scorable(parts: {
 }) {
   return {
     titleLower: (parts.title ?? "").toLowerCase(),
-    headingsLower: (parts.headings ?? "").toLowerCase(),
+    headings: (parts.headings ?? "")
+      .toLowerCase()
+      .split("\n")
+      .filter(Boolean)
+      .map((textLower) => ({ textLower, level: 2 })),
     descriptionLower: (parts.description ?? "").toLowerCase(),
     sanitizedLower: (parts.content ?? "").toLowerCase(),
   };
@@ -106,7 +110,6 @@ describe("scoreDoc tiering", () => {
     const r = scoreDoc(
       scorable({ title: "Monitoring guide" }),
       "monitor",
-      false,
       matchers("monitor"),
     );
     expect(r.score).toBeGreaterThan(0);
@@ -117,7 +120,6 @@ describe("scoreDoc tiering", () => {
     const r = scoreDoc(
       scorable({ content: "configure your status page here" }),
       "status page",
-      true,
       matchers("status", "page"),
     );
     expect(r.full).toBe(true);
@@ -128,7 +130,6 @@ describe("scoreDoc tiering", () => {
     const r = scoreDoc(
       scorable({ title: "status", content: "the page loads fast" }),
       "status page",
-      true,
       matchers("status", "page"),
     );
     expect(r.score).toBeGreaterThan(0);
@@ -139,13 +140,11 @@ describe("scoreDoc tiering", () => {
     const allTerms = scoreDoc(
       scorable({ title: "status", content: "the page loads" }),
       "status page",
-      true,
       matchers("status", "page"),
     );
     const oneTerm = scoreDoc(
       scorable({ title: "status only" }),
       "status page",
-      true,
       matchers("status", "page"),
     );
     expect(allTerms.score).toBeGreaterThan(oneTerm.score);
@@ -155,11 +154,66 @@ describe("scoreDoc tiering", () => {
     const r = scoreDoc(
       scorable({ title: "unrelated" }),
       "monitor",
-      false,
       matchers("monitor"),
     );
     expect(r.score).toBe(0);
     expect(r.full).toBe(false);
+  });
+});
+
+describe("scoreDoc ranking signals", () => {
+  const score = (entry: Parameters<typeof scoreDoc>[0], phrase: string) =>
+    scoreDoc(entry, phrase, matchers(...phrase.split(" "))).score;
+
+  test("a heading that is the query beats one that contains it", () => {
+    const exact = scorable({ headings: "custom domain" });
+    const contains = scorable({
+      headings: "update dns for your custom domain",
+    });
+    expect(score(exact, "custom domain")).toBeGreaterThan(
+      score(contains, "custom domain"),
+    );
+  });
+
+  test("a shallower heading outweighs a deeper one", () => {
+    const at = (level: number) => ({
+      ...scorable({}),
+      headings: [{ textLower: "custom domain", level }],
+    });
+    expect(score(at(2), "custom domain")).toBeGreaterThan(
+      score(at(3), "custom domain"),
+    );
+    expect(score(at(3), "custom domain")).toBeGreaterThan(
+      score(at(4), "custom domain"),
+    );
+  });
+
+  test("repeated mentions count, up to a cap", () => {
+    const mentions = (n: number) =>
+      scorable({ content: Array(n).fill("a custom domain here").join(". ") });
+    const [one, three, nine] = [1, 3, 9].map((n) =>
+      score(mentions(n), "custom domain"),
+    );
+    expect(three).toBeGreaterThan(one);
+    expect(nine).toBe(three);
+  });
+
+  test("a plural phrase matches the singular as a full hit", () => {
+    const r = scoreDoc(
+      scorable({ headings: "custom domain", content: "set a custom domain" }),
+      "custom domains",
+      matchers("custom", "domains"),
+    );
+    expect(r.full).toBe(true);
+    expect(getContentSnippet("set a custom domain", r.needle)).toContain(
+      "custom domain",
+    );
+  });
+
+  test("a title that is the query beats a title that contains it", () => {
+    expect(score(scorable({ title: "pricing" }), "pricing")).toBeGreaterThan(
+      score(scorable({ title: "status page pricing compared" }), "pricing"),
+    );
   });
 });
 
@@ -286,7 +340,7 @@ describe("scoreDoc stopword integration", () => {
     ]);
     const ms = matchers(...filtered);
     const phrase = "how to configure status page subdomain";
-    const r = scoreDoc(entry, phrase, true, ms);
+    const r = scoreDoc(entry, phrase, ms);
     // Before the fix, "how" and "to" were in matchers but matched nothing,
     // so allTermsBonus was never awarded. Now they're stripped and all 4
     // content terms match, so allTermsBonus is included and score > 38.
@@ -300,12 +354,11 @@ describe("normalizeForMatch / hyphen phrase", () => {
     const r = scoreDoc(
       {
         titleLower: "",
-        headingsLower: "",
+        headings: [],
         descriptionLower: "",
         sanitizedLower: normalized,
       },
       "status page",
-      true,
       matchers("status", "page"),
     );
     expect(r.full).toBe(true);
@@ -326,7 +379,6 @@ describe("scoreDoc description field", () => {
     const r = scoreDoc(
       scorable({ description: "uptime monitoring for your services" }),
       "uptime monitoring",
-      true,
       matchers("uptime", "monitoring"),
     );
     // phraseDescription (50) + termDescription for both terms + allTermsBonus
@@ -339,14 +391,13 @@ describe("scoreDoc description field", () => {
     expect(r.needle).toBeNull();
   });
 
-  test("term in description only contributes termDescription to score", () => {
+  test("single word in description only scores as phrase and term", () => {
     const r = scoreDoc(
       scorable({ description: "synthetic monitoring platform" }),
       "synthetic",
-      false,
       matchers("synthetic"),
     );
-    expect(r.score).toBe(WEIGHTS.termDescription);
+    expect(r.score).toBe(WEIGHTS.phraseDescription + WEIGHTS.termDescription);
     expect(r.needle).toBeNull();
   });
 
@@ -357,7 +408,6 @@ describe("scoreDoc description field", () => {
         content: "configure your monitoring setup",
       }),
       "synthetic monitoring",
-      true,
       matchers("synthetic", "monitoring"),
     );
     expect(r.score).toBeGreaterThanOrEqual(
@@ -369,13 +419,11 @@ describe("scoreDoc description field", () => {
     const descOnly = scoreDoc(
       scorable({ description: "status page uptime" }),
       "status page",
-      true,
       matchers("status", "page"),
     );
     const contentOnly = scoreDoc(
       scorable({ content: "status page uptime" }),
       "status page",
-      true,
       matchers("status", "page"),
     );
     expect(descOnly.score).toBeGreaterThan(contentOnly.score);

@@ -20,7 +20,12 @@ import {
   stripSrOnly,
 } from "./search-match";
 
-type Heading = { slug: string; index: number };
+type Heading = {
+  slug: string;
+  index: number;
+  textLower: string;
+  level: number;
+};
 
 type IndexedDoc = {
   doc: MDXData;
@@ -30,7 +35,6 @@ type IndexedDoc = {
   sanitized: string;
   sanitizedLower: string;
   headings: Heading[];
-  headingsLower: string;
   descriptionLower: string;
 };
 
@@ -55,13 +59,16 @@ function indexDoc(doc: MDXData, type: Corpus): IndexedDoc {
     .join(" ");
   const sanitized = sanitizeContent(faqText ? `${raw} ${faqText}` : raw);
   const headings: Heading[] = [];
-  const headingTexts: string[] = [];
-  const headingRegex = /^#{1,6}\s+(.+)$/gm;
+  const headingRegex = /^(#{1,6})\s+(.+)$/gm;
   let match = headingRegex.exec(raw);
   while (match !== null) {
-    const text = match[1].trim();
-    headings.push({ slug: slugify(text), index: match.index });
-    headingTexts.push(text);
+    const text = match[2].trim();
+    headings.push({
+      slug: slugify(text),
+      index: match.index,
+      textLower: normalizeForMatch(text),
+      level: match[1].length,
+    });
     match = headingRegex.exec(raw);
   }
   return {
@@ -72,7 +79,6 @@ function indexDoc(doc: MDXData, type: Corpus): IndexedDoc {
     sanitized,
     sanitizedLower: normalizeForMatch(sanitized),
     headings,
-    headingsLower: normalizeForMatch(headingTexts.join(" \n ")),
     descriptionLower: normalizeForMatch(doc.metadata.description),
   };
 }
@@ -95,9 +101,8 @@ function getCorpus(type: Corpus): IndexedDoc[] {
 function buildVocab(entries: IndexedDoc[]): string[] {
   const seen = new Set<string>();
   for (const e of entries) {
-    for (const w of `${e.titleLower} ${e.headingsLower}`.split(
-      /[^\p{L}\p{N}]+/u,
-    )) {
+    const headingText = e.headings.map((h) => h.textLower).join(" ");
+    for (const w of `${e.titleLower} ${headingText}`.split(/[^\p{L}\p{N}]+/u)) {
       if (w.length >= 4) seen.add(w);
     }
   }
@@ -126,6 +131,29 @@ function getAll(): IndexedDoc[] {
   ];
 }
 
+// Where a feature query should land first: the reference and product pages
+// define a feature, the rest mention it.
+const PRIOR: Record<Corpus, number> = {
+  product: 1,
+  docs: 0.9,
+  guides: 0.8,
+  tools: 0.8,
+  tooling: 0.8,
+  unrelated: 1,
+  "use-case": 0.65,
+  compare: 0.65,
+  customers: 0.65,
+  blog: 0.6,
+  changelog: 0.6,
+};
+
+const DATED: ReadonlySet<Corpus> = new Set(["blog", "changelog"]);
+
+function prior(entry: IndexedDoc): number {
+  if (entry.doc.href.startsWith("/docs/reference/")) return 1;
+  return PRIOR[entry.type];
+}
+
 type ScoredEntry = {
   entry: IndexedDoc;
   score: number;
@@ -136,21 +164,21 @@ type ScoredEntry = {
 function runScoring(
   entries: IndexedDoc[],
   phrase: string,
-  usePhrase: boolean,
   matchers: ReturnType<typeof makeMatcher>[],
 ): ScoredEntry[] {
   const scored: ScoredEntry[] = [];
   for (const entry of entries) {
-    const { score, needle, full } = scoreDoc(
-      entry,
-      phrase,
-      usePhrase,
-      matchers,
-    );
-    if (score > 0) scored.push({ entry, score, needle, full });
+    const { score, needle, full } = scoreDoc(entry, phrase, matchers);
+    if (score > 0) {
+      scored.push({ entry, score: score * prior(entry), needle, full });
+    }
   }
   scored.sort(
-    (a, b) => b.score - a.score || recency(b.entry) - recency(a.entry),
+    (a, b) =>
+      b.score - a.score ||
+      prior(b.entry) - prior(a.entry) ||
+      tieRecency(b.entry) - tieRecency(a.entry) ||
+      a.entry.doc.href.localeCompare(b.entry.doc.href),
   );
   return scored;
 }
@@ -174,9 +202,8 @@ export function searchCorpus(params: {
   }
 
   const matchers = terms.map(makeMatcher);
-  const usePhrase = phrase.includes(" ");
 
-  let scored = runScoring(entries, phrase, usePhrase, matchers);
+  let scored = runScoring(entries, phrase, matchers);
   let isFallback = false;
 
   // Zero-result fallback: attempt per-term typo correction against corpus vocabulary.
@@ -186,9 +213,8 @@ export function searchCorpus(params: {
     const anyFixed = corrected.some((c, i) => c !== terms[i]);
     if (anyFixed) {
       const corrPhrase = corrected.join(" ");
-      const corrUsePhrase = corrPhrase.includes(" ");
       const corrMatchers = corrected.map(makeMatcher);
-      scored = runScoring(entries, corrPhrase, corrUsePhrase, corrMatchers);
+      scored = runScoring(entries, corrPhrase, corrMatchers);
       isFallback = true;
     }
   }
@@ -215,8 +241,9 @@ function toResult(
   return { ...entry.doc, type: entry.type, content, href, tier };
 }
 
-function recency(entry: IndexedDoc) {
-  return entry.doc.metadata.publishedAt.getTime();
+// Only posts are dated on purpose; elsewhere publishedAt says nothing about relevance.
+function tieRecency(entry: IndexedDoc) {
+  return DATED.has(entry.type) ? entry.doc.metadata.publishedAt.getTime() : 0;
 }
 
 function byRecency(a: SearchResult, b: SearchResult) {
