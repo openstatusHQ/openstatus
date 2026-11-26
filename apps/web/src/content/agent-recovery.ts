@@ -2,6 +2,7 @@ const BASE = "https://www.openstatus.dev";
 
 /** Machine-readable entry points an agent can retry against after a dead link. */
 export const AGENT_RECOVERY_LINKS = [
+  ["Search", "/.well-known/search"],
   ["Sitemap", "/sitemap.xml"],
   ["llms.txt", "/llms.txt"],
   ["OpenAPI specification", "/openapi.json"],

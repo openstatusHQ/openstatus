@@ -10,7 +10,7 @@ describe("generateListingForPath", () => {
   test("listings carry the same frontmatter shape as pages", () => {
     const blog = generateListingForPath("/blog");
     expect(blog).toMatch(
-      /^---\ntitle: "Blog - [^"]+"\nurl: "https:\/\/www.openstatus.dev\/blog"\ndescription: ".+"\n---\n\n# Blog\n/,
+      /^---\ntitle: "Blog - [^"]+"\nurl: "https:\/\/www.openstatus.dev\/blog"\ndescription: ".+"\nagent:\n(?:  [^\n]+\n)+---\n\n# Blog\n/,
     );
     expect(generateListingForPath("")).toContain(
       'url: "https://www.openstatus.dev/"',
@@ -30,13 +30,13 @@ describe("generateListingForPath", () => {
     expect(overview).toBeTruthy();
     const sdk = generateListingForPath("/docs/sdk") ?? "";
     expect(sdk).toMatch(
-      /^---\ntitle: "SDK — openstatus docs"\nurl: [^\n]+\ndescription: [^\n]+\n---/,
+      /^---\ntitle: "SDK — openstatus docs"\nurl: [^\n]+\ndescription: [^\n]+\nagent:\n/,
     );
     expect(sdk).toContain(`description: ${JSON.stringify(overview)}`);
     // a nested chapter's slug is a directory, not a page
     const nodejs = generateListingForPath("/docs/sdk/nodejs") ?? "";
     expect(nodejs).toMatch(
-      /^---\ntitle: "[^"]+ — openstatus docs"\nurl: [^\n]+\ndescription: [^\n]+\n---/,
+      /^---\ntitle: "[^"]+ — openstatus docs"\nurl: [^\n]+\ndescription: [^\n]+\nagent:\n/,
     );
     expect(nodejs).toContain(`description: ${JSON.stringify(overview)}`);
     expect(sdk).toContain(`- [Node SDK](/docs/sdk/nodejs): ${overview}`);

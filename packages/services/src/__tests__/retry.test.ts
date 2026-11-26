@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import { NotFoundError } from "../errors";
 import {
   isRetryableDbError,
+  isTransientNetworkError,
   isTransientServerError,
   retryRead,
   withBusyRetry,
@@ -16,6 +17,15 @@ const transient502 = () => {
     message: "SERVER_ERROR: Server returned HTTP status 502",
   };
   return err;
+};
+
+// The chain a failed libSQL HTTP connection produces under drizzle.
+const connectTimeout = () => {
+  const aggregate = Object.assign(new AggregateError([], ""), {
+    code: "ETIMEDOUT",
+  });
+  const fetchFailed = new TypeError("fetch failed", { cause: aggregate });
+  return new Error("Failed query: select ...", { cause: fetchFailed });
 };
 
 describe("isRetryableDbError", () => {
@@ -112,6 +122,24 @@ describe("isTransientServerError", () => {
 
   test("false for a busy/locked error (handled by isRetryableDbError)", () => {
     expect(isTransientServerError({ code: "SQLITE_BUSY" })).toBe(false);
+  });
+});
+
+describe("isTransientNetworkError", () => {
+  test("true for the drizzle-wrapped connect timeout chain", () => {
+    expect(isTransientNetworkError(connectTimeout())).toBe(true);
+  });
+
+  test("true for an undici connect timeout code", () => {
+    expect(isTransientNetworkError({ code: "UND_ERR_CONNECT_TIMEOUT" })).toBe(
+      true,
+    );
+  });
+
+  test("false for a server response, busy error or unrelated error", () => {
+    expect(isTransientNetworkError(transient502())).toBe(false);
+    expect(isTransientNetworkError({ code: "SQLITE_BUSY" })).toBe(false);
+    expect(isTransientNetworkError(new Error("boom"))).toBe(false);
   });
 });
 
@@ -226,5 +254,16 @@ describe("retryRead", () => {
     });
     await expect(promise).rejects.toBe(original);
     expect(attempts).toBe(5);
+  });
+
+  test("retries a failed connection then resolves", async () => {
+    let attempts = 0;
+    const result = await retryRead(async () => {
+      attempts++;
+      if (attempts < 3) throw connectTimeout();
+      return "ok";
+    });
+    expect(result).toBe("ok");
+    expect(attempts).toBe(3);
   });
 });

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { agentSearchMeta } from "../../content/agent-search";
 import type { MDXData } from "../../content/utils";
 
 export const TITLE = "openstatus";
@@ -44,6 +45,7 @@ export const defaultMetadata: Metadata = {
   },
   twitter: twitterMetadata,
   openGraph: ogMetadata,
+  other: agentSearchMeta,
 };
 
 // Next merges metadata shallowly per field, so a page must emit its own

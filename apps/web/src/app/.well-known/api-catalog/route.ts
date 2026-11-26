@@ -39,6 +39,16 @@ const linkset = {
       ],
     },
     {
+      anchor: "https://www.openstatus.dev/.well-known/search",
+      "service-doc": [
+        {
+          href: "https://www.openstatus.dev/.well-known/search",
+          type: "text/markdown",
+          title: "Openstatus site search for agents",
+        },
+      ],
+    },
+    {
       anchor: "https://api.openstatus.dev/mcp",
       "service-desc": [
         {
