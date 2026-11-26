@@ -210,12 +210,6 @@ export const UpdateMonitorOtelInput = z.object({
 });
 export type UpdateMonitorOtelInput = z.infer<typeof UpdateMonitorOtelInput>;
 
-export const UpdateMonitorPublicInput = z.object({
-  id: z.number().int(),
-  public: z.boolean(),
-});
-export type UpdateMonitorPublicInput = z.infer<typeof UpdateMonitorPublicInput>;
-
 export const UpdateMonitorResponseTimeInput = z.object({
   id: z.number().int(),
   timeout: timeoutMs,

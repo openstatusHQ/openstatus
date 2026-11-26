@@ -395,16 +395,17 @@ export async function updatePageComponentOrder(args: {
       // non-conflicting INSERT SQLite would persist that timestamp as the
       // rowid. The `onConflictDoUpdate` SET clause doesn't touch `id`, so
       // existing rows keep their real ids either way.
+      // An omitted `public` keeps the stored value; new components start private.
+      const resolvePublic = (c: {
+        public?: boolean;
+        monitorId?: number | null;
+      }) => {
+        if (c.public !== undefined) return c.public;
+        if (c.monitorId == null) return false;
+        return existingByMonitorId.get(c.monitorId)?.public ?? false;
+      };
       const monitorInsertValues = monitorComponents.map(
-        ({ id: _id, ...rest }) => ({
-          ...rest,
-          public:
-            rest.public ??
-            (rest.monitorId != null
-              ? existingByMonitorId.get(rest.monitorId)?.public
-              : undefined) ??
-            false,
-        }),
+        ({ id: _id, ...rest }) => ({ ...rest, public: resolvePublic(rest) }),
       );
       const upserted = await tx
         .insert(pageComponent)

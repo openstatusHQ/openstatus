@@ -15,10 +15,15 @@ import {
   FormCardHeader,
   FormCardTitle,
 } from "@/components/forms/form-card";
+import {
+  formatMonitorVisibility,
+  useMonitorVisibility,
+} from "@/hooks/use-monitor-visibility";
 
 // Read-only: visibility moved to the page component, so the same monitor can
 // be public on one status page and private on another.
-export function FormVisibility({ visibility }: { visibility: boolean }) {
+export function FormVisibility({ monitorId }: { monitorId: number }) {
+  const visibility = useMonitorVisibility(monitorId);
   return (
     <FormCard id="visibility">
       <FormCardHeader>
@@ -43,7 +48,16 @@ export function FormVisibility({ visibility }: { visibility: boolean }) {
               .
             </p>
           </div>
-          <Switch id="monitor-visibility" checked={visibility} disabled />
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="text-muted-foreground text-sm">
+              {formatMonitorVisibility(visibility)}
+            </span>
+            <Switch
+              id="monitor-visibility"
+              checked={(visibility?.publicPages ?? 0) > 0}
+              disabled
+            />
+          </div>
         </div>
       </FormCardContent>
       <FormCardFooter>

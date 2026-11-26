@@ -22,7 +22,6 @@ import {
   UpdateMonitorFollowRedirectsInput,
   UpdateMonitorGeneralInput,
   UpdateMonitorOtelInput,
-  UpdateMonitorPublicInput,
   UpdateMonitorResponseTimeInput,
   UpdateMonitorRetryInput,
 } from "./schemas";
@@ -303,36 +302,6 @@ export async function updateMonitorOtel(args: {
         otelHeaders: headersToDbJson(input.otelHeaders),
         updatedAt: new Date(),
       })
-      .where(eq(monitor.id, existing.id))
-      .returning()
-      .get();
-    await emitAudit(tx, ctx, {
-      action: "monitor.update",
-      entityType: "monitor",
-      entityId: existing.id,
-      before: await monitorAuditSnapshot(existing),
-      after: await monitorAuditSnapshot(updated),
-    });
-  });
-}
-
-export async function updateMonitorPublic(args: {
-  ctx: ServiceContext;
-  input: UpdateMonitorPublicInput;
-}): Promise<void> {
-  const { ctx } = args;
-  requireScope(ctx, "monitors:write");
-  const input = UpdateMonitorPublicInput.parse(args.input);
-  await withTransaction(ctx, async (tx) => {
-    const existing = await getMonitorInWorkspace({
-      tx,
-      id: input.id,
-      workspaceId: ctx.workspace.id,
-    });
-    assertHeartbeatNotPublic(existing, input.public);
-    const updated = await tx
-      .update(monitor)
-      .set({ public: input.public, updatedAt: new Date() })
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();

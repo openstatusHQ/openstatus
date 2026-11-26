@@ -276,7 +276,7 @@ export function FormMonitorUpdate() {
               });
             }}
           />
-          <FormVisibility visibility={monitor.public ?? false} />
+          <FormVisibility monitorId={monitor.id} />
         </>
       )}
       <FormDangerZone
