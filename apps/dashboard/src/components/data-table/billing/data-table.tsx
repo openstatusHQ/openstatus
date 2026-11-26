@@ -492,7 +492,7 @@ export function DataTable({
                           }
                           setConfirm({
                             id,
-                            kind: isIntervalSwitch
+                            kind: isSamePlan
                               ? "interval"
                               : planOrder.indexOf(id) >
                                   planOrder.indexOf(workspace.plan)
