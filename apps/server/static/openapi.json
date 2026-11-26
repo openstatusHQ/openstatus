@@ -4725,6 +4725,235 @@
         "additionalProperties": false,
         "description": "WhatsappData contains configuration for WhatsApp notifications."
       },
+      "openstatus.playbook.v1.DeletePlaybookRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "not": {
+              "enum": ["PLAYBOOK_TYPE_UNSPECIFIED"]
+            },
+            "title": "type",
+            "description": "Type of the playbook to delete (required).",
+            "$ref": "#/components/schemas/openstatus.playbook.v1.PlaybookType"
+          }
+        },
+        "title": "DeletePlaybookRequest",
+        "additionalProperties": false,
+        "description": "DeletePlaybookRequest is the request to delete the playbook of a type."
+      },
+      "openstatus.playbook.v1.DeletePlaybookResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "success",
+            "description": "Whether the deletion was successful."
+          }
+        },
+        "title": "DeletePlaybookResponse",
+        "additionalProperties": false,
+        "description": "DeletePlaybookResponse is the response after deleting a playbook."
+      },
+      "openstatus.playbook.v1.GetPlaybookRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "not": {
+              "enum": ["PLAYBOOK_TYPE_UNSPECIFIED"]
+            },
+            "title": "type",
+            "description": "Type of the playbook to retrieve (required).",
+            "$ref": "#/components/schemas/openstatus.playbook.v1.PlaybookType"
+          }
+        },
+        "title": "GetPlaybookRequest",
+        "additionalProperties": false,
+        "description": "GetPlaybookRequest is the request to get the playbook of a type."
+      },
+      "openstatus.playbook.v1.GetPlaybookResponse": {
+        "type": "object",
+        "properties": {
+          "playbook": {
+            "title": "playbook",
+            "description": "The requested playbook.",
+            "$ref": "#/components/schemas/openstatus.playbook.v1.Playbook"
+          }
+        },
+        "title": "GetPlaybookResponse",
+        "additionalProperties": false,
+        "description": "GetPlaybookResponse is the response containing the playbook."
+      },
+      "openstatus.playbook.v1.ListPlaybooksRequest": {
+        "type": "object",
+        "title": "ListPlaybooksRequest",
+        "additionalProperties": false,
+        "description": "ListPlaybooksRequest is the request to list playbooks."
+      },
+      "openstatus.playbook.v1.ListPlaybooksResponse": {
+        "type": "object",
+        "properties": {
+          "playbooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/openstatus.playbook.v1.PlaybookSummary"
+            },
+            "title": "playbooks",
+            "description": "The playbooks the workspace has written."
+          }
+        },
+        "title": "ListPlaybooksResponse",
+        "additionalProperties": false,
+        "description": "ListPlaybooksResponse is the response containing playbook summaries."
+      },
+      "openstatus.playbook.v1.Playbook": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "type",
+            "description": "What the playbook covers.",
+            "$ref": "#/components/schemas/openstatus.playbook.v1.PlaybookType"
+          },
+          "content": {
+            "type": "string",
+            "title": "content",
+            "description": "The playbook in markdown, as written. {{name}} marks a variable."
+          },
+          "variables": {
+            "type": "object",
+            "title": "variables",
+            "additionalProperties": {
+              "type": "string",
+              "title": "value"
+            },
+            "description": "Values set for the variables in the content, by name."
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "created_at",
+            "description": "Timestamp when the playbook was first written (RFC 3339 format)."
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "updated_at",
+            "description": "Timestamp when the playbook was last changed (RFC 3339 format)."
+          }
+        },
+        "title": "Playbook",
+        "additionalProperties": false,
+        "description": "Playbook is the team's written rules for one type."
+      },
+      "openstatus.playbook.v1.Playbook.VariablesEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key"
+          },
+          "value": {
+            "type": "string",
+            "title": "value"
+          }
+        },
+        "title": "VariablesEntry",
+        "additionalProperties": false
+      },
+      "openstatus.playbook.v1.PlaybookSummary": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "title": "type",
+            "description": "What the playbook covers.",
+            "$ref": "#/components/schemas/openstatus.playbook.v1.PlaybookType"
+          },
+          "createdAt": {
+            "type": "string",
+            "title": "created_at",
+            "description": "Timestamp when the playbook was first written (RFC 3339 format)."
+          },
+          "updatedAt": {
+            "type": "string",
+            "title": "updated_at",
+            "description": "Timestamp when the playbook was last changed (RFC 3339 format)."
+          }
+        },
+        "title": "PlaybookSummary",
+        "additionalProperties": false,
+        "description": "PlaybookSummary is a playbook without its text (used in list responses)."
+      },
+      "openstatus.playbook.v1.PlaybookType": {
+        "type": "string",
+        "title": "PlaybookType",
+        "enum": [
+          "PLAYBOOK_TYPE_UNSPECIFIED",
+          "PLAYBOOK_TYPE_INCIDENT_RESPONSE",
+          "PLAYBOOK_TYPE_STATUS_PAGE",
+          "PLAYBOOK_TYPE_MAINTENANCE_WINDOWS",
+          "PLAYBOOK_TYPE_POSTMORTEM"
+        ],
+        "description": "PlaybookType is what a playbook covers. A workspace has at most one playbook per type."
+      },
+      "openstatus.playbook.v1.UpdatePlaybookRequest": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "not": {
+              "enum": ["PLAYBOOK_TYPE_UNSPECIFIED"]
+            },
+            "title": "type",
+            "description": "Type of the playbook to write (required).",
+            "$ref": "#/components/schemas/openstatus.playbook.v1.PlaybookType"
+          },
+          "content": {
+            "type": "string",
+            "examples": ["Sign off every update with {{team_name}}."],
+            "title": "content",
+            "maxLength": 10000,
+            "minLength": 1,
+            "description": "The complete playbook in markdown (required, 1-10000 characters). It\n replaces the existing text. {{name}} marks a variable; names use lowercase\n letters, digits and underscores."
+          },
+          "variables": {
+            "type": "object",
+            "title": "variables",
+            "additionalProperties": {
+              "type": "string",
+              "title": "value",
+              "maxLength": 500
+            },
+            "description": "Values for the variables in the content, by name. This replaces the stored\n values: a variable left out is unset, and names the content does not use\n are dropped."
+          }
+        },
+        "title": "UpdatePlaybookRequest",
+        "additionalProperties": false,
+        "description": "UpdatePlaybookRequest is the request to write the playbook of a type."
+      },
+      "openstatus.playbook.v1.UpdatePlaybookRequest.VariablesEntry": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "key"
+          },
+          "value": {
+            "type": "string",
+            "title": "value"
+          }
+        },
+        "title": "VariablesEntry",
+        "additionalProperties": false
+      },
+      "openstatus.playbook.v1.UpdatePlaybookResponse": {
+        "type": "object",
+        "properties": {
+          "playbook": {
+            "title": "playbook",
+            "description": "The written playbook.",
+            "$ref": "#/components/schemas/openstatus.playbook.v1.Playbook"
+          }
+        },
+        "title": "UpdatePlaybookResponse",
+        "additionalProperties": false,
+        "description": "UpdatePlaybookResponse is the response after writing a playbook."
+      },
       "openstatus.private_location.v1.CreatePrivateLocationRequest": {
         "type": "object",
         "properties": {
@@ -7737,6 +7966,10 @@
       "description": "Declare and run incidents: lifecycle (open -> mitigated -> resolved, or canceled),\ntimeline notes, a linked status report, and the postmortem.\n"
     },
     {
+      "name": "PlaybookService",
+      "description": "Read and write the team's playbooks: how they run incidents, write on the status\npage, schedule maintenance and write postmortems. One playbook per type.\n"
+    },
+    {
       "name": "MaintenanceService",
       "description": "Schedule maintenance windows for status page components. Subscribers can be\nnotified automatically when maintenance is created.\n"
     },
@@ -10627,6 +10860,266 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rpc/openstatus.playbook.v1.PlaybookService/DeletePlaybook": {
+      "post": {
+        "tags": ["PlaybookService"],
+        "summary": "DeletePlaybook",
+        "description": "DeletePlaybook removes the playbook of a type.",
+        "operationId": "PlaybookService_DeletePlaybook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.playbook.v1.DeletePlaybookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.DeletePlaybookResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rpc/openstatus.playbook.v1.PlaybookService/GetPlaybook": {
+      "get": {
+        "tags": ["PlaybookService"],
+        "summary": "GetPlaybook",
+        "description": "GetPlaybook retrieves the playbook of a type.",
+        "operationId": "PlaybookService_GetPlaybook.get",
+        "parameters": [
+          {
+            "name": "message",
+            "in": "query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.GetPlaybookRequest"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.GetPlaybookResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["PlaybookService"],
+        "summary": "GetPlaybook",
+        "description": "GetPlaybook retrieves the playbook of a type.",
+        "operationId": "PlaybookService_GetPlaybook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.playbook.v1.GetPlaybookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.GetPlaybookResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rpc/openstatus.playbook.v1.PlaybookService/ListPlaybooks": {
+      "get": {
+        "tags": ["PlaybookService"],
+        "summary": "ListPlaybooks",
+        "description": "ListPlaybooks returns the playbooks the workspace has written, without their text.",
+        "operationId": "PlaybookService_ListPlaybooks.get",
+        "parameters": [
+          {
+            "name": "message",
+            "in": "query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.ListPlaybooksRequest"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.ListPlaybooksResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["PlaybookService"],
+        "summary": "ListPlaybooks",
+        "description": "ListPlaybooks returns the playbooks the workspace has written, without their text.",
+        "operationId": "PlaybookService_ListPlaybooks",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.playbook.v1.ListPlaybooksRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.ListPlaybooksResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/connect.error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rpc/openstatus.playbook.v1.PlaybookService/UpdatePlaybook": {
+      "post": {
+        "tags": ["PlaybookService"],
+        "summary": "UpdatePlaybook",
+        "description": "UpdatePlaybook writes the playbook of a type: it is created when the\n workspace has none of that type, otherwise its text and variables are replaced.",
+        "operationId": "PlaybookService_UpdatePlaybook",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/openstatus.playbook.v1.UpdatePlaybookRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/openstatus.playbook.v1.UpdatePlaybookResponse"
                 }
               }
             }

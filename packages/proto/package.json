@@ -40,6 +40,10 @@
     "./incident/v1": {
       "import": "./gen/ts/openstatus/incident/v1/index.ts",
       "types": "./gen/ts/openstatus/incident/v1/index.ts"
+    },
+    "./playbook/v1": {
+      "import": "./gen/ts/openstatus/playbook/v1/index.ts",
+      "types": "./gen/ts/openstatus/playbook/v1/index.ts"
     }
   },
   "scripts": {

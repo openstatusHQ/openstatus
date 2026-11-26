@@ -1,0 +1,107 @@
+syntax = "proto3";
+
+package openstatus.playbook.v1;
+
+import "buf/validate/validate.proto";
+import "gnostic/openapi/v3/annotations.proto";
+import "openstatus/playbook/v1/playbook.proto";
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/playbook/v1;playbookv1";
+
+// PlaybookService manages the team's playbooks: how they run incidents, write on
+// the status page, schedule maintenance and write postmortems.
+service PlaybookService {
+  // ListPlaybooks returns the playbooks the workspace has written, without their text.
+  rpc ListPlaybooks(ListPlaybooksRequest) returns (ListPlaybooksResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // GetPlaybook retrieves the playbook of a type.
+  rpc GetPlaybook(GetPlaybookRequest) returns (GetPlaybookResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+
+  // UpdatePlaybook writes the playbook of a type: it is created when the
+  // workspace has none of that type, otherwise its text and variables are replaced.
+  rpc UpdatePlaybook(UpdatePlaybookRequest) returns (UpdatePlaybookResponse);
+
+  // DeletePlaybook removes the playbook of a type.
+  rpc DeletePlaybook(DeletePlaybookRequest) returns (DeletePlaybookResponse);
+}
+
+// ListPlaybooksRequest is the request to list playbooks.
+message ListPlaybooksRequest {}
+
+// ListPlaybooksResponse is the response containing playbook summaries.
+message ListPlaybooksResponse {
+  // The playbooks the workspace has written.
+  repeated PlaybookSummary playbooks = 1;
+}
+
+// GetPlaybookRequest is the request to get the playbook of a type.
+message GetPlaybookRequest {
+  // Type of the playbook to retrieve (required).
+  PlaybookType type = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+// GetPlaybookResponse is the response containing the playbook.
+message GetPlaybookResponse {
+  // The requested playbook.
+  Playbook playbook = 1;
+}
+
+// UpdatePlaybookRequest is the request to write the playbook of a type.
+message UpdatePlaybookRequest {
+  // Type of the playbook to write (required).
+  PlaybookType type = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+
+  // The complete playbook in markdown (required, 1-10000 characters). It
+  // replaces the existing text. {{name}} marks a variable; names use lowercase
+  // letters, digits and underscores.
+  string content = 2 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 10000
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"Sign off every update with {{team_name}}.\""}}
+  ];
+
+  // Values for the variables in the content, by name. This replaces the stored
+  // values: a variable left out is unset, and names the content does not use
+  // are dropped.
+  map<string, string> variables = 3 [(buf.validate.field).map = {
+    keys: {
+      string: {pattern: "^[a-z0-9_]{1,64}$"}
+    }
+    values: {
+      string: {max_len: 500}
+    }
+  }];
+}
+
+// UpdatePlaybookResponse is the response after writing a playbook.
+message UpdatePlaybookResponse {
+  // The written playbook.
+  Playbook playbook = 1;
+}
+
+// DeletePlaybookRequest is the request to delete the playbook of a type.
+message DeletePlaybookRequest {
+  // Type of the playbook to delete (required).
+  PlaybookType type = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+// DeletePlaybookResponse is the response after deleting a playbook.
+message DeletePlaybookResponse {
+  // Whether the deletion was successful.
+  bool success = 1;
+}

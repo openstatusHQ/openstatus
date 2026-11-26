@@ -4,6 +4,7 @@ import { IncidentService } from "@openstatus/proto/incident/v1";
 import { MaintenanceService } from "@openstatus/proto/maintenance/v1";
 import { MonitorService } from "@openstatus/proto/monitor/v1";
 import { NotificationService } from "@openstatus/proto/notification/v1";
+import { PlaybookService } from "@openstatus/proto/playbook/v1";
 import { PrivateLocationService } from "@openstatus/proto/private_location/v1";
 import { StatusPageService } from "@openstatus/proto/status_page/v1";
 import { StatusReportService } from "@openstatus/proto/status_report/v1";
@@ -13,6 +14,7 @@ import { incidentServiceImpl } from "./handlers/incident";
 import { maintenanceServiceImpl } from "./handlers/maintenance";
 import { monitorServiceImpl } from "./handlers/monitor";
 import { notificationServiceImpl } from "./handlers/notification";
+import { playbookServiceImpl } from "./handlers/playbook";
 import { privateLocationServiceImpl } from "./handlers/private-location";
 import { statusPageServiceImpl } from "./handlers/status-page";
 import { statusReportServiceImpl } from "./handlers/status-report";
@@ -52,4 +54,5 @@ export const routes = createConnectRouter({
   .service(MaintenanceService, maintenanceServiceImpl)
   .service(NotificationService, notificationServiceImpl)
   .service(PrivateLocationService, privateLocationServiceImpl)
-  .service(IncidentService, incidentServiceImpl);
+  .service(IncidentService, incidentServiceImpl)
+  .service(PlaybookService, playbookServiceImpl);

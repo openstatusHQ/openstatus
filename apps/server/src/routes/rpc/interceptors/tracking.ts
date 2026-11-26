@@ -169,6 +169,14 @@ export const RPC_EVENT_MAP: Record<string, RpcEventMapping> = {
     event: Events.DeleteMaintenanceUpdate,
   },
 
+  // PlaybookService
+  "openstatus.playbook.v1.PlaybookService/UpdatePlaybook": {
+    event: Events.SavePlaybook,
+  },
+  "openstatus.playbook.v1.PlaybookService/DeletePlaybook": {
+    event: Events.ClearPlaybook,
+  },
+
   // NotificationService
   "openstatus.notification.v1.NotificationService/CreateNotification": {
     event: Events.CreateNotification,

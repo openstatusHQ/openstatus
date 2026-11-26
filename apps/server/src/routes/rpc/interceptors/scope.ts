@@ -13,6 +13,7 @@ export const RPC_SERVICE_GROUP: Record<string, ScopeGroup> = {
   "openstatus.status_report.v1.StatusReportService": "incidents",
   "openstatus.incident.v1.IncidentService": "incidents",
   "openstatus.maintenance.v1.MaintenanceService": "incidents",
+  "openstatus.playbook.v1.PlaybookService": "incidents",
   "openstatus.notification.v1.NotificationService": "notifications",
 };
 

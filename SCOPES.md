@@ -53,7 +53,7 @@ key form read it.
 | --- | --- | --- |
 | Service verbs | `requireScope(ctx, …)` first line of every exported verb | see the table below |
 | V1 REST | `requireGroupScope(group)` per sub-router, `GET`/`HEAD` → `:read`, else `:write` | `/monitor`, `/check` → monitors · `/page` → pages · `/status_report`, `/status_report_update`, `/incident`, `/maintenance` → incidents · `/notification` → notifications · `/page_subscriber` → subscribers · `/whoami` → `any` |
-| RPC (ConnectRPC) | `scopeInterceptor` after auth, then the service verb | `MonitorService`, `PrivateLocationService` → monitors · `StatusPageService` → pages, except methods matching `/subscri/i` → subscribers · `StatusReportService`, `IncidentService`, `MaintenanceService` → incidents · `NotificationService` → notifications · `HealthService` unmapped. Read = proto `NO_SIDE_EFFECTS` or `Get*`/`List*` |
+| RPC (ConnectRPC) | `scopeInterceptor` after auth, then the service verb | `MonitorService`, `PrivateLocationService` → monitors · `StatusPageService` → pages, except methods matching `/subscri/i` → subscribers · `StatusReportService`, `IncidentService`, `MaintenanceService`, `PlaybookService` → incidents · `NotificationService` → notifications · `HealthService` unmapped. Read = proto `NO_SIDE_EFFECTS` or `Get*`/`List*` |
 | MCP, dashboard chat, Slack | tool `scope` filters `tools/list`; the verb gates the call | see the tool table |
 | OAuth | `parseScopeParam` validates the request, `decideSession` checks granted ⊆ requested | 12 settable values |
 

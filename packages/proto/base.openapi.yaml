@@ -45,6 +45,10 @@ tags:
     description: |
       Declare and run incidents: lifecycle (open -> mitigated -> resolved, or canceled),
       timeline notes, a linked status report, and the postmortem.
+  - name: PlaybookService
+    description: |
+      Read and write the team's playbooks: how they run incidents, write on the status
+      page, schedule maintenance and write postmortems. One playbook per type.
   - name: MaintenanceService
     description: |
       Schedule maintenance windows for status page components. Subscribers can be
