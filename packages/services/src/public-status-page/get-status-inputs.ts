@@ -1,5 +1,4 @@
-import { eq } from "@openstatus/db";
-import { notExcused, page } from "@openstatus/db/src/schema";
+import { notExcused } from "@openstatus/db/src/schema";
 
 import { type DB, dbOnlyContext, getReadDb } from "../context";
 
@@ -15,7 +14,7 @@ export async function getPublicPageStatusInputs(args: {
 }) {
   const db = getReadDb(dbOnlyContext(args.db));
   const row = await db.query.page.findFirst({
-    where: eq(page.slug, args.slug),
+    where: { slug: args.slug },
     with: {
       pageComponents: {
         with: {

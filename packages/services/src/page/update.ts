@@ -4,7 +4,7 @@ import { page } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { LimitExceededError } from "../errors";
+import { LimitExceededError, NotFoundError } from "../errors";
 import {
   assertAccessTypeAllowed,
   assertCustomDomainAvailable,
@@ -58,6 +58,7 @@ export async function updatePageGeneral(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -99,6 +100,7 @@ export async function updatePageCustomDomain(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -165,6 +167,7 @@ export async function updatePagePasswordProtection(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -210,6 +213,7 @@ export async function updatePageAppearance(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -246,6 +250,7 @@ export async function updatePageCustomTheme(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -281,6 +286,7 @@ export async function updatePageLinks(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -323,6 +329,7 @@ export async function updatePageLocales(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -360,6 +367,7 @@ export async function updatePageTimezone(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",
@@ -408,6 +416,7 @@ export async function updatePageConfiguration(args: {
       .where(eq(page.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page.update",

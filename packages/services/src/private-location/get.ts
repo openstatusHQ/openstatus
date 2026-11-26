@@ -1,6 +1,3 @@
-import { and, eq } from "@openstatus/db";
-import { privateLocation } from "@openstatus/db/src/schema";
-
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { NotFoundError } from "../errors";
@@ -21,10 +18,7 @@ export async function getPrivateLocation(args: {
   const db = getReadDb(args.ctx);
 
   const row = await db.query.privateLocation.findFirst({
-    where: and(
-      eq(privateLocation.id, input.id),
-      eq(privateLocation.workspaceId, args.ctx.workspace.id),
-    ),
+    where: { id: input.id, workspaceId: args.ctx.workspace.id },
     with: {
       privateLocationToMonitors: {
         with: { monitor: true },

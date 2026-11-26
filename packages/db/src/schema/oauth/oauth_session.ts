@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import type { Scope } from "../api-keys/constants";
@@ -29,10 +28,3 @@ export const oauthSession = sqliteTable(
     index("oauth_session_expires_at_idx").on(t.expiresAt),
   ],
 );
-
-export const oauthSessionRelations = relations(oauthSession, ({ one }) => ({
-  client: one(oauthClient, {
-    fields: [oauthSession.clientId],
-    references: [oauthClient.clientId],
-  }),
-}));

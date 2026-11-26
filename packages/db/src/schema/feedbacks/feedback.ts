@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { user } from "../users";
@@ -30,14 +30,3 @@ export const feedback = sqliteTable(
   },
   (t) => [index("feedback_workspace_id_idx").on(t.workspaceId)],
 );
-
-export const feedbackRelations = relations(feedback, ({ one }) => ({
-  workspace: one(workspace, {
-    fields: [feedback.workspaceId],
-    references: [workspace.id],
-  }),
-  user: one(user, {
-    fields: [feedback.userId],
-    references: [user.id],
-  }),
-}));

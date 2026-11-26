@@ -1,10 +1,11 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import type { AdapterAccount } from "next-auth/adapters";
 
@@ -16,7 +17,7 @@ export const user = sqliteTable(
     id: integer("id").primaryKey(),
 
     // clerk fields
-    tenantId: text("tenant_id", { length: 256 }).unique(), // the clerk User Id
+    tenantId: text("tenant_id", { length: 256 }), // the clerk User Id
     firstName: text("first_name").default(""),
     lastName: text("last_name").default(""),
     photoUrl: text("photo_url").default(""),
@@ -34,14 +35,13 @@ export const user = sqliteTable(
     ),
     deletedAt: integer("deleted_at", { mode: "timestamp" }),
   },
-  // Plain, not LOWER(email): @auth/drizzle-adapter's getUserByEmail does an
-  // exact eq() match, which an expression index would not serve.
-  (table) => [index("user_email_idx").on(table.email)],
+  (table) => [
+    uniqueIndex("user_tenant_id_unique").on(table.tenantId),
+    // Plain, not LOWER(email): @auth/drizzle-adapter's getUserByEmail does an
+    // exact eq() match, which an expression index would not serve.
+    index("user_email_idx").on(table.email),
+  ],
 );
-
-export const userRelations = relations(user, ({ many }) => ({
-  usersToWorkspaces: many(usersToWorkspaces),
-}));
 
 export const usersToWorkspaces = sqliteTable(
   "users_to_workspaces",
@@ -61,20 +61,6 @@ export const usersToWorkspaces = sqliteTable(
     primaryKey({ columns: [t.userId, t.workspaceId] }),
     index("users_to_workspaces_workspace_id_idx").on(t.workspaceId),
   ],
-);
-
-export const usersToWorkspaceRelations = relations(
-  usersToWorkspaces,
-  ({ one }) => ({
-    workspace: one(workspace, {
-      fields: [usersToWorkspaces.workspaceId],
-      references: [workspace.id],
-    }),
-    user: one(user, {
-      fields: [usersToWorkspaces.userId],
-      references: [user.id],
-    }),
-  }),
 );
 
 // NEXT AUTH TABLES

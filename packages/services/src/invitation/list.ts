@@ -1,6 +1,5 @@
-import { and, db as defaultDb, eq, gte, isNull, sql } from "@openstatus/db";
+import { db as defaultDb, sql } from "@openstatus/db";
 import {
-  invitation,
   selectInvitationSchema,
   selectWorkspaceSchema,
 } from "@openstatus/db/src/schema";
@@ -28,11 +27,11 @@ export async function listInvitations(args: {
   const db = ctx.db ?? defaultDb;
 
   const rows = await db.query.invitation.findMany({
-    where: and(
-      eq(invitation.workspaceId, ctx.workspace.id),
-      gte(invitation.expiresAt, new Date()),
-      isNull(invitation.acceptedAt),
-    ),
+    where: {
+      workspaceId: ctx.workspace.id,
+      expiresAt: { gte: new Date() },
+      acceptedAt: { isNull: true },
+    },
   });
 
   return rows.map((r) => selectInvitationSchema.parse(r));
@@ -59,13 +58,13 @@ export async function getInvitationByToken(args: {
   const db = args.ctx.db ?? defaultDb;
 
   const result = await db.query.invitation.findFirst({
-    where: and(
-      eq(invitation.token, input.token),
-      isNull(invitation.acceptedAt),
-      gte(invitation.expiresAt, new Date()),
+    where: {
+      token: input.token,
+      acceptedAt: { isNull: true },
+      expiresAt: { gte: new Date() },
       // Rows created before emails were normalized keep their original casing.
-      sql`lower(${invitation.email}) = ${input.email}`,
-    ),
+      RAW: (t) => sql`lower(${t.email}) = ${input.email}`,
+    },
     with: { workspace: true },
   });
 
@@ -87,10 +86,7 @@ export async function getInvitation(args: {
   const db = ctx.db ?? defaultDb;
 
   const row = await db.query.invitation.findFirst({
-    where: and(
-      eq(invitation.id, input.id),
-      eq(invitation.workspaceId, ctx.workspace.id),
-    ),
+    where: { id: input.id, workspaceId: ctx.workspace.id },
   });
   if (!row) throw new NotFoundError("invitation", input.id);
   return selectInvitationSchema.parse(row);

@@ -1,10 +1,10 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
   sqliteTable,
   text,
-  unique,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors/monitor";
@@ -33,24 +33,10 @@ export const frozenMonitorUptime = sqliteTable(
   },
   (t) => [
     // idempotency key: re-freezing a month is a silent no-op
-    unique("frozen_monitor_uptime_monitor_id_month_unique").on(
+    uniqueIndex("frozen_monitor_uptime_monitor_id_month_unique").on(
       t.monitorId,
       t.month,
     ),
     index("frozen_monitor_uptime_workspace_id_idx").on(t.workspaceId),
   ],
-);
-
-export const frozenMonitorUptimeRelations = relations(
-  frozenMonitorUptime,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [frozenMonitorUptime.monitorId],
-      references: [monitor.id],
-    }),
-    workspace: one(workspace, {
-      fields: [frozenMonitorUptime.workspaceId],
-      references: [workspace.id],
-    }),
-  }),
 );

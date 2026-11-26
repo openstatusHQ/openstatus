@@ -47,7 +47,7 @@ export async function getWorkspace(args: {
   const db = ctx.db ?? defaultDb;
 
   const result = await db.query.workspace.findFirst({
-    where: eq(workspace.id, ctx.workspace.id),
+    where: { id: ctx.workspace.id },
   });
 
   // Shouldn't be reachable in practice — `ctx.workspace` was already
@@ -136,7 +136,7 @@ export async function getWorkspaceByStripeId(args: {
   const db = args.db ?? defaultDb;
 
   const row = await db.query.workspace.findFirst({
-    where: eq(workspace.stripeId, stripeId),
+    where: { stripeId },
   });
 
   return row ? selectWorkspaceSchema.parse(row) : null;
@@ -168,7 +168,7 @@ export async function listWorkspaces(args: {
   const db = args.ctx.db ?? defaultDb;
 
   const rows = await db.query.usersToWorkspaces.findMany({
-    where: eq(usersToWorkspaces.userId, input.userId),
+    where: { userId: input.userId },
     with: { workspace: true },
   });
 

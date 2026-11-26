@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  uniqueIndex,
+} from "drizzle-orm/sqlite-core";
 
 import {
   type ApiConfig,
@@ -11,7 +17,7 @@ export const externalService = sqliteTable(
   "external_service",
   {
     id: integer("id").primaryKey(),
-    slug: text("slug", { length: 64 }).notNull().unique(),
+    slug: text("slug", { length: 64 }).notNull(),
     aliases: text("aliases", { mode: "json" })
       .$type<string[]>()
       .default(sql`(json_array())`)
@@ -31,5 +37,8 @@ export const externalService = sqliteTable(
       sql`(strftime('%s', 'now'))`,
     ),
   },
-  (t) => [index("external_service_deleted_at_idx").on(t.deletedAt)],
+  (t) => [
+    uniqueIndex("external_service_slug_unique").on(t.slug),
+    index("external_service_deleted_at_idx").on(t.deletedAt),
+  ],
 );

@@ -26,10 +26,7 @@ export async function setPrivateLocationStatus(args: {
 
   return withTransaction(ctx, async (tx) => {
     const existing = await tx.query.privateLocation.findFirst({
-      where: and(
-        eq(privateLocation.id, input.id),
-        eq(privateLocation.workspaceId, ctx.workspace.id),
-      ),
+      where: { id: input.id, workspaceId: ctx.workspace.id },
     });
 
     if (!existing) {

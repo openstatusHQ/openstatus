@@ -4,6 +4,7 @@ import { type Incident, incident } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import {
   appendIncidentEvent,
   assertMember,
@@ -63,6 +64,7 @@ export async function updateIncident(args: {
       .where(eq(incident.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("incident", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "incident.update",

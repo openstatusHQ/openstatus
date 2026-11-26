@@ -7,7 +7,7 @@ import {
   validateCustomTheme,
 } from "@openstatus/theme-store";
 import { isKnownTimeZone } from "@openstatus/utils";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
 import { pageAccessTypes, pageCardValues } from "./constants";

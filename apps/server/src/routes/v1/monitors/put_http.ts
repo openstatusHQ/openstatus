@@ -133,6 +133,13 @@ export function registerPutHTTPMonitor(api: typeof monitorsApi) {
       .returning()
       .get();
 
+    if (!_newMonitor) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Monitor ${id} not found`,
+      });
+    }
+
     const otelHeader = _newMonitor.otelHeaders
       ? z
           .array(

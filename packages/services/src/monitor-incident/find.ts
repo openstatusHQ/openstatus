@@ -24,6 +24,6 @@ export async function findOpenMonitorIncident(args: {
 
 export async function findMonitorIncident(args: { id: number; db?: DB }) {
   return (args.db ?? defaultDb).query.monitorIncidentTable.findFirst({
-    where: eq(monitorIncidentTable.id, args.id),
+    where: { id: args.id },
   });
 }

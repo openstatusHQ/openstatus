@@ -1,6 +1,3 @@
-import { eq } from "@openstatus/db";
-import { pageComponent } from "@openstatus/db/src/schema";
-
 import { dbOnlyContext, type DB, getReadDb } from "../context";
 import { requirePageAccess, type PageVisitor } from "../page-access";
 import { bySlugOrDomain } from "./internal";
@@ -19,7 +16,7 @@ export async function getPublicStatusPageMonitor(args: {
     where: bySlugOrDomain(input.slug),
     with: {
       pageComponents: {
-        where: eq(pageComponent.monitorId, input.id),
+        where: { monitorId: input.id },
         with: { monitor: true },
       },
     },

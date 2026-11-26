@@ -1,7 +1,7 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { workspace, workspaceRole } from "../workspaces";
+import { workspaceRole } from "../workspaces";
 
 export const invitation = sqliteTable(
   "invitation",
@@ -19,10 +19,3 @@ export const invitation = sqliteTable(
   },
   (t) => [index("invitation_workspace_id_idx").on(t.workspaceId)],
 );
-
-export const invitationRelations = relations(invitation, ({ one }) => ({
-  workspace: one(workspace, {
-    fields: [invitation.workspaceId],
-    references: [workspace.id],
-  }),
-}));

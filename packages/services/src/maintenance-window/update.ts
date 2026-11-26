@@ -8,7 +8,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ConflictError, ValidationError } from "../errors";
+import { ConflictError, NotFoundError, ValidationError } from "../errors";
 import {
   getMaintenanceWindowInWorkspace,
   monitorIdsOf,
@@ -74,6 +74,8 @@ export async function updateMaintenanceWindow(args: {
       .where(eq(monitorMaintenanceWindow.id, existing.id))
       .returning()
       .get();
+    if (!updated)
+      throw new NotFoundError("monitor_maintenance_window", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor_maintenance_window.update",
       entityType: "monitor_maintenance_window",
@@ -118,6 +120,8 @@ export async function endMaintenanceWindow(args: {
       .where(eq(monitorMaintenanceWindow.id, existing.id))
       .returning()
       .get();
+    if (!updated)
+      throw new NotFoundError("monitor_maintenance_window", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor_maintenance_window.update",
       entityType: "monitor_maintenance_window",

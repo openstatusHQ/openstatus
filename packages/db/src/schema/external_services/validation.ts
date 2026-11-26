@@ -1,6 +1,7 @@
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
+import { INDUSTRIES, apiConfigSchema } from "./constants";
 import { externalService } from "./external_service";
 import { externalServiceComponent } from "./external_service_component";
 import { externalServiceIncident } from "./external_service_incident";
@@ -13,11 +14,17 @@ export const externalServiceSlugSchema = z
   .max(64)
   .regex(externalServiceSlugRegex);
 
-export const selectExternalServiceSchema = createSelectSchema(externalService);
+export const selectExternalServiceSchema = createSelectSchema(externalService, {
+  aliases: z.array(z.string()),
+  industry: z.array(z.enum(INDUSTRIES)),
+  apiConfig: apiConfigSchema.nullable(),
+});
 
 export const insertExternalServiceSchema = createInsertSchema(externalService, {
   slug: externalServiceSlugSchema,
   aliases: z.array(externalServiceSlugSchema).optional(),
+  industry: z.array(z.enum(INDUSTRIES)),
+  apiConfig: apiConfigSchema.optional(),
 });
 
 export type ExternalService = z.infer<typeof selectExternalServiceSchema>;

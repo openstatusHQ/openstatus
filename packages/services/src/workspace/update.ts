@@ -42,6 +42,7 @@ export async function updateWorkspaceName(args: {
       .where(eq(workspace.id, ctx.workspace.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("workspace", ctx.workspace.id);
 
     await emitAudit(tx, ctx, {
       action: "workspace.update",
@@ -94,6 +95,7 @@ export async function updateWorkspacePlan(args: {
       .where(eq(workspace.id, ctx.workspace.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("workspace", ctx.workspace.id);
 
     const metadata = input.reason
       ? {
@@ -201,6 +203,7 @@ export async function updateWorkspaceLimits(args: {
       .where(eq(workspace.id, ctx.workspace.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("workspace", ctx.workspace.id);
 
     await emitAudit(tx, ctx, {
       action: "workspace.update",

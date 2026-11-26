@@ -1,6 +1,6 @@
 import * as assertions from "@openstatus/assertions";
 import { headerPairSchema, uniqueRegions } from "@openstatus/utils";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import { z } from "zod";
 
 import { monitorPeriodicitySchema, monitorRegionSchema } from "../constants";

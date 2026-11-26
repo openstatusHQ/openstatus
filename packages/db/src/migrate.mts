@@ -5,9 +5,12 @@ import { migrate } from "drizzle-orm/libsql/migrator";
 import { env } from "../env.mjs";
 
 async function main() {
-  const db = drizzle(
-    createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
-  );
+  const db = drizzle({
+    client: createClient({
+      url: env.DATABASE_URL,
+      authToken: env.DATABASE_AUTH_TOKEN,
+    }),
+  });
   console.log("Running migrations");
 
   await migrate(db, { migrationsFolder: "drizzle" });

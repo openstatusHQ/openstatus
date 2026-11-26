@@ -64,7 +64,7 @@ describe("statusPage.subscribe", () => {
     expect(result).not.toHaveProperty("token");
 
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, result?.id ?? -1),
+      where: { id: result?.id ?? -1 },
     });
     expect(row?.token).toBeTruthy();
     expect(row?.acceptedAt).toBeNull();

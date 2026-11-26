@@ -4,7 +4,7 @@ import { monitor, selectMonitorSchema } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { ValidationError } from "../errors";
+import { NotFoundError, ValidationError } from "../errors";
 import type { Monitor } from "../types";
 import { heartbeatConfigChanged, syncHeartbeatDeadline } from "./heartbeat";
 import {
@@ -121,6 +121,7 @@ export async function updateMonitorConfig(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
 
     if (!existing.active && updated.active) {
       await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
@@ -206,6 +207,7 @@ export async function updateMonitorGeneral(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
 
     if (!existing.active && updated.active) {
       await syncHeartbeatDeadline({ tx, row: updated, anchor: "now" });
@@ -244,6 +246,7 @@ export async function updateMonitorRetry(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
@@ -273,6 +276,7 @@ export async function updateMonitorFollowRedirects(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
@@ -306,6 +310,7 @@ export async function updateMonitorOtel(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
@@ -336,6 +341,7 @@ export async function updateMonitorPublic(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",
@@ -369,6 +375,7 @@ export async function updateMonitorResponseTime(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
     await emitAudit(tx, ctx, {
       action: "monitor.update",
       entityType: "monitor",

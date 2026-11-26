@@ -1,7 +1,7 @@
 import { page } from "@openstatus/db/src/schema";
 
 import { dbOnlyContext, type DB, getReadDb } from "../context";
-import { bySlugOrDomain } from "./internal";
+import { matchesSlugOrDomain } from "./internal";
 import { PublicPageInput } from "./schemas";
 
 export type PublicStatusPageIndexing = Pick<
@@ -24,7 +24,7 @@ export async function getPublicStatusPageIndexing(args: {
       allowIndex: page.allowIndex,
     })
     .from(page)
-    .where(bySlugOrDomain(input.slug))
+    .where(matchesSlugOrDomain(page, input.slug))
     .get();
   return row ?? null;
 }

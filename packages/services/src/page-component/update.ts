@@ -4,6 +4,7 @@ import { pageComponent } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import { assertGroupOnPage, getPageComponentInWorkspace } from "./internal";
 import { UpdatePageComponentInput } from "./schemas";
 
@@ -46,6 +47,7 @@ export async function updatePageComponent(args: {
       .where(eq(pageComponent.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page_component", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page_component.update",

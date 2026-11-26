@@ -1,10 +1,9 @@
-import { type Column, isNull, relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
   sqliteTable,
   text,
-  unique,
   uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
@@ -70,7 +69,10 @@ export const monitorIncidentTable = sqliteTable(
     ),
   },
   (table) => [
-    unique().on(table.monitorId, table.startedAt),
+    uniqueIndex("monitor_incident_monitor_id_started_at_unique").on(
+      table.monitorId,
+      table.startedAt,
+    ),
     index("monitor_incident_workspace_id_started_at_idx").on(
       table.workspaceId,
       table.startedAt,
@@ -83,33 +85,5 @@ export const monitorIncidentTable = sqliteTable(
   ],
 );
 
-export const monitorIncidentRelations = relations(
-  monitorIncidentTable,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [monitorIncidentTable.monitorId],
-      references: [monitor.id],
-    }),
-    workspace: one(workspace, {
-      fields: [monitorIncidentTable.workspaceId],
-      references: [workspace.id],
-    }),
-    acknowledgedByUser: one(user, {
-      fields: [monitorIncidentTable.acknowledgedBy],
-      references: [user.id],
-    }),
-    resolvedByUser: one(user, {
-      fields: [monitorIncidentTable.resolvedBy],
-      references: [user.id],
-    }),
-    excusedByUser: one(user, {
-      fields: [monitorIncidentTable.excusedBy],
-      references: [user.id],
-    }),
-  }),
-);
-
 /** Relational `where` for public surfaces: an excused outage counts as up and is never shown. */
-export function notExcused(t: { excusedAt: Column }) {
-  return isNull(t.excusedAt);
-}
+export const notExcused = { excusedAt: { isNull: true } } as const;

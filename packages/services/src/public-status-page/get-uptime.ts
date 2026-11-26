@@ -1,5 +1,4 @@
-import { inArray } from "@openstatus/db";
-import { notExcused, pageComponent } from "@openstatus/db/src/schema";
+import { notExcused } from "@openstatus/db/src/schema";
 
 import { dbOnlyContext, type DB, getReadDb } from "../context";
 import { requirePageAccess, type PageVisitor } from "../page-access";
@@ -36,7 +35,7 @@ export async function getPublicStatusPageUptime(args: {
         },
       },
       pageComponents: {
-        where: inArray(pageComponent.id, input.pageComponentIds),
+        where: { id: { in: input.pageComponentIds } },
         with: {
           monitor: { with: { monitorIncidents: { where: notExcused } } },
         },

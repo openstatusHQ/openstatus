@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { sql } from "drizzle-orm/sql";
 import {
   index,
@@ -35,18 +34,4 @@ export const privateLocationMonitorStatus = sqliteTable(
       table.privateLocationId,
     ),
   ],
-);
-
-export const privateLocationMonitorStatusRelations = relations(
-  privateLocationMonitorStatus,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [privateLocationMonitorStatus.monitorId],
-      references: [monitor.id],
-    }),
-    privateLocation: one(privateLocation, {
-      fields: [privateLocationMonitorStatus.privateLocationId],
-      references: [privateLocation.id],
-    }),
-  }),
 );

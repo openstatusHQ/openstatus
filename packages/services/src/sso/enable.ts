@@ -100,6 +100,7 @@ export async function enableSso(args: {
         .where(eq(workspace.id, ctx.workspace.id))
         .returning()
         .get();
+      if (!updated) throw new NotFoundError("workspace", ctx.workspace.id);
 
       if (existing.workosOrganizationId) {
         await emitAudit(tx, ctx, {

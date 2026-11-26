@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNotNull, isNull, sql } from "@openstatus/db";
+import { and, eq, inArray, isNotNull, isNull, sql } from "@openstatus/db";
 import {
   type Incident,
   type IncidentStatus,
@@ -31,19 +31,18 @@ const incidentListWith = {
   statusReport: { columns: { id: true, title: true, status: true } },
 } as const;
 
+// Takes the table: relational queries alias it, the count reads it directly.
 function listWhere(
+  t: Pick<typeof incident, "workspaceId" | "status" | "closedAt">,
   ctx: ServiceContext,
   input: Pick<ListIncidentsInput, "status" | "closed">,
 ) {
-  return and(
-    eq(incident.workspaceId, ctx.workspace.id),
-    input.status?.length ? inArray(incident.status, input.status) : undefined,
-    input.closed === undefined
-      ? undefined
-      : input.closed
-        ? isNotNull(incident.closedAt)
-        : isNull(incident.closedAt),
-  );
+  const conditions = [eq(t.workspaceId, ctx.workspace.id)];
+  if (input.status?.length) conditions.push(inArray(t.status, input.status));
+  if (input.closed !== undefined) {
+    conditions.push(input.closed ? isNotNull(t.closedAt) : isNull(t.closedAt));
+  }
+  return sql.join(conditions, sql` and `);
 }
 
 /** Newest declared first. */
@@ -56,11 +55,10 @@ export async function listIncidents(args: {
   const input = ListIncidentsInput.parse(args.input ?? {});
   const db = getReadDb(ctx);
 
-  const where = listWhere(ctx, input);
   const items = (
     await db.query.incident.findMany({
-      where,
-      orderBy: [desc(incident.declaredAt), desc(incident.id)],
+      where: { RAW: (t) => listWhere(t, ctx, input) },
+      orderBy: { declaredAt: "desc", id: "desc" },
       limit: input.limit,
       offset: input.offset,
       with: incidentListWith,
@@ -76,7 +74,7 @@ export async function listIncidents(args: {
     const row = await db
       .select({ count: sql<number>`count(*)` })
       .from(incident)
-      .where(where)
+      .where(listWhere(incident, ctx, input))
       .get();
     totalSize = row?.count ?? totalSize;
   }
@@ -90,8 +88,8 @@ export async function listAllIncidents(args: {
 }) {
   requireScope(args.ctx, "incidents:read");
   const rows = await getReadDb(args.ctx).query.incident.findMany({
-    where: listWhere(args.ctx, args.input ?? {}),
-    orderBy: [desc(incident.declaredAt), desc(incident.id)],
+    where: { RAW: (t) => listWhere(t, args.ctx, args.input ?? {}) },
+    orderBy: { declaredAt: "desc", id: "desc" },
     with: incidentListWith,
   });
   return rows.map(toIncidentView);
@@ -105,10 +103,7 @@ export async function getIncident(args: {
   requireScope(ctx, "incidents:read");
   const input = IncidentIdInput.parse(args.input);
   const row = await getReadDb(ctx).query.incident.findFirst({
-    where: and(
-      eq(incident.id, input.id),
-      eq(incident.workspaceId, ctx.workspace.id),
-    ),
+    where: { id: input.id, workspaceId: ctx.workspace.id },
     with: {
       commander: { columns: incidentUserColumns },
       declaredByUser: { columns: incidentUserColumns },
@@ -180,11 +175,11 @@ export async function getIncidentBySlackChannel(args: {
   const { ctx } = args;
   requireScope(ctx, "incidents:read");
   return getReadDb(ctx).query.incident.findFirst({
-    where: and(
-      eq(incident.workspaceId, ctx.workspace.id),
-      eq(incident.slackTeamId, args.input.teamId),
-      eq(incident.slackChannelId, args.input.channelId),
-    ),
+    where: {
+      workspaceId: ctx.workspace.id,
+      slackTeamId: args.input.teamId,
+      slackChannelId: args.input.channelId,
+    },
     with: {
       commander: { columns: incidentUserColumns },
       statusReport: { columns: { id: true, title: true, status: true } },

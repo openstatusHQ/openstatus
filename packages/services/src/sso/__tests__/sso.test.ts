@@ -361,8 +361,7 @@ describe("disableSso", () => {
       expect(row?.workosOrganizationId).toBe("org_test_1");
 
       const members = await tx.query.usersToWorkspaces.findMany({
-        where: (t, { eq: equals }) =>
-          equals(t.workspaceId, scaleCtx.workspace.id),
+        where: { workspaceId: scaleCtx.workspace.id },
       });
       expect(members.length).toBeGreaterThanOrEqual(2);
     });
@@ -748,10 +747,7 @@ describe("joinSsoWorkspace", () => {
       });
 
       const membership = await tx.query.usersToWorkspaces.findFirst({
-        where: and(
-          eq(usersToWorkspaces.userId, newcomer.id),
-          eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
-        ),
+        where: { userId: newcomer.id, workspaceId: scaleCtx.workspace.id },
       });
       expect(membership?.role).toBe("member");
 
@@ -776,10 +772,7 @@ describe("joinSsoWorkspace", () => {
       });
 
       const membership = await tx.query.usersToWorkspaces.findFirst({
-        where: and(
-          eq(usersToWorkspaces.userId, SCALE_OWNER_ID),
-          eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
-        ),
+        where: { userId: SCALE_OWNER_ID, workspaceId: scaleCtx.workspace.id },
       });
       expect(membership?.role).toBe("owner");
 
@@ -824,10 +817,7 @@ describe("joinSsoWorkspace", () => {
       ).rejects.toBeInstanceOf(ForbiddenError);
 
       const membership = await tx.query.usersToWorkspaces.findFirst({
-        where: and(
-          eq(usersToWorkspaces.userId, newcomer.id),
-          eq(usersToWorkspaces.workspaceId, scaleCtx.workspace.id),
-        ),
+        where: { userId: newcomer.id, workspaceId: scaleCtx.workspace.id },
       });
       expect(membership).toBe(undefined);
     });

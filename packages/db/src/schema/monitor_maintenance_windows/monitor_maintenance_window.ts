@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -63,39 +63,4 @@ export const monitorMaintenanceWindowToMonitor = sqliteTable(
       t.monitorId,
     ),
   ],
-);
-
-export const monitorMaintenanceWindowRelations = relations(
-  monitorMaintenanceWindow,
-  ({ one, many }) => ({
-    workspace: one(workspace, {
-      fields: [monitorMaintenanceWindow.workspaceId],
-      references: [workspace.id],
-    }),
-    monitors: many(monitorMaintenanceWindowToMonitor),
-    createdByUser: one(user, {
-      fields: [monitorMaintenanceWindow.createdBy],
-      references: [user.id],
-      relationName: "monitorMaintenanceWindowCreatedBy",
-    }),
-    updatedByUser: one(user, {
-      fields: [monitorMaintenanceWindow.updatedBy],
-      references: [user.id],
-      relationName: "monitorMaintenanceWindowUpdatedBy",
-    }),
-  }),
-);
-
-export const monitorMaintenanceWindowToMonitorRelations = relations(
-  monitorMaintenanceWindowToMonitor,
-  ({ one }) => ({
-    window: one(monitorMaintenanceWindow, {
-      fields: [monitorMaintenanceWindowToMonitor.monitorMaintenanceWindowId],
-      references: [monitorMaintenanceWindow.id],
-    }),
-    monitor: one(monitor, {
-      fields: [monitorMaintenanceWindowToMonitor.monitorId],
-      references: [monitor.id],
-    }),
-  }),
 );

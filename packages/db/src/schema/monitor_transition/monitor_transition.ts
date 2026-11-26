@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { monitorStatus } from "../monitors/constants";
@@ -28,14 +27,4 @@ export const monitorTransition = sqliteTable(
     ),
     index("monitor_transition_created_at_idx").on(t.createdAt),
   ],
-);
-
-export const monitorTransitionRelations = relations(
-  monitorTransition,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [monitorTransition.monitorId],
-      references: [monitor.id],
-    }),
-  }),
 );

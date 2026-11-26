@@ -7,7 +7,6 @@ import {
   incidentEvent,
   selectWorkspaceSchema,
   type Workspace,
-  workspace as workspaceTable,
 } from "@openstatus/db/src/schema";
 import { declareIncident } from "@openstatus/services/incident";
 import { Hono } from "hono";
@@ -155,7 +154,7 @@ describe("/openstatus incident", () => {
         user: { profile: { email: "ping@openstatus.dev" } },
       });
     workspace = selectWorkspaceSchema.parse(
-      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
+      await db.query.workspace.findFirst({ where: { id: 1 } }),
     );
     slackTestState.resolveWorkspace = (teamId: string) =>
       teamId === "T_KNOWN"

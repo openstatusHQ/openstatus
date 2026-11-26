@@ -73,7 +73,7 @@ afterAll(async () => {
 describe("getSubscriberByToken", () => {
   test("should return subscriber info with masked email for valid token", async () => {
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, testToken),
+      where: { token: testToken },
       with: { page: true },
     });
 
@@ -95,7 +95,7 @@ describe("getSubscriberByToken", () => {
   test("should return null for non-existent token", async () => {
     const nonExistentToken = crypto.randomUUID();
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, nonExistentToken),
+      where: { token: nonExistentToken },
     });
 
     expect(subscriber).toBeUndefined();
@@ -114,7 +114,7 @@ describe("getSubscriberByToken", () => {
     });
 
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, unsubscribedToken),
+      where: { token: unsubscribedToken },
     });
 
     expect(subscriber).toBeDefined();
@@ -164,7 +164,7 @@ describe("unsubscribe mutation", () => {
 
     // Verify unsubscribed
     const updatedSubscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, newSubscriber.id),
+      where: { id: newSubscriber.id },
     });
 
     expect(updatedSubscriber?.unsubscribedAt).not.toBeNull();
@@ -174,7 +174,7 @@ describe("unsubscribe mutation", () => {
   test("should fail for non-existent token", async () => {
     const nonExistentToken = crypto.randomUUID();
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, nonExistentToken),
+      where: { token: nonExistentToken },
     });
 
     expect(subscriber).toBeUndefined();
@@ -201,7 +201,7 @@ describe("unsubscribe mutation", () => {
   test("should fail for already unsubscribed user", async () => {
     // Get the unsubscribed subscriber from earlier test
     const unsubscribedSubscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.email, "test-unsubscribe-2@example.com"),
+      where: { email: "test-unsubscribe-2@example.com" },
     });
 
     expect(unsubscribedSubscriber).toBeDefined();
@@ -213,7 +213,7 @@ describe("unsubscribe mutation", () => {
 
     // Get subscriber and unsubscribe
     const subscriber = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.email, "test-unsubscribe-3@example.com"),
+      where: { email: "test-unsubscribe-3@example.com" },
     });
 
     if (subscriber) {
@@ -223,7 +223,7 @@ describe("unsubscribe mutation", () => {
         .where(eq(pageSubscriber.id, subscriber.id));
 
       const updatedSubscriber = await db.query.pageSubscriber.findFirst({
-        where: eq(pageSubscriber.id, subscriber.id),
+        where: { id: subscriber.id },
       });
 
       const afterUnsubscribe = new Date();

@@ -1,6 +1,3 @@
-import { and, eq } from "@openstatus/db";
-import { statusReport } from "@openstatus/db/src/schema";
-
 import { dbOnlyContext, type DB, getReadDb } from "../context";
 import { requirePageAccess, type PageVisitor } from "../page-access";
 import { findPageBySlug } from "./internal";
@@ -19,7 +16,7 @@ export async function getPublicStatusReport(args: {
   await requirePageAccess(page, args.visitor);
 
   const row = await db.query.statusReport.findFirst({
-    where: and(eq(statusReport.id, input.id), eq(statusReport.pageId, page.id)),
+    where: { id: input.id, pageId: page.id },
     with: {
       statusReportsToPageComponents: {
         with: { pageComponent: { with: { monitor: true } } },

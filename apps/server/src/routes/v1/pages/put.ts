@@ -199,6 +199,12 @@ export function registerPutPage(api: typeof pagesApi) {
       .where(eq(page.id, _page.id))
       .returning()
       .get();
+    if (!newPage) {
+      throw new OpenStatusApiError({
+        code: "NOT_FOUND",
+        message: `Page ${id} not found`,
+      });
+    }
 
     const currentPageComponents = await db
       .select()

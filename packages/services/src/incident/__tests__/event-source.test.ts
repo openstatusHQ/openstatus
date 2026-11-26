@@ -166,9 +166,8 @@ describe("incident event source", () => {
         input: { id: row.id, content: "Second", draftedBy: "user" },
       });
       const events = await tx.query.incidentEvent.findMany({
-        where: (e, { and, eq, like }) =>
-          and(eq(e.incidentId, row.id), like(e.type, "postmortem_%")),
-        orderBy: (e, { asc }) => [asc(e.id)],
+        where: { incidentId: row.id, type: { like: "postmortem_%" } },
+        orderBy: { id: "asc" },
       });
       expect(
         events.map((e) => ({ source: e.source, sourceRef: e.sourceRef })),

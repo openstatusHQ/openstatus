@@ -89,7 +89,7 @@ export async function recomputeReportStatus(
   if (current.status === latest.status && !isNewLatest && !removedLatest)
     return current;
 
-  return tx
+  const updated = await tx
     .update(statusReport)
     .set({
       status: latest.status,
@@ -99,4 +99,5 @@ export async function recomputeReportStatus(
     .where(eq(statusReport.id, statusReportId))
     .returning()
     .get();
+  return updated ?? null;
 }

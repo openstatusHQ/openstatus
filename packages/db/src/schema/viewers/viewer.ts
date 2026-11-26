@@ -4,22 +4,27 @@ import {
   primaryKey,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
-export const viewer = sqliteTable("viewer", {
-  id: integer("id").primaryKey(),
-  name: text("name"),
-  email: text("email").unique(),
-  emailVerified: integer("emailVerified", { mode: "timestamp" }),
-  image: text("image"),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`(strftime('%s', 'now'))`,
-  ),
-});
+export const viewer = sqliteTable(
+  "viewer",
+  {
+    id: integer("id").primaryKey(),
+    name: text("name"),
+    email: text("email"),
+    emailVerified: integer("emailVerified", { mode: "timestamp" }),
+    image: text("image"),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`(strftime('%s', 'now'))`,
+    ),
+  },
+  (t) => [uniqueIndex("viewer_email_unique").on(t.email)],
+);
 
 export const viewerSession = sqliteTable("viewer_session", {
   sessionToken: text("session_token").primaryKey(),

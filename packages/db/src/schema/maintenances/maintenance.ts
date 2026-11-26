@@ -1,7 +1,6 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-import { maintenancesToPageComponents } from "../page_components";
 import { page } from "../pages";
 import { user } from "../users";
 import { workspace } from "../workspaces";
@@ -60,47 +59,4 @@ export const maintenanceUpdate = sqliteTable(
     ),
   },
   (t) => [index("maintenance_update_maintenance_id_idx").on(t.maintenanceId)],
-);
-
-export const maintenanceRelations = relations(maintenance, ({ one, many }) => ({
-  maintenancesToPageComponents: many(maintenancesToPageComponents),
-  maintenanceUpdates: many(maintenanceUpdate),
-  page: one(page, {
-    fields: [maintenance.pageId],
-    references: [page.id],
-  }),
-  workspace: one(workspace, {
-    fields: [maintenance.workspaceId],
-    references: [workspace.id],
-  }),
-  createdByUser: one(user, {
-    fields: [maintenance.createdBy],
-    references: [user.id],
-    relationName: "maintenanceCreatedBy",
-  }),
-  updatedByUser: one(user, {
-    fields: [maintenance.updatedBy],
-    references: [user.id],
-    relationName: "maintenanceUpdatedBy",
-  }),
-}));
-
-export const maintenanceUpdateRelations = relations(
-  maintenanceUpdate,
-  ({ one }) => ({
-    maintenance: one(maintenance, {
-      fields: [maintenanceUpdate.maintenanceId],
-      references: [maintenance.id],
-    }),
-    createdByUser: one(user, {
-      fields: [maintenanceUpdate.createdBy],
-      references: [user.id],
-      relationName: "maintenanceUpdateCreatedBy",
-    }),
-    updatedByUser: one(user, {
-      fields: [maintenanceUpdate.updatedBy],
-      references: [user.id],
-      relationName: "maintenanceUpdateUpdatedBy",
-    }),
-  }),
 );

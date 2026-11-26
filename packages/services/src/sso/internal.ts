@@ -1,7 +1,6 @@
 import { and, db as defaultDb, eq, isNotNull } from "@openstatus/db";
 import {
   selectWorkspaceSchema,
-  usersToWorkspaces,
   workspace,
   workspaceSsoDomain,
 } from "@openstatus/db/src/schema";
@@ -24,10 +23,7 @@ export async function requireOwner(tx: DB, ctx: ServiceContext): Promise<void> {
   }
 
   const membership = await tx.query.usersToWorkspaces.findFirst({
-    where: and(
-      eq(usersToWorkspaces.userId, userId),
-      eq(usersToWorkspaces.workspaceId, ctx.workspace.id),
-    ),
+    where: { userId, workspaceId: ctx.workspace.id },
   });
 
   if (!membership || membership.role !== "owner") {

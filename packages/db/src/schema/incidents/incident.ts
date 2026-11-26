@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -88,46 +88,3 @@ export const incidentEvent = sqliteTable(
     ),
   ],
 );
-
-export const incidentRelations = relations(incident, ({ one, many }) => ({
-  workspace: one(workspace, {
-    fields: [incident.workspaceId],
-    references: [workspace.id],
-  }),
-  commander: one(user, {
-    fields: [incident.commanderId],
-    references: [user.id],
-    relationName: "incidentCommander",
-  }),
-  declaredByUser: one(user, {
-    fields: [incident.declaredBy],
-    references: [user.id],
-    relationName: "incidentDeclaredBy",
-  }),
-  resolvedByUser: one(user, {
-    fields: [incident.resolvedBy],
-    references: [user.id],
-    relationName: "incidentResolvedBy",
-  }),
-  acknowledgedByUser: one(user, {
-    fields: [incident.acknowledgedBy],
-    references: [user.id],
-    relationName: "incidentAcknowledgedBy",
-  }),
-  statusReport: one(statusReport, {
-    fields: [incident.statusReportId],
-    references: [statusReport.id],
-  }),
-  events: many(incidentEvent),
-}));
-
-export const incidentEventRelations = relations(incidentEvent, ({ one }) => ({
-  incident: one(incident, {
-    fields: [incidentEvent.incidentId],
-    references: [incident.id],
-  }),
-  createdByUser: one(user, {
-    fields: [incidentEvent.createdBy],
-    references: [user.id],
-  }),
-}));

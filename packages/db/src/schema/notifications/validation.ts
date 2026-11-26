@@ -1,5 +1,5 @@
 import { safeUrlSchema } from "@openstatus/utils";
-import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { createInsertSchema, createSelectSchema } from "drizzle-orm/zod";
 import * as z from "zod";
 
 import { notificationProvider } from "./constants";

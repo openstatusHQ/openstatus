@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { integer, primaryKey, sqliteTable } from "drizzle-orm/sqlite-core";
 
 import { pageComponent } from "../page_components";
@@ -19,19 +19,5 @@ export const pageSubscriberToPageComponent = sqliteTable(
   },
   (t) => ({
     pk: primaryKey({ columns: [t.pageSubscriberId, t.pageComponentId] }),
-  }),
-);
-
-export const pageSubscriberToPageComponentRelations = relations(
-  pageSubscriberToPageComponent,
-  ({ one }) => ({
-    pageSubscriber: one(pageSubscriber, {
-      fields: [pageSubscriberToPageComponent.pageSubscriberId],
-      references: [pageSubscriber.id],
-    }),
-    pageComponent: one(pageComponent, {
-      fields: [pageSubscriberToPageComponent.pageComponentId],
-      references: [pageComponent.id],
-    }),
   }),
 );

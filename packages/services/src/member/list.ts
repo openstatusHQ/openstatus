@@ -1,9 +1,4 @@
-import { eq } from "@openstatus/db";
-import {
-  selectUserSchema,
-  usersToWorkspaces,
-  workspaceRole,
-} from "@openstatus/db/src/schema";
+import { selectUserSchema, workspaceRole } from "@openstatus/db/src/schema";
 import { z } from "zod";
 
 import { requireScope } from "../auth";
@@ -26,7 +21,7 @@ export async function listMembers(args: {
   const db = getReadDb(args.ctx);
 
   const rows = await db.query.usersToWorkspaces.findMany({
-    where: eq(usersToWorkspaces.workspaceId, args.ctx.workspace.id),
+    where: { workspaceId: args.ctx.workspace.id },
     with: { user: true },
   });
 

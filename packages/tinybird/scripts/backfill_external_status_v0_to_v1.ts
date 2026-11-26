@@ -114,7 +114,7 @@ async function loadNameToSlugMap(): Promise<Map<string, string>> {
     url: env.DATABASE_URL,
     authToken: env.DATABASE_AUTH_TOKEN,
   });
-  const db = drizzle(client);
+  const db = drizzle({ client });
 
   try {
     const rows = await db

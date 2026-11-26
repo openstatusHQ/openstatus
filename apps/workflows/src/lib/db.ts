@@ -1,5 +1,5 @@
 import { createClient } from "@libsql/client";
-import { schema } from "@openstatus/db";
+import { relations } from "@openstatus/db";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env";
@@ -15,5 +15,5 @@ const client = createClient({
 
 export const db = drizzle({
   client: client,
-  schema,
+  relations,
 });

@@ -9,7 +9,7 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
-import { ValidationError } from "../errors";
+import { NotFoundError, ValidationError } from "../errors";
 import {
   assertSchedulingWithinPlan,
   getMonitorInWorkspace,
@@ -66,6 +66,7 @@ export async function updateMonitorSchedulingRegions(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
 
     await tx
       .delete(privateLocationToMonitors)

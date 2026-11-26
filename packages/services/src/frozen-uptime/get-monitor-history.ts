@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, isNull } from "@openstatus/db";
+import { and, asc, eq, gte } from "@openstatus/db";
 import {
   frozenMonitorUptime,
   frozenMonitorUptimeDaySchema,
@@ -57,12 +57,11 @@ export async function getMonitorUptimeHistory(args: {
   const firstMonth = historyStart(nowMs, historyMonths);
 
   const _monitor = await db.query.monitor.findFirst({
-    where: (monitor, { and: andWhere, eq: eqWhere }) =>
-      andWhere(
-        eqWhere(monitor.id, input.monitorId),
-        eqWhere(monitor.workspaceId, ctx.workspace.id),
-        isNull(monitor.deletedAt),
-      ),
+    where: {
+      id: input.monitorId,
+      workspaceId: ctx.workspace.id,
+      deletedAt: { isNull: true },
+    },
   });
   if (!_monitor) throw new NotFoundError("monitor", input.monitorId);
 

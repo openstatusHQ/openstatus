@@ -25,7 +25,7 @@ import {
   defaultTb,
   withTransaction,
 } from "../context";
-import { ForbiddenError, ValidationError } from "../errors";
+import { ForbiddenError, NotFoundError, ValidationError } from "../errors";
 import type { Monitor } from "../types";
 import {
   generateHeartbeatToken,
@@ -136,6 +136,7 @@ export async function updateMonitorHeartbeat(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
 
     // An unchanged save must not undo the fresh deadline a resume granted.
     if (heartbeatConfigChanged(existing, updated)) {
@@ -176,6 +177,7 @@ export async function regenerateHeartbeatToken(args: {
       .where(eq(monitor.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("monitor", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "monitor.update",

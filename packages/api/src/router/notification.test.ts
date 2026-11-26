@@ -53,7 +53,7 @@ test("notification.delete does not delete a notification from another workspace"
   await caller.notification.delete({ id: otherWorkspaceNotifId });
 
   const notifAfter = await db.query.notification.findFirst({
-    where: eq(notification.id, otherWorkspaceNotifId),
+    where: { id: otherWorkspaceNotifId },
   });
   expect(notifAfter).toBeDefined();
   expect(notifAfter?.id).toBe(otherWorkspaceNotifId);
@@ -82,7 +82,7 @@ test("notification.delete succeeds for own workspace notification", async () => 
   await caller.notification.delete({ id: tempNotif.id });
 
   const notifAfter = await db.query.notification.findFirst({
-    where: eq(notification.id, tempNotif.id),
+    where: { id: tempNotif.id },
   });
   expect(notifAfter).toBeUndefined();
 });
@@ -111,7 +111,7 @@ test("notification.updateNotifier rejects notification from another workspace", 
 
   // Verify monitor associations were NOT deleted
   const associations = await db.query.notificationsToMonitors.findMany({
-    where: eq(notificationsToMonitors.notificationId, otherWorkspaceNotifId),
+    where: { notificationId: otherWorkspaceNotifId },
   });
   expect(associations.length).toBe(1);
 });

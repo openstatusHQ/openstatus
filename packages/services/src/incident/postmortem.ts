@@ -122,6 +122,7 @@ export async function draftPostmortem(args: {
       .where(eq(incidentPostmortem.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("incident_postmortem", existing.id);
     await emitAudit(tx, ctx, {
       action: "incident_postmortem.update",
       entityType: "incident_postmortem",
@@ -187,6 +188,7 @@ export async function approvePostmortem(args: {
       .where(eq(incidentPostmortem.id, existing.id))
       .returning()
       .get();
+    if (!approved) throw new NotFoundError("incident_postmortem", existing.id);
     await emitAudit(tx, ctx, {
       action: "incident_postmortem.update",
       entityType: "incident_postmortem",
@@ -218,7 +220,7 @@ export async function getPostmortem(args: {
   const db = getReadDb(ctx);
   const row = await getIncidentInWorkspace(db, ctx.workspace.id, input.id);
   return db.query.incidentPostmortem.findFirst({
-    where: eq(incidentPostmortem.incidentId, row.id),
+    where: { incidentId: row.id },
     with: { approvedByUser: { columns: incidentUserColumns } },
   });
 }

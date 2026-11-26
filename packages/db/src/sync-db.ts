@@ -2,7 +2,7 @@ import { createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 
 import { env } from "../env.mjs";
-import * as schema from "./schema";
+import { relations } from "./schema/relations";
 
 const client = createClient({
   url: "file:///app/data/replica.db",
@@ -13,5 +13,5 @@ const client = createClient({
 
 export const syncDB = drizzle({
   client: client,
-  schema,
+  relations,
 });

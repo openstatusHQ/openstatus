@@ -11,11 +11,8 @@ import type { Adapter } from "next-auth/adapters";
 import { createUser, getUser, getUserByEmail } from "./helpers";
 
 const drizzleAdapter = DrizzleAdapter(db, {
-  // @ts-expect-error: problem with type
   usersTable: user,
-  // @ts-expect-error: problem with type
   accountsTable: account,
-  // @ts-expect-error: problem with type
   sessionsTable: session,
   verificationTokensTable: verificationToken,
 }) as Adapter;

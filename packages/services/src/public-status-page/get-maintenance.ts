@@ -1,6 +1,3 @@
-import { and, eq } from "@openstatus/db";
-import { maintenance } from "@openstatus/db/src/schema";
-
 import { dbOnlyContext, type DB, getReadDb } from "../context";
 import { requirePageAccess, type PageVisitor } from "../page-access";
 import { findPageBySlug } from "./internal";
@@ -19,7 +16,7 @@ export async function getPublicMaintenance(args: {
   await requirePageAccess(page, args.visitor);
 
   const row = await db.query.maintenance.findFirst({
-    where: and(eq(maintenance.id, input.id), eq(maintenance.pageId, page.id)),
+    where: { id: input.id, pageId: page.id },
     with: {
       maintenanceUpdates: {
         orderBy: (updates, { desc }) => [desc(updates.date), desc(updates.id)],

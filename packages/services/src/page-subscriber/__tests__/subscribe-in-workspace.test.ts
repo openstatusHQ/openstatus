@@ -68,7 +68,7 @@ describe("subscribeEmailInWorkspace", () => {
       expect(err).toBeInstanceOf(NotFoundError);
       expect((err as NotFoundError).entity).toBe("page");
       const rows = await tx.query.pageSubscriber.findMany({
-        where: (s, { eq }) => eq(s.pageId, p.id),
+        where: { pageId: p.id },
       });
       expect(rows).toEqual([]);
     });

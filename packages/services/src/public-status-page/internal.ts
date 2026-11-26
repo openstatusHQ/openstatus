@@ -1,19 +1,24 @@
-import { and, inArray, isNull, sql } from "@openstatus/db";
-import {
-  notExcused,
-  page,
-  privateLocationToMonitors,
-} from "@openstatus/db/src/schema";
+import { sql } from "@openstatus/db";
+import { notExcused, page } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
 
 // A host reaches its page through either the slug or the custom domain. Most
 // pages store "" as their custom domain, so "" must never match it.
-export const bySlugOrDomain = (slug: string) =>
-  sql`lower(${page.slug}) = ${slug} OR (${page.customDomain} != '' AND lower(${page.customDomain}) = ${slug})`;
+export const matchesSlugOrDomain = (
+  t: Pick<typeof page, "slug" | "customDomain">,
+  slug: string,
+) =>
+  sql`lower(${t.slug}) = ${slug} OR (${t.customDomain} != '' AND lower(${t.customDomain}) = ${slug})`;
+
+/** Relational `where`: relational queries alias the table, so it resolves columns late. */
+export const bySlugOrDomain = (slug: string) => ({
+  RAW: (t: Pick<typeof page, "slug" | "customDomain">) =>
+    matchesSlugOrDomain(t, slug),
+});
 
 export function findPageBySlug(db: DB, slug: string) {
-  return db.select().from(page).where(bySlugOrDomain(slug)).get();
+  return db.select().from(page).where(matchesSlugOrDomain(page, slug)).get();
 }
 
 /** Everything a rendered status page shows, ordered for display. */
@@ -80,10 +85,7 @@ export async function countActivePrivateLocations(
   const counts = new Map<number, number>();
   if (monitorIds.length === 0) return counts;
   const rows = await db.query.privateLocationToMonitors.findMany({
-    where: and(
-      inArray(privateLocationToMonitors.monitorId, monitorIds),
-      isNull(privateLocationToMonitors.deletedAt),
-    ),
+    where: { monitorId: { in: monitorIds }, deletedAt: { isNull: true } },
     columns: { monitorId: true },
   });
   for (const row of rows) {

@@ -4,6 +4,7 @@ import { workspaceSsoDomain } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import type { WorkOSClient } from "./client";
 import { getWorkspaceByWorkosOrganization, listSsoDomains } from "./internal";
 import { RemoveSsoDomainInput, SyncSsoDomainInput } from "./schemas";
@@ -49,6 +50,8 @@ export async function syncSsoDomain(args: {
         .where(eq(workspaceSsoDomain.id, existing.id))
         .returning()
         .get();
+      if (!updated)
+        throw new NotFoundError("workspace_sso_domain", existing.id);
 
       await emitAudit(tx, scopedCtx, {
         action: "workspace_sso.update",

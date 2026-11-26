@@ -1,4 +1,4 @@
-import { db, eq, inArray } from "@openstatus/db";
+import { db, inArray } from "@openstatus/db";
 import { pageSubscriber } from "@openstatus/db/src/schema";
 import { createPage } from "@openstatus/db/src/test/factories";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -54,7 +54,7 @@ describe("createSlackSubscriber", () => {
     expect(result.pageName).toBeDefined();
 
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, result.id),
+      where: { id: result.id },
     });
     expect(row?.channelType).toBe("slack");
     expect(row?.slackChannelId).toBe(CHANNELS.create);
@@ -83,7 +83,7 @@ describe("createSlackSubscriber", () => {
     expect(second.alreadySubscribed).toBe(true);
 
     const rows = await db.query.pageSubscriber.findMany({
-      where: eq(pageSubscriber.slackChannelId, CHANNELS.dedup),
+      where: { slackChannelId: CHANNELS.dedup },
     });
     expect(rows).toHaveLength(1);
   });
@@ -113,7 +113,7 @@ describe("createSlackSubscriber", () => {
 
     expect(reactivated.alreadySubscribed).toBe(false);
     const rows = await db.query.pageSubscriber.findMany({
-      where: eq(pageSubscriber.slackChannelId, CHANNELS.reactivate),
+      where: { slackChannelId: CHANNELS.reactivate },
     });
     expect(rows).toHaveLength(1);
     expect(rows[0]?.unsubscribedAt).toBeNull();
@@ -143,7 +143,7 @@ describe("createSlackSubscriber on a protected page", () => {
       ).rejects.toBeInstanceOf(PreconditionFailedError);
 
       const rows = await db.query.pageSubscriber.findMany({
-        where: eq(pageSubscriber.pageId, gated.id),
+        where: { pageId: gated.id },
       });
       expect(rows).toHaveLength(0);
     });
@@ -161,7 +161,7 @@ describe("removeSlackSubscriber", () => {
 
     expect(result.removed).toBe(true);
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, created.id),
+      where: { id: created.id },
     });
     expect(row?.unsubscribedAt).not.toBeNull();
 

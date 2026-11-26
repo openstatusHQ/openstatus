@@ -76,7 +76,7 @@ export default defineConfig({
     "apps/dashboard/src/scripts/*.ts",
     "packages/proto/gen/**",
     "**/*_pb.ts",
-    "**/drizzle/meta/**",
+    "**/drizzle/*/snapshot.json",
     "**/.content-collections/**",
     ".devbox/**",
     "**/*.astro",

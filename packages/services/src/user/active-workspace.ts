@@ -1,10 +1,9 @@
-import { and, db as defaultDb, eq, isNull } from "@openstatus/db";
+import { db as defaultDb } from "@openstatus/db";
 import {
   type User,
   type Workspace,
   selectUserSchema,
   selectWorkspaceSchema,
-  user,
 } from "@openstatus/db/src/schema";
 
 import type { DB } from "../context";
@@ -34,11 +33,11 @@ export async function resolveUserWorkspaces(args: {
 }): Promise<{ user: User; workspaces: Workspace[] } | null> {
   const db = args.db ?? defaultDb;
   const row = await db.query.user.findFirst({
-    where: and(eq(user.id, args.userId), isNull(user.deletedAt)),
+    where: { id: args.userId, deletedAt: { isNull: true } },
     with: {
       usersToWorkspaces: {
         // Makes the no-cookie fallback the earliest membership, not Turso's order.
-        orderBy: (t, { asc }) => asc(t.createdAt),
+        orderBy: { createdAt: "asc" },
         with: { workspace: true },
       },
     },

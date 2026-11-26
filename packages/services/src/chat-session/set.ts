@@ -11,7 +11,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { UnauthorizedError } from "../errors";
+import { NotFoundError, UnauthorizedError } from "../errors";
 import { compactMessages, getChatSessionInWorkspace } from "./internal";
 import { SetChatSessionMessagesInput } from "./schemas";
 
@@ -57,6 +57,7 @@ export async function setChatSessionMessages(args: {
       .where(eq(chatSession.id, session.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("chat_session", session.id);
 
     return updated;
   });

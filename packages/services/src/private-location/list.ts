@@ -1,4 +1,4 @@
-import { count, desc, eq } from "@openstatus/db";
+import { count, eq } from "@openstatus/db";
 import { privateLocation } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
@@ -26,13 +26,13 @@ export async function listPrivateLocations(args: {
   const db = getReadDb(args.ctx);
 
   const rows = await db.query.privateLocation.findMany({
-    where: eq(privateLocation.workspaceId, args.ctx.workspace.id),
+    where: { workspaceId: args.ctx.workspace.id },
     with: {
       privateLocationToMonitors: {
         with: { monitor: true },
       },
     },
-    orderBy: desc(privateLocation.id),
+    orderBy: { id: "desc" },
     limit: input.limit ?? LIMIT_DEFAULT,
     offset: input.offset ?? 0,
   });

@@ -62,13 +62,13 @@ export async function acceptInvitation(args: {
     // would appear with one name on the db fetch and another on the
     // relation join.
     const existing = await tx.query.invitation.findFirst({
-      where: and(
-        eq(invitation.id, input.id),
+      where: {
+        id: input.id,
         // Rows created before emails were normalized keep their original casing.
-        sql`lower(${invitation.email}) = ${input.email}`,
-        isNull(invitation.acceptedAt),
-        gte(invitation.expiresAt, new Date()),
-      ),
+        RAW: (t) => sql`lower(${t.email}) = ${input.email}`,
+        acceptedAt: { isNull: true },
+        expiresAt: { gte: new Date() },
+      },
       with: { workspace: true },
     });
 

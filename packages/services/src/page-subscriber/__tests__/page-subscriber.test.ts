@@ -159,7 +159,7 @@ describe("upsertSelfSignupSubscriber", () => {
       input: { email, pageId: PAGE_ID },
     });
     const rows = await db.query.pageSubscriber.findMany({
-      where: eq(pageSubscriber.email, email),
+      where: { email },
     });
     expect(rows).toHaveLength(1);
   });
@@ -187,7 +187,7 @@ describe("upsertSelfSignupSubscriber", () => {
       expect(result.id).toBe(first.id);
       expect(result.componentIds).toEqual([COMPONENT_1, COMPONENT_2]);
       const stored = await tx.query.pageSubscriberToPageComponent.findMany({
-        where: eq(pageSubscriberToPageComponent.pageSubscriberId, first.id),
+        where: { pageSubscriberId: first.id },
       });
       expect(stored.map((row) => row.pageComponentId).sort()).toEqual(
         [COMPONENT_1, COMPONENT_2].sort(),
@@ -251,7 +251,7 @@ describe("upsertSelfSignupSubscriber", () => {
         expect(result.componentIds).toEqual([]);
         expect(
           await tx.query.pageSubscriberToPageComponent.findMany({
-            where: eq(pageSubscriberToPageComponent.pageSubscriberId, first.id),
+            where: { pageSubscriberId: first.id },
           }),
         ).toEqual([]);
 
@@ -323,7 +323,7 @@ describe("upsertSelfSignupSubscriber", () => {
         expect(
           (
             await tx.query.pageSubscriber.findFirst({
-              where: eq(pageSubscriber.id, first.id),
+              where: { id: first.id },
             })
           )?.acceptedAt,
         ).toBeNull();
@@ -351,7 +351,7 @@ describe("upsertSelfSignupSubscriber", () => {
       input: { email, pageId: PAGE_ID },
     });
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.email, email),
+      where: { email },
     });
     expect(row?.expiresAt?.getTime()).toBeGreaterThan(before.getTime());
   });
@@ -389,7 +389,7 @@ describe("upsertSelfSignupSubscriber", () => {
     expect(result.componentIds).toEqual([COMPONENT_1]);
 
     const oldRow = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, initial.id),
+      where: { id: initial.id },
     });
     expect(oldRow?.unsubscribedAt).toBeDefined();
   });
@@ -416,7 +416,7 @@ describe("upsertSelfSignupSubscriber", () => {
     expect(result.acceptedAt).toBeNull();
 
     const oldRow = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, pending.id),
+      where: { id: pending.id },
     });
     expect(oldRow?.unsubscribedAt).toBeDefined();
     expect(oldRow?.acceptedAt).toBeNull();
@@ -563,7 +563,7 @@ describe("verifySelfSignupSubscriber", () => {
         if (!expanded?.token) throw new Error("Expected a rotated token");
         expect(expanded.token).not.toBe(first.token);
         const stored = await db.query.pageSubscriber.findFirst({
-          where: eq(pageSubscriber.id, first.id),
+          where: { id: first.id },
         });
         expect(stored?.acceptedAt).toBeNull();
         expect(stored?.token).toBe(expanded.token);
@@ -901,7 +901,7 @@ describe("unsubscribeSubscriber", () => {
     ).resolves.toBeUndefined();
 
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.token, token),
+      where: { token },
     });
     expect(row?.unsubscribedAt).toBeDefined();
 
@@ -1101,7 +1101,7 @@ describe("unsubscribePageSubscriber", () => {
     ).resolves.toBeUndefined();
 
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, sub.id),
+      where: { id: sub.id },
     });
     expect(row?.unsubscribedAt).toBeDefined();
 
@@ -1129,7 +1129,7 @@ describe("unsubscribePageSubscriber", () => {
     ).resolves.toBeUndefined();
 
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, sub.id),
+      where: { id: sub.id },
     });
     expect(row?.unsubscribedAt).toBeDefined();
   });
@@ -1177,7 +1177,7 @@ describe("unsubscribePageSubscriber by id", () => {
     ).resolves.toBeUndefined();
 
     const row = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, sub.id),
+      where: { id: sub.id },
     });
     expect(row?.unsubscribedAt).toBeDefined();
 
@@ -1222,7 +1222,7 @@ describe("unsubscribePageSubscriber by id", () => {
 
     await unsubscribePageSubscriber({ ctx, input });
     const first = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, sub.id),
+      where: { id: sub.id },
     });
     await clearAuditLog(WORKSPACE_ID);
 
@@ -1231,7 +1231,7 @@ describe("unsubscribePageSubscriber by id", () => {
     ).resolves.toBeUndefined();
 
     const second = await db.query.pageSubscriber.findFirst({
-      where: eq(pageSubscriber.id, sub.id),
+      where: { id: sub.id },
     });
     expect(second?.unsubscribedAt).toEqual(first?.unsubscribedAt);
 

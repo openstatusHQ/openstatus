@@ -3,6 +3,7 @@ import { incident } from "@openstatus/db/src/schema";
 
 import { emitAudit } from "../audit";
 import type { DB, ServiceContext } from "../context";
+import { NotFoundError } from "../errors";
 import { appendIncidentEvent } from "./internal";
 
 /**
@@ -34,6 +35,7 @@ export async function clearIncidentCommander(args: {
       .where(eq(incident.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("incident", existing.id);
     await emitAudit(tx, ctx, {
       action: "incident.update",
       entityType: "incident",

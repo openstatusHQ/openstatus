@@ -1,6 +1,3 @@
-import { and, eq, isNull } from "@openstatus/db";
-import { page, pageSubscriber } from "@openstatus/db/src/schema";
-
 import { type DB, getReadDb, dbOnlyContext } from "../context";
 import { NotFoundError } from "../errors";
 import { type PageVisitor, requirePageAccess } from "../page-access";
@@ -24,20 +21,20 @@ export async function hasPendingSubscriber(args: {
   // Gate first: pending state on a protected page is not public.
   if (args.visitor) {
     const pageData = await db.query.page.findFirst({
-      where: eq(page.id, input.pageId),
+      where: { id: input.pageId },
     });
     if (!pageData) throw new NotFoundError("page", input.pageId);
     await requirePageAccess(pageData, args.visitor);
   }
 
   const existing = await db.query.pageSubscriber.findFirst({
-    where: and(
-      eq(pageSubscriber.email, input.email.toLowerCase()),
-      eq(pageSubscriber.pageId, input.pageId),
-      eq(pageSubscriber.channelType, "email"),
-      isNull(pageSubscriber.unsubscribedAt),
-      isNull(pageSubscriber.acceptedAt),
-    ),
+    where: {
+      email: input.email.toLowerCase(),
+      pageId: input.pageId,
+      channelType: "email",
+      unsubscribedAt: { isNull: true },
+      acceptedAt: { isNull: true },
+    },
   });
   return !!(existing?.expiresAt && existing.expiresAt > new Date());
 }

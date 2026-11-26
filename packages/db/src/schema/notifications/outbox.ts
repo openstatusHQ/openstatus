@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -124,22 +124,4 @@ export const notificationDeadLetter = sqliteTable(
       t.diedAt,
     ),
   ],
-);
-
-export const notificationOutboxRelations = relations(
-  notificationOutbox,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [notificationOutbox.monitorId],
-      references: [monitor.id],
-    }),
-    notification: one(notification, {
-      fields: [notificationOutbox.notificationId],
-      references: [notification.id],
-    }),
-    incident: one(monitorIncidentTable, {
-      fields: [notificationOutbox.incidentId],
-      references: [monitorIncidentTable.id],
-    }),
-  }),
 );

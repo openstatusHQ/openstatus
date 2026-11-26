@@ -1,7 +1,6 @@
 import { db, eq } from "@openstatus/db";
 import {
   maintenance,
-  maintenanceUpdate,
   maintenancesToPageComponents,
   page,
   pageComponent,
@@ -139,10 +138,7 @@ test("maintenance.update rejects maintenance from another workspace", async () =
 
   // Verify page component associations were NOT deleted
   const associations = await db.query.maintenancesToPageComponents.findMany({
-    where: eq(
-      maintenancesToPageComponents.maintenanceId,
-      otherWorkspaceMaintenanceId,
-    ),
+    where: { maintenanceId: otherWorkspaceMaintenanceId },
   });
   expect(associations.length).toBe(1);
 });
@@ -167,7 +163,7 @@ test("maintenance.update succeeds for own workspace maintenance", async () => {
   updatedMaintenanceIds.push(1);
 
   const updated = await db.query.maintenance.findFirst({
-    where: eq(maintenance.id, 1),
+    where: { id: 1 },
   });
   expect(updated?.title).toBe("Updated Maintenance Title");
 });
@@ -268,7 +264,7 @@ test("maintenance update procedures provide full CRUD", async () => {
 
   await caller.maintenance.deleteUpdate({ id: added.id });
   const deleted = await db.query.maintenanceUpdate.findFirst({
-    where: eq(maintenanceUpdate.id, added.id),
+    where: { id: added.id },
   });
   expect(deleted).toBeUndefined();
 

@@ -283,11 +283,7 @@ export async function getUptimeHistory(args: {
   const nowMs = now.getTime();
 
   const _page = await db.query.page.findFirst({
-    where: (page, { and: andWhere, eq: eqWhere }) =>
-      andWhere(
-        eqWhere(page.id, input.pageId),
-        eqWhere(page.workspaceId, ctx.workspace.id),
-      ),
+    where: { id: input.pageId, workspaceId: ctx.workspace.id },
     with: {
       statusReports: {
         with: {

@@ -39,6 +39,7 @@ export async function disableSso(args: {
       .where(eq(workspace.id, ctx.workspace.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("workspace", ctx.workspace.id);
 
     await emitAudit(tx, ctx, {
       action: "workspace_sso.update",

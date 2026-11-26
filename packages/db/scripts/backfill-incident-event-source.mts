@@ -11,9 +11,12 @@ import { incidentEvent } from "../src/schema";
 const FROM_SLACK = /\n\n\[From Slack\]\((https?:\/\/\S+)\)$/;
 const apply = process.argv.includes("--apply");
 
-const db = drizzle(
-  createClient({ url: env.DATABASE_URL, authToken: env.DATABASE_AUTH_TOKEN }),
-);
+const db = drizzle({
+  client: createClient({
+    url: env.DATABASE_URL,
+    authToken: env.DATABASE_AUTH_TOKEN,
+  }),
+});
 
 const rows = await db
   .select({ id: incidentEvent.id, message: incidentEvent.message })

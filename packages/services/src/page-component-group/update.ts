@@ -4,6 +4,7 @@ import { pageComponentGroup } from "@openstatus/db/src/schema";
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import { getGroupInWorkspace } from "./internal";
 import { UpdatePageComponentGroupInput } from "./schemas";
 
@@ -32,6 +33,7 @@ export async function updatePageComponentGroup(args: {
       .where(eq(pageComponentGroup.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("page_component_group", existing.id);
 
     await emitAudit(tx, ctx, {
       action: "page_component_group.update",

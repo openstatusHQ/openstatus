@@ -1,4 +1,4 @@
-import { type SQL, getTableColumns, sql } from "@openstatus/db";
+import { type SQL, getColumns, sql } from "@openstatus/db";
 import {
   type AuditActionName,
   auditLog,
@@ -8,7 +8,7 @@ import {
 import { type Actor, extractActorId, tryGetActorUserId } from "../context";
 import type { MonitorIncident } from "../types";
 
-const columns = Object.entries(getTableColumns(monitorIncidentTable));
+const columns = Object.entries(getColumns(monitorIncidentTable));
 
 // Mirrors what `emitAudit` stores for a selected row: timestamps (all
 // second-precision here) as ISO strings, booleans as JSON booleans.
@@ -16,7 +16,7 @@ function snapshot(overrides: Partial<Record<keyof MonitorIncident, SQL>> = {}) {
   const pairs = columns.map(([key, column]) => {
     const override = overrides[key as keyof MonitorIncident];
     if (override) return sql`${sql.raw(`'${key}'`)}, ${override}`;
-    if (column.dataType === "date") {
+    if (column.dataType === "object date") {
       return sql`${sql.raw(`'${key}'`)}, strftime('%Y-%m-%dT%H:%M:%fZ', ${column}, 'unixepoch')`;
     }
     if (column.dataType === "boolean") {

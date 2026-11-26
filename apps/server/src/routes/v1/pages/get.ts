@@ -1,7 +1,5 @@
 import { createRoute } from "@hono/zod-openapi";
-import { and, eq } from "@openstatus/db";
 import { db } from "@openstatus/db/src/db";
-import { page } from "@openstatus/db/src/schema";
 
 import { OpenStatusApiError, openApiErrorResponses } from "@/libs/errors";
 import { notEmpty } from "@/utils/not-empty";
@@ -36,7 +34,7 @@ export function registerGetPage(api: typeof pagesApi) {
     const { id } = c.req.valid("param");
 
     const _page = await db.query.page.findFirst({
-      where: and(eq(page.workspaceId, workspaceId), eq(page.id, Number(id))),
+      where: { workspaceId, id: Number(id) },
       with: {
         pageComponents: true,
       },

@@ -71,10 +71,7 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
         },
         maintenanceUpdates: true,
       },
-      where: and(
-        eq(maintenance.id, Number(id)),
-        eq(maintenance.workspaceId, workspaceId),
-      ),
+      where: { id: Number(id), workspaceId },
     });
 
     if (!_maintenance) {
@@ -141,6 +138,12 @@ export function registerPutMaintenance(api: typeof maintenancesApi) {
         .where(eq(maintenance.id, Number(id)))
         .returning()
         .get();
+      if (!updated) {
+        throw new OpenStatusApiError({
+          code: "NOT_FOUND",
+          message: `Maintenance ${id} not found`,
+        });
+      }
 
       if (message !== undefined) {
         await rewriteLatestUpdate(tx, Number(id), message, actorUserId);

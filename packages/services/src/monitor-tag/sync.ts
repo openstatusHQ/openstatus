@@ -32,7 +32,7 @@ export async function syncMonitorTags(args: {
 
   return withTransaction(ctx, async (tx) => {
     const existing = await tx.query.monitorTag.findMany({
-      where: eq(monitorTag.workspaceId, workspaceId),
+      where: { workspaceId },
     });
 
     const keepIds = new Set(

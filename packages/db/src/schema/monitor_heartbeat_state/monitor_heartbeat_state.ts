@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 import { monitor } from "../monitors";
@@ -23,14 +22,4 @@ export const monitorHeartbeatState = sqliteTable(
     nextDueAt: integer("next_due_at", { mode: "timestamp_ms" }),
   },
   (t) => [index("monitor_heartbeat_state_next_due_at_idx").on(t.nextDueAt)],
-);
-
-export const monitorHeartbeatStateRelations = relations(
-  monitorHeartbeatState,
-  ({ one }) => ({
-    monitor: one(monitor, {
-      fields: [monitorHeartbeatState.monitorId],
-      references: [monitor.id],
-    }),
-  }),
 );

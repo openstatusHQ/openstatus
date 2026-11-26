@@ -64,6 +64,7 @@ async function setStatusReport(
     .where(eq(incident.id, existing.id))
     .returning()
     .get();
+  if (!updated) throw new NotFoundError("incident", existing.id);
   await emitAudit(tx, ctx, {
     action: "incident.update",
     entityType: "incident",

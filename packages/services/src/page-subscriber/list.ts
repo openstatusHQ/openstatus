@@ -1,5 +1,5 @@
 import { and, eq, isNull } from "@openstatus/db";
-import { page, pageSubscriber } from "@openstatus/db/src/schema";
+import { pageSubscriber } from "@openstatus/db/src/schema";
 
 import { requireScope } from "../auth";
 import { type ServiceContext, getReadDb } from "../context";
@@ -65,32 +65,28 @@ export async function listPageSubscribers(args: {
   const db = getReadDb(ctx);
 
   const pageRow = await db.query.page.findFirst({
-    where: and(
-      eq(page.workspaceId, ctx.workspace.id),
-      eq(page.id, input.pageId),
-    ),
+    where: { workspaceId: ctx.workspace.id, id: input.pageId },
   });
   if (!pageRow) {
     throw new NotFoundError("page", input.pageId);
   }
 
   const subscriptions = await db.query.pageSubscriber.findMany({
-    where:
-      input.includeUnsubscribed === false
-        ? and(
-            eq(pageSubscriber.pageId, pageRow.id),
-            isNull(pageSubscriber.unsubscribedAt),
-          )
-        : eq(pageSubscriber.pageId, pageRow.id),
+    where: {
+      pageId: pageRow.id,
+      ...(input.includeUnsubscribed === false && {
+        unsubscribedAt: { isNull: true },
+      }),
+    },
     with: {
       components: {
         with: { pageComponent: true },
       },
     },
-    orderBy: (subs, { desc, asc }) =>
+    orderBy:
       input.order === "asc"
-        ? [asc(subs.createdAt), asc(subs.id)]
-        : [desc(subs.createdAt), desc(subs.id)],
+        ? { createdAt: "asc", id: "asc" }
+        : { createdAt: "desc", id: "desc" },
     limit: input.limit,
     offset: input.offset,
   });
@@ -129,10 +125,7 @@ export async function countPageSubscribers(args: {
   const input = ListPageSubscribersInput.parse(args.input);
   const db = getReadDb(ctx);
   const pageRow = await db.query.page.findFirst({
-    where: and(
-      eq(page.workspaceId, ctx.workspace.id),
-      eq(page.id, input.pageId),
-    ),
+    where: { workspaceId: ctx.workspace.id, id: input.pageId },
   });
   if (!pageRow) throw new NotFoundError("page", input.pageId);
   return db.$count(

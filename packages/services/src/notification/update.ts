@@ -8,6 +8,7 @@ import {
 import { emitAudit } from "../audit";
 import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import type { Notification } from "../types";
 import {
   DEPRECATED_PROVIDERS,
@@ -58,6 +59,7 @@ export async function updateNotification(args: {
       .where(eq(notification.id, existing.id))
       .returning()
       .get();
+    if (!updated) throw new NotFoundError("notification", existing.id);
 
     await tx
       .delete(notificationsToMonitors)

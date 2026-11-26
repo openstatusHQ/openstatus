@@ -190,7 +190,7 @@ describe("statusPage.getUptime in runs mode", () => {
     stub("heartbeatStatus15m", async () => ({ data: [] }));
 
     const berlin = await db.query.page.findFirst({
-      where: eq(page.slug, berlinSlug),
+      where: { slug: berlinSlug },
       with: { pageComponents: true },
     });
     const result = await caller().statusPage.getUptime({
@@ -223,7 +223,7 @@ describe("statusPage.getUptime in runs mode", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     const berlin = await db.query.page.findFirst({
-      where: eq(page.slug, berlinSlug),
+      where: { slug: berlinSlug },
       with: { pageComponents: true },
     });
     const result = await caller().statusPage.getUptime({

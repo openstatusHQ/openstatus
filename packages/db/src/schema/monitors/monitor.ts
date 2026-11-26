@@ -1,4 +1,4 @@
-import { relations, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   index,
   integer,
@@ -8,11 +8,6 @@ import {
 } from "drizzle-orm/sqlite-core";
 
 import { monitorPeriodicity } from "../constants";
-import { monitorIncidentTable } from "../monitor_incidents/monitor_incident";
-import { monitorStatusTable } from "../monitor_status/monitor_status";
-import { monitorTagsToMonitors } from "../monitor_tags";
-import { notificationsToMonitors } from "../notifications";
-import { privateLocationToMonitors } from "../private_locations";
 import { workspace } from "../workspaces/workspace";
 import {
   grpcTlsModes,
@@ -96,15 +91,3 @@ export const monitor = sqliteTable(
       .where(sql`${t.heartbeatToken} IS NOT NULL`),
   ],
 );
-
-export const monitorRelation = relations(monitor, ({ one, many }) => ({
-  monitorTagsToMonitors: many(monitorTagsToMonitors),
-  workspace: one(workspace, {
-    fields: [monitor.workspaceId],
-    references: [workspace.id],
-  }),
-  monitorsToNotifications: many(notificationsToMonitors),
-  monitorIncidents: many(monitorIncidentTable),
-  monitorStatus: many(monitorStatusTable),
-  privateLocationToMonitors: many(privateLocationToMonitors),
-}));

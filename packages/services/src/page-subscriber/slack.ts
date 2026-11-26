@@ -1,4 +1,4 @@
-import { and, eq, isNull, sql } from "@openstatus/db";
+import { eq, sql } from "@openstatus/db";
 import {
   page,
   pageSubscriber,
@@ -62,7 +62,7 @@ export async function createSlackSubscriber(args: {
 
   const readDb = getReadDb(dbOnlyContext(args.db));
   const pageData = await readDb.query.page.findFirst({
-    where: eq(page.id, input.pageId),
+    where: { id: input.pageId },
     with: { workspace: true },
   });
   if (!pageData) {
@@ -91,11 +91,11 @@ export async function createSlackSubscriber(args: {
     assertSlackSubscribable(current.accessType);
 
     const existing = await tx.query.pageSubscriber.findFirst({
-      where: and(
-        eq(pageSubscriber.pageId, input.pageId),
-        eq(pageSubscriber.slackChannelId, input.channelId),
-        eq(pageSubscriber.channelType, "slack"),
-      ),
+      where: {
+        pageId: input.pageId,
+        slackChannelId: input.channelId,
+        channelType: "slack",
+      },
     });
 
     if (existing && !existing.unsubscribedAt) {
@@ -199,7 +199,7 @@ export async function removeSlackSubscriber(args: {
 
   const readDb = getReadDb(dbOnlyContext(args.db));
   const pageData = await readDb.query.page.findFirst({
-    where: eq(page.id, input.pageId),
+    where: { id: input.pageId },
     with: { workspace: true },
   });
   if (!pageData) {
@@ -209,13 +209,14 @@ export async function removeSlackSubscriber(args: {
 
   return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const existing = await tx.query.pageSubscriber.findFirst({
-      where: and(
-        eq(pageSubscriber.pageId, input.pageId),
-        eq(pageSubscriber.slackChannelId, input.channelId),
-        eq(pageSubscriber.channelType, "slack"),
-        sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${input.teamId}`,
-        isNull(pageSubscriber.unsubscribedAt),
-      ),
+      where: {
+        pageId: input.pageId,
+        slackChannelId: input.channelId,
+        channelType: "slack",
+        RAW: (t) =>
+          sql`json_extract(${t.channelConfig}, '$.teamId') = ${input.teamId}`,
+        unsubscribedAt: { isNull: true },
+      },
     });
     if (!existing) return { removed: false };
 
@@ -262,11 +263,12 @@ export async function removeSlackTeamSubscribers(args: {
   const { teamId } = args.input;
   return withTransaction(dbOnlyContext(args.db), async (tx) => {
     const rows = await tx.query.pageSubscriber.findMany({
-      where: and(
-        eq(pageSubscriber.channelType, "slack"),
-        isNull(pageSubscriber.unsubscribedAt),
-        sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${teamId}`,
-      ),
+      where: {
+        channelType: "slack",
+        unsubscribedAt: { isNull: true },
+        RAW: (t) =>
+          sql`json_extract(${t.channelConfig}, '$.teamId') = ${teamId}`,
+      },
       with: { page: { with: { workspace: true } } },
     });
     for (const existing of rows) {
@@ -319,12 +321,13 @@ export async function listSlackSubscribersForChannel(args: {
   const readDb = getReadDb(dbOnlyContext(args.db));
 
   const rows = await readDb.query.pageSubscriber.findMany({
-    where: and(
-      eq(pageSubscriber.slackChannelId, input.channelId),
-      eq(pageSubscriber.channelType, "slack"),
-      sql`json_extract(${pageSubscriber.channelConfig}, '$.teamId') = ${input.teamId}`,
-      isNull(pageSubscriber.unsubscribedAt),
-    ),
+    where: {
+      slackChannelId: input.channelId,
+      channelType: "slack",
+      RAW: (t) =>
+        sql`json_extract(${t.channelConfig}, '$.teamId') = ${input.teamId}`,
+      unsubscribedAt: { isNull: true },
+    },
     with: { page: true },
   });
 

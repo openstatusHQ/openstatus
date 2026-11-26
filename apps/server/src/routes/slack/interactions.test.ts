@@ -699,7 +699,7 @@ describe("link this channel button", () => {
 
   test("binds the channel to the incident as the clicking member", async () => {
     const workspace = selectWorkspaceSchema.parse(
-      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
+      await db.query.workspace.findFirst({ where: { id: 1 } }),
     );
     const created = await declareIncident({
       ctx: { workspace, actor: { type: "system", job: "test" } },
@@ -1312,7 +1312,7 @@ describe("pinned incident card buttons", () => {
     configureSlackDoubles();
     redisStore.clear();
     workspace = selectWorkspaceSchema.parse(
-      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
+      await db.query.workspace.findFirst({ where: { id: 1 } }),
     );
     const created = await declareIncident({
       ctx: { workspace, actor: { type: "system", job: "test" } },
@@ -1687,7 +1687,7 @@ describe("Acknowledge on the pinned incident card", () => {
     analytics.track.mockClear();
     const workspace = selectWorkspaceSchema.parse(
       await db.query.workspace.findFirst({
-        where: eq(workspaceTable.id, workspaceId),
+        where: { id: workspaceId },
       }),
     );
     const created = await declareIncident({
@@ -2328,7 +2328,7 @@ describe("link this channel instead", () => {
     redisStore.clear();
     slackTestState.archiveImpl = () => Promise.resolve({ ok: true });
     workspace = selectWorkspaceSchema.parse(
-      await db.query.workspace.findFirst({ where: eq(workspaceTable.id, 1) }),
+      await db.query.workspace.findFirst({ where: { id: 1 } }),
     );
     const suffix = crypto.randomUUID().replaceAll("-", "").toUpperCase();
     oldChannel = `CINC${suffix}`;
