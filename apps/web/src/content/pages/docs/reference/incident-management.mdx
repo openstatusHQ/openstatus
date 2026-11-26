@@ -68,7 +68,7 @@ An incident can link to one status report. The two keep their own status: markin
 A postmortem is a markdown document attached to a resolved incident. It is either a `draft` or `approved`.
 
 - The agent drafts it from the incident's fields, its timeline, the linked status report's updates and the history of the incident's Slack channel. Where it has no facts it says what is unknown.
-- The draft has seven sections: Summary, Impact, Timeline, Root cause, What went well, What went wrong, Action items.
+- The draft has seven sections: Summary, Impact, Timeline, Root cause, What went well, What went wrong, Action items. A [postmortem playbook](/docs/reference/playbooks#postmortem-drafts) replaces them with your own structure.
 - Drafting again replaces the draft. Once approved, the agent can no longer redraft it; a person can still edit it.
 - An owner, an admin or the incident's commander approves it. Approving closes the incident by default.
 
@@ -126,3 +126,4 @@ Every change to an incident or its postmortem is written to the audit log with t
 - **[Understanding status reports and incidents](/docs/concept/status-reports-and-incidents)**: how the objects fit together.
 - **[Set up the Slack agent](/docs/guides/how-to-setup-slack-agent)**: install Slack and run your first incident from it.
 - **[MCP server reference](/docs/reference/mcp-server#incidents)**: the incident tools for agents.
+- **[Playbooks reference](/docs/reference/playbooks)**: write down your severities, roles and postmortem structure for the agent to follow.

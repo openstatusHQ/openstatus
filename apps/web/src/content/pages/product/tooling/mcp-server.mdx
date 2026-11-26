@@ -32,7 +32,7 @@ Add the URL as a custom connector in Claude, ChatGPT, or Cursor, or run `claude 
 
 ## What you can do
 
-The server exposes **46 workspace tools**, grouped by entity. Read tools work with **Read only** access; write tools need **Read & write**.
+The server exposes **49 workspace tools**, grouped by entity. Read tools work with **Read only** access; write tools need **Read & write**.
 
 | Area              | Read                                                                               | Write                                                                                                                                                                                                             |
 | ----------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -40,6 +40,7 @@ The server exposes **46 workspace tools**, grouped by entity. Read tools work wi
 | Status reports    | `list_status_reports` `get_status_report`                                          | `create_status_report` `add_status_report_update` `update_status_report` `resolve_status_report` `update_status_report_update` `delete_status_report_update`                                                      |
 | Maintenance       | `list_maintenances` `get_maintenance`                                              | `create_maintenance` `update_maintenance` `add_maintenance_update` `update_maintenance_update` `delete_maintenance_update`                                                                                        |
 | Incidents         | `list_incidents` `get_incident` `get_postmortem`                                   | `declare_incident` `update_incident` `set_incident_status` `resolve_incident` `add_incident_note` `draft_postmortem` `approve_postmortem`                                                                         |
+| Playbooks         | `list_playbooks` `get_playbook`                                                    | `update_playbook`                                                                                                                                                                                                 |
 | Monitors          | `list_monitors` `get_monitor` `get_monitor_status` `get_monitor_summary`           | `create_monitor` `update_monitor`                                                                                                                                                                                 |
 | Response logs     | `list_response_logs` `get_response_log`                                            |                                                                                                                                                                                                                   |
 | Notifications     | `list_notifications`                                                               |                                                                                                                                                                                                                   |

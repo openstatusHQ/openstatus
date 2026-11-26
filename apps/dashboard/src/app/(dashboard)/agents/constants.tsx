@@ -33,6 +33,6 @@ export const AGENT_TABS: {
     value: "playbooks",
     label: "Playbooks",
     icon: BookOpen,
-    docs: "https://www.openstatus.dev/docs",
+    docs: "https://www.openstatus.dev/docs/reference/playbooks",
   },
 ];
