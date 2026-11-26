@@ -108,7 +108,6 @@ resource "openstatus_http_monitor" "website" {
   url         = "https://www.example.com"
   periodicity = "1m"
   active      = true
-  public      = true
   regions     = ["fly-iad", "fly-ams", "fly-syd"]
 }
 ```
@@ -204,7 +203,7 @@ Manages a TCP connection monitor to verify that a port is open and reachable.
 | `degraded_at` | `number`      | No       | computed | Degradation threshold in milliseconds.                             |
 | `retry`       | `number`      | No       | `3`      | Number of retries on failure (0–10).                               |
 | `active`      | `bool`        | No       | `false`  | Whether the monitor is active.                                     |
-| `public`      | `bool`        | No       | `false`  | Whether the monitor is publicly visible.                           |
+| `public`      | `bool`        | No       | `false`  | Deprecated: status pages no longer read it. Visibility is set per [page component](/docs/reference/page-components#visibility). |
 | `description` | `string`      | No       |          | Monitor description (max 1024 chars).                              |
 | `regions`     | `set(string)` | No       |          | Regions to monitor from. See [Available Regions](#available-regions). |
 
@@ -265,7 +264,7 @@ Manages a DNS monitor with support for record type assertions.
 | `degraded_at` | `number`      | No       | computed | Degradation threshold in milliseconds.                             |
 | `retry`       | `number`      | No       | `3`      | Number of retries on failure (0–10).                               |
 | `active`      | `bool`        | No       | `false`  | Whether the monitor is active.                                     |
-| `public`      | `bool`        | No       | `false`  | Whether the monitor is publicly visible.                           |
+| `public`      | `bool`        | No       | `false`  | Deprecated: status pages no longer read it. Visibility is set per [page component](/docs/reference/page-components#visibility). |
 | `description` | `string`      | No       |          | Monitor description (max 1024 chars).                              |
 | `regions`     | `set(string)` | No       |          | Regions to monitor from. See [Available Regions](#available-regions). |
 
@@ -342,7 +341,7 @@ Manages an ICMP (ping) monitor that checks host reachability and round-trip late
 | `degraded_at` | `number`      | No       | computed | Average-latency threshold in milliseconds.                         |
 | `retry`       | `number`      | No       | `3`      | Number of retries on a fully failed check (0–10).                  |
 | `active`      | `bool`        | No       | `false`  | Whether the monitor is active.                                     |
-| `public`      | `bool`        | No       | `false`  | Whether the monitor is publicly visible.                           |
+| `public`      | `bool`        | No       | `false`  | Deprecated: status pages no longer read it. Visibility is set per [page component](/docs/reference/page-components#visibility). |
 | `description` | `string`      | No       |          | Monitor description (max 1024 chars).                              |
 | `regions`     | `set(string)` | No       |          | Regions to monitor from. See [Available Regions](#available-regions). |
 
@@ -881,7 +880,6 @@ resource "openstatus_http_monitor" "api" {
   method      = "GET"
   timeout     = 30000
   active      = true
-  public      = true
   regions     = ["fly-iad", "fly-ams", "fly-nrt"]
 
   status_code_assertions {
@@ -900,7 +898,6 @@ resource "openstatus_http_monitor" "website" {
   url         = "https://www.example.com"
   periodicity = "1m"
   active      = true
-  public      = true
   regions     = ["fly-iad", "fly-ams", "fly-syd"]
 
   status_code_assertions {

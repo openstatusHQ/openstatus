@@ -20,6 +20,7 @@ import { FormResponseTime } from "./form-response-time";
 import { FormRetry, RETRY_DEFAULT } from "./form-retry";
 import { FormSchedulingRegions } from "./form-scheduling-regions";
 import { FormTags } from "./form-tags";
+import { FormVisibility } from "./form-visibility";
 
 export function FormMonitorUpdate() {
   const { id } = useParams<{ id: string }>();
@@ -275,6 +276,7 @@ export function FormMonitorUpdate() {
               });
             }}
           />
+          <FormVisibility visibility={monitor.public ?? false} />
         </>
       )}
       <FormDangerZone
