@@ -219,7 +219,7 @@ function ConfirmPlanChangeDialog({
   const description = isTrialing
     ? `Your trial ends now and your card is charged ${formatted} today.`
     : shown.kind === "downgrade"
-      ? `You give up ${plans[currentPlan].title} for ${target.title} at ${formatted} right away, along with its higher limits. The unused time is credited to your next invoice.`
+      ? `You move to ${target.title} at ${formatted} right away and lose the higher limits of ${plans[currentPlan].title}. The unused time is credited to your next invoice.`
       : `Your subscription changes to ${target.title} at ${formatted} right away. The difference is prorated on your next invoice.`;
   const action =
     shown.kind === "interval"
