@@ -70,7 +70,6 @@ export function getMonitorDetails(
   );
 
   const visibility: DetailsRow[] = [
-    { label: "Public", value: <TableCellBoolean value={output.public} /> },
     {
       label: "Tags",
       value: (

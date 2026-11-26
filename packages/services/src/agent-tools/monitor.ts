@@ -141,7 +141,11 @@ const GetMonitorOutput = z.object({
   degradedAfter: z.number().int().nullable(),
   retry: z.number().int(),
   followRedirects: z.boolean(),
-  public: z.boolean(),
+  public: z
+    .boolean()
+    .describe(
+      "Deprecated and ignored: visibility is set per status page component (list_page_components `public`).",
+    ),
   tags: z.array(z.object({ id: z.number().int(), name: z.string() })),
   notifications: z.array(
     z.object({

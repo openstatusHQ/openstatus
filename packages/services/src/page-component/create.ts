@@ -6,6 +6,7 @@ import { requireScope } from "../auth";
 import { type ServiceContext, withTransaction } from "../context";
 import { ConflictError, NotFoundError } from "../errors";
 import { assertWithinLimit } from "../limits";
+import { assertHeartbeatNotPublic } from "../monitor/internal";
 import { assertGroupOnPage, assertPageInWorkspace } from "./internal";
 import { CreatePageComponentInput } from "./schemas";
 
@@ -33,7 +34,11 @@ export async function createPageComponent(args: {
       // Soft-deleted monitors are excluded — a tombstoned monitor's id
       // shouldn't be attachable to a fresh component.
       const row = await tx
-        .select({ id: monitor.id, name: monitor.name })
+        .select({
+          id: monitor.id,
+          name: monitor.name,
+          jobType: monitor.jobType,
+        })
         .from(monitor)
         .where(
           and(
@@ -48,6 +53,7 @@ export async function createPageComponent(args: {
       // safe: the schema's refine guarantees monitorId on this branch
       if (!row) throw new NotFoundError("monitor", input.monitorId as number);
       name = name ?? row.name;
+      assertHeartbeatNotPublic(row, input.public);
 
       // `(pageId, monitorId)` is UNIQUE — pre-check so a duplicate reads as a
       // conflict rather than a raw driver constraint failure.
@@ -107,6 +113,7 @@ export async function createPageComponent(args: {
         description: input.description ?? null,
         order,
         groupId: input.groupId ?? null,
+        public: input.public ?? false,
       })
       .returning()
       .get();

@@ -66,7 +66,6 @@ Monitor components calculate uptime percentages based on:
 
 **Monitor selection:**
 When adding a monitor component, the dashboard shows you available monitors with indicators for:
-- **Public/Private status**: Whether the monitor is already public.
 - **Active status**: Inactive monitors can be linked, but don't share data until they're activated again. The dashboard warns you when a linked monitor is inactive.
 - **Already linked**: Monitors already used on this status page are unavailable.
 
@@ -148,6 +147,32 @@ Static components do not perform any health checks or generate incidents. You ar
 - Manual status reports.
 - Scheduled maintenances.
 - Automatic incidents are **not** supported.
+
+## Visibility
+
+**Type:** Boolean
+**Default:** `false`
+
+Each monitor component decides whether its monitor's stats are public **on that status page**. Because a monitor can be attached to several status pages, the same monitor can be public on an internal page and private on your customer-facing one.
+
+- **Public** — visitors see the monitor's latency, response time and uptime, and can open its detail page (`/monitors/<id>`) from the status page.
+- **Private** — the component still shows its status, incidents, reports and maintenances, but the stats stay in your dashboard.
+
+![The visibility toggle next to each monitor component](/assets/changelog/page-component-visibility.png)
+
+Set it with the eye toggle next to the component under [**Status Pages > Components**](https://app.openstatus.dev/status-pages/_/components), then **Submit**. The open eye means public, the crossed-out eye means private; hover the toggle to see the current value.
+
+**Rules:**
+
+- New components start private.
+- Only monitor components can be public. Static components have no stats to share, and the API rejects `public: true` on them.
+- Heartbeat monitors cannot be public: pings have no latency to chart, and their details stay private. The toggle is disabled for them.
+
+<Aside type="note">
+Visibility used to be a monitor setting (`public` on the monitor) that applied to every page the monitor was on. When it moved to page components, each monitor component copied the old value of its monitor, so existing pages did not change. The monitor-level field is deprecated: it is still accepted by the API and Terraform, but status pages no longer read it.
+</Aside>
+
+**API and MCP:** `PageComponent.public` is returned by every status page RPC that lists components. Set it with `public` on `AddMonitorComponent` and `UpdateComponent`, or with the `add_page_component` and `update_page_component` [MCP tools](/docs/reference/mcp-server).
 
 ## Component groups
 
@@ -281,6 +306,7 @@ Components and groups can be reordered using drag-and-drop functionality in the 
 You can modify the following properties of existing components:
 
 - Component name and description.
+- [Visibility](#visibility) (monitor components only).
 - Group assignment (move between groups or make ungrouped).
 - Display order.
 

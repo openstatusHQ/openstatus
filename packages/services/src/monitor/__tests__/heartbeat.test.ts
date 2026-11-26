@@ -38,7 +38,6 @@ import {
   bulkUpdateMonitors,
   updateMonitorConfig,
   updateMonitorGeneral,
-  updateMonitorPublic,
 } from "../update";
 
 const TEST_PREFIX = "svc-heartbeat-test";
@@ -756,12 +755,6 @@ describe("visibility", () => {
 
       const row = await createHeartbeat(tx);
       await expect(
-        updateMonitorPublic({
-          ctx: txCtx,
-          input: { id: row.id, public: true },
-        }),
-      ).rejects.toBeInstanceOf(ValidationError);
-      await expect(
         updateMonitorConfig({
           ctx: txCtx,
           input: { id: row.id, public: true },
@@ -775,7 +768,7 @@ describe("visibility", () => {
       ).rejects.toBeInstanceOf(ValidationError);
 
       // making it private stays allowed
-      await updateMonitorPublic({
+      await updateMonitorConfig({
         ctx: txCtx,
         input: { id: row.id, public: false },
       });

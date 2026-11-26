@@ -270,16 +270,9 @@ Authorization: Bearer <your_token>
 **Type:** Boolean
 **Default:** `false`
 
-Controls the visibility of monitor data on your public status page.
+**Deprecated.** Status pages no longer read this field. A monitor can be attached to several status pages, so whether its stats are public is now set on each [page component](/docs/reference/page-components#visibility). When the setting moved, every monitor component copied this value, so existing pages kept their visibility.
 
-- `true` — monitor metrics and status are visible to all visitors of your status page.
-- `false` — monitor data remains private, accessible only within your openstatus dashboard.
-
-**Use cases for public visibility:**
-
-- Enhancing transparency with users regarding service health.
-- Providing public API status pages.
-- Displaying SaaS service availability to customers.
+The field is still accepted by the API and Terraform so existing configurations keep working, and it is shown read-only in the monitor's settings.
 
 ## Related resources
 

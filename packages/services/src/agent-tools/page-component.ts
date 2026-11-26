@@ -34,6 +34,9 @@ const ListPageComponentsOutput = z.object({
       monitorId: z.number().int().nullable(),
       groupId: z.number().int().nullable(),
       groupName: z.string().nullable(),
+      public: z
+        .boolean()
+        .describe("Whether the monitor's stats are shown on this page."),
     }),
   ),
   groups: z.array(
@@ -74,6 +77,7 @@ export const listPageComponentsTool: AgentTool<
         monitorId: c.monitorId ?? null,
         groupId: c.groupId ?? null,
         groupName: c.group?.name ?? null,
+        public: c.public,
       })),
       groups: groups.map((g) => ({
         id: g.id,
@@ -101,6 +105,12 @@ const AddPageComponentInputShape = z.object({
     .optional()
     .describe("Public component name. Defaults to the monitor's name."),
   description: z.string().optional(),
+  public: z
+    .boolean()
+    .optional()
+    .describe(
+      "Show the monitor's latency and uptime stats on this page. Monitor components only; heartbeat monitors cannot be public.",
+    ),
 });
 
 const AddPageComponentOutput = z.object({
@@ -109,6 +119,7 @@ const AddPageComponentOutput = z.object({
   monitorId: z.number().int(),
   name: z.string(),
   order: z.number().int(),
+  public: z.boolean(),
 });
 
 export const addPageComponentTool: AgentTool<
@@ -133,6 +144,9 @@ export const addPageComponentTool: AgentTool<
         },
         { label: "Monitor ID", value: String(input.monitorId) },
         ...(input.name ? [{ label: "Name", value: input.name }] : []),
+        ...(input.public !== undefined
+          ? [{ label: "Public", value: input.public ? "Yes" : "No" }]
+          : []),
       ],
     }),
     verb: "added",
@@ -146,6 +160,7 @@ export const addPageComponentTool: AgentTool<
         monitorId: input.monitorId,
         name: input.name,
         description: input.description,
+        public: input.public,
       },
     });
     return {
@@ -154,6 +169,7 @@ export const addPageComponentTool: AgentTool<
       monitorId: created.monitorId ?? input.monitorId,
       name: created.name,
       order: created.order ?? 0,
+      public: created.public,
     };
   },
 };
@@ -275,6 +291,12 @@ const UpdatePageComponentInputShape = z
       .describe(
         "Group to move the component into (must be on the same page; ids from list_page_components `groups`). null removes it from its group.",
       ),
+    public: z
+      .boolean()
+      .optional()
+      .describe(
+        "Show the monitor's latency and uptime stats on this page. Monitor components only; heartbeat monitors cannot be public.",
+      ),
   })
   .refine(
     (input) => Object.values(input).filter((v) => v !== undefined).length > 1,
@@ -288,6 +310,7 @@ const UpdatePageComponentOutput = z.object({
   name: z.string(),
   order: z.number().int(),
   groupId: z.number().int().nullable(),
+  public: z.boolean(),
 });
 
 export const updatePageComponentTool: AgentTool<
@@ -296,7 +319,7 @@ export const updatePageComponentTool: AgentTool<
 > = {
   name: "update_page_component",
   description:
-    "Rename, reorder, describe or regroup a status page component. AUDIT-LOGGED. Call list_page_components first and send only the fields that change. groupId moves the component into a group on the same page (create one with create_component_group); null ungroups it. The linked monitor cannot change — add a new component instead.",
+    "Rename, reorder, describe, regroup or change the visibility (`public`) of a status page component. AUDIT-LOGGED. Call list_page_components first and send only the fields that change. groupId moves the component into a group on the same page (create one with create_component_group); null ungroups it. The linked monitor cannot change — add a new component instead.",
   scope: "pages:write",
   destructive: true,
   inputSchema: UpdatePageComponentInputShape,
@@ -320,6 +343,7 @@ export const updatePageComponentTool: AgentTool<
           description: c.description,
           order: currentPosition(c, components),
           groupId: c.groupId,
+          public: c.public,
         });
       },
     },
@@ -348,6 +372,9 @@ export const updatePageComponentTool: AgentTool<
                   input.groupId === null ? "(ungroup)" : String(input.groupId),
               },
             ]
+          : []),
+        ...(input.public !== undefined
+          ? [{ label: "Public", value: input.public ? "Yes" : "No" }]
           : []),
       ],
     }),
@@ -387,6 +414,7 @@ export const updatePageComponentTool: AgentTool<
           name: input.name,
           description: input.description,
           groupId: input.groupId,
+          public: input.public,
           ...positions.get(target.id),
         },
       });
@@ -403,6 +431,7 @@ export const updatePageComponentTool: AgentTool<
       name: updated.name,
       order: updated.order ?? 0,
       groupId: updated.groupId ?? null,
+      public: updated.public,
     };
   },
 };

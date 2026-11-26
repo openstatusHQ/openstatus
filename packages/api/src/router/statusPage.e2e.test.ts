@@ -1422,7 +1422,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "https://example.com",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1438,6 +1437,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         name: componentName,
         description: componentDescription,
         order: 0,
+        public: true,
       })
       .returning()
       .get();
@@ -1453,7 +1453,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "https://example.com",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1468,6 +1467,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         monitorId: noDescriptionMonitorId,
         name: "No Description Component",
         order: 1,
+        public: true,
       })
       .returning()
       .get();
@@ -1483,7 +1483,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "https://example.com",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1499,6 +1498,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         name: "Cleared Description Component",
         description: "",
         order: 2,
+        public: true,
       })
       .returning()
       .get();
@@ -1515,7 +1515,6 @@ describe("statusPage exposes page component names, not internal monitor names", 
         periodicity: "1m",
         url: "api.example.com:443",
         active: true,
-        public: true,
       })
       .returning()
       .get();
@@ -1530,6 +1529,7 @@ describe("statusPage exposes page component names, not internal monitor names", 
         monitorId: grpcMonitorId,
         name: "gRPC component",
         order: 3,
+        public: true,
       })
       .returning()
       .get();
@@ -1692,6 +1692,36 @@ describe("statusPage exposes page component names, not internal monitor names", 
 
     expect(result?.name).toBe(componentName);
     expect(result?.description).toBe(componentDescription);
+  });
+
+  test("visibility comes from the page component, not the monitor", async () => {
+    await db
+      .update(monitor)
+      .set({ public: true })
+      .where(eq(monitor.id, publicNameMonitorId));
+    await db
+      .update(pageComponent)
+      .set({ public: false })
+      .where(eq(pageComponent.id, publicNameComponentId));
+    try {
+      const caller = await createCaller();
+      const detail = await caller.statusPage.getMonitor({
+        slug: publicNameSlug,
+        id: publicNameMonitorId,
+      });
+      expect(detail).toBeNull();
+
+      const list = await caller.statusPage.getMonitors({
+        slug: publicNameSlug,
+      });
+      expect(list?.map((m) => m.id)).not.toContain(publicNameMonitorId);
+      expect(list?.map((m) => m.id)).toContain(grpcMonitorId);
+    } finally {
+      await db
+        .update(pageComponent)
+        .set({ public: true })
+        .where(eq(pageComponent.id, publicNameComponentId));
+    }
   });
 });
 
@@ -1863,5 +1893,101 @@ describe("statusPage on a page stored in runs mode", () => {
 
     const light = await caller.statusPage.getLight({ slug: runsSlug });
     expect(light).not.toBeNull();
+  });
+});
+
+describe("statusPage visibility is per page", () => {
+  const publicSlug = "e2e-visibility-public-page";
+  const privateSlug = "e2e-visibility-private-page";
+  let monitorId: number;
+  let workspaceId: number;
+
+  async function createCaller() {
+    const { edgeRouter } = await import("../edge");
+    const { createInnerTRPCContext } = await import("../trpc");
+    return edgeRouter.createCaller(
+      // @ts-expect-error - auth not required for public procedure
+      createInnerTRPCContext({ req: undefined, auth: undefined }),
+    );
+  }
+
+  beforeAll(async () => {
+    const { workspace: ws } = await createTestWorkspace();
+    workspaceId = ws.id;
+    // private at the monitor level: only the component flag may expose it
+    const m = await db
+      .insert(monitor)
+      .values({
+        workspaceId,
+        name: "Per-page visibility monitor",
+        periodicity: "1m",
+        url: "https://example.com",
+        active: true,
+        public: false,
+      })
+      .returning()
+      .get();
+    monitorId = m.id;
+
+    for (const [slug, isPublic] of [
+      [publicSlug, true],
+      [privateSlug, false],
+    ] as const) {
+      const p = await db
+        .insert(page)
+        .values({
+          workspaceId,
+          title: slug,
+          description: "",
+          slug,
+          customDomain: "",
+          published: true,
+        })
+        .returning()
+        .get();
+      await db.insert(pageComponent).values({
+        workspaceId,
+        pageId: p.id,
+        type: "monitor",
+        monitorId,
+        name: "API",
+        public: isPublic,
+      });
+    }
+  });
+
+  afterAll(async () => {
+    await db.delete(page).where(eq(page.workspaceId, workspaceId));
+    await db.delete(monitor).where(eq(monitor.id, monitorId));
+  });
+
+  test("a private monitor is shown where its component is public", async () => {
+    const caller = await createCaller();
+    const detail = await caller.statusPage.getMonitor({
+      slug: publicSlug,
+      id: monitorId,
+    });
+    expect(detail?.id).toBe(monitorId);
+
+    const list = await caller.statusPage.getMonitors({ slug: publicSlug });
+    expect(list?.map((m) => m.id)).toEqual([monitorId]);
+
+    const page = await caller.statusPage.get({ slug: publicSlug });
+    expect(page?.monitors.find((m) => m.id === monitorId)?.public).toBe(true);
+  });
+
+  test("the same monitor stays hidden on the page where it is private", async () => {
+    const caller = await createCaller();
+    const detail = await caller.statusPage.getMonitor({
+      slug: privateSlug,
+      id: monitorId,
+    });
+    expect(detail).toBeNull();
+
+    const list = await caller.statusPage.getMonitors({ slug: privateSlug });
+    expect(list).toEqual([]);
+
+    const page = await caller.statusPage.get({ slug: privateSlug });
+    expect(page?.monitors.find((m) => m.id === monitorId)?.public).toBe(false);
   });
 });

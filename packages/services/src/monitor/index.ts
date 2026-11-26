@@ -108,7 +108,6 @@ export {
   updateMonitorFollowRedirects,
   updateMonitorGeneral,
   updateMonitorOtel,
-  updateMonitorPublic,
   updateMonitorResponseTime,
   updateMonitorRetry,
 } from "./update";
@@ -146,7 +145,6 @@ export {
   UpdateMonitorGeneralInput,
   UpdateMonitorNotifiersInput,
   UpdateMonitorOtelInput,
-  UpdateMonitorPublicInput,
   UpdateMonitorResponseTimeInput,
   UpdateMonitorRetryInput,
   UpdateMonitorSchedulingRegionsInput,

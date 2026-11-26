@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const publicOnlyOnMonitor = {
+  path: ["public"],
+  message: "Only monitor components can be public.",
+};
+
 // Flat shape + cross-field `.refine` for the monitor/static invariant.
 // The DB has a matching CHECK constraint
 // (`type='monitor' AND monitor_id IS NOT NULL OR type='static' AND
@@ -20,6 +25,8 @@ const componentInput = z
     name: z.string().trim().min(1),
     description: z.string().nullish(),
     type: z.enum(["monitor", "static"]),
+    // Omitted keeps the stored value (new components default to private).
+    public: z.boolean().optional(),
   })
   .refine(
     (c) => (c.type === "monitor" ? c.monitorId != null : c.monitorId == null),
@@ -28,7 +35,8 @@ const componentInput = z
       message:
         "Monitor components require a monitorId; static components must not set one.",
     },
-  );
+  )
+  .refine((c) => !(c.public && c.type !== "monitor"), publicOnlyOnMonitor);
 
 const groupInput = z.object({
   // `id` is required to round-trip existing groups. Omitting it flags the
@@ -65,6 +73,7 @@ export const CreatePageComponentInput = z
     // Omitted = append after the page's last component.
     order: z.number().int().optional(),
     groupId: z.number().int().nullish(),
+    public: z.boolean().optional(),
   })
   .refine(
     (c) => (c.type === "monitor" ? c.monitorId != null : c.monitorId == null),
@@ -77,7 +86,8 @@ export const CreatePageComponentInput = z
   .refine((c) => c.type === "monitor" || (c.name?.length ?? 0) > 0, {
     path: ["name"],
     message: "Static components require a name.",
-  });
+  })
+  .refine((c) => !(c.public && c.type !== "monitor"), publicOnlyOnMonitor);
 export type CreatePageComponentInput = z.input<typeof CreatePageComponentInput>;
 
 /** Partial patch — `undefined` leaves a field as-is, `null` clears it. */
@@ -88,6 +98,7 @@ export const UpdatePageComponentInput = z.object({
   order: z.number().int().optional(),
   groupId: z.number().int().nullish(),
   groupOrder: z.number().int().optional(),
+  public: z.boolean().optional(),
 });
 export type UpdatePageComponentInput = z.infer<typeof UpdatePageComponentInput>;
 

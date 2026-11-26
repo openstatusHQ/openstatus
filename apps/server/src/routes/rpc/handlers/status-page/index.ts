@@ -891,6 +891,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
           description: req.description ?? null,
           order: req.order ?? 0,
           groupId,
+          public: req.public,
         },
       });
 
@@ -988,6 +989,7 @@ export const statusPageServiceImpl: ServiceImpl<typeof StatusPageService> = {
                 : parseEntityId(req.groupId, "group id")
               : undefined,
           groupOrder: req.groupOrder,
+          public: req.public,
         },
       });
 

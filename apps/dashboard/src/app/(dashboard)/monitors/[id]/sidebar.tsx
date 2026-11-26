@@ -18,6 +18,10 @@ import {
 } from "@/data/heartbeat.client";
 import { getMonitorHealth, monitorTypes } from "@/data/monitors.client";
 import { useHydrated } from "@/hooks/use-hydrated";
+import {
+  formatMonitorVisibility,
+  useMonitorVisibility,
+} from "@/hooks/use-monitor-visibility";
 import { useNow } from "@/hooks/use-now";
 import { formatClockOrDay, formatMilliseconds } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
@@ -59,6 +63,7 @@ export function Sidebar() {
   const { data: monitor } = useQuery(
     trpc.monitor.get.queryOptions({ id: Number.parseInt(id) }),
   );
+  const visibility = useMonitorVisibility(Number.parseInt(id));
 
   const until = monitor?.maintenance?.until;
   useMaintenanceTick(until ? [{ from: until, to: until }] : []);
@@ -178,7 +183,10 @@ export function Sidebar() {
           label: "Configuration",
           items: isHeartbeat
             ? [
-                { label: "Public", value: String(monitor.public) },
+                {
+                  label: "Visibility",
+                  value: formatMonitorVisibility(visibility),
+                },
                 { label: "Active", value: String(monitor.active) },
               ]
             : [
@@ -187,7 +195,10 @@ export function Sidebar() {
                   label: "Timeout",
                   value: formatMilliseconds(monitor.timeout),
                 },
-                { label: "Public", value: String(monitor.public) },
+                {
+                  label: "Visibility",
+                  value: formatMonitorVisibility(visibility),
+                },
                 { label: "Active", value: String(monitor.active) },
                 {
                   label: "Follow redirects",

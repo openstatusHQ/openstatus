@@ -48,11 +48,6 @@ export function FormMonitorUpdate() {
       onSuccess: () => refetch(),
     }),
   );
-  const updatePublicMutation = useMutation(
-    trpc.monitor.updatePublic.mutationOptions({
-      onSuccess: () => refetch(),
-    }),
-  );
   const updateSchedulingRegionsMutation = useMutation(
     trpc.monitor.updateSchedulingRegions.mutationOptions({
       onSuccess: () => refetch(),
@@ -281,17 +276,7 @@ export function FormMonitorUpdate() {
               });
             }}
           />
-          <FormVisibility
-            defaultValues={{
-              visibility: monitor.public ?? false,
-            }}
-            onSubmit={async (values) => {
-              await updatePublicMutation.mutateAsync({
-                id: Number.parseInt(id),
-                public: values.visibility,
-              });
-            }}
-          />
+          <FormVisibility monitorId={monitor.id} />
         </>
       )}
       <FormDangerZone
