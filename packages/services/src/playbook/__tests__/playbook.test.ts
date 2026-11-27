@@ -592,6 +592,8 @@ describe("agent tools", () => {
         description: "Who is paged and when.",
         content: "Page the primary first.",
       };
+      // the flag is what puts the approval card in front of the write
+      expect(createPlaybookTool.destructive).toBe(true);
       const created = await createPlaybookTool.run({ ctx: c, input });
       expect(created.slug).toBe("on-call");
       await expect(createPlaybookTool.run({ ctx: c, input })).rejects.toThrow(

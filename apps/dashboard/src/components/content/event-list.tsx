@@ -86,7 +86,10 @@ export function EventRowDate({
     return (
       <span
         data-slot="event-row-date"
-        className="text-muted-foreground/50 font-mono text-xs [grid-area:date]"
+        className={cn(
+          "text-muted-foreground/50 font-mono text-xs [grid-area:date]",
+          className,
+        )}
       >
         —
       </span>

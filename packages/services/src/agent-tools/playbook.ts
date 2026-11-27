@@ -247,7 +247,7 @@ export const createPlaybookTool: AgentTool<
   name: "create_playbook",
   description: `Create a new playbook under a slug of the team's own, next to the built-in ones (${builtinPlaybookSlugs.join(", ")}; write those with update_playbook). Fails when the slug is already taken: call list_playbooks first, and change an existing playbook with update_playbook. AUDIT-LOGGED; the agent can read the playbook from then on. Write only what the user asked for or confirmed; never invent the team's rules.`,
   scope: "incidents:write",
-  destructive: false,
+  destructive: true,
   inputSchema: CreatePlaybookInput,
   outputSchema: CreatePlaybookOutput,
   approval: {
