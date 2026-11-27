@@ -12,6 +12,8 @@ A workspace has at most one playbook per slug. Playbooks are internal: nothing i
 
 Four playbooks come with a default title, description and template:
 
+<Aside type="note">The agent does not read a built-in playbook until someone in your team saves it. Until then the template only fills the editor, and the agent is told your team has no playbook for that slug.</Aside>
+
 | Slug | Covers | The agent reads it |
 |---|---|---|
 | `incident-response` | Severities, roles, steps, update cadence, escalation | When asked about the process, and before declaring an incident |
