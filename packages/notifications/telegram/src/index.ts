@@ -84,6 +84,7 @@ export async function sendMessage({
   const params = new URLSearchParams({ chat_id: chatId, text: message });
   const res = await fetch(
     `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage?${params}`,
+    { signal: AbortSignal.timeout(10_000) },
   );
   if (!res.ok) {
     throw new Error(`Failed to send telegram message: ${res.statusText}`);

@@ -53,6 +53,34 @@ describe("Telegram Notifications", () => {
         ["text", message],
       ]);
     });
+    test("aborts a stalled request after 10 seconds", async () => {
+      fetchMock.mockRestore();
+      fetchMock = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation((_url, init) => {
+          return new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => {
+              reject(init.signal?.reason);
+            });
+          });
+        });
+
+      vi.useFakeTimers();
+      try {
+        const assertion = expect(
+          sendMessage({ chatId: "-123456789", message: "hello" }),
+        ).rejects.toThrow();
+        await vi.advanceTimersByTimeAsync(10_000);
+        await assertion;
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+        const signal = fetchMock.mock.calls[0][1]?.signal;
+        expect(signal).toBeInstanceOf(AbortSignal);
+        expect(signal?.aborted).toBe(true);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
   });
 
   const createMockMonitor = () => ({

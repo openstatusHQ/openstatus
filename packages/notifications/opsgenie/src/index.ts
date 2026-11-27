@@ -38,6 +38,7 @@ export const sendAlert = async ({
       "Content-Type": "application/json",
       Authorization: `GenieKey ${opsgenie.apiKey}`,
     },
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) {
     throw new Error(
@@ -77,6 +78,7 @@ export const sendDegraded = async ({
       "Content-Type": "application/json",
       Authorization: `GenieKey ${opsgenie.apiKey}`,
     },
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) {
     throw new Error(
@@ -104,6 +106,7 @@ export const sendRecovery = async ({
       "Content-Type": "application/json",
       Authorization: `GenieKey ${opsgenie.apiKey}`,
     },
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) {
     throw new Error(
@@ -138,6 +141,7 @@ export const sendTest = async (props: {
         Authorization: `GenieKey ${apiKey}`,
         "Access-Control-Allow-Origin": "*",
       },
+      signal: AbortSignal.timeout(10_000),
     });
     console.log(await res.json());
     return true;
