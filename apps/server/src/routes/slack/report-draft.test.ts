@@ -138,6 +138,25 @@ describe("draftStatusReport", () => {
     expect(prompt).toContain("(no channel messages)");
   });
 
+  test("the team's status-page playbook joins the system prompt, the rules stay", async () => {
+    reportDraftState.impl = () => Promise.resolve(modelDraft);
+    await draftStatusReport({ incident, sourceMessages: [], candidates });
+    const plain = reportDraftState.calls[0]?.system ?? "";
+    expect(plain).not.toContain("playbook");
+
+    await draftStatusReport({
+      incident,
+      sourceMessages: [],
+      candidates,
+      playbook: "Sign off as the Platform team.",
+    });
+    const system = reportDraftState.calls[1]?.system ?? "";
+    expect(system.startsWith(plain)).toBe(true);
+    expect(system).toContain(
+      '<playbook slug="status-page">\nSign off as the Platform team.\n</playbook>',
+    );
+  });
+
   test("a model failure gives no draft instead of throwing", async () => {
     reportDraftState.impl = () => Promise.reject(new Error("timeout"));
     expect(

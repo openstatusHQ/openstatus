@@ -1,6 +1,8 @@
 import { getLogger } from "@logtape/logtape";
+import { renderPlaybook } from "@openstatus/db/src/schema/playbooks/variables";
 import type { ServiceContext } from "@openstatus/services";
 import { escapeMrkdwn, getIncident } from "@openstatus/services/incident";
+import { getPlaybook } from "@openstatus/services/playbook";
 import type { KnownBlock, WebClient } from "@slack/web-api";
 import { z } from "zod";
 
@@ -149,10 +151,24 @@ export async function postReportFollowUp(args: {
       return { pages: [], components: [] };
     },
   );
+  // A failed lookup costs the draft the team's style, never the draft.
+  const playbook = await getPlaybook({
+    ctx,
+    input: { slug: "status-page" },
+  }).catch((error) => {
+    logger.warn("slack follow-up could not load the playbook", {
+      error,
+      incidentId,
+    });
+    return null;
+  });
   const draft = await draftStatusReport({
     incident,
     sourceMessages,
     candidates,
+    playbook: playbook
+      ? renderPlaybook(playbook.content, playbook.variables)
+      : undefined,
   });
   const draftId = draft ? await storeDraft(draft) : undefined;
   const value = { incidentId, ...(draftId ? { draftId } : {}) };
