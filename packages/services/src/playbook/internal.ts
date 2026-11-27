@@ -60,7 +60,7 @@ export async function insertPlaybook(
       createdBy: actorUserId,
       updatedBy: actorUserId,
     })
-    .onConflictDoNothing()
+    .onConflictDoNothing({ target: [playbook.workspaceId, playbook.slug] })
     .returning()
     .get();
   if (!created) {

@@ -323,11 +323,15 @@ ${publicUpdates || "(none)"}
 
 Source note: ${transcriptNote}${channelSection}`;
 
+  // a failed lookup drafts with the default sections
   const playbook = await getPlaybookBySlug(
     getReadDb(ctx),
     ctx.workspace.id,
     "postmortem",
-  );
+  ).catch((err) => {
+    console.warn("postmortem draft: playbook lookup failed", err);
+    return undefined;
+  });
   const body = await generate({
     system: postmortemSystem(
       playbook

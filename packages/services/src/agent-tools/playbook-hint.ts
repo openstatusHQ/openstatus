@@ -2,5 +2,5 @@ import type { BuiltinPlaybookSlug } from "@openstatus/db/src/schema/playbooks/co
 
 /** Sentence appended to the description of tools whose text a playbook governs. */
 export function playbookHint(slug: BuiltinPlaybookSlug): string {
-  return ` If the team has written a \`${slug}\` playbook (list_playbooks), read it with get_playbook before writing the text and follow it.`;
+  return ` If the team has written a \`${slug}\` playbook, read it with get_playbook before writing the text and follow it.`;
 }
