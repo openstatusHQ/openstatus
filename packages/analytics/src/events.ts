@@ -356,4 +356,12 @@ export const Events = {
     name: "content_copied",
     channel: "content",
   },
+  SearchPerformed: {
+    name: "search_performed",
+    channel: "search",
+  },
+  SearchResultClicked: {
+    name: "search_result_clicked",
+    channel: "search",
+  },
 } as const satisfies Record<string, EventProps>;

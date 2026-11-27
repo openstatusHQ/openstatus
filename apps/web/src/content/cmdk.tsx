@@ -29,6 +29,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { CORPUS_LABELS, type Corpus, type SearchResult } from "./search-meta";
+import { useSearchTracking } from "./use-search-tracking";
 import { buildHighlightRegex } from "./utils/search-match";
 
 type ConfigItem = {
@@ -226,6 +227,7 @@ export function CmdK({
     data: items = [],
     isLoading: loading,
     isFetching: fetching,
+    isPlaceholderData: stale,
   } = useQuery<SearchResult[]>({
     queryKey: ["search", scope, query],
     queryFn: async () => {
@@ -239,6 +241,13 @@ export function CmdK({
     // A pinned corpus can browse with an empty query; unpinned "all" waits for input.
     enabled: !!page || !!query,
     placeholderData: (previousData) => previousData,
+  });
+
+  const trackResultClick = useSearchTracking({
+    query,
+    scope,
+    items,
+    settled: !fetching && !stale && query === search.trim(),
   });
 
   const resetSearch = React.useCallback(() => setSearch(""), []);
@@ -402,6 +411,7 @@ export function CmdK({
                   search={search}
                   setOpen={setOpen}
                   scope={scope}
+                  onResultClick={trackResultClick}
                 />
               ) : null}
             </CommandList>
@@ -520,11 +530,13 @@ function SearchResults({
   search,
   setOpen,
   scope,
+  onResultClick,
 }: {
   items: SearchResult[];
   search: string;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   scope: Corpus | "all";
+  onResultClick: (item: SearchResult, top: boolean) => void;
 }) {
   const router = useRouter();
 
@@ -537,11 +549,12 @@ function SearchResults({
       ? text.replace(highlightRe, (match) => `<mark>${match}</mark>`)
       : text;
 
-  const renderRow = (item: SearchResult) => (
+  const renderRow = (item: SearchResult, top: boolean) => (
     <CommandItem
       key={item.href}
       value={item.href}
       onSelect={() => {
+        onResultClick(item, top);
         router.push(item.href);
         setOpen(false);
       }}
@@ -595,7 +608,7 @@ function SearchResults({
       <React.Fragment key={`${prefix}-${group.key}`}>
         {index > 0 && <CommandSeparator />}
         <CommandGroup heading={group.key}>
-          {group.items.map(renderRow)}
+          {group.items.map((item) => renderRow(item, false))}
         </CommandGroup>
       </React.Fragment>
     ));
@@ -605,7 +618,7 @@ function SearchResults({
       {top.length > 0 ? (
         <>
           <CommandGroup heading="Top results">
-            {top.map(renderRow)}
+            {top.map((item) => renderRow(item, true))}
           </CommandGroup>
           {rest.length > 0 ? <CommandSeparator /> : null}
         </>
