@@ -196,7 +196,7 @@ func Http(ctx context.Context, client *http.Client, inputData request.HttpChecke
 	if inputData.Method == http.MethodPost {
 		contentType := ""
 		for _, header := range inputData.Headers {
-			if header.Key == "Content-Type" {
+			if strings.EqualFold(header.Key, "Content-Type") {
 				contentType = header.Value
 				break
 			}
