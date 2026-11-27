@@ -73,36 +73,27 @@ Say what will happen, when (in UTC), what customers will notice and whether they
 
   "maintenance-windows": `# Maintenance windows
 
-## What it is
-Planned work that customers may notice: a deploy with downtime, a database upgrade, a provider migration. It is announced on the status page before it starts. Work that customers cannot notice needs no window.
+## Window or status page maintenance
+Two different things with similar names. Neither creates the other.
 
-## When we schedule
-- Outside our customers' business hours, Tuesday to Thursday when possible.
-- Never on a Friday, before a public holiday or during a customer launch.
-- One window at a time. No window while an incident is open.
+| | Maintenance window | Status page maintenance |
+| --- | --- | --- |
+| For | Us | Customers |
+| Does | Keeps monitors quiet during planned work | Announces planned work |
+| Applies to | Monitors | Status page components |
+| Visible | Internal only, never on a status page | Public, and can notify subscribers |
 
-## Notice
-| Expected impact | Announce at least |
-| --- | --- |
-| Downtime | 7 days before |
-| Degraded performance | 3 days before |
-| No expected impact, but risk | 1 day before |
+## Which one we use
+- Work customers will not notice, such as a deploy or a restart that would only trip our monitors: a maintenance window.
+- Work customers will notice: a status page maintenance, plus a maintenance window for the monitors that would alert.
+- Never a status page maintenance just to silence a monitor.
 
-Notify subscribers when the window is created and again when it starts.
+## Window mode
+- Pause checks when the service will be down and the results would be noise.
+- Keep checking when we want the data from the work. The monitor's status does not change and nobody is alerted.
 
-## The notice says
-1. What we are doing, in one sentence, without internal names.
-2. When: start and end in UTC.
-3. What customers will notice during the window.
-4. What they need to do, or that they need to do nothing.
-
-## During the window
-- Pause the affected monitors, or keep them checking without alerts, for the length of the window.
-- Post an update when the work starts and when it is done.
-- If the work will run past the end time, extend the window and post an update before the end time passes.
-
-## When it goes wrong
-If customers are affected beyond what was announced, declare an incident and follow the incident response playbook.`,
+## Status page maintenance
+What the public notice says follows the status page playbook.`,
 
   postmortem: `# Postmortem
 

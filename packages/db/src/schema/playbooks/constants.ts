@@ -36,7 +36,7 @@ const defaultDescription: Record<BuiltinPlaybookSlug, string> = {
   "status-page":
     "How you write on the status page: tone, what to say and never say, sign-off, public names for internal systems.",
   "maintenance-windows":
-    "What a maintenance window means for you, when you schedule one, the notice period and what the notice says.",
+    "How a maintenance window differs from a maintenance on a status page, and when you use which.",
   postmortem: "The sections of your postmortems and what goes in each.",
 };
 
