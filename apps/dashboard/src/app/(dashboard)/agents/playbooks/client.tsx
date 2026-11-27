@@ -123,7 +123,11 @@ export function Client() {
                   optional
                 />
                 <EventRowMenu>
-                  <PlaybookRowActions slug={slug} written={Boolean(playbook)} />
+                  <PlaybookRowActions
+                    slug={slug}
+                    title={playbook?.title ?? playbookDefaultTitle(slug)}
+                    written={Boolean(playbook)}
+                  />
                 </EventRowMenu>
               </EventRow>
             );

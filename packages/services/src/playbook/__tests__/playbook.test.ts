@@ -1,3 +1,5 @@
+import { eq } from "@openstatus/db";
+import { playbook } from "@openstatus/db/src/schema";
 import {
   PLAYBOOK_MAX_CHARS,
   PLAYBOOK_MAX_CUSTOM,
@@ -126,7 +128,7 @@ describe("savePlaybook", () => {
     });
   });
 
-  test("title and description default to the slug's, keep an edit and reset when emptied", async () => {
+  test("title and description are stored from the slug's default, keep an edit and cannot be emptied", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
       const created = await savePlaybook({
@@ -137,6 +139,13 @@ describe("savePlaybook", () => {
       expect(created.description).toBe(
         "The sections of your postmortems and what goes in each.",
       );
+      const stored = await tx
+        .select()
+        .from(playbook)
+        .where(eq(playbook.id, created.id))
+        .get();
+      expect(stored?.title).toBe("Postmortem");
+      expect(stored?.description).toBe(created.description);
 
       const renamed = await savePlaybook({
         ctx: c,
@@ -150,6 +159,14 @@ describe("savePlaybook", () => {
       expect(renamed.title).toBe("Reviews");
       expect(renamed.description).toBe("How we review.");
 
+      await expect(
+        savePlaybook({
+          ctx: c,
+          // @ts-expect-error null is not a way to unset the description
+          input: { slug: "postmortem", content: "x", description: null },
+        }),
+      ).rejects.toThrow();
+
       // left out, both are kept
       const kept = await savePlaybook({
         ctx: c,
@@ -158,18 +175,18 @@ describe("savePlaybook", () => {
       expect(kept.title).toBe("Reviews");
       expect(kept.description).toBe("How we review.");
 
-      const reset = await savePlaybook({
-        ctx: c,
-        input: { slug: "postmortem", content: "y", description: "" },
-      });
-      expect(reset.title).toBe("Reviews");
-      expect(reset.description).toBe(
-        "The sections of your postmortems and what goes in each.",
-      );
+      for (const patch of [{ description: " " }, { title: "" }]) {
+        await expect(
+          savePlaybook({
+            ctx: c,
+            input: { slug: "postmortem", content: "y", ...patch },
+          }),
+        ).rejects.toThrow();
+      }
     });
   });
 
-  test("a custom slug needs a title, is listed after the built-ins and is capped", async () => {
+  test("a custom slug needs a title and a description, is listed after the built-ins and is capped", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
       await expect(
@@ -178,16 +195,32 @@ describe("savePlaybook", () => {
       await expect(
         savePlaybook({
           ctx: c,
-          input: { slug: "Run_Book", title: "Runbook", content: "x" },
+          input: {
+            slug: "Run_Book",
+            title: "Runbook",
+            description: "How we run things.",
+            content: "x",
+          },
         }),
       ).rejects.toThrow();
+      await expect(
+        savePlaybook({
+          ctx: c,
+          input: { slug: "runbook", title: "Runbook", content: "x" },
+        }),
+      ).rejects.toThrow(ValidationError);
 
       const created = await savePlaybook({
         ctx: c,
-        input: { slug: "runbook", title: "Runbook", content: "x" },
+        input: {
+          slug: "runbook",
+          title: "Runbook",
+          description: "How we run things.",
+          content: "x",
+        },
       });
       expect(created.title).toBe("Runbook");
-      expect(created.description).toBe("");
+      expect(created.description).toBe("How we run things.");
       await savePlaybook({
         ctx: c,
         input: { slug: "postmortem", content: "x" },
@@ -196,21 +229,30 @@ describe("savePlaybook", () => {
         "postmortem",
         "runbook",
       ]);
-      // without a description, the title says what it covers
       expect(await loadPlaybookSection({ ctx: c })).toContain(
-        "- runbook: Runbook\n",
+        "- runbook: How we run things.\n",
       );
 
       for (let i = 1; i < PLAYBOOK_MAX_CUSTOM; i++) {
         await savePlaybook({
           ctx: c,
-          input: { slug: `runbook-${i}`, title: `Runbook ${i}`, content: "x" },
+          input: {
+            slug: `runbook-${i}`,
+            title: `Runbook ${i}`,
+            description: "x",
+            content: "x",
+          },
         });
       }
       await expect(
         savePlaybook({
           ctx: c,
-          input: { slug: "one-too-many", title: "No", content: "x" },
+          input: {
+            slug: "one-too-many",
+            title: "No",
+            description: "x",
+            content: "x",
+          },
         }),
       ).rejects.toThrow(LimitExceededError);
       // the cap is on custom slugs only
@@ -402,6 +444,23 @@ describe("reads", () => {
     });
   });
 
+  test("a slug stored before the format existed can be read and cleared", async () => {
+    await withTestTransaction(async (tx) => {
+      const c = { ...ctx, db: tx };
+      await tx.insert(playbook).values({
+        workspaceId: ctx.workspace.id,
+        slug: "maintenance_windows",
+        title: "Maintenance",
+        description: "Old",
+        content: "old",
+      });
+      const input = { slug: "maintenance_windows" };
+      expect((await getPlaybook({ ctx: c, input }))?.content).toBe("old");
+      await clearPlaybook({ ctx: c, input });
+      expect(await getPlaybook({ ctx: c, input })).toBeNull();
+    });
+  });
+
   test("clearing an empty slot is a not-found", async () => {
     await withTestTransaction(async (tx) => {
       await expect(
@@ -423,7 +482,6 @@ describe("buildPlaybookSection", () => {
     const section = buildPlaybookSection([
       {
         slug: "status-page",
-        title: "Status page",
         description: "Our public\n## voice",
       },
     ]);
@@ -510,6 +568,21 @@ describe("agent tools", () => {
       expect(updated.created).toBe(false);
       const row = await getPlaybook({ ctx: c, input: { slug: "status-page" } });
       expect(row?.variables).toEqual({ team_name: "Platform" });
+    });
+  });
+
+  test("the update_playbook approval card names the stored title", async () => {
+    await withTestTransaction(async (tx) => {
+      const c = { ...ctx, db: tx };
+      const title = async (input: { slug: string; content: string }) => {
+        const approval = updatePlaybookTool.approval;
+        const draft = await approval?.prepareDraftInput?.({ ctx: c, input });
+        return approval?.summarize(draft ?? input).title;
+      };
+      const input = { slug: "postmortem", content: "## Summary" };
+      expect(await title(input)).toBe("Write the Postmortem playbook");
+      await savePlaybook({ ctx: c, input: { ...input, title: "Reviews" } });
+      expect(await title(input)).toBe("Write the Reviews playbook");
     });
   });
 

@@ -63,7 +63,7 @@ import {
 } from "@/components/content/property-list";
 import { SectionGroup } from "@/components/content/section";
 import { PlaybookRowActions } from "@/components/data-table/playbooks/data-table-row-actions";
-import { playbookTemplate, playbookUsedFor } from "@/data/playbooks.client";
+import { playbookTemplate } from "@/data/playbooks.client";
 import { formatDistanceToNowShort } from "@/lib/formatter";
 import { useTRPC } from "@/lib/trpc/client";
 import { errorMessage } from "@/lib/trpc/error";
@@ -94,7 +94,6 @@ export function Client({ slug }: { slug: string }) {
     heading.description ||
     playbook?.description ||
     playbookDefaultDescription(slug);
-  const [descriptionResets, setDescriptionResets] = useState(0);
 
   const refresh = () =>
     Promise.all([
@@ -145,8 +144,6 @@ export function Client({ slug }: { slug: string }) {
     });
   };
   const saveHeading = (patch: Heading) => {
-    // emptied, the description goes back to the default: remount to show it
-    if (patch.description === "") setDescriptionResets((n) => n + 1);
     if (!playbook) return setHeading({ ...heading, ...patch });
     saveProperty.mutate({
       slug,
@@ -197,14 +194,19 @@ export function Client({ slug }: { slug: string }) {
           </DetailTitle>
           {playbook ? (
             <DetailActions>
-              <PlaybookRowActions slug={slug} written edit={false} />
+              <PlaybookRowActions
+                slug={slug}
+                title={playbook.title}
+                written
+                edit={false}
+              />
             </DetailActions>
           ) : null}
         </DetailTitleRow>
         <DetailDescription>
           <DetailInput
-            key={descriptionResets}
             multiline
+            required
             aria-label="Description"
             placeholder="Add a description…"
             maxLength={PLAYBOOK_DESCRIPTION_MAX_CHARS}
@@ -291,14 +293,6 @@ export function Client({ slug }: { slug: string }) {
                   <span className="truncate">{status.label}</span>
                 </PropertyValue>
               </Property>
-              {builtin ? (
-                <Property>
-                  <PropertyLabel>Used for</PropertyLabel>
-                  <PropertyValue>
-                    <span className="truncate">{playbookUsedFor[slug]}</span>
-                  </PropertyValue>
-                </Property>
-              ) : null}
               <Property>
                 <PropertyLabel>Slug</PropertyLabel>
                 <PropertyValue>

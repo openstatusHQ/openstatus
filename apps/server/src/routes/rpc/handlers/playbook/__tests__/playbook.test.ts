@@ -203,12 +203,25 @@ describe("PlaybookService", () => {
     ).toBe("invalid_argument");
   });
 
-  test("a custom slug needs a title, then behaves like any playbook", async () => {
+  test("a custom slug needs a title and a description, then behaves like any playbook", async () => {
     expect(
       (
         await rpcError(
           "UpdatePlaybook",
           { slug: "database-failover", content: "x" },
+          key,
+        )
+      ).code,
+    ).toBe("invalid_argument");
+    expect(
+      (
+        await rpcError(
+          "UpdatePlaybook",
+          {
+            slug: "database-failover",
+            title: "Database failover",
+            content: "x",
+          },
           key,
         )
       ).code,

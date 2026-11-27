@@ -10,10 +10,12 @@ import { useTRPC } from "@/lib/trpc/client";
 
 export function PlaybookRowActions({
   slug,
+  title,
   written,
   edit = true,
 }: {
   slug: string;
+  title: string;
   written: boolean;
   /** Off on the playbook's own page. */
   edit?: boolean;
@@ -52,6 +54,7 @@ export function PlaybookRowActions({
       deleteAction={
         written
           ? {
+              confirmationValue: title,
               description: builtin
                 ? "The agent stops following this playbook and the editor goes back to the default template. The text stays in the audit log."
                 : "The playbook is removed and the agent stops following it. The text stays in the audit log.",

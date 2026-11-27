@@ -40,12 +40,12 @@ const defaultDescription: Record<BuiltinPlaybookSlug, string> = {
   postmortem: "The sections of your postmortems and what goes in each.",
 };
 
-/** Shown until the team sets its own title; a custom slug stands in for itself. */
+/** Written to a built-in playbook created without a title; a custom slug stands in for itself. */
 export function playbookDefaultTitle(slug: string): string {
   return isBuiltinPlaybookSlug(slug) ? defaultTitle[slug] : slug;
 }
 
-/** Shown until the team sets its own description; empty for a custom slug. */
+/** Written to a built-in playbook created without a description; empty for a custom slug. */
 export function playbookDefaultDescription(slug: string): string {
   return isBuiltinPlaybookSlug(slug) ? defaultDescription[slug] : "";
 }

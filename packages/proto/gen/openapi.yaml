@@ -4211,19 +4211,22 @@ components:
             - "null"
           title: title
           maxLength: 100
+          minLength: 1
           description: |-
-            Name of the playbook (max 100 characters). Left out, the stored title is
-             kept; an empty string goes back to the default for the slug. Required to
-             create a playbook under a custom slug.
+            Name of the playbook (1 to 100 characters). Left out, the stored title is
+             kept, or the default of a built-in slug when the playbook is created.
+             Required to create a playbook under a custom slug.
         description:
           type:
             - string
             - "null"
           title: description
           maxLength: 500
+          minLength: 1
           description: |-
-            What the playbook covers (max 500 characters). Left out, the stored
-             description is kept; an empty string goes back to the default for the slug.
+            What the playbook covers (1 to 500 characters). Left out, the stored
+             description is kept, or the default of a built-in slug when the playbook is
+             created. Required to create a playbook under a custom slug.
       title: UpdatePlaybookRequest
       additionalProperties: false
       description: UpdatePlaybookRequest is the request to write the playbook of a slug.

@@ -1,9 +1,11 @@
 import { eq } from "@openstatus/db";
-import { playbook } from "@openstatus/db/src/schema";
+import { type Playbook, playbook } from "@openstatus/db/src/schema";
 import {
   isBuiltinPlaybookSlug,
   PLAYBOOK_MAX_CHARS,
   PLAYBOOK_MAX_CUSTOM,
+  playbookDefaultDescription,
+  playbookDefaultTitle,
 } from "@openstatus/db/src/schema/playbooks/constants";
 import {
   type PlaybookVariables,
@@ -19,11 +21,7 @@ import {
   withTransaction,
 } from "../context";
 import { LimitExceededError, ValidationError } from "../errors";
-import {
-  getPlaybookBySlug,
-  type PlaybookWithDefaults,
-  withDefaults,
-} from "./internal";
+import { getPlaybookBySlug } from "./internal";
 import { SavePlaybookInput } from "./schemas";
 
 /** Keeps the non-empty values of variables the text uses, in order of use. */
@@ -42,7 +40,7 @@ function usedVariables(
 export async function savePlaybook(args: {
   ctx: ServiceContext;
   input: SavePlaybookInput;
-}): Promise<PlaybookWithDefaults> {
+}): Promise<Playbook> {
   const { ctx } = args;
   requireScope(ctx, "incidents:write");
   const input = SavePlaybookInput.parse(args.input);
@@ -56,19 +54,23 @@ export async function savePlaybook(args: {
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getPlaybookBySlug(tx, ctx.workspace.id, input.slug);
+    const builtin = isBuiltinPlaybookSlug(input.slug);
+    // a default is only ever written on create, so later edits to it never reach the row
     const title =
-      input.title === undefined
-        ? (existing?.title ?? null)
-        : input.title || null;
+      input.title ??
+      existing?.title ??
+      (builtin ? playbookDefaultTitle(input.slug) : "");
     const description =
-      input.description === undefined
-        ? (existing?.description ?? null)
-        : input.description || null;
+      input.description ??
+      existing?.description ??
+      playbookDefaultDescription(input.slug);
+    if (!title || !description) {
+      throw new ValidationError(
+        "A custom playbook needs a title and a description.",
+      );
+    }
     if (!existing) {
-      if (!isBuiltinPlaybookSlug(input.slug)) {
-        if (!title) {
-          throw new ValidationError("A custom playbook needs a title.");
-        }
+      if (!builtin) {
         const slugs = await tx
           .select({ slug: playbook.slug })
           .from(playbook)
@@ -103,7 +105,7 @@ export async function savePlaybook(args: {
         entityId: created.id,
         after: created,
       });
-      return withDefaults(created);
+      return created;
     }
     if (
       existing.title === title &&
@@ -111,7 +113,7 @@ export async function savePlaybook(args: {
       existing.content === input.content &&
       JSON.stringify(existing.variables) === JSON.stringify(variables)
     ) {
-      return withDefaults(existing);
+      return existing;
     }
 
     const updated = await tx
@@ -134,6 +136,6 @@ export async function savePlaybook(args: {
       before: existing,
       after: updated,
     });
-    return withDefaults(updated);
+    return updated;
   });
 }

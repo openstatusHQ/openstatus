@@ -40,7 +40,11 @@ const schema = z.object({
     .min(1, "Slug is required")
     .max(PLAYBOOK_SLUG_MAX_CHARS)
     .regex(PLAYBOOK_SLUG, "Use lowercase letters, digits and single hyphens"),
-  description: z.string().trim().max(PLAYBOOK_DESCRIPTION_MAX_CHARS),
+  description: z
+    .string()
+    .trim()
+    .min(1, "Description is required")
+    .max(PLAYBOOK_DESCRIPTION_MAX_CHARS),
 });
 
 export type FormValues = z.infer<typeof schema>;

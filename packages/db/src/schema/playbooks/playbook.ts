@@ -19,9 +19,8 @@ export const playbook = sqliteTable(
       .notNull()
       .references(() => workspace.id, { onDelete: "cascade" }),
     slug: text("slug").notNull(),
-    // null = the default of a built-in slug
-    title: text("title"),
-    description: text("description"),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
     content: text("content").notNull(),
     variables: text("variables", { mode: "json" }).$type<PlaybookVariables>(),
     createdBy: integer("created_by").references(() => user.id, {

@@ -1,5 +1,4 @@
 import { isBuiltinPlaybookSlug } from "@openstatus/db/src/schema/playbooks/constants";
-import { playbookSlugSchema } from "@openstatus/db/src/schema/playbooks/validation";
 import { notFound } from "next/navigation";
 
 import { HydrateClient, getQueryClient, trpc } from "@/lib/trpc/server";
@@ -11,8 +10,7 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
-  if (!playbookSlugSchema.safeParse(slug).success) return notFound();
+  const slug = decodeURIComponent((await params).slug);
 
   const queryClient = getQueryClient();
   const playbook = await queryClient.fetchQuery(

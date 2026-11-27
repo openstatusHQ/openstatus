@@ -4933,13 +4933,15 @@
             "type": ["string", "null"],
             "title": "title",
             "maxLength": 100,
-            "description": "Name of the playbook (max 100 characters). Left out, the stored title is\n kept; an empty string goes back to the default for the slug. Required to\n create a playbook under a custom slug."
+            "minLength": 1,
+            "description": "Name of the playbook (1 to 100 characters). Left out, the stored title is\n kept, or the default of a built-in slug when the playbook is created.\n Required to create a playbook under a custom slug."
           },
           "description": {
             "type": ["string", "null"],
             "title": "description",
             "maxLength": 500,
-            "description": "What the playbook covers (max 500 characters). Left out, the stored\n description is kept; an empty string goes back to the default for the slug."
+            "minLength": 1,
+            "description": "What the playbook covers (1 to 500 characters). Left out, the stored\n description is kept, or the default of a built-in slug when the playbook is\n created. Required to create a playbook under a custom slug."
           }
         },
         "title": "UpdatePlaybookRequest",

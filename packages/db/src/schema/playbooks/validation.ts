@@ -25,11 +25,13 @@ export const playbookSlugSchema = z
 export const playbookTitleSchema = z
   .string()
   .trim()
+  .min(1)
   .max(PLAYBOOK_TITLE_MAX_CHARS);
 
 export const playbookDescriptionSchema = z
   .string()
   .trim()
+  .min(1)
   .max(PLAYBOOK_DESCRIPTION_MAX_CHARS);
 
 export const playbookContentSchema = z

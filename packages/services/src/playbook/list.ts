@@ -5,14 +5,10 @@ import { builtinPlaybookSlugs } from "@openstatus/db/src/schema/playbooks/consta
 import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
-import {
-  getPlaybookBySlug,
-  type PlaybookWithDefaults,
-  withDefaults,
-} from "./internal";
+import { getPlaybookBySlug } from "./internal";
 import { PlaybookSlugInput } from "./schemas";
 
-export type PlaybookWithUser = PlaybookWithDefaults & {
+export type PlaybookWithUser = Playbook & {
   createdByUser: AttributedUserDetail | null;
   updatedByUser: AttributedUserDetail | null;
 };
@@ -27,7 +23,7 @@ function withUsers(
   users: Map<number, AttributedUserDetail>,
 ): PlaybookWithUser {
   return {
-    ...withDefaults(row),
+    ...row,
     createdByUser:
       row.createdBy != null ? (users.get(row.createdBy) ?? null) : null,
     updatedByUser:

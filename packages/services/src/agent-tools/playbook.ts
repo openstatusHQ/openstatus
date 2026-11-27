@@ -128,7 +128,7 @@ const UpdatePlaybookInput = z
     description: playbookDescriptionSchema
       .optional()
       .describe(
-        "What the playbook covers and when to read it. Leave it out to keep the current one.",
+        "What the playbook covers and when to read it; it is what the agent sees before it opens the playbook. Required when creating a playbook under a custom slug; otherwise leave it out to keep the current one.",
       ),
     content: playbookContentSchema.describe(
       "The complete playbook in markdown. It replaces the whole playbook, so include every section that should stay. {{name}} (lowercase letters, digits, underscores) marks a variable.",
@@ -162,6 +162,11 @@ export const updatePlaybookTool: AgentTool<
   inputSchema: UpdatePlaybookInput,
   outputSchema: UpdatePlaybookOutput,
   approval: {
+    prepareDraftInput: async ({ ctx, input }) => {
+      if (input.title) return input;
+      const existing = await getPlaybook({ ctx, input: { slug: input.slug } });
+      return existing ? { ...input, title: existing.title } : input;
+    },
     summarize: (input) => ({
       title: `Write the ${input.title ?? playbookDefaultTitle(input.slug)} playbook`,
       lines: [

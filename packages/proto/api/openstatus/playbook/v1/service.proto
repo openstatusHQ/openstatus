@@ -96,14 +96,21 @@ message UpdatePlaybookRequest {
     }
   }];
 
-  // Name of the playbook (max 100 characters). Left out, the stored title is
-  // kept; an empty string goes back to the default for the slug. Required to
-  // create a playbook under a custom slug.
-  optional string title = 4 [(buf.validate.field).string.max_len = 100];
+  // Name of the playbook (1 to 100 characters). Left out, the stored title is
+  // kept, or the default of a built-in slug when the playbook is created.
+  // Required to create a playbook under a custom slug.
+  optional string title = 4 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 100
+  }];
 
-  // What the playbook covers (max 500 characters). Left out, the stored
-  // description is kept; an empty string goes back to the default for the slug.
-  optional string description = 5 [(buf.validate.field).string.max_len = 500];
+  // What the playbook covers (1 to 500 characters). Left out, the stored
+  // description is kept, or the default of a built-in slug when the playbook is
+  // created. Required to create a playbook under a custom slug.
+  optional string description = 5 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 500
+  }];
 }
 
 // UpdatePlaybookResponse is the response after writing a playbook.

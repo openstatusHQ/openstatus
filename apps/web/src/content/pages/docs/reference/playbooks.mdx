@@ -27,7 +27,7 @@ For anything else your team does its own way, such as a database failover or a c
 |---|---|
 | Slug | Lowercase letters, digits and single hyphens, up to 64 characters: `database-failover`. It cannot be changed later. |
 | Title | Required |
-| Description | What the playbook covers. The agent is told the description and uses it to decide when to read the playbook, so say when it applies. |
+| Description | Required. What the playbook covers. The agent is told the description and uses it to decide when to read the playbook, so say when it applies. |
 | Limit | 20 custom playbooks per workspace |
 
 A custom playbook has no template: it starts with its title as a heading. Deleting it removes it from the list.
@@ -43,7 +43,7 @@ Open [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbo
 
 ### Title and description
 
-Click the title or the description on the playbook's page to change it. The agent is told the description, so write it as what the playbook covers. For a built-in playbook, empty the description to go back to the default.
+Click the title or the description on the playbook's page to change it. The agent is told the description, so write it as what the playbook covers. Neither can be left empty.
 
 | Field | Limit |
 |---|---|
@@ -93,7 +93,7 @@ Without a `postmortem` playbook, drafts are unchanged.
 |---|---|---|
 | `ListPlaybooks` | The playbooks the workspace has written, with title and description, without their text | `incidents:read` |
 | `GetPlaybook` | One playbook: title, description, the text as written, its variable values and timestamps | `incidents:read` |
-| `UpdatePlaybook` | Creates the playbook when there is none for that slug, otherwise replaces its text and variables. `title` and `description` are optional, except `title` when creating a custom slug | `incidents:write` |
+| `UpdatePlaybook` | Creates the playbook when there is none for that slug, otherwise replaces its text and variables. `title` and `description` are optional for a built-in slug and required when creating a custom slug | `incidents:write` |
 | `DeletePlaybook` | Removes the playbook of a slug | `incidents:write` |
 
 ```bash
@@ -107,7 +107,7 @@ curl https://api.openstatus.dev/rpc/openstatus.playbook.v1.PlaybookService/Updat
   }'
 ```
 
-`variables` replaces the stored values: a variable you leave out is unset, and names the text does not use are dropped. `title` and `description` are kept when you leave them out; an empty string goes back to the default. `GetPlaybook` returns `not_found` when the workspace has no playbook for that slug.
+`variables` replaces the stored values: a variable you leave out is unset, and names the text does not use are dropped. `title` and `description` are kept when you leave them out; an empty string is rejected. A built-in playbook stores the default title and description when it is first written, so they do not change afterwards unless you change them. `GetPlaybook` returns `not_found` when the workspace has no playbook for that slug.
 
 ## Audit log
 
