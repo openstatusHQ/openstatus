@@ -43,8 +43,8 @@ function isBlockedIPv6(ip: string): boolean {
   if (normalized === "::1" || normalized === "::") return true;
   // Unique local addresses (fc00::/7)
   if (normalized.startsWith("fc") || normalized.startsWith("fd")) return true;
-  // Link-local (fe80::/10)
-  if (normalized.startsWith("fe80")) return true;
+  // Link-local (fe80::/10: fe80 through febf)
+  if (/^fe[89ab][0-9a-f]:/.test(normalized)) return true;
   // IPv4-mapped IPv6 addresses
   // Node's URL parser converts ::ffff:127.0.0.1 to ::ffff:7f00:1 (hex form)
   // Handle both dotted-quad (::ffff:127.0.0.1) and hex (::ffff:7f00:1) forms
@@ -67,8 +67,9 @@ function isBlockedIPv6(ip: string): boolean {
 }
 
 function isBlockedHost(hostname: string): boolean {
-  const lower = hostname.toLowerCase();
-  if (BLOCKED_HOSTNAMES.has(lower)) return true;
+  // Trailing dots still resolve as FQDNs in DNS but would miss exact string checks.
+  const lower = hostname.toLowerCase().replace(/\.+$/, "");
+  if (BLOCKED_HOSTNAMES.has(lower) || lower.endsWith(".localhost")) return true;
 
   // Check if hostname is a raw IP address
   if (/^\d{1,3}(\.\d{1,3}){3}$/.test(lower)) {
