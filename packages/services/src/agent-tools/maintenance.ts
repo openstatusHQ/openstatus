@@ -217,7 +217,7 @@ export const createMaintenanceTool: AgentTool<
   name: "create_maintenance",
   description:
     "Schedule a maintenance window on a status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The maintenance row persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page." +
-    playbookHint("maintenance-windows", "status-page"),
+    playbookHint("status-page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: CreateMaintenanceInputShape,
@@ -522,7 +522,7 @@ export const updateMaintenanceTool: AgentTool<
   name: "update_maintenance",
   description:
     "Change a maintenance window: title, time range, affected components or the newest message. PUBLIC and AUDIT-LOGGED; does not notify subscribers. Call get_maintenance first and send only the fields that change. `message` rewrites the newest timeline entry (it does not append — use add_maintenance_update for progress). `from` must stay before `to`." +
-    playbookHint("maintenance-windows", "status-page"),
+    playbookHint("status-page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateMaintenanceInputShape,

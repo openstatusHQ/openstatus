@@ -186,7 +186,7 @@ export const updatePlaybookTool: AgentTool<
       return existing ? { ...input, title: existing.title } : input;
     },
     summarize: (input) => ({
-      title: `Write the ${input.title ?? playbookDefaultTitle(input.slug)} playbook`,
+      title: `Update the ${input.title ?? playbookDefaultTitle(input.slug)} playbook`,
       lines: [
         { label: "Playbook", value: summaryText(input.content) },
         ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
@@ -195,7 +195,7 @@ export const updatePlaybookTool: AgentTool<
         })),
       ],
     }),
-    verb: "saved",
+    verb: "updated",
   },
   async run({ ctx, input }) {
     const existing = await getPlaybook({ ctx, input: { slug: input.slug } });

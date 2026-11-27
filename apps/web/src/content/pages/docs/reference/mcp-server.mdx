@@ -76,7 +76,7 @@ The server only advertises tools the credential can call. Read only sees `list_*
 
 ## Tools
 
-The server exposes 51 tools (49 on plans without the `audit-log` feature), grouped by resource: 46 scoped to the workspace tied to your credential, 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)), and `submit_feedback` (see [Feedback](#feedback)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
+The server exposes 55 tools (53 on plans without the `audit-log` feature), grouped by resource: 50 scoped to the workspace tied to your credential, 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)), and `submit_feedback` (see [Feedback](#feedback)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
 
 ### Pages
 

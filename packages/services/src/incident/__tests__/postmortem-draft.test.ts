@@ -9,7 +9,7 @@ import {
 import type { DB, ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError } from "../../errors";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
-import { savePlaybook } from "../../playbook/save";
+import { updatePlaybook } from "../../playbook/update";
 import type { Workspace } from "../../types";
 import {
   bindIncidentSlackChannel,
@@ -327,7 +327,7 @@ describe("generatePostmortemDraft", () => {
     await withTestTransaction(async (tx) => {
       const ctx = { ...makeUserCtx(workspace, { userId }), db: tx };
       const row = await resolvedIncident(tx, ctx, false);
-      await savePlaybook({
+      await updatePlaybook({
         ctx,
         input: {
           slug: "postmortem",

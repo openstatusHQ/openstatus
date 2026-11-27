@@ -17,12 +17,12 @@ function caller(userId: number, workspaceId: number) {
   );
 }
 
-test("a variable's value survives save, a value-only save and a reload", async () => {
+test("a variable's value survives an update, a value-only update and a reload", async () => {
   const f = await createTestWorkspace();
   const own = caller(f.user.id, f.workspace.id);
   const content = "Contact {{support}} first.";
 
-  await own.playbook.save({
+  await own.playbook.update({
     slug: "maintenance-windows",
     content,
     variables: { support: "the support desk" },
@@ -31,7 +31,7 @@ test("a variable's value survives save, a value-only save and a reload", async (
     (await own.playbook.get({ slug: "maintenance-windows" }))?.variables,
   ).toEqual({ support: "the support desk" });
 
-  await own.playbook.save({
+  await own.playbook.update({
     slug: "maintenance-windows",
     content,
     variables: { support: "help@acme.com" },
@@ -41,6 +41,6 @@ test("a variable's value survives save, a value-only save and a reload", async (
   expect(reloaded?.content).toBe(content);
   expect(reloaded?.createdByUser?.id).toBe(f.user.id);
 
-  await own.playbook.clear({ slug: "maintenance-windows" });
+  await own.playbook.delete({ slug: "maintenance-windows" });
   expect(await own.playbook.get({ slug: "maintenance-windows" })).toBeNull();
 });

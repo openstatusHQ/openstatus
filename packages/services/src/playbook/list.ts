@@ -6,7 +6,7 @@ import { type AttributedUserDetail, loadAttributedUsers } from "../attribution";
 import { requireScope } from "../auth";
 import { getReadDb, type ServiceContext } from "../context";
 import { getPlaybookBySlug } from "./internal";
-import { PlaybookSlugInput } from "./schemas";
+import { GetPlaybookInput } from "./schemas";
 
 export type PlaybookWithUser = Playbook & {
   createdByUser: AttributedUserDetail | null;
@@ -56,11 +56,11 @@ export async function listPlaybooks(args: {
 /** `null` for an empty slot. */
 export async function getPlaybook(args: {
   ctx: ServiceContext;
-  input: PlaybookSlugInput;
+  input: GetPlaybookInput;
 }): Promise<PlaybookWithUser | null> {
   const { ctx } = args;
   requireScope(ctx, "incidents:read");
-  const input = PlaybookSlugInput.parse(args.input);
+  const input = GetPlaybookInput.parse(args.input);
   const db = getReadDb(ctx);
 
   const row = await getPlaybookBySlug(db, ctx.workspace.id, input.slug);

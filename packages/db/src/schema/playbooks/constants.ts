@@ -1,8 +1,5 @@
-// Slugs with a default title, description and template. Any other slug is a
-// custom playbook. A workspace has at most one playbook per slug.
-// Code loads these by their literal slug (`postmortem` for the postmortem
-// draft, `status-page` for the Slack report draft, all four in `playbookHint`),
-// so never rename one. A custom playbook is only read when the agent picks it.
+// Slugs with a default title, description and template; any other slug is custom.
+// Drafts and tool hints load these by their literal slug, so never rename one.
 export const builtinPlaybookSlugs = [
   "incident-response",
   "status-page",

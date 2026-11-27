@@ -17,6 +17,16 @@ export function playbookVariableNames(content: string): string[] {
   return [...names];
 }
 
+// own keys only, so `{{constructor}}` never resolves to a prototype member
+export function playbookVariableValue(
+  variables: PlaybookVariables | null | undefined,
+  name: string,
+): string | undefined {
+  return variables && Object.prototype.hasOwnProperty.call(variables, name)
+    ? variables[name]
+    : undefined;
+}
+
 /** Replaces `{{name}}` by its value; a variable without one stays as written. */
 export function renderPlaybook(
   content: string,
@@ -26,10 +36,7 @@ export function renderPlaybook(
 ): string {
   if (!variables) return content;
   return content.replace(pattern(), (match: string, name: string) => {
-    // own keys only, so `{{constructor}}` never resolves to a prototype member
-    const value = Object.prototype.hasOwnProperty.call(variables, name)
-      ? variables[name]
-      : undefined;
+    const value = playbookVariableValue(variables, name);
     return value ? format(value) : match;
   });
 }

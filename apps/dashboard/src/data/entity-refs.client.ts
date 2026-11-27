@@ -1,5 +1,6 @@
 import type { AuditEntityType } from "@openstatus/db/src/schema/audit_logs/validation";
 import {
+  BookOpen,
   Components,
   Incident,
   type IconType,
@@ -98,6 +99,13 @@ export const entityKinds = {
     fields: [],
     auditType: "monitor_maintenance_window",
     href: () => "/maintenance-windows",
+  },
+  playbook: {
+    label: "Playbook",
+    icon: BookOpen,
+    fields: [],
+    auditType: "playbook",
+    href: (playbook: { slug: string }) => `/agents/playbooks/${playbook.slug}`,
   },
 } as const satisfies Record<string, EntityKindConfig>;
 

@@ -35,5 +35,7 @@ Change a playbook only when the user asks: update_playbook rewrites one (read it
 
 /** Wraps team-written playbook text where it enters a prompt or a tool result. */
 export function delimitPlaybook(slug: string, content: string): string {
-  return `<playbook slug="${slug}">\n${content}\n</playbook>`;
+  // team text must not close the block and continue as prompt
+  const body = content.replace(/<\/playbook/gi, "<\\/playbook");
+  return `<playbook slug="${slug}">\n${body}\n</playbook>`;
 }

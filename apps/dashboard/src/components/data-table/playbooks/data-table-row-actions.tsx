@@ -24,8 +24,8 @@ export function PlaybookRowActions({
   const router = useRouter();
   const queryClient = useQueryClient();
   const builtin = isBuiltinPlaybookSlug(slug);
-  const clearMutation = useMutation(
-    trpc.playbook.clear.mutationOptions({
+  const deleteMutation = useMutation(
+    trpc.playbook.delete.mutationOptions({
       onSuccess: async () => {
         // a deleted custom playbook has no page left to stay on
         if (!edit && !builtin) router.push("/agents/playbooks");
@@ -59,7 +59,7 @@ export function PlaybookRowActions({
                 ? "The agent stops following this playbook and the editor goes back to the default template. The text stays in the audit log."
                 : "The playbook is removed and the agent stops following it. The text stays in the audit log.",
               submitAction: async () => {
-                await clearMutation.mutateAsync({ slug });
+                await deleteMutation.mutateAsync({ slug });
               },
             }
           : undefined

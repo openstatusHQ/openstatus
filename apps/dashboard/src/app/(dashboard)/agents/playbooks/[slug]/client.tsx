@@ -113,7 +113,7 @@ export function Client({ slug }: { slug: string }) {
   };
 
   const save = useMutation(
-    trpc.playbook.save.mutationOptions({
+    trpc.playbook.update.mutationOptions({
       onSuccess: () => {
         toast.success("Playbook saved");
         return refresh();
@@ -123,7 +123,7 @@ export function Client({ slug }: { slug: string }) {
   );
   // The heading and a value save on their own, like the properties of an incident; the text does not.
   const saveProperty = useMutation(
-    trpc.playbook.save.mutationOptions({
+    trpc.playbook.update.mutationOptions({
       onSuccess: () =>
         queryClient.invalidateQueries({ queryKey: trpc.playbook.pathKey() }),
       onError,

@@ -1,8 +1,8 @@
 import type { ServiceImpl } from "@connectrpc/connect";
 import type { PlaybookService } from "@openstatus/proto/playbook/v1";
 import {
-  clearPlaybook,
   createPlaybook,
+  deletePlaybook,
   getPlaybook,
   listPlaybooks,
   updatePlaybook,
@@ -76,7 +76,7 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
 
   async deletePlaybook(req, ctx) {
     try {
-      await clearPlaybook({
+      await deletePlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
         input: { slug: req.slug },
       });

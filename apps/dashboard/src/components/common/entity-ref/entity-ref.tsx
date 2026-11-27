@@ -18,6 +18,7 @@ import { MonitorIncidentCard } from "./cards/monitor-incident";
 import { NotificationCard } from "./cards/notification";
 import { PageCard } from "./cards/page";
 import { PageComponentCard } from "./cards/page-component";
+import { PlaybookCard } from "./cards/playbook";
 import { PrivateLocationCard } from "./cards/private-location";
 import { StatusReportCard } from "./cards/status-report";
 
@@ -32,6 +33,7 @@ const cards = {
   privateLocation: PrivateLocationCard,
   notification: NotificationCard,
   maintenanceWindow: MaintenanceWindowCard,
+  playbook: PlaybookCard,
 } satisfies Record<EntityKind, React.ComponentType<{ id: number }>>;
 
 /** An entity id that opens a card with the entity on hover, focus or tap. */

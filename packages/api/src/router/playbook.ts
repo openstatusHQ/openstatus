@@ -1,12 +1,14 @@
 import { Events } from "@openstatus/analytics";
 import {
-  PlaybookSlugInput,
-  SavePlaybookInput,
-  clearPlaybook,
+  CreatePlaybookInput,
+  DeletePlaybookInput,
+  GetPlaybookInput,
+  UpdatePlaybookInput,
   createPlaybook,
+  deletePlaybook,
   getPlaybook,
   listPlaybooks,
-  savePlaybook,
+  updatePlaybook,
 } from "@openstatus/services/playbook";
 
 import { toServiceCtx, toTRPCError } from "../service-adapter";
@@ -22,7 +24,7 @@ export const playbookRouter = createTRPCRouter({
   }),
 
   get: protectedProcedure
-    .input(PlaybookSlugInput)
+    .input(GetPlaybookInput)
     .query(async ({ ctx, input }) => {
       try {
         return await getPlaybook({ ctx: toServiceCtx(ctx), input });
@@ -32,8 +34,8 @@ export const playbookRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .meta({ track: Events.SavePlaybook, trackProps: ["slug"] })
-    .input(SavePlaybookInput)
+    .meta({ track: Events.CreatePlaybook, trackProps: ["slug"] })
+    .input(CreatePlaybookInput)
     .mutation(async ({ ctx, input }) => {
       try {
         return await createPlaybook({ ctx: toServiceCtx(ctx), input });
@@ -42,23 +44,23 @@ export const playbookRouter = createTRPCRouter({
       }
     }),
 
-  save: protectedProcedure
-    .meta({ track: Events.SavePlaybook, trackProps: ["slug"] })
-    .input(SavePlaybookInput)
+  update: protectedProcedure
+    .meta({ track: Events.UpdatePlaybook, trackProps: ["slug"] })
+    .input(UpdatePlaybookInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await savePlaybook({ ctx: toServiceCtx(ctx), input });
+        return await updatePlaybook({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
     }),
 
-  clear: protectedProcedure
-    .meta({ track: Events.ClearPlaybook, trackProps: ["slug"] })
-    .input(PlaybookSlugInput)
+  delete: protectedProcedure
+    .meta({ track: Events.DeletePlaybook, trackProps: ["slug"] })
+    .input(DeletePlaybookInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        await clearPlaybook({ ctx: toServiceCtx(ctx), input });
+        await deletePlaybook({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }
