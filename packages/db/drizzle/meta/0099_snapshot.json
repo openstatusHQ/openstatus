@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "71471c95-5b4c-4e3f-bc8a-89bd730e82af",
+  "id": "166e0047-4d3a-42c2-aaf2-fbb6dc49516a",
   "prevId": "c84452f4-e749-4224-9f85-962b83535a04",
   "tables": {
     "workspace": {
@@ -7292,8 +7292,22 @@
           "notNull": true,
           "autoincrement": false
         },
-        "type": {
-          "name": "type",
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -7304,6 +7318,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "variables": {
+          "name": "variables",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "created_by": {
@@ -7338,11 +7359,11 @@
         }
       },
       "indexes": {
-        "playbook_workspace_id_type_idx": {
-          "name": "playbook_workspace_id_type_idx",
+        "playbook_workspace_id_slug_idx": {
+          "name": "playbook_workspace_id_slug_idx",
           "columns": [
             "workspace_id",
-            "type"
+            "slug"
           ],
           "isUnique": true
         }

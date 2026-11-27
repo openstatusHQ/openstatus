@@ -1,8 +1,11 @@
 CREATE TABLE `playbook` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`workspace_id` integer NOT NULL,
-	`type` text NOT NULL,
+	`slug` text NOT NULL,
+	`title` text NOT NULL,
+	`description` text NOT NULL,
 	`content` text NOT NULL,
+	`variables` text,
 	`created_by` integer,
 	`updated_by` integer,
 	`created_at` integer DEFAULT (strftime('%s', 'now')) NOT NULL,
@@ -12,4 +15,4 @@ CREATE TABLE `playbook` (
 	FOREIGN KEY (`updated_by`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `playbook_workspace_id_type_idx` ON `playbook` (`workspace_id`,`type`);
+CREATE UNIQUE INDEX `playbook_workspace_id_slug_idx` ON `playbook` (`workspace_id`,`slug`);
