@@ -16,6 +16,7 @@ import {
 } from "@openstatus/db/src/schema/playbooks/variables";
 import { z } from "zod";
 
+import { withTransaction } from "../context";
 import {
   delimitPlaybook,
   getPlaybook,
@@ -74,7 +75,7 @@ const GetPlaybookInput = z
       .boolean()
       .optional()
       .describe(
-        "Set to true only when you are about to change the playbook: also returns `source` and `variables`.",
+        "Set to true only when you are about to change the playbook: also returns `source`, and `variables` when the text uses any.",
       ),
   })
   .strict();
@@ -86,7 +87,7 @@ const GetPlaybookOutput = z.object({
     .string()
     .optional()
     .describe(
-      "Only with forEdit, when the playbook uses {{name}} variables: the text as written, before values are filled in. Base an update_playbook call on this, never on `content`.",
+      "Only with forEdit: the text as written, without the <playbook> wrapper and before {{name}} values are filled in. Base an update_playbook call on this, never on `content`.",
     ),
   variables: playbookVariablesSchema
     .optional()
@@ -126,11 +127,14 @@ export const getPlaybookTool: AgentTool<
         row.slug,
         renderPlaybook(row.content, row.variables),
       ),
-      ...(usesVariables
-        ? input.forEdit
-          ? { source: row.content, variables: row.variables ?? {} }
-          : { note: VARIABLES_NOTE }
-        : {}),
+      ...(input.forEdit
+        ? {
+            source: row.content,
+            ...(usesVariables ? { variables: row.variables ?? {} } : {}),
+          }
+        : usesVariables
+          ? { note: VARIABLES_NOTE }
+          : {}),
     };
   },
 };
@@ -205,23 +209,31 @@ export const updatePlaybookTool: AgentTool<
     }),
     verb: "updated",
   },
+  // oxlint-disable-next-line openstatus/services-mutation-guards -- updatePlaybook checks the scope and audits
   async run({ ctx, input }) {
-    const existing = await getPlaybook({ ctx, input: { slug: input.slug } });
-    const row = await updatePlaybook({
-      ctx,
-      input: {
-        slug: input.slug,
-        title: input.title,
-        description: input.description,
-        content: input.content,
-        variables: { ...existing?.variables, ...input.variables },
-      },
+    // one transaction, so the values kept are the ones the write replaces
+    return withTransaction(ctx, async (tx) => {
+      const txCtx = { ...ctx, db: tx };
+      const existing = await getPlaybook({
+        ctx: txCtx,
+        input: { slug: input.slug },
+      });
+      const row = await updatePlaybook({
+        ctx: txCtx,
+        input: {
+          slug: input.slug,
+          title: input.title,
+          description: input.description,
+          content: input.content,
+          variables: { ...existing?.variables, ...input.variables },
+        },
+      });
+      return {
+        slug: row.slug,
+        created: existing === null,
+        updatedAt: row.updatedAt.toISOString(),
+      };
     });
-    return {
-      slug: row.slug,
-      created: existing === null,
-      updatedAt: row.updatedAt.toISOString(),
-    };
   },
 };
 

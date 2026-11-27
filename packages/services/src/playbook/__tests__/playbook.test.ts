@@ -710,7 +710,7 @@ describe("agent tools", () => {
     });
   });
 
-  test("get_playbook has no source without variables", async () => {
+  test("get_playbook returns the text as written only with forEdit", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
       await updatePlaybook({
@@ -723,6 +723,14 @@ describe("agent tools", () => {
       });
       expect(read.source).toBeUndefined();
       expect(read.variables).toBeUndefined();
+
+      const editable = await getPlaybookTool.run({
+        ctx: c,
+        input: { slug: "postmortem", forEdit: true },
+      });
+      // an edit must not start from the delimited text
+      expect(editable.source).toBe("## Summary");
+      expect(editable.variables).toBeUndefined();
     });
   });
 

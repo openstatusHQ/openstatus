@@ -88,7 +88,7 @@ export function Client({ slug }: { slug: string }) {
   const [values, setValues] = useState<PlaybookVariables | null>(null);
   const serverValues = playbook?.variables ?? {};
   const variables = values ?? serverValues;
-  // Edits made before the playbook exists; they go with the first Save.
+  // Edits that go with Save: before the playbook exists, or while the text has unsaved changes.
   const [heading, setHeading] = useState<Heading>({});
   const title = heading.title ?? playbook?.title ?? playbookDefaultTitle(slug);
   const description =
@@ -96,7 +96,7 @@ export function Client({ slug }: { slug: string }) {
     playbook?.description ||
     playbookDefaultDescription(slug);
 
-  const refresh = () =>
+  const refresh = (saved: string) =>
     Promise.all([
       queryClient.invalidateQueries({
         queryKey: trpc.playbook.get.queryKey({ slug }),
@@ -105,7 +105,8 @@ export function Client({ slug }: { slug: string }) {
         queryKey: trpc.playbook.list.queryKey(),
       }),
     ]).then(() => {
-      setDraft(null);
+      // text typed while the save was in flight stays in the editor
+      setDraft((current) => (current === saved ? null : current));
       setValues(null);
       setHeading({});
     });
@@ -115,9 +116,9 @@ export function Client({ slug }: { slug: string }) {
 
   const save = useMutation(
     trpc.playbook.update.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (_data, saved) => {
         toast.success("Playbook saved");
-        return refresh();
+        return refresh(saved.content);
       },
       onError,
     }),
@@ -130,22 +131,24 @@ export function Client({ slug }: { slug: string }) {
       onError,
     }),
   );
-  // Only for a variable the saved text already uses; one that exists only in
-  // unsaved text goes with Save, since the server drops values the text does not use.
+  // A property save resends the saved text, so while the text has unsaved
+  // changes every property goes with Save instead: two writes cannot cross.
+  const textDirty = draft !== null && draft.trim() !== server;
+  // Only for a variable the saved text already uses; the server drops the others.
   const saveValue = (name: string) => {
-    if (!playbook || !playbookVariableNames(playbook.content).includes(name)) {
-      return;
-    }
+    if (!playbook || textDirty) return;
+    if (!playbookVariableNames(playbook.content).includes(name)) return;
     const value = (playbookVariableValue(variables, name) ?? "").trim();
     if (value === (playbookVariableValue(serverValues, name) ?? "")) return;
     saveProperty.mutate({
       slug,
       content: playbook.content,
-      variables: { ...serverValues, [name]: value },
+      // every local value, so an earlier blur-save still in flight is not undone
+      variables: { ...variables, [name]: value },
     });
   };
   const saveHeading = (patch: Heading) => {
-    if (!playbook) return setHeading({ ...heading, ...patch });
+    if (!playbook || textDirty) return setHeading({ ...heading, ...patch });
     saveProperty.mutate({
       slug,
       content: playbook.content,
@@ -160,17 +163,18 @@ export function Client({ slug }: { slug: string }) {
 
   const names = playbookVariableNames(content);
   const rendered = renderPlaybook(content, variables);
-  // the cap counts what the agent reads: the text with its variables filled in
-  const length = rendered.trim().length;
+  // the cap applies to the text as written and with its variables filled in
+  const length = Math.max(rendered.trim().length, content.trim().length);
   const tooLong = length > PLAYBOOK_MAX_CHARS;
   const dirty =
-    (draft !== null && draft.trim() !== server) ||
+    textDirty ||
+    Object.keys(heading).length > 0 ||
     names.some(
       (name) =>
         (playbookVariableValue(variables, name) ?? "").trim() !==
         (playbookVariableValue(serverValues, name) ?? "").trim(),
     );
-  const busy = save.isPending;
+  const busy = save.isPending || saveProperty.isPending;
   const canSave = !busy && (dirty || !playbook) && length > 0 && !tooLong;
   const submit = () => save.mutate({ slug, content, variables, ...heading });
 

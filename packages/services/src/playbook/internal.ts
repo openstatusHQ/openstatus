@@ -9,7 +9,7 @@ import {
 } from "@openstatus/db/src/schema/playbooks/variables";
 
 import { type DB, type ServiceContext, tryGetActorUserId } from "../context";
-import { ValidationError } from "../errors";
+import { ConflictError, ValidationError } from "../errors";
 
 export async function getPlaybookBySlug(
   db: DB,
@@ -51,7 +51,8 @@ export async function insertPlaybook(
   >,
 ): Promise<Playbook> {
   const actorUserId = tryGetActorUserId(ctx.actor);
-  return tx
+  // a concurrent first write of the slug loses on the unique index
+  const created = await tx
     .insert(playbook)
     .values({
       ...values,
@@ -59,6 +60,11 @@ export async function insertPlaybook(
       createdBy: actorUserId,
       updatedBy: actorUserId,
     })
+    .onConflictDoNothing()
     .returning()
     .get();
+  if (!created) {
+    throw new ConflictError(`A ${values.slug} playbook already exists.`);
+  }
+  return created;
 }

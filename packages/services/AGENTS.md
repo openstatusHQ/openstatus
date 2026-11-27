@@ -44,6 +44,10 @@ audit row: the legacy v1 incident `PUT`.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.
+- **One transaction per operation.** A read the write depends on (the row a
+  merge starts from, a limit count) happens inside the same transaction. A
+  caller that reads and then calls a verb, such as an agent tool's `run`, opens
+  the transaction itself and passes `{ ...ctx, db: tx }` to both.
 - **Every read and write filters by `ctx.workspace.id`.** Use the
   `getXInWorkspace` fetch-or-throw helpers in the entity's `internal.ts`.
 - **Throw `ServiceError` subclasses** from `./errors`. Routers convert them with

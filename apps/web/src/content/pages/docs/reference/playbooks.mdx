@@ -60,9 +60,9 @@ Write `{{name}}` in the text to add a variable, then set its value under **Varia
 |---|---|
 | Name | Lowercase letters, digits and underscores, up to 64 characters: `{{support_email}}` |
 | Value | Plain text, up to 500 characters |
-| Saving | A value saves when you leave its field, once the saved text uses the variable. A variable you just typed is saved together with the text. |
+| Saving | A value saves when you leave its field, once the saved text uses the variable. While the text has unsaved changes, values, title and description are saved together with it. |
 | Unset | A variable without a value stays in the text as `{{name}}`, so the gap is visible to the reader and the agent |
-| Limit | The 10,000 characters count the text with its variables filled in |
+| Limit | The 10,000 characters apply to the text as written and to the text with its variables filled in |
 
 The preview shows the playbook with its variables filled in, each value marked as inline code.
 
@@ -104,7 +104,7 @@ Without a `postmortem` playbook, drafts are unchanged.
 |---|---|---|
 | `ListPlaybooks` | The playbooks the workspace has written, with title and description, without their text | `incidents:read` |
 | `GetPlaybook` | One playbook: title, description, the text as written, its variable values and timestamps | `incidents:read` |
-| `CreatePlaybook` | Creates a custom playbook: `slug`, `title`, `description` and `content` are required. Returns `failed_precondition` when the slug is taken and `invalid_argument` for a built-in slug | `incidents:write` |
+| `CreatePlaybook` | Creates a custom playbook: `slug`, `title`, `description` and `content` are required. Returns `failed_precondition` when the slug is taken, `invalid_argument` for a built-in slug and `resource_exhausted` at the limit of 20 custom playbooks | `incidents:write` |
 | `UpdatePlaybook` | Replaces the text and variables of a playbook; `title` and `description` are optional. A built-in slug is created on its first write, a custom slug that does not exist returns `not_found` | `incidents:write` |
 | `DeletePlaybook` | Removes the playbook of a slug | `incidents:write` |
 

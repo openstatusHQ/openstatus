@@ -140,7 +140,7 @@ The team's own rules for incidents, status page updates, maintenance and postmor
 | Tool              | Scope | Purpose |
 |-------------------|----------|---------|
 | `list_playbooks`  | `incidents:read` | Which playbooks the workspace has written (the built-in `incident-response`, `status-page`, `maintenance-windows`, `postmortem` and any custom ones), each with `slug`, `title`, `description` and `updatedAt`. Never returns their text. |
-| `get_playbook`    | `incidents:read` | One playbook's text by `slug`, with its variables filled in. With `forEdit: true`, a playbook that uses `{{name}}` variables also returns `source` (the text as written) and `variables` (the values set), which is what an edit starts from. An unwritten slug returns an empty `content` and an `error`. |
+| `get_playbook`    | `incidents:read` | One playbook's text by `slug`, with its variables filled in. With `forEdit: true` it also returns `source` (the text as written, which is what an edit starts from) and, when the text uses `{{name}}` variables, `variables` (the values set). An unwritten slug returns an empty `content` and an `error`. |
 | `create_playbook` | `incidents:write` | Create a custom playbook: a new `slug`, `title`, `description`, the `content` in markdown and optional `variables`. Fails when the slug is taken or is one of the built-in ones. |
 | `update_playbook` | `incidents:write` | Write an existing playbook, or a built-in one for the first time: `slug`, the complete `content` in markdown (it replaces the whole text) and optional `variables`, `title` and `description`. Fails for a custom slug that does not exist. Variables left out keep their stored value. |
 
