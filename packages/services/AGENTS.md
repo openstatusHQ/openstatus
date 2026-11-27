@@ -21,7 +21,7 @@ audit row: the legacy v1 incident `PUT`.
 ## Shape of a verb
 
 - **One file per verb** under `packages/services/src/<entity>/` (`create.ts`,
-  `update.ts`, `remove.ts`), re-exported from that entity's `index.ts`. Callers
+  `update.ts`, `delete.ts`), re-exported from that entity's `index.ts`. Callers
   import from `@openstatus/services/<entity>`.
 - **Signature:** `async function verbEntity(args: { ctx: ServiceContext; input: VerbInput })`.
   `ctx` carries `workspace`, `actor`, and an optional `db`/transaction.

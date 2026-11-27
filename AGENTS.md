@@ -37,6 +37,37 @@ workflows pin the same node. Never float one back to `@latest` or
   assertion evaluation, region codes — must be changed on both sides in one PR.
 - **Shared UI comes from `@openstatus/ui`.** Do not fork a primitive into an app.
 
+## One resource, one shape
+
+A resource reads the same at every layer. Copy `maintenance` end to end; a plan
+or spec that names things differently is wrong, not the repo.
+
+| Layer | Shape |
+|---|---|
+| Service verbs | `listX`, `getX`, `createX`, `updateX`, `deleteX`, with inputs `CreateXInput`, ... in `schemas.ts` |
+| tRPC | procedures `list`, `get`, `create`, `update`, `delete`, taking the service input schema |
+| RPC | `ListX`, `GetX`, `CreateX`, `UpdateX`, `DeleteX` on `XService`; handlers in `apps/server/src/routes/rpc/handlers/<x>/` (`index.ts`, `converters.ts`, `errors.ts`) |
+| Agent tools | `list_x`, `get_x`, `create_x`, `update_x` in `packages/services/src/agent-tools/<x>.ts`; a write is `destructive: true` with an `approval` whose `verb` is `created` / `updated` / `deleted` |
+| Analytics | `Events.CreateX` / `UpdateX` / `DeleteX`, named `x_created` / `x_updated` / `x_deleted`, `channel: "x"` |
+| Audit | `x.create`, `x.update`, `x.delete` |
+
+- **Create and update are separate at every layer.** A verb that does both
+  (`save`, `upsert`, `set`) and its mirror (`clear`) are the usual drift.
+  Other verbs are for real state changes (`resolve`, `acknowledge`, `notify`).
+- **Analytics are server-side**: tRPC `.meta({ track: Events.CreateX })`, RPC an
+  entry per mutating method in `RPC_EVENT_MAP`
+  (`apps/server/src/routes/rpc/interceptors/tracking.ts`).
+- **A new RPC service** also needs its group in `RPC_SERVICE_GROUP`, and the
+  proto regenerated: `buf:ts` and `buf:openapi` in `packages/proto`, then
+  `openapi:json` in `apps/server`.
+- **A new agent tool** also goes in the registry
+  (`packages/services/src/agent-tools/index.ts`), the MCP registration
+  (`apps/server/src/routes/mcp/tools/`), the `tools/list` test and the tool
+  tables and counts in both `mcp-server.mdx` pages under `apps/web`.
+- **Dashboard**: a "Create x" button opens a sheet form, and delete sits in the
+  row's `QuickActions` behind a typed confirmation.
+- **One migration file per PR.** Regenerate rather than stack them.
+
 ## Tests
 
 - CI gives every DB-touching package its own database (the matrix in
