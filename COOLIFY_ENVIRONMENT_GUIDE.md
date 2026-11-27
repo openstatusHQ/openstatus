@@ -43,6 +43,7 @@ RESEND_API_KEY=re_your_resend_api_key_here
 ### **Analytics (TinyBird)**
 ```bash
 TINY_BIRD_API_KEY=your_tinybird_api_key
+TINYBIRD_TOKEN=your_tinybird_token
 TINYBIRD_URL=http://tinybird:7181
 ```
 
@@ -130,7 +131,7 @@ WORKSPACES_HIDE_URL=false
 - **Database**: `DATABASE_URL`, `DATABASE_AUTH_TOKEN`
 - **Authentication**: `AUTH_SECRET`, `NEXT_PUBLIC_URL`, `SELF_HOST`
 - **Email**: `RESEND_API_KEY`
-- **Analytics**: `TINY_BIRD_API_KEY`, `TINYBIRD_URL`
+- **Analytics**: `TINY_BIRD_API_KEY`, `TINYBIRD_TOKEN`, `TINYBIRD_URL`
 - **OAuth**: `AUTH_GITHUB_*`, `AUTH_GOOGLE_*`
 - **Queue**: `UPSTASH_*`
 - **Cloud**: `GCP_*`, `CRON_SECRET`

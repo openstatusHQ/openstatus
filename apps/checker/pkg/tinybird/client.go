@@ -61,7 +61,9 @@ func (c client) SendEvent(ctx context.Context, event any, dataSourceName string)
 		log.Ctx(ctx).Error().Err(err).Msg("unable to create request")
 		return fmt.Errorf("unable to create request: %w", err)
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
+	if c.apiKey != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {

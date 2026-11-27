@@ -36,6 +36,7 @@ x-common-variables: &common-env # Database Configuration
 
   # Analytics (Optional)
   TINY_BIRD_API_KEY: ${TINY_BIRD_API_KEY:-}
+  TINYBIRD_TOKEN: ${TINYBIRD_TOKEN:-${TINY_BIRD_API_KEY:-}}
   TINYBIRD_URL: ${TINYBIRD_URL:-}
 
   # Redis/Queue (Optional)
@@ -282,6 +283,8 @@ services:
     environment:
       - DATABASE_URL=${DATABASE_URL:-http://libsql:8080}
       - DATABASE_AUTH_TOKEN=${DATABASE_AUTH_TOKEN:-}
+      - TINYBIRD_URL=${TINYBIRD_URL:-http://tinybird:7181}
+      - TINYBIRD_TOKEN=${TINYBIRD_TOKEN:-${TINY_BIRD_API_KEY:-}}
       - PORT=${CHECKER_PORT:-8080}
     depends_on:
       server:

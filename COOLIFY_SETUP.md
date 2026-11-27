@@ -95,6 +95,7 @@ Create each service individually using the configurations below.
   ```
   DB_URL=http://libsql:8080
   TINYBIRD_URL=http://tinybird:7181
+  TINYBIRD_TOKEN=your-tinybird-token
   GIN_MODE=release
   PORT=8080
   NODE_ENV=production
@@ -108,6 +109,8 @@ Create each service individually using the configurations below.
 - **Environment Variables**:
   ```
   DATABASE_URL=http://libsql:8080
+  TINYBIRD_URL=http://tinybird:7181
+  TINYBIRD_TOKEN=your-tinybird-token
   PORT=8080
   NODE_ENV=production
   ```
