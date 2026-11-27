@@ -109,7 +109,7 @@ export const getPlaybookTool: AgentTool<
   destructive: false,
   inputSchema: GetPlaybookInput,
   outputSchema: GetPlaybookOutput,
-  // An empty slot is an answer ("the team has not written one"), not a failure.
+  // An unwritten playbook is an answer ("the team has not written one"), not a failure.
   async run({ ctx, input }) {
     const row = await getPlaybook({ ctx, input });
     if (!row) {
@@ -169,6 +169,13 @@ function summaryText(content: string): string {
   return content.length > 600 ? `${content.slice(0, 600)}…` : content;
 }
 
+function variableLines(variables: Record<string, string> | undefined) {
+  return Object.entries(variables ?? {}).map(([name, value]) => ({
+    label: name,
+    value,
+  }));
+}
+
 export const updatePlaybookTool: AgentTool<
   z.infer<typeof UpdatePlaybookInput>,
   z.infer<typeof UpdatePlaybookOutput>
@@ -188,11 +195,12 @@ export const updatePlaybookTool: AgentTool<
     summarize: (input) => ({
       title: `Update the ${input.title ?? playbookDefaultTitle(input.slug)} playbook`,
       lines: [
+        // the description is what every agent prompt carries, so a change must be visible
+        ...(input.description
+          ? [{ label: "Description", value: input.description }]
+          : []),
         { label: "Playbook", value: summaryText(input.content) },
-        ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
-          label: name,
-          value,
-        })),
+        ...variableLines(input.variables),
       ],
     }),
     verb: "updated",
@@ -257,10 +265,7 @@ export const createPlaybookTool: AgentTool<
         { label: "Slug", value: input.slug },
         { label: "Description", value: input.description },
         { label: "Playbook", value: summaryText(input.content) },
-        ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
-          label: name,
-          value,
-        })),
+        ...variableLines(input.variables),
       ],
     }),
     verb: "created",

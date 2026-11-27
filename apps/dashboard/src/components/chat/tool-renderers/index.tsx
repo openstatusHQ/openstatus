@@ -470,6 +470,10 @@ export const toolRenderers: ToolRendererRegistry = {
   update_playbook: {
     renderDraft: (input) => [
       { field: "slug", after: input.slug },
+      ...(input.title ? [{ field: "title", after: input.title }] : []),
+      ...(input.description
+        ? [{ field: "description", after: input.description }]
+        : []),
       { field: "content", after: input.content },
       ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
         field: name,

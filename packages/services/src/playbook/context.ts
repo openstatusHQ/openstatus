@@ -4,7 +4,7 @@ import { listPlaybooks } from "./list";
 
 type PlaybookEntry = { slug: string; description: string };
 
-/** `buildPlaybookSection` for the workspace's filled slots. */
+/** `buildPlaybookSection` for the workspace's playbooks. */
 export async function loadPlaybookSection(args: {
   ctx: ServiceContext;
 }): Promise<string> {

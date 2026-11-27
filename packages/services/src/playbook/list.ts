@@ -53,7 +53,7 @@ export async function listPlaybooks(args: {
     .map((r) => withUsers(r, users));
 }
 
-/** `null` for an empty slot. */
+/** `null` when the workspace has no playbook of that slug. */
 export async function getPlaybook(args: {
   ctx: ServiceContext;
   input: GetPlaybookInput;

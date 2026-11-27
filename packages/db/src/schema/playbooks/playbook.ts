@@ -10,7 +10,7 @@ import { user } from "../users";
 import { workspace } from "../workspaces";
 import type { PlaybookVariables } from "./variables";
 
-// Autoincrement: audit rows are the history of a cleared playbook, so its id must never be reused.
+// Autoincrement: audit rows are the history of a deleted playbook, so its id must never be reused.
 export const playbook = sqliteTable(
   "playbook",
   {

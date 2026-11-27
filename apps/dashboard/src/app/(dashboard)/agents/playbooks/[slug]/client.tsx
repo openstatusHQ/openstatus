@@ -12,6 +12,7 @@ import {
   PLAYBOOK_VARIABLE_VALUE_MAX_CHARS,
   type PlaybookVariables,
   playbookVariableNames,
+  playbookVariableValue,
   renderPlaybook,
 } from "@openstatus/db/src/schema/playbooks/variables";
 import {
@@ -80,7 +81,7 @@ export function Client({ slug }: { slug: string }) {
   const builtin = isBuiltinPlaybookSlug(slug);
   // a custom playbook has no template to start from or go back to
   const template = builtin ? playbookTemplate[slug] : "";
-  // An empty slot opens on the template, which can be saved as is.
+  // An unwritten playbook opens on the template, which can be saved as is.
   const server = playbook?.content ?? template;
   const content = draft ?? server;
   // same rule as the text: null follows the server copy
@@ -135,8 +136,8 @@ export function Client({ slug }: { slug: string }) {
     if (!playbook || !playbookVariableNames(playbook.content).includes(name)) {
       return;
     }
-    const value = (variables[name] ?? "").trim();
-    if (value === (serverValues[name] ?? "")) return;
+    const value = (playbookVariableValue(variables, name) ?? "").trim();
+    if (value === (playbookVariableValue(serverValues, name) ?? "")) return;
     saveProperty.mutate({
       slug,
       content: playbook.content,
@@ -166,7 +167,8 @@ export function Client({ slug }: { slug: string }) {
     (draft !== null && draft.trim() !== server) ||
     names.some(
       (name) =>
-        (variables[name] ?? "").trim() !== (serverValues[name] ?? "").trim(),
+        (playbookVariableValue(variables, name) ?? "").trim() !==
+        (playbookVariableValue(serverValues, name) ?? "").trim(),
     );
   const busy = save.isPending;
   const canSave = !busy && (dirty || !playbook) && length > 0 && !tooLong;
@@ -354,7 +356,7 @@ export function Client({ slug }: { slug: string }) {
                         aria-label={name}
                         placeholder="Not set"
                         maxLength={PLAYBOOK_VARIABLE_VALUE_MAX_CHARS}
-                        value={variables[name] ?? ""}
+                        value={playbookVariableValue(variables, name) ?? ""}
                         onChange={(e) =>
                           setValues({ ...variables, [name]: e.target.value })
                         }

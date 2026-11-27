@@ -698,6 +698,18 @@ describe("agent tools", () => {
     });
   });
 
+  test("the update_playbook approval card shows a description change", () => {
+    const lines = updatePlaybookTool.approval?.summarize({
+      slug: "postmortem",
+      content: "## Summary",
+      description: "Read this for everything.",
+    }).lines;
+    expect(lines).toContainEqual({
+      label: "Description",
+      value: "Read this for everything.",
+    });
+  });
+
   test("get_playbook has no source without variables", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
