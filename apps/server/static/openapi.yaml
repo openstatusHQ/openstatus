@@ -4021,6 +4021,85 @@ components:
       title: WhatsappData
       additionalProperties: false
       description: WhatsappData contains configuration for WhatsApp notifications.
+    openstatus.playbook.v1.CreatePlaybookRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          examples:
+            - database-failover
+          title: slug
+          maxLength: 64
+          minLength: 1
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          description: |-
+            Slug of the new playbook (required): lowercase letters, digits and single
+             hyphens, max 64 characters. It cannot be one of the built-in slugs
+             (incident-response, status-page, maintenance-windows, postmortem) and
+             cannot be changed later.
+        title:
+          type: string
+          examples:
+            - Database failover
+          title: title
+          maxLength: 100
+          minLength: 1
+          description: Name of the playbook (required, 1 to 100 characters).
+        description:
+          type: string
+          examples:
+            - How we fail over the primary database.
+          title: description
+          maxLength: 500
+          minLength: 1
+          description: |-
+            What the playbook covers (required, 1 to 500 characters). The agent is
+             told the description and uses it to decide when to read the playbook.
+        content:
+          type: string
+          examples:
+            - Page {{dba_on_call}} before promoting the replica.
+          title: content
+          maxLength: 10000
+          minLength: 1
+          description: |-
+            The complete playbook in markdown (required, 1-10000 characters).
+             {{name}} marks a variable; names use lowercase letters, digits and
+             underscores.
+        variables:
+          type: object
+          title: variables
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 500
+          description: |-
+            Values for the variables in the content, by name. Names the content does
+             not use are dropped.
+      title: CreatePlaybookRequest
+      additionalProperties: false
+      description: CreatePlaybookRequest is the request to create a custom playbook.
+    openstatus.playbook.v1.CreatePlaybookRequest.VariablesEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: VariablesEntry
+      additionalProperties: false
+    openstatus.playbook.v1.CreatePlaybookResponse:
+      type: object
+      properties:
+        playbook:
+          title: playbook
+          description: The created playbook.
+          $ref: '#/components/schemas/openstatus.playbook.v1.Playbook'
+      title: CreatePlaybookResponse
+      additionalProperties: false
+      description: CreatePlaybookResponse is the response after creating a playbook.
     openstatus.playbook.v1.DeletePlaybookRequest:
       type: object
       properties:
@@ -4214,8 +4293,7 @@ components:
           minLength: 1
           description: |-
             Name of the playbook (1 to 100 characters). Left out, the stored title is
-             kept, or the default of a built-in slug when the playbook is created.
-             Required to create a playbook under a custom slug.
+             kept, or the default of a built-in slug on its first write.
         description:
           type:
             - string
@@ -4225,8 +4303,7 @@ components:
           minLength: 1
           description: |-
             What the playbook covers (1 to 500 characters). Left out, the stored
-             description is kept, or the default of a built-in slug when the playbook is
-             created. Required to create a playbook under a custom slug.
+             description is kept, or the default of a built-in slug on its first write.
       title: UpdatePlaybookRequest
       additionalProperties: false
       description: UpdatePlaybookRequest is the request to write the playbook of a slug.
@@ -8655,6 +8732,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /rpc/openstatus.playbook.v1.PlaybookService/CreatePlaybook:
+    post:
+      tags:
+        - PlaybookService
+      summary: CreatePlaybook
+      description: |-
+        CreatePlaybook creates a custom playbook under a new slug. It fails when
+         the slug is taken or is one of the built-in slugs.
+      operationId: PlaybookService_CreatePlaybook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.playbook.v1.CreatePlaybookRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.CreatePlaybookResponse'
   /rpc/openstatus.playbook.v1.PlaybookService/DeletePlaybook:
     post:
       tags:
@@ -8801,8 +8908,8 @@ paths:
         - PlaybookService
       summary: UpdatePlaybook
       description: |-
-        UpdatePlaybook writes the playbook of a slug: it is created when the
-         workspace has none for that slug, otherwise its text and variables are replaced.
+        UpdatePlaybook replaces the text and variables of a playbook. A built-in
+         slug is created on its first write; an unknown custom slug is not found.
       operationId: PlaybookService_UpdatePlaybook
       requestBody:
         content:

@@ -41,7 +41,7 @@ export function Client() {
   const queryClient = useQueryClient();
   const { data: playbooks } = useQuery(trpc.playbook.list.queryOptions());
   const create = useMutation(
-    trpc.playbook.save.mutationOptions({
+    trpc.playbook.create.mutationOptions({
       onSuccess: async (playbook) => {
         await queryClient.invalidateQueries({
           queryKey: trpc.playbook.pathKey(),
@@ -95,13 +95,7 @@ export function Client() {
             const playbook = playbooks?.find((p) => p.slug === slug);
             return (
               <EventRow key={slug}>
-                {playbook ? (
-                  <EventRowDate date={playbook.updatedAt} />
-                ) : (
-                  <span className="text-muted-foreground/50 font-mono text-xs [grid-area:date]">
-                    —
-                  </span>
-                )}
+                <EventRowDate date={playbook?.updatedAt} />
                 <EventRowStatus>
                   <StatusDot variant={playbook ? "success" : "default"} />
                   <span>{playbook ? "Written" : "Empty"}</span>

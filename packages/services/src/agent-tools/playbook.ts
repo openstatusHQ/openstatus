@@ -1,7 +1,7 @@
 import {
+  builtinPlaybookSlugs,
   playbookDefaultDescription,
   playbookDefaultTitle,
-  builtinPlaybookSlugs,
 } from "@openstatus/db/src/schema/playbooks/constants";
 import {
   playbookContentSchema,
@@ -19,8 +19,9 @@ import { z } from "zod";
 import {
   delimitPlaybook,
   getPlaybook,
+  createPlaybook,
   listPlaybooks,
-  savePlaybook,
+  updatePlaybook,
 } from "../playbook";
 import type { AgentTool } from "./types";
 
@@ -66,7 +67,17 @@ export const listPlaybooksTool: AgentTool<
   },
 };
 
-const GetPlaybookInput = z.object({ slug: playbookSlugSchema }).strict();
+const GetPlaybookInput = z
+  .object({
+    slug: playbookSlugSchema,
+    forEdit: z
+      .boolean()
+      .optional()
+      .describe(
+        "Set to true only when you are about to change the playbook: also returns `source` and `variables`.",
+      ),
+  })
+  .strict();
 
 const GetPlaybookOutput = z.object({
   slug: z.string(),
@@ -75,13 +86,18 @@ const GetPlaybookOutput = z.object({
     .string()
     .optional()
     .describe(
-      "Only when the playbook uses {{name}} variables: the text as written, before values are filled in. Base an update_playbook call on this, never on `content`.",
+      "Only with forEdit, when the playbook uses {{name}} variables: the text as written, before values are filled in. Base an update_playbook call on this, never on `content`.",
     ),
   variables: playbookVariablesSchema
     .optional()
     .describe("The values currently set for the variables in `source`."),
+  note: z.string().optional(),
   error: z.string().optional(),
 });
+
+// an edit based on the filled-in text would bake the values into the playbook
+const VARIABLES_NOTE =
+  "This text has {{name}} variables filled in. Before update_playbook, read it again with forEdit: true.";
 
 export const getPlaybookTool: AgentTool<
   z.infer<typeof GetPlaybookInput>,
@@ -111,7 +127,9 @@ export const getPlaybookTool: AgentTool<
         renderPlaybook(row.content, row.variables),
       ),
       ...(usesVariables
-        ? { source: row.content, variables: row.variables ?? {} }
+        ? input.forEdit
+          ? { source: row.content, variables: row.variables ?? {} }
+          : { note: VARIABLES_NOTE }
         : {}),
     };
   },
@@ -122,13 +140,11 @@ const UpdatePlaybookInput = z
     slug: playbookSlugSchema,
     title: playbookTitleSchema
       .optional()
-      .describe(
-        "Name of the playbook. Required when creating a playbook under a custom slug; otherwise leave it out to keep the current one.",
-      ),
+      .describe("Name of the playbook. Leave it out to keep the current one."),
     description: playbookDescriptionSchema
       .optional()
       .describe(
-        "What the playbook covers and when to read it; it is what the agent sees before it opens the playbook. Required when creating a playbook under a custom slug; otherwise leave it out to keep the current one.",
+        "What the playbook covers and when to read it; it is what the agent sees before it opens the playbook. Leave it out to keep the current one.",
       ),
     content: playbookContentSchema.describe(
       "The complete playbook in markdown. It replaces the whole playbook, so include every section that should stay. {{name}} (lowercase letters, digits, underscores) marks a variable.",
@@ -143,7 +159,9 @@ const UpdatePlaybookInput = z
 
 const UpdatePlaybookOutput = z.object({
   slug: z.string(),
-  created: z.boolean().describe("True when the playbook did not exist before."),
+  created: z
+    .boolean()
+    .describe("True when a built-in playbook was written for the first time."),
   updatedAt: z.string(),
 });
 
@@ -156,7 +174,7 @@ export const updatePlaybookTool: AgentTool<
   z.infer<typeof UpdatePlaybookOutput>
 > = {
   name: "update_playbook",
-  description: `Write one of the team's playbooks: creates it when the team has none for that slug yet, otherwise replaces its whole text. AUDIT-LOGGED; the agent follows the new text from then on. Before changing an existing playbook, read it with get_playbook and send the full text with your change applied. Write only what the user asked for or confirmed; never invent the team's rules. Slugs: ${slugList}`,
+  description: `Write one of the team's existing playbooks, or one of the four built-in ones for the first time: replaces its whole text. A new playbook under a custom slug is create_playbook. AUDIT-LOGGED; the agent follows the new text from then on. Before changing an existing playbook, read it with get_playbook (forEdit: true) and send the full text with your change applied. Write only what the user asked for or confirmed; never invent the team's rules. Slugs: ${slugList}`,
   scope: "incidents:write",
   destructive: true,
   inputSchema: UpdatePlaybookInput,
@@ -181,7 +199,7 @@ export const updatePlaybookTool: AgentTool<
   },
   async run({ ctx, input }) {
     const existing = await getPlaybook({ ctx, input: { slug: input.slug } });
-    const row = await savePlaybook({
+    const row = await updatePlaybook({
       ctx,
       input: {
         slug: input.slug,
@@ -196,5 +214,59 @@ export const updatePlaybookTool: AgentTool<
       created: existing === null,
       updatedAt: row.updatedAt.toISOString(),
     };
+  },
+};
+
+const CreatePlaybookInput = z
+  .object({
+    slug: playbookSlugSchema.describe(
+      "A new slug of the team's own: lowercase letters, digits and single hyphens. Not one of the built-in slugs.",
+    ),
+    title: playbookTitleSchema.describe("Name of the playbook."),
+    description: playbookDescriptionSchema.describe(
+      "What the playbook covers and when to read it; it is what the agent sees before it opens the playbook.",
+    ),
+    content: playbookContentSchema.describe(
+      "The complete playbook in markdown. {{name}} (lowercase letters, digits, underscores) marks a variable.",
+    ),
+    variables: playbookVariablesSchema
+      .optional()
+      .describe("Values for {{name}} variables in the text."),
+  })
+  .strict();
+
+const CreatePlaybookOutput = z.object({
+  slug: z.string(),
+  updatedAt: z.string(),
+});
+
+export const createPlaybookTool: AgentTool<
+  z.infer<typeof CreatePlaybookInput>,
+  z.infer<typeof CreatePlaybookOutput>
+> = {
+  name: "create_playbook",
+  description: `Create a new playbook under a slug of the team's own, next to the built-in ones (${builtinPlaybookSlugs.join(", ")}; write those with update_playbook). Fails when the slug is already taken: call list_playbooks first, and change an existing playbook with update_playbook. AUDIT-LOGGED; the agent can read the playbook from then on. Write only what the user asked for or confirmed; never invent the team's rules.`,
+  scope: "incidents:write",
+  destructive: false,
+  inputSchema: CreatePlaybookInput,
+  outputSchema: CreatePlaybookOutput,
+  approval: {
+    summarize: (input) => ({
+      title: `Create the ${input.title} playbook`,
+      lines: [
+        { label: "Slug", value: input.slug },
+        { label: "Description", value: input.description },
+        { label: "Playbook", value: summaryText(input.content) },
+        ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
+          label: name,
+          value,
+        })),
+      ],
+    }),
+    verb: "created",
+  },
+  async run({ ctx, input }) {
+    const row = await createPlaybook({ ctx, input });
+    return { slug: row.slug, updatedAt: row.updatedAt.toISOString() };
   },
 };

@@ -9,6 +9,7 @@ import { db, eq } from "@openstatus/db";
 import { playbook } from "@openstatus/db/src/schema";
 import { createTestWorkspace } from "@openstatus/db/src/test/factories";
 import {
+  CreatePlaybookResponseSchema,
   DeletePlaybookResponseSchema,
   GetPlaybookResponseSchema,
   ListPlaybooksResponseSchema,
@@ -203,43 +204,48 @@ describe("PlaybookService", () => {
     ).toBe("invalid_argument");
   });
 
-  test("a custom slug needs a title and a description, then behaves like any playbook", async () => {
+  test("a custom playbook is created once, then updated like any playbook", async () => {
+    const input = {
+      slug: "database-failover",
+      title: "Database failover",
+      description: "Read before touching the primary.",
+      content: "Promote the replica.",
+    };
     expect(
-      (
-        await rpcError(
-          "UpdatePlaybook",
-          { slug: "database-failover", content: "x" },
-          key,
-        )
-      ).code,
+      (await rpcError("CreatePlaybook", { ...input, title: "" }, key)).code,
     ).toBe("invalid_argument");
     expect(
-      (
-        await rpcError(
-          "UpdatePlaybook",
-          {
-            slug: "database-failover",
-            title: "Database failover",
-            content: "x",
-          },
-          key,
-        )
-      ).code,
+      (await rpcError("CreatePlaybook", { ...input, slug: "postmortem" }, key))
+        .code,
     ).toBe("invalid_argument");
+    // an update never creates a custom slug
+    expect(
+      await rpcError(
+        "UpdatePlaybook",
+        { slug: input.slug, content: input.content },
+        key,
+      ),
+    ).toEqual({ status: 404, code: "not_found" });
 
     const created = await rpc(
-      UpdatePlaybookResponseSchema,
-      "UpdatePlaybook",
-      {
-        slug: "database-failover",
-        title: "Database failover",
-        description: "Read before touching the primary.",
-        content: "Promote the replica.",
-      },
+      CreatePlaybookResponseSchema,
+      "CreatePlaybook",
+      input,
       key,
     );
     await trackIds();
     expect(created.playbook?.title).toBe("Database failover");
+    expect((await rpcError("CreatePlaybook", input, key)).code).toBe(
+      "failed_precondition",
+    );
+
+    const updated = await rpc(
+      UpdatePlaybookResponseSchema,
+      "UpdatePlaybook",
+      { slug: input.slug, content: "Page the DBA first." },
+      key,
+    );
+    expect(updated.playbook?.title).toBe("Database failover");
 
     const listed = await rpc(
       ListPlaybooksResponseSchema,

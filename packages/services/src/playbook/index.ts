@@ -5,6 +5,6 @@ export {
   loadPlaybookSection,
 } from "./context";
 export { getPlaybook, listPlaybooks, type PlaybookWithUser } from "./list";
-export { savePlaybook } from "./save";
+export { createPlaybook, savePlaybook, updatePlaybook } from "./save";
 
 export { PlaybookSlugInput, SavePlaybookInput } from "./schemas";

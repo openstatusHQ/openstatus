@@ -75,12 +75,23 @@ export function EventRowDate({
   className,
   ...props
 }: Omit<React.ComponentProps<"time">, "dateTime" | "children"> & {
-  date: Date;
+  /** Without one the cell shows an em dash, so the columns still line up. */
+  date?: Date | null;
   /** Show the day in this zone instead of the browser's. */
   timeZone?: string;
 }) {
   // local-time text differs between server and browser
   const hydrated = useHydrated();
+  if (!date) {
+    return (
+      <span
+        data-slot="event-row-date"
+        className="text-muted-foreground/50 font-mono text-xs [grid-area:date]"
+      >
+        —
+      </span>
+    );
+  }
   return (
     <HoverCardTimestamp date={date} side="top" align="start">
       <time

@@ -454,6 +454,19 @@ export const toolRenderers: ToolRendererRegistry = {
   get_playbook: {
     summary: (o) => (o.error ? o.error : `read ${o.slug}`),
   },
+  create_playbook: {
+    renderDraft: (input) => [
+      { field: "slug", after: input.slug },
+      { field: "title", after: input.title },
+      { field: "description", after: input.description },
+      { field: "content", after: input.content },
+      ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
+        field: name,
+        after: value,
+      })),
+    ],
+    summary: (o) => `created ${o.slug}`,
+  },
   update_playbook: {
     renderDraft: (input) => [
       { field: "slug", after: input.slug },

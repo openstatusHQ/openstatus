@@ -21,8 +21,12 @@ service PlaybookService {
     option idempotency_level = NO_SIDE_EFFECTS;
   }
 
-  // UpdatePlaybook writes the playbook of a slug: it is created when the
-  // workspace has none for that slug, otherwise its text and variables are replaced.
+  // CreatePlaybook creates a custom playbook under a new slug. It fails when
+  // the slug is taken or is one of the built-in slugs.
+  rpc CreatePlaybook(CreatePlaybookRequest) returns (CreatePlaybookResponse);
+
+  // UpdatePlaybook replaces the text and variables of a playbook. A built-in
+  // slug is created on its first write; an unknown custom slug is not found.
   rpc UpdatePlaybook(UpdatePlaybookRequest) returns (UpdatePlaybookResponse);
 
   // DeletePlaybook removes the playbook of a slug.
@@ -56,6 +60,69 @@ message GetPlaybookRequest {
 // GetPlaybookResponse is the response containing the playbook.
 message GetPlaybookResponse {
   // The requested playbook.
+  Playbook playbook = 1;
+}
+
+// CreatePlaybookRequest is the request to create a custom playbook.
+message CreatePlaybookRequest {
+  // Slug of the new playbook (required): lowercase letters, digits and single
+  // hyphens, max 64 characters. It cannot be one of the built-in slugs
+  // (incident-response, status-page, maintenance-windows, postmortem) and
+  // cannot be changed later.
+  string slug = 1 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 64
+      pattern: "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"database-failover\""}}
+  ];
+
+  // Name of the playbook (required, 1 to 100 characters).
+  string title = 2 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 100
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"Database failover\""}}
+  ];
+
+  // What the playbook covers (required, 1 to 500 characters). The agent is
+  // told the description and uses it to decide when to read the playbook.
+  string description = 3 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 500
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"How we fail over the primary database.\""}}
+  ];
+
+  // The complete playbook in markdown (required, 1-10000 characters).
+  // {{name}} marks a variable; names use lowercase letters, digits and
+  // underscores.
+  string content = 4 [
+    (buf.validate.field).string = {
+      min_len: 1
+      max_len: 10000
+    },
+    (gnostic.openapi.v3.property) = {example: {yaml: "\"Page {{dba_on_call}} before promoting the replica.\""}}
+  ];
+
+  // Values for the variables in the content, by name. Names the content does
+  // not use are dropped.
+  map<string, string> variables = 5 [(buf.validate.field).map = {
+    keys: {
+      string: {pattern: "^[a-z0-9_]{1,64}$"}
+    }
+    values: {
+      string: {max_len: 500}
+    }
+  }];
+}
+
+// CreatePlaybookResponse is the response after creating a playbook.
+message CreatePlaybookResponse {
+  // The created playbook.
   Playbook playbook = 1;
 }
 
@@ -97,16 +164,14 @@ message UpdatePlaybookRequest {
   }];
 
   // Name of the playbook (1 to 100 characters). Left out, the stored title is
-  // kept, or the default of a built-in slug when the playbook is created.
-  // Required to create a playbook under a custom slug.
+  // kept, or the default of a built-in slug on its first write.
   optional string title = 4 [(buf.validate.field).string = {
     min_len: 1
     max_len: 100
   }];
 
   // What the playbook covers (1 to 500 characters). Left out, the stored
-  // description is kept, or the default of a built-in slug when the playbook is
-  // created. Required to create a playbook under a custom slug.
+  // description is kept, or the default of a built-in slug on its first write.
   optional string description = 5 [(buf.validate.field).string = {
     min_len: 1
     max_len: 500

@@ -4,6 +4,7 @@ import type {
 } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { ServiceContext } from "@openstatus/services";
 import {
+  createPlaybookTool,
   getPlaybookTool,
   listPlaybooksTool,
   updatePlaybookTool,
@@ -18,6 +19,7 @@ export function registerPlaybookTools(
   return registerRegistryTools(server, ctx, [
     listPlaybooksTool,
     getPlaybookTool,
+    createPlaybookTool,
     updatePlaybookTool,
   ]);
 }

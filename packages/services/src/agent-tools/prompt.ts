@@ -189,6 +189,7 @@ const INTERNAL_WRITE_TOOLS = [
   "set_incident_status",
   "draft_postmortem",
   "approve_postmortem",
+  "create_playbook",
   "update_playbook",
   "create_monitor",
   "update_monitor",

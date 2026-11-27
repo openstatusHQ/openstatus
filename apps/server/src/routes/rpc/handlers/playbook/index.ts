@@ -2,9 +2,10 @@ import type { ServiceImpl } from "@connectrpc/connect";
 import type { PlaybookService } from "@openstatus/proto/playbook/v1";
 import {
   clearPlaybook,
+  createPlaybook,
   getPlaybook,
   listPlaybooks,
-  savePlaybook,
+  updatePlaybook,
 } from "@openstatus/services/playbook";
 
 import { toConnectError, toServiceCtx } from "../../adapter";
@@ -37,9 +38,27 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
     }
   },
 
+  async createPlaybook(req, ctx) {
+    try {
+      const row = await createPlaybook({
+        ctx: toServiceCtx(getRpcContext(ctx)),
+        input: {
+          slug: req.slug,
+          title: req.title,
+          description: req.description,
+          content: req.content,
+          variables: req.variables,
+        },
+      });
+      return { playbook: playbookToProto(row) };
+    } catch (err) {
+      toConnectError(err);
+    }
+  },
+
   async updatePlaybook(req, ctx) {
     try {
-      const row = await savePlaybook({
+      const row = await updatePlaybook({
         ctx: toServiceCtx(getRpcContext(ctx)),
         input: {
           slug: req.slug,

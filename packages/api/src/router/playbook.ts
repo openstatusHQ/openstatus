@@ -3,6 +3,7 @@ import {
   PlaybookSlugInput,
   SavePlaybookInput,
   clearPlaybook,
+  createPlaybook,
   getPlaybook,
   listPlaybooks,
   savePlaybook,
@@ -25,6 +26,17 @@ export const playbookRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       try {
         return await getPlaybook({ ctx: toServiceCtx(ctx), input });
+      } catch (err) {
+        toTRPCError(err);
+      }
+    }),
+
+  create: protectedProcedure
+    .meta({ track: Events.SavePlaybook, trackProps: ["slug"] })
+    .input(SavePlaybookInput)
+    .mutation(async ({ ctx, input }) => {
+      try {
+        return await createPlaybook({ ctx: toServiceCtx(ctx), input });
       } catch (err) {
         toTRPCError(err);
       }

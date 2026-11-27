@@ -15,12 +15,14 @@ import {
   withTestTransaction,
 } from "../../../test/helpers";
 import {
+  createPlaybookTool,
   getPlaybookTool,
   listPlaybooksTool,
   updatePlaybookTool,
 } from "../../agent-tools/playbook";
 import type { ServiceContext } from "../../context";
 import {
+  ConflictError,
   ForbiddenError,
   LimitExceededError,
   NotFoundError,
@@ -474,8 +476,10 @@ describe("reads", () => {
 });
 
 describe("buildPlaybookSection", () => {
-  test("is empty without playbooks", () => {
-    expect(buildPlaybookSection([])).toBe("");
+  test("without playbooks, tells the agent there is nothing to read", () => {
+    const section = buildPlaybookSection([]);
+    expect(section).toContain("has not written any playbooks");
+    expect(section).toContain("do not call list_playbooks or get_playbook");
   });
 
   test("names the filled slugs, what each covers and the tool", () => {
@@ -554,9 +558,17 @@ describe("agent tools", () => {
         input: { slug: "status-page" },
       });
       expect(read.content).toContain("Sign off as Platform.");
+      // a plain read carries the text once, and says how to get the editable one
+      expect(read.source).toBeUndefined();
+      expect(read.note).toContain("forEdit: true");
+
+      const editable = await getPlaybookTool.run({
+        ctx: c,
+        input: { slug: "status-page", forEdit: true },
+      });
       // the text to edit is the one with the variable still in it
-      expect(read.source).toBe("Sign off as {{team_name}}.");
-      expect(read.variables).toEqual({ team_name: "Platform" });
+      expect(editable.source).toBe("Sign off as {{team_name}}.");
+      expect(editable.variables).toEqual({ team_name: "Platform" });
 
       const updated = await updatePlaybookTool.run({
         ctx: c,
@@ -568,6 +580,63 @@ describe("agent tools", () => {
       expect(updated.created).toBe(false);
       const row = await getPlaybook({ ctx: c, input: { slug: "status-page" } });
       expect(row?.variables).toEqual({ team_name: "Platform" });
+    });
+  });
+
+  test("create_playbook adds a custom playbook once", async () => {
+    await withTestTransaction(async (tx) => {
+      const c = { ...ctx, db: tx };
+      const input = {
+        slug: "on-call",
+        title: "On-call",
+        description: "Who is paged and when.",
+        content: "Page the primary first.",
+      };
+      const created = await createPlaybookTool.run({ ctx: c, input });
+      expect(created.slug).toBe("on-call");
+      await expect(createPlaybookTool.run({ ctx: c, input })).rejects.toThrow(
+        ConflictError,
+      );
+
+      const updated = await updatePlaybookTool.run({
+        ctx: c,
+        input: { slug: "on-call", content: "Page the secondary first." },
+      });
+      expect(updated.created).toBe(false);
+      const row = await getPlaybook({ ctx: c, input: { slug: "on-call" } });
+      expect(row?.title).toBe("On-call");
+    });
+  });
+
+  test("create_playbook rejects a built-in slug", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        createPlaybookTool.run({
+          ctx: { ...ctx, db: tx },
+          input: {
+            slug: "postmortem",
+            title: "Postmortem",
+            description: "Sections.",
+            content: "## Summary",
+          },
+        }),
+      ).rejects.toThrow(ValidationError);
+    });
+  });
+
+  test("update_playbook rejects a custom slug that does not exist", async () => {
+    await withTestTransaction(async (tx) => {
+      await expect(
+        updatePlaybookTool.run({
+          ctx: { ...ctx, db: tx },
+          input: {
+            slug: "on-call",
+            title: "On-call",
+            description: "Who is paged and when.",
+            content: "Page the primary first.",
+          },
+        }),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 

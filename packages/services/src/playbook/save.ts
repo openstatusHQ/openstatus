@@ -20,7 +20,12 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { LimitExceededError, ValidationError } from "../errors";
+import {
+  ConflictError,
+  LimitExceededError,
+  NotFoundError,
+  ValidationError,
+} from "../errors";
 import { getPlaybookBySlug } from "./internal";
 import { SavePlaybookInput } from "./schemas";
 
@@ -36,13 +41,35 @@ function usedVariables(
   return entries.length ? Object.fromEntries(entries) : null;
 }
 
+type WriteArgs = { ctx: ServiceContext; input: SavePlaybookInput };
+
 /** Writes the workspace's one playbook of this slug, creating it when the slot is empty. */
-export async function savePlaybook(args: {
-  ctx: ServiceContext;
-  input: SavePlaybookInput;
-}): Promise<Playbook> {
+export async function savePlaybook(args: WriteArgs): Promise<Playbook> {
   const { ctx } = args;
   requireScope(ctx, "incidents:write");
+  return writePlaybook(args, "save");
+}
+
+/** Creates a custom playbook; a taken or built-in slug is refused. */
+export async function createPlaybook(args: WriteArgs): Promise<Playbook> {
+  const { ctx } = args;
+  requireScope(ctx, "incidents:write");
+  return writePlaybook(args, "create");
+}
+
+/** Replaces a playbook; only a built-in slug may be written for the first time. */
+export async function updatePlaybook(args: WriteArgs): Promise<Playbook> {
+  const { ctx } = args;
+  requireScope(ctx, "incidents:write");
+  return writePlaybook(args, "update");
+}
+
+// oxlint-disable-next-line openstatus/services-mutation-guards -- the three verbs above check the scope
+async function writePlaybook(
+  args: WriteArgs,
+  mode: "save" | "create" | "update",
+): Promise<Playbook> {
+  const { ctx } = args;
   const input = SavePlaybookInput.parse(args.input);
   const actorUserId = tryGetActorUserId(ctx.actor);
   const variables = usedVariables(input.content, input.variables);
@@ -55,6 +82,17 @@ export async function savePlaybook(args: {
   return withTransaction(ctx, async (tx) => {
     const existing = await getPlaybookBySlug(tx, ctx.workspace.id, input.slug);
     const builtin = isBuiltinPlaybookSlug(input.slug);
+    if (mode === "create" && builtin) {
+      throw new ValidationError(
+        `${input.slug} is a built-in playbook; update it instead.`,
+      );
+    }
+    if (mode === "create" && existing) {
+      throw new ConflictError(`A ${input.slug} playbook already exists.`);
+    }
+    if (mode === "update" && !existing && !builtin) {
+      throw new NotFoundError("playbook", input.slug);
+    }
     // a default is only ever written on create, so later edits to it never reach the row
     const title =
       input.title ??

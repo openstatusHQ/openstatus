@@ -54,6 +54,7 @@ import {
   updateComponentGroupTool,
 } from "./page-component-group";
 import {
+  createPlaybookTool,
   getPlaybookTool,
   listPlaybooksTool,
   updatePlaybookTool,
@@ -122,6 +123,7 @@ export {
   updateComponentGroupTool,
 } from "./page-component-group";
 export {
+  createPlaybookTool,
   getPlaybookTool,
   listPlaybooksTool,
   updatePlaybookTool,
@@ -202,6 +204,7 @@ export const agentTools = {
   delete_maintenance_update: deleteMaintenanceUpdateTool,
   list_playbooks: listPlaybooksTool,
   get_playbook: getPlaybookTool,
+  create_playbook: createPlaybookTool,
   update_playbook: updatePlaybookTool,
   list_monitors: listMonitorsTool,
   create_monitor: createMonitorTool,

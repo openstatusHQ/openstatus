@@ -68,16 +68,27 @@ The preview shows the playbook with its variables filled in, each value marked a
 
 ## How the agent uses playbooks
 
-The agent is told which playbooks exist and the description of each, not what they say. It reads one with `get_playbook` when you ask how the team does something, and before it drafts a status report, a maintenance notice or a postmortem. It is asked to read first; it is not forced to, so check a draft before you approve it.
+The agent is told which playbooks exist and the description of each, not what they say. In Slack, the status report drafted right after an incident is declared always follows your `status-page` playbook. It reads one with `get_playbook` when you ask how the team does something, and before it drafts a status report, a maintenance notice or a postmortem. It is asked to read first; it is not forced to, so check a draft before you approve it.
 
 - **Slack and the dashboard assistant**: the agent knows which playbooks are written and reads the relevant one on its own.
 - **MCP**: the server instructions and the tool descriptions point the client's model at `list_playbooks` and `get_playbook`. See the [MCP server reference](/docs/reference/mcp-server#playbooks).
 
 A playbook decides wording, structure, severity and process. It never overrides the approval step, and it cannot give the agent permissions it does not have.
 
+### Slugs that are read by name
+
+Two drafts load a playbook by its exact slug, without the agent choosing to:
+
+| Slug | Read by |
+|---|---|
+| `postmortem` | The [postmortem draft](#postmortem-drafts) |
+| `status-page` | The first status report Slack drafts after an incident is declared |
+
+Rules for those two drafts only apply when they are written under these slugs. A custom playbook is never loaded this way: the agent reads it when its description fits the request, so a custom `our-postmortems` playbook does not shape the postmortem draft.
+
 ### Changing a playbook from the agent
 
-Ask the agent to write or change a playbook and it calls `update_playbook`, which creates the playbook when there is none for that slug and otherwise replaces its text. Like every write, it needs your approval first. The agent cannot delete a playbook.
+Ask the agent to change a playbook and it calls `update_playbook`, which replaces its text; the same tool writes a built-in playbook for the first time. Ask for a new playbook of your own and it calls `create_playbook`, which needs a slug, a title and a description. Like every write, it needs your approval first. The agent cannot delete a playbook.
 
 ## Postmortem drafts
 
@@ -93,7 +104,8 @@ Without a `postmortem` playbook, drafts are unchanged.
 |---|---|---|
 | `ListPlaybooks` | The playbooks the workspace has written, with title and description, without their text | `incidents:read` |
 | `GetPlaybook` | One playbook: title, description, the text as written, its variable values and timestamps | `incidents:read` |
-| `UpdatePlaybook` | Creates the playbook when there is none for that slug, otherwise replaces its text and variables. `title` and `description` are optional for a built-in slug and required when creating a custom slug | `incidents:write` |
+| `CreatePlaybook` | Creates a custom playbook: `slug`, `title`, `description` and `content` are required. Returns `failed_precondition` when the slug is taken and `invalid_argument` for a built-in slug | `incidents:write` |
+| `UpdatePlaybook` | Replaces the text and variables of a playbook; `title` and `description` are optional. A built-in slug is created on its first write, a custom slug that does not exist returns `not_found` | `incidents:write` |
 | `DeletePlaybook` | Removes the playbook of a slug | `incidents:write` |
 
 ```bash

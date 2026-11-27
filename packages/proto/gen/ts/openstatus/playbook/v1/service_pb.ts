@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file openstatus/playbook/v1/service.proto.
  */
 export const file_openstatus_playbook_v1_service: GenFile = /*@__PURE__*/
-  fileDesc("CiRvcGVuc3RhdHVzL3BsYXlib29rL3YxL3NlcnZpY2UucHJvdG8SFm9wZW5zdGF0dXMucGxheWJvb2sudjEiFgoUTGlzdFBsYXlib29rc1JlcXVlc3QiUwoVTGlzdFBsYXlib29rc1Jlc3BvbnNlEjoKCXBsYXlib29rcxgBIAMoCzInLm9wZW5zdGF0dXMucGxheWJvb2sudjEuUGxheWJvb2tTdW1tYXJ5IlkKEkdldFBsYXlib29rUmVxdWVzdBJDCgRzbHVnGAEgASgJQjW6RxE6DxINInN0YXR1cy1wYWdlIrpIHnIcGEAyGF5bYS16MC05XSsoLVthLXowLTldKykqJCJJChNHZXRQbGF5Ym9va1Jlc3BvbnNlEjIKCHBsYXlib29rGAEgASgLMiAub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9vayKzAwoVVXBkYXRlUGxheWJvb2tSZXF1ZXN0EkMKBHNsdWcYASABKAlCNbpHEToPEg0ic3RhdHVzLXBhZ2UiukgechwYQDIYXlthLXowLTldKygtW2EtejAtOV0rKSokEk0KB2NvbnRlbnQYAiABKAlCPLpHLzotEisiU2lnbiBvZmYgZXZlcnkgdXBkYXRlIHdpdGgge3t0ZWFtX25hbWV9fS4iukgHcgUQARiQThJ1Cgl2YXJpYWJsZXMYAyADKAsyPC5vcGVuc3RhdHVzLnBsYXlib29rLnYxLlVwZGF0ZVBsYXlib29rUmVxdWVzdC5WYXJpYWJsZXNFbnRyeUIkukghmgEeIhVyEzIRXlthLXowLTlfXXsxLDY0fSQqBXIDGPQDEh0KBXRpdGxlGAQgASgJQgm6SAZyBBABGGRIAIgBARIkCgtkZXNjcmlwdGlvbhgFIAEoCUIKukgHcgUQARj0A0gBiAEBGjAKDlZhcmlhYmxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCCAoGX3RpdGxlQg4KDF9kZXNjcmlwdGlvbiJMChZVcGRhdGVQbGF5Ym9va1Jlc3BvbnNlEjIKCHBsYXlib29rGAEgASgLMiAub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9vayJcChVEZWxldGVQbGF5Ym9va1JlcXVlc3QSQwoEc2x1ZxgBIAEoCUI1ukcROg8SDSJzdGF0dXMtcGFnZSK6SB5yHBhAMhheW2EtejAtOV0rKC1bYS16MC05XSspKiQiKQoWRGVsZXRlUGxheWJvb2tSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIMtMDCg9QbGF5Ym9va1NlcnZpY2UScQoNTGlzdFBsYXlib29rcxIsLm9wZW5zdGF0dXMucGxheWJvb2sudjEuTGlzdFBsYXlib29rc1JlcXVlc3QaLS5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkxpc3RQbGF5Ym9va3NSZXNwb25zZSIDkAIBEmsKC0dldFBsYXlib29rEioub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5HZXRQbGF5Ym9va1JlcXVlc3QaKy5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkdldFBsYXlib29rUmVzcG9uc2UiA5ACARJvCg5VcGRhdGVQbGF5Ym9vaxItLm9wZW5zdGF0dXMucGxheWJvb2sudjEuVXBkYXRlUGxheWJvb2tSZXF1ZXN0Gi4ub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5VcGRhdGVQbGF5Ym9va1Jlc3BvbnNlEm8KDkRlbGV0ZVBsYXlib29rEi0ub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5EZWxldGVQbGF5Ym9va1JlcXVlc3QaLi5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkRlbGV0ZVBsYXlib29rUmVzcG9uc2VCVVpTZ2l0aHViLmNvbS9vcGVuc3RhdHVzaHEvb3BlbnN0YXR1cy9wYWNrYWdlcy9wcm90by9vcGVuc3RhdHVzL3BsYXlib29rL3YxO3BsYXlib29rdjFiBnByb3RvMw", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_playbook_v1_playbook]);
+  fileDesc("CiRvcGVuc3RhdHVzL3BsYXlib29rL3YxL3NlcnZpY2UucHJvdG8SFm9wZW5zdGF0dXMucGxheWJvb2sudjEiFgoUTGlzdFBsYXlib29rc1JlcXVlc3QiUwoVTGlzdFBsYXlib29rc1Jlc3BvbnNlEjoKCXBsYXlib29rcxgBIAMoCzInLm9wZW5zdGF0dXMucGxheWJvb2sudjEuUGxheWJvb2tTdW1tYXJ5IlkKEkdldFBsYXlib29rUmVxdWVzdBJDCgRzbHVnGAEgASgJQjW6RxE6DxINInN0YXR1cy1wYWdlIrpIHnIcGEAyGF5bYS16MC05XSsoLVthLXowLTldKykqJCJJChNHZXRQbGF5Ym9va1Jlc3BvbnNlEjIKCHBsYXlib29rGAEgASgLMiAub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9vayLpAwoVQ3JlYXRlUGxheWJvb2tSZXF1ZXN0EksKBHNsdWcYASABKAlCPbpHFzoVEhMiZGF0YWJhc2UtZmFpbG92ZXIiukggch4QARhAMhheW2EtejAtOV0rKC1bYS16MC05XSspKiQSMgoFdGl0bGUYAiABKAlCI7pHFzoVEhMiRGF0YWJhc2UgZmFpbG92ZXIiukgGcgQQARhkEk4KC2Rlc2NyaXB0aW9uGAMgASgJQjm6Ryw6KhIoIkhvdyB3ZSBmYWlsIG92ZXIgdGhlIHByaW1hcnkgZGF0YWJhc2UuIrpIB3IFEAEY9AMSVgoHY29udGVudBgEIAEoCUJFukc4OjYSNCJQYWdlIHt7ZGJhX29uX2NhbGx9fSBiZWZvcmUgcHJvbW90aW5nIHRoZSByZXBsaWNhLiK6SAdyBRABGJBOEnUKCXZhcmlhYmxlcxgFIAMoCzI8Lm9wZW5zdGF0dXMucGxheWJvb2sudjEuQ3JlYXRlUGxheWJvb2tSZXF1ZXN0LlZhcmlhYmxlc0VudHJ5QiS6SCGaAR4iFXITMhFeW2EtejAtOV9dezEsNjR9JCoFcgMY9AMaMAoOVmFyaWFibGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJMChZDcmVhdGVQbGF5Ym9va1Jlc3BvbnNlEjIKCHBsYXlib29rGAEgASgLMiAub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9vayKzAwoVVXBkYXRlUGxheWJvb2tSZXF1ZXN0EkMKBHNsdWcYASABKAlCNbpHEToPEg0ic3RhdHVzLXBhZ2UiukgechwYQDIYXlthLXowLTldKygtW2EtejAtOV0rKSokEk0KB2NvbnRlbnQYAiABKAlCPLpHLzotEisiU2lnbiBvZmYgZXZlcnkgdXBkYXRlIHdpdGgge3t0ZWFtX25hbWV9fS4iukgHcgUQARiQThJ1Cgl2YXJpYWJsZXMYAyADKAsyPC5vcGVuc3RhdHVzLnBsYXlib29rLnYxLlVwZGF0ZVBsYXlib29rUmVxdWVzdC5WYXJpYWJsZXNFbnRyeUIkukghmgEeIhVyEzIRXlthLXowLTlfXXsxLDY0fSQqBXIDGPQDEh0KBXRpdGxlGAQgASgJQgm6SAZyBBABGGRIAIgBARIkCgtkZXNjcmlwdGlvbhgFIAEoCUIKukgHcgUQARj0A0gBiAEBGjAKDlZhcmlhYmxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCCAoGX3RpdGxlQg4KDF9kZXNjcmlwdGlvbiJMChZVcGRhdGVQbGF5Ym9va1Jlc3BvbnNlEjIKCHBsYXlib29rGAEgASgLMiAub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5QbGF5Ym9vayJcChVEZWxldGVQbGF5Ym9va1JlcXVlc3QSQwoEc2x1ZxgBIAEoCUI1ukcROg8SDSJzdGF0dXMtcGFnZSK6SB5yHBhAMhheW2EtejAtOV0rKC1bYS16MC05XSspKiQiKQoWRGVsZXRlUGxheWJvb2tSZXNwb25zZRIPCgdzdWNjZXNzGAEgASgIMsQECg9QbGF5Ym9va1NlcnZpY2UScQoNTGlzdFBsYXlib29rcxIsLm9wZW5zdGF0dXMucGxheWJvb2sudjEuTGlzdFBsYXlib29rc1JlcXVlc3QaLS5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkxpc3RQbGF5Ym9va3NSZXNwb25zZSIDkAIBEmsKC0dldFBsYXlib29rEioub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5HZXRQbGF5Ym9va1JlcXVlc3QaKy5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkdldFBsYXlib29rUmVzcG9uc2UiA5ACARJvCg5DcmVhdGVQbGF5Ym9vaxItLm9wZW5zdGF0dXMucGxheWJvb2sudjEuQ3JlYXRlUGxheWJvb2tSZXF1ZXN0Gi4ub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5DcmVhdGVQbGF5Ym9va1Jlc3BvbnNlEm8KDlVwZGF0ZVBsYXlib29rEi0ub3BlbnN0YXR1cy5wbGF5Ym9vay52MS5VcGRhdGVQbGF5Ym9va1JlcXVlc3QaLi5vcGVuc3RhdHVzLnBsYXlib29rLnYxLlVwZGF0ZVBsYXlib29rUmVzcG9uc2USbwoORGVsZXRlUGxheWJvb2sSLS5vcGVuc3RhdHVzLnBsYXlib29rLnYxLkRlbGV0ZVBsYXlib29rUmVxdWVzdBouLm9wZW5zdGF0dXMucGxheWJvb2sudjEuRGVsZXRlUGxheWJvb2tSZXNwb25zZUJVWlNnaXRodWIuY29tL29wZW5zdGF0dXNocS9vcGVuc3RhdHVzL3BhY2thZ2VzL3Byb3RvL29wZW5zdGF0dXMvcGxheWJvb2svdjE7cGxheWJvb2t2MWIGcHJvdG8z", [file_buf_validate_validate, file_gnostic_openapi_v3_annotations, file_openstatus_playbook_v1_playbook]);
 
 /**
  * ListPlaybooksRequest is the request to list playbooks.
@@ -98,6 +98,83 @@ export const GetPlaybookResponseSchema: GenMessage<GetPlaybookResponse> = /*@__P
   messageDesc(file_openstatus_playbook_v1_service, 3);
 
 /**
+ * CreatePlaybookRequest is the request to create a custom playbook.
+ *
+ * @generated from message openstatus.playbook.v1.CreatePlaybookRequest
+ */
+export type CreatePlaybookRequest = Message<"openstatus.playbook.v1.CreatePlaybookRequest"> & {
+  /**
+   * Slug of the new playbook (required): lowercase letters, digits and single
+   * hyphens, max 64 characters. It cannot be one of the built-in slugs
+   * (incident-response, status-page, maintenance-windows, postmortem) and
+   * cannot be changed later.
+   *
+   * @generated from field: string slug = 1;
+   */
+  slug: string;
+
+  /**
+   * Name of the playbook (required, 1 to 100 characters).
+   *
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * What the playbook covers (required, 1 to 500 characters). The agent is
+   * told the description and uses it to decide when to read the playbook.
+   *
+   * @generated from field: string description = 3;
+   */
+  description: string;
+
+  /**
+   * The complete playbook in markdown (required, 1-10000 characters).
+   * {{name}} marks a variable; names use lowercase letters, digits and
+   * underscores.
+   *
+   * @generated from field: string content = 4;
+   */
+  content: string;
+
+  /**
+   * Values for the variables in the content, by name. Names the content does
+   * not use are dropped.
+   *
+   * @generated from field: map<string, string> variables = 5;
+   */
+  variables: { [key: string]: string };
+};
+
+/**
+ * Describes the message openstatus.playbook.v1.CreatePlaybookRequest.
+ * Use `create(CreatePlaybookRequestSchema)` to create a new message.
+ */
+export const CreatePlaybookRequestSchema: GenMessage<CreatePlaybookRequest> = /*@__PURE__*/
+  messageDesc(file_openstatus_playbook_v1_service, 4);
+
+/**
+ * CreatePlaybookResponse is the response after creating a playbook.
+ *
+ * @generated from message openstatus.playbook.v1.CreatePlaybookResponse
+ */
+export type CreatePlaybookResponse = Message<"openstatus.playbook.v1.CreatePlaybookResponse"> & {
+  /**
+   * The created playbook.
+   *
+   * @generated from field: openstatus.playbook.v1.Playbook playbook = 1;
+   */
+  playbook?: Playbook | undefined;
+};
+
+/**
+ * Describes the message openstatus.playbook.v1.CreatePlaybookResponse.
+ * Use `create(CreatePlaybookResponseSchema)` to create a new message.
+ */
+export const CreatePlaybookResponseSchema: GenMessage<CreatePlaybookResponse> = /*@__PURE__*/
+  messageDesc(file_openstatus_playbook_v1_service, 5);
+
+/**
  * UpdatePlaybookRequest is the request to write the playbook of a slug.
  *
  * @generated from message openstatus.playbook.v1.UpdatePlaybookRequest
@@ -133,8 +210,7 @@ export type UpdatePlaybookRequest = Message<"openstatus.playbook.v1.UpdatePlaybo
 
   /**
    * Name of the playbook (1 to 100 characters). Left out, the stored title is
-   * kept, or the default of a built-in slug when the playbook is created.
-   * Required to create a playbook under a custom slug.
+   * kept, or the default of a built-in slug on its first write.
    *
    * @generated from field: optional string title = 4;
    */
@@ -142,8 +218,7 @@ export type UpdatePlaybookRequest = Message<"openstatus.playbook.v1.UpdatePlaybo
 
   /**
    * What the playbook covers (1 to 500 characters). Left out, the stored
-   * description is kept, or the default of a built-in slug when the playbook is
-   * created. Required to create a playbook under a custom slug.
+   * description is kept, or the default of a built-in slug on its first write.
    *
    * @generated from field: optional string description = 5;
    */
@@ -155,7 +230,7 @@ export type UpdatePlaybookRequest = Message<"openstatus.playbook.v1.UpdatePlaybo
  * Use `create(UpdatePlaybookRequestSchema)` to create a new message.
  */
 export const UpdatePlaybookRequestSchema: GenMessage<UpdatePlaybookRequest> = /*@__PURE__*/
-  messageDesc(file_openstatus_playbook_v1_service, 4);
+  messageDesc(file_openstatus_playbook_v1_service, 6);
 
 /**
  * UpdatePlaybookResponse is the response after writing a playbook.
@@ -176,7 +251,7 @@ export type UpdatePlaybookResponse = Message<"openstatus.playbook.v1.UpdatePlayb
  * Use `create(UpdatePlaybookResponseSchema)` to create a new message.
  */
 export const UpdatePlaybookResponseSchema: GenMessage<UpdatePlaybookResponse> = /*@__PURE__*/
-  messageDesc(file_openstatus_playbook_v1_service, 5);
+  messageDesc(file_openstatus_playbook_v1_service, 7);
 
 /**
  * DeletePlaybookRequest is the request to delete the playbook of a slug.
@@ -200,7 +275,7 @@ export type DeletePlaybookRequest = Message<"openstatus.playbook.v1.DeletePlaybo
  * Use `create(DeletePlaybookRequestSchema)` to create a new message.
  */
 export const DeletePlaybookRequestSchema: GenMessage<DeletePlaybookRequest> = /*@__PURE__*/
-  messageDesc(file_openstatus_playbook_v1_service, 6);
+  messageDesc(file_openstatus_playbook_v1_service, 8);
 
 /**
  * DeletePlaybookResponse is the response after deleting a playbook.
@@ -221,7 +296,7 @@ export type DeletePlaybookResponse = Message<"openstatus.playbook.v1.DeletePlayb
  * Use `create(DeletePlaybookResponseSchema)` to create a new message.
  */
 export const DeletePlaybookResponseSchema: GenMessage<DeletePlaybookResponse> = /*@__PURE__*/
-  messageDesc(file_openstatus_playbook_v1_service, 7);
+  messageDesc(file_openstatus_playbook_v1_service, 9);
 
 /**
  * PlaybookService manages the team's playbooks: how they run incidents, write on
@@ -251,8 +326,19 @@ export const PlaybookService: GenService<{
     output: typeof GetPlaybookResponseSchema;
   },
   /**
-   * UpdatePlaybook writes the playbook of a slug: it is created when the
-   * workspace has none for that slug, otherwise its text and variables are replaced.
+   * CreatePlaybook creates a custom playbook under a new slug. It fails when
+   * the slug is taken or is one of the built-in slugs.
+   *
+   * @generated from rpc openstatus.playbook.v1.PlaybookService.CreatePlaybook
+   */
+  createPlaybook: {
+    methodKind: "unary";
+    input: typeof CreatePlaybookRequestSchema;
+    output: typeof CreatePlaybookResponseSchema;
+  },
+  /**
+   * UpdatePlaybook replaces the text and variables of a playbook. A built-in
+   * slug is created on its first write; an unknown custom slug is not found.
    *
    * @generated from rpc openstatus.playbook.v1.PlaybookService.UpdatePlaybook
    */
