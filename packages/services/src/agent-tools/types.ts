@@ -112,15 +112,23 @@ export type ApprovalMeta<TInput> = {
    * Read-only; must not mutate.
    */
   loadBefore?: {
-    /** Input field holding the target entity's id. */
+    /** Input field holding the target entity's id: an integer, or a slug. */
     idField: keyof TInput & string;
     load: (args: {
       ctx: ServiceContext;
-      id: number;
+      // safe because loadApprovalBefore parses the id with the tool's own id field schema
+      // oxlint-disable-next-line typescript/no-explicit-any -- an integer for most tools, a slug for playbooks
+      id: any;
     }) => Promise<ApprovalBefore>;
   };
   /** Surface-rendered confirmation summary. */
   summarize: (input: TInput) => { title: string; lines: SummaryLine[] };
+  /**
+   * Lines that replace `summarize`'s on a surface without a diff view
+   * (Slack), for a write whose full new value does not fit the card. Such a
+   * surface loads `before` only for tools that set this.
+   */
+  summarizeChange?: (input: TInput, before: ApprovalBefore) => SummaryLine[];
   /**
    * Past-tense verb for the default presenter ("created", "resolved").
    * Inferred from the tool name when omitted.

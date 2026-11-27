@@ -5021,6 +5021,12 @@
             "maxLength": 500,
             "minLength": 1,
             "description": "What the playbook covers (1 to 500 characters). Left out, the stored\n description is kept, or the default of a built-in slug on its first write."
+          },
+          "expectedUpdatedAt": {
+            "type": ["string", "null"],
+            "examples": ["2026-11-27T09:30:00.000Z"],
+            "title": "expected_updated_at",
+            "description": "The updated_at of the playbook as you read it (RFC 3339 format). When set,\n the write is refused with failed_precondition if the playbook was changed\n or deleted since. Left out, the write always replaces the stored playbook."
           }
         },
         "title": "UpdatePlaybookRequest",

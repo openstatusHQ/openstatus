@@ -12,7 +12,11 @@ import {
   getPageDashboardLink,
   getStatusReportLink,
 } from "./page-urls";
-import { deriveDraftSchema, getRegistryTool } from "./registry-runner";
+import {
+  deriveDraftSchema,
+  getRegistryTool,
+  loadChangeLines,
+} from "./registry-runner";
 
 export function makeRefResolvers(workspaceId: number): RefResolvers {
   return {
@@ -67,6 +71,7 @@ export async function postConfirmationCard(args: {
     actionId,
     tool,
     input: displayInput,
+    changeLines: await loadChangeLines(tool, ctx, input),
     resolvers: makeRefResolvers(ctx.workspace.id),
   });
   await slack.chat.update({ channel, ts: posted.ts, text, blocks });

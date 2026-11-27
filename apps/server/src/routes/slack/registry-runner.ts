@@ -2,6 +2,7 @@ import type { ServiceContext } from "@openstatus/services";
 import {
   type AgentToolName,
   type AnyAgentTool,
+  type SummaryLine,
   agentTools,
   isAgentToolAvailable,
 } from "@openstatus/services/agent-tools";
@@ -24,7 +25,26 @@ export type SlackToolDraft = {
   toolName: string;
   input: unknown;
   displayInput: unknown;
+  /** Card lines for a tool that summarizes its change against the stored entity. */
+  changeLines?: SummaryLine[];
 };
+
+/** Undefined when the tool has no change summary or the entity cannot be read; the card then shows the proposed values. */
+export async function loadChangeLines(
+  t: AnyAgentTool,
+  ctx: ServiceContext,
+  input: unknown,
+): Promise<SummaryLine[] | undefined> {
+  const { loadBefore, summarizeChange } = t.approval ?? {};
+  if (!loadBefore || !summarizeChange) return undefined;
+  if (typeof input !== "object" || input === null) return undefined;
+  try {
+    const id = (input as Record<string, unknown>)[loadBefore.idField];
+    return summarizeChange(input, await loadBefore.load({ ctx, id }));
+  } catch {
+    return undefined;
+  }
+}
 
 export function isSlackToolDraft(value: unknown): value is SlackToolDraft {
   if (typeof value !== "object" || value === null) return false;
@@ -85,6 +105,7 @@ export function buildTool(t: AnyAgentTool, ctx: ServiceContext): Tool {
         toolName: t.name,
         input: parsed,
         displayInput,
+        changeLines: await loadChangeLines(t, ctx, parsed),
       };
       return draft;
     },

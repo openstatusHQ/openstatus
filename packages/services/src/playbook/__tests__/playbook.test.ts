@@ -581,7 +581,7 @@ describe("agent tools", () => {
     });
   });
 
-  test("update_playbook creates, then replaces while keeping set values", async () => {
+  test("update_playbook creates, then replaces the text and the values", async () => {
     await withTestTransaction(async (tx) => {
       const c = { ...ctx, db: tx };
       const created = await updatePlaybookTool.run({
@@ -611,16 +611,97 @@ describe("agent tools", () => {
       expect(editable.source).toBe("Sign off as {{team_name}}.");
       expect(editable.variables).toEqual({ team_name: "Platform" });
 
+      const content = "No ETAs. Sign off as {{team_name}}.";
       const updated = await updatePlaybookTool.run({
         ctx: c,
         input: {
           slug: "status-page",
-          content: "No ETAs. Sign off as {{team_name}}.",
+          content,
+          variables: editable.variables,
+          expectedUpdatedAt: editable.updatedAt,
         },
       });
       expect(updated.created).toBe(false);
-      const row = await getPlaybook({ ctx: c, input: { slug: "status-page" } });
+      const slug = { slug: "status-page" };
+      const row = await getPlaybook({ ctx: c, input: slug });
       expect(row?.variables).toEqual({ team_name: "Platform" });
+
+      // same as the API: a value left out is unset
+      await updatePlaybookTool.run({ ctx: c, input: { ...slug, content } });
+      const unset = await getPlaybook({ ctx: c, input: slug });
+      expect(unset?.variables).toBeNull();
+    });
+  });
+
+  test("update_playbook refuses a write based on a stale read", async () => {
+    await withTestTransaction(async (tx) => {
+      const c = { ...ctx, db: tx };
+      const slug = { slug: "status-page" };
+      await updatePlaybook({ ctx: c, input: { ...slug, content: "one" } });
+      const read = await getPlaybookTool.run({
+        ctx: c,
+        input: { ...slug, forEdit: true },
+      });
+      // someone else saves in between, within the same second
+      await updatePlaybook({ ctx: c, input: { ...slug, content: "two" } });
+      await expect(
+        updatePlaybookTool.run({
+          ctx: c,
+          input: {
+            ...slug,
+            content: "three",
+            expectedUpdatedAt: read.updatedAt,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+      const row = await getPlaybook({ ctx: c, input: slug });
+      expect(row?.content).toBe("two");
+      // a write for a playbook that was deleted since is refused too
+      await deletePlaybook({ ctx: c, input: slug });
+      await expect(
+        updatePlaybook({
+          ctx: c,
+          input: {
+            ...slug,
+            content: "four",
+            expectedUpdatedAt: row?.updatedAt,
+          },
+        }),
+      ).rejects.toBeInstanceOf(ConflictError);
+    });
+  });
+
+  test("the update_playbook approval card shows a change at the end of a long playbook", async () => {
+    await withTestTransaction(async (tx) => {
+      const c = { ...ctx, db: tx };
+      const lines = Array.from({ length: 200 }, (_, i) => `- rule ${i}`);
+      const stored = await updatePlaybook({
+        ctx: c,
+        input: {
+          slug: "status-page",
+          content: [...lines, "Sign off as {{team_name}}."].join("\n"),
+          variables: { team_name: "Platform" },
+        },
+      });
+      const approval = updatePlaybookTool.approval;
+      const before = await approval?.loadBefore?.load({
+        ctx: c,
+        id: "status-page",
+      });
+      expect(before?.label).toBe(stored.title);
+      const input = {
+        slug: "status-page",
+        content: [...lines.slice(0, 199), "- always promise an ETA"].join("\n"),
+      };
+      if (!before) throw new Error("no before snapshot");
+      expect(approval?.summarizeChange?.(input, before)).toEqual([
+        {
+          label: "Removed",
+          value: "\n- rule 199\nSign off as {{team_name}}.",
+        },
+        { label: "Added", value: "\n- always promise an ETA" },
+        { label: "team_name", value: "(unset)" },
+      ]);
     });
   });
 

@@ -1,3 +1,4 @@
+import { playbookLineChanges } from "@openstatus/db/src/schema/playbooks/changes";
 import {
   builtinPlaybookSlugs,
   playbookDefaultDescription,
@@ -12,11 +13,13 @@ import {
 } from "@openstatus/db/src/schema/playbooks/validation";
 import {
   playbookVariableNames,
+  playbookVariableValue,
   renderPlaybook,
 } from "@openstatus/db/src/schema/playbooks/variables";
 import { z } from "zod";
 
-import { withTransaction } from "../context";
+import { type ServiceContext, withTransaction } from "../context";
+import { NotFoundError } from "../errors";
 import {
   delimitPlaybook,
   getPlaybook,
@@ -24,7 +27,8 @@ import {
   listPlaybooks,
   updatePlaybook,
 } from "../playbook";
-import type { AgentTool } from "./types";
+import { beforeSnapshot } from "./approval-before";
+import type { AgentTool, SummaryLine } from "./types";
 
 const slugList = `${builtinPlaybookSlugs
   .map((s) => `${s} (${playbookDefaultDescription(s)})`)
@@ -75,7 +79,7 @@ const GetPlaybookInput = z
       .boolean()
       .optional()
       .describe(
-        "Set to true only when you are about to change the playbook: also returns `source`, and `variables` when the text uses any.",
+        "Set to true only when you are about to change the playbook: also returns `source`, `updatedAt`, and `variables` when the text uses any.",
       ),
   })
   .strict();
@@ -92,6 +96,12 @@ const GetPlaybookOutput = z.object({
   variables: playbookVariablesSchema
     .optional()
     .describe("The values currently set for the variables in `source`."),
+  updatedAt: z
+    .string()
+    .optional()
+    .describe(
+      "Only with forEdit: when the playbook was last changed. Send it as `expectedUpdatedAt` to update_playbook.",
+    ),
   note: z.string().optional(),
   error: z.string().optional(),
 });
@@ -130,6 +140,7 @@ export const getPlaybookTool: AgentTool<
       ...(input.forEdit
         ? {
             source: row.content,
+            updatedAt: row.updatedAt.toISOString(),
             ...(usesVariables ? { variables: row.variables ?? {} } : {}),
           }
         : usesVariables
@@ -156,7 +167,14 @@ const UpdatePlaybookInput = z
     variables: playbookVariablesSchema
       .optional()
       .describe(
-        "Values for {{name}} variables in the text. Omitted variables keep the value they already have.",
+        "Values for the {{name}} variables in the text. They replace the stored values: a variable left out is unset, so send every value get_playbook (forEdit) returned that should stay.",
+      ),
+    expectedUpdatedAt: z
+      .string()
+      .datetime()
+      .optional()
+      .describe(
+        "The `updatedAt` get_playbook (forEdit) returned. The write is refused when someone changed the playbook since; then read it again and reapply the change. Leave it out only when the playbook does not exist yet.",
       ),
   })
   .strict();
@@ -169,8 +187,65 @@ const UpdatePlaybookOutput = z.object({
   updatedAt: z.string(),
 });
 
+// Slack caps a card's text, so a long value is cut and the card says how much is left out.
+const SUMMARY_MAX_CHARS = 600;
+
 function summaryText(content: string): string {
-  return content.length > 600 ? `${content.slice(0, 600)}…` : content;
+  return content.length > SUMMARY_MAX_CHARS
+    ? `${content.slice(0, SUMMARY_MAX_CHARS)}… (${content.length.toLocaleString("en-US")} characters in total)`
+    : content;
+}
+
+function summaryLines(lines: string[]): string {
+  const shown: string[] = [];
+  let chars = 0;
+  for (const line of lines) {
+    if (chars + line.length > SUMMARY_MAX_CHARS && shown.length > 0) break;
+    shown.push(line);
+    chars += line.length;
+  }
+  const hidden = lines.length - shown.length;
+  return `\n${shown.join("\n")}${hidden > 0 ? `\n… and ${hidden} more ${hidden === 1 ? "line" : "lines"}` : ""}`;
+}
+
+/** What an update changes against the stored playbook, so an edit past the first lines is visible. */
+function changeLines(
+  input: z.infer<typeof UpdatePlaybookInput>,
+  before: Record<string, unknown>,
+): SummaryLine[] {
+  const lines: SummaryLine[] = [];
+  if (input.title && input.title !== before.title) {
+    lines.push({ label: "Title", value: input.title });
+  }
+  if (input.description && input.description !== before.description) {
+    lines.push({ label: "Description", value: input.description });
+  }
+  const { removed, added } = playbookLineChanges(
+    typeof before.content === "string" ? before.content : "",
+    input.content,
+  );
+  if (removed.length) {
+    lines.push({ label: "Removed", value: summaryLines(removed) });
+  }
+  if (added.length) {
+    lines.push({ label: "Added", value: summaryLines(added) });
+  }
+  const stored = playbookVariablesSchema.catch({}).parse(before.variables);
+  for (const name of new Set([
+    ...Object.keys(stored),
+    ...playbookVariableNames(input.content),
+  ])) {
+    const previous = playbookVariableValue(stored, name) ?? "";
+    const next = playbookVariableNames(input.content).includes(name)
+      ? (playbookVariableValue(input.variables, name) ?? "")
+      : "";
+    if (previous !== next) {
+      lines.push({ label: name, value: next || "(unset)" });
+    }
+  }
+  return lines.length
+    ? lines
+    : [{ label: "Playbook", value: "No changes to the stored playbook." }];
 }
 
 function variableLines(variables: Record<string, string> | undefined) {
@@ -207,11 +282,25 @@ export const updatePlaybookTool: AgentTool<
         ...variableLines(input.variables),
       ],
     }),
+    loadBefore: {
+      idField: "slug",
+      load: async ({ ctx, id }: { ctx: ServiceContext; id: string }) => {
+        const row = await getPlaybook({ ctx, input: { slug: id } });
+        if (!row) throw new NotFoundError("playbook", id);
+        return beforeSnapshot(row.title, {
+          title: row.title,
+          description: row.description,
+          content: row.content,
+          variables: row.variables ?? {},
+        });
+      },
+    },
+    summarizeChange: (input, before) => changeLines(input, before.values),
     verb: "updated",
   },
   // oxlint-disable-next-line openstatus/services-mutation-guards -- updatePlaybook checks the scope and audits
   async run({ ctx, input }) {
-    // one transaction, so the values kept are the ones the write replaces
+    // one transaction, so `created` describes the row this write found
     return withTransaction(ctx, async (tx) => {
       const txCtx = { ...ctx, db: tx };
       const existing = await getPlaybook({
@@ -225,7 +314,10 @@ export const updatePlaybookTool: AgentTool<
           title: input.title,
           description: input.description,
           content: input.content,
-          variables: { ...existing?.variables, ...input.variables },
+          variables: input.variables,
+          expectedUpdatedAt: input.expectedUpdatedAt
+            ? new Date(input.expectedUpdatedAt)
+            : undefined,
         },
       });
       return {

@@ -27,6 +27,7 @@ const BEFORE_ID_FIELDS: Record<string, string> = {
   update_maintenance: "maintenanceId",
   update_maintenance_update: "id",
   update_incident: "id",
+  update_playbook: "slug",
 };
 
 let teamCtx: ServiceContext;
@@ -40,7 +41,7 @@ beforeAll(async () => {
 });
 
 describe("approval loadBefore", () => {
-  test("every update tool loads its entity by an integer id field", () => {
+  test("every update tool loads its entity by its id field", () => {
     for (const tool of Object.values(agentTools) as AnyAgentTool[]) {
       const idField = tool.approval?.loadBefore?.idField;
       expect(idField, tool.name).toBe(BEFORE_ID_FIELDS[tool.name]);

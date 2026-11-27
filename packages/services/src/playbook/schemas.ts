@@ -29,5 +29,7 @@ export const UpdatePlaybookInput = CreatePlaybookInput.extend({
   title: playbookTitleSchema.optional(),
   /** Omitted keeps the stored description, or the default on a built-in slug's first write. */
   description: playbookDescriptionSchema.optional(),
+  /** The `updatedAt` the caller read; the write is refused when the playbook changed since. */
+  expectedUpdatedAt: z.coerce.date().optional(),
 });
 export type UpdatePlaybookInput = z.infer<typeof UpdatePlaybookInput>;

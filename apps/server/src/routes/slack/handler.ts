@@ -1516,6 +1516,7 @@ async function handleConfirmation(
       actionId: existing.id,
       tool,
       input: draft.displayInput,
+      changeLines: draft.changeLines,
       resolvers: makeRefResolvers(workspaceId),
     });
     await reply.send({ text, blocks });
@@ -1544,6 +1545,7 @@ async function handleConfirmation(
       actionId,
       tool,
       input: draft.displayInput,
+      changeLines: draft.changeLines,
       resolvers: makeRefResolvers(workspaceId),
     });
     await slack.chat.update({ channel, ts: messageTs, text, blocks });

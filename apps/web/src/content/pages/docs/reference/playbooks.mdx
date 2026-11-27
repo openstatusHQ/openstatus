@@ -39,6 +39,7 @@ Open [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbo
 - An empty playbook opens with a default template in the editor. Save it as is, or change it first. Nothing is stored until you save.
 - **Reset template** puts the default text back in the editor.
 - The text is markdown, up to 10,000 characters.
+- If someone else, or the agent, changed the playbook after you opened it, saving is refused instead of replacing their change. Copy your text, reload the page and apply it again.
 - Delete a playbook from the **⋯** menu on its row or next to its title. For a built-in playbook, the editor then opens on the template again.
 
 ### Title and description
@@ -90,6 +91,8 @@ Rules for those two drafts only apply when they are written under these slugs. A
 
 Ask the agent to change a playbook and it calls `update_playbook`, which replaces its text; the same tool writes a built-in playbook for the first time. Ask for a new playbook of your own and it calls `create_playbook`, which needs a slug, a title and a description. Like every write, it needs your approval first. The agent cannot delete a playbook.
 
+The approval card for a change shows the lines that are removed and added and the variables that change, not the whole text. In Slack a long list of lines is cut and the card says how many more there are. If someone changed the playbook after the agent read it, the write is refused instead of replacing their change: ask the agent to read it again.
+
 ## Postmortem drafts
 
 When a `postmortem` playbook exists, the [postmortem draft](/docs/reference/incident-management#postmortem) follows its structure in place of the seven default sections. The other rules stay: only the facts it was given, a UTC timeline, action items as a checklist. The draft's footer says it follows the team's playbook.
@@ -105,7 +108,7 @@ Without a `postmortem` playbook, drafts are unchanged.
 | `ListPlaybooks` | The playbooks the workspace has written, with title and description, without their text | `incidents:read` |
 | `GetPlaybook` | One playbook: title, description, the text as written, its variable values and timestamps | `incidents:read` |
 | `CreatePlaybook` | Creates a custom playbook: `slug`, `title`, `description` and `content` are required. Returns `failed_precondition` when the slug is taken, `invalid_argument` for a built-in slug and `resource_exhausted` at the limit of 20 custom playbooks | `incidents:write` |
-| `UpdatePlaybook` | Replaces the text and variables of a playbook; `title` and `description` are optional. A built-in slug is created on its first write, a custom slug that does not exist returns `not_found` | `incidents:write` |
+| `UpdatePlaybook` | Replaces the text and variables of a playbook; `title` and `description` are optional. A built-in slug is created on its first write, a custom slug that does not exist returns `not_found`. With `expectedUpdatedAt`, returns `failed_precondition` when the playbook changed since | `incidents:write` |
 | `DeletePlaybook` | Removes the playbook of a slug | `incidents:write` |
 
 ```bash
@@ -120,6 +123,8 @@ curl https://api.openstatus.dev/rpc/openstatus.playbook.v1.PlaybookService/Updat
 ```
 
 `variables` replaces the stored values: a variable you leave out is unset, and names the text does not use are dropped. `title` and `description` are kept when you leave them out; an empty string is rejected. A built-in playbook stores the default title and description when it is first written, so they do not change afterwards unless you change them. `GetPlaybook` returns `not_found` when the workspace has no playbook for that slug.
+
+To avoid replacing a change you have not seen, send the `updatedAt` you read as `expectedUpdatedAt`. The write is then refused with `failed_precondition` when the playbook was changed or deleted since. Without it, the write always replaces the stored playbook.
 
 ## Audit log
 

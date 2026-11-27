@@ -62,6 +62,7 @@ import {
 import { updateMaintenanceChanges } from "./update-maintenance";
 import { updateMonitorChanges } from "./update-monitor";
 import { updatePageComponentChanges } from "./update-page-component";
+import { updatePlaybookChanges } from "./update-playbook";
 import { updateStatusPageChanges } from "./update-status-page";
 import { updateStatusReportChanges } from "./update-status-report";
 
@@ -468,18 +469,8 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) => `created ${o.slug}`,
   },
   update_playbook: {
-    renderDraft: (input) => [
-      { field: "slug", after: input.slug },
-      ...(input.title ? [{ field: "title", after: input.title }] : []),
-      ...(input.description
-        ? [{ field: "description", after: input.description }]
-        : []),
-      { field: "content", after: input.content },
-      ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
-        field: name,
-        after: value,
-      })),
-    ],
+    beforeIdField: "slug",
+    renderDraft: updatePlaybookChanges,
     summary: (o) => `${o.created ? "created" : "updated"} ${o.slug}`,
   },
   search_docs: {
