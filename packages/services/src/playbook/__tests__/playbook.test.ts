@@ -618,7 +618,6 @@ describe("agent tools", () => {
           slug: "status-page",
           content,
           variables: editable.variables,
-          expectedUpdatedAt: editable.updatedAt,
         },
       });
       expect(updated.created).toBe(false);
@@ -630,44 +629,6 @@ describe("agent tools", () => {
       await updatePlaybookTool.run({ ctx: c, input: { ...slug, content } });
       const unset = await getPlaybook({ ctx: c, input: slug });
       expect(unset?.variables).toBeNull();
-    });
-  });
-
-  test("update_playbook refuses a write based on a stale read", async () => {
-    await withTestTransaction(async (tx) => {
-      const c = { ...ctx, db: tx };
-      const slug = { slug: "status-page" };
-      await updatePlaybook({ ctx: c, input: { ...slug, content: "one" } });
-      const read = await getPlaybookTool.run({
-        ctx: c,
-        input: { ...slug, forEdit: true },
-      });
-      // someone else saves in between, within the same second
-      await updatePlaybook({ ctx: c, input: { ...slug, content: "two" } });
-      await expect(
-        updatePlaybookTool.run({
-          ctx: c,
-          input: {
-            ...slug,
-            content: "three",
-            expectedUpdatedAt: read.updatedAt,
-          },
-        }),
-      ).rejects.toBeInstanceOf(ConflictError);
-      const row = await getPlaybook({ ctx: c, input: slug });
-      expect(row?.content).toBe("two");
-      // a write for a playbook that was deleted since is refused too
-      await deletePlaybook({ ctx: c, input: slug });
-      await expect(
-        updatePlaybook({
-          ctx: c,
-          input: {
-            ...slug,
-            content: "four",
-            expectedUpdatedAt: row?.updatedAt,
-          },
-        }),
-      ).rejects.toBeInstanceOf(ConflictError);
     });
   });
 

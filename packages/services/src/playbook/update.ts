@@ -13,7 +13,7 @@ import {
   tryGetActorUserId,
   withTransaction,
 } from "../context";
-import { ConflictError, NotFoundError } from "../errors";
+import { NotFoundError } from "../errors";
 import { getPlaybookBySlug, insertPlaybook, storedVariables } from "./internal";
 import { UpdatePlaybookInput } from "./schemas";
 
@@ -29,14 +29,6 @@ export async function updatePlaybook(args: {
 
   return withTransaction(ctx, async (tx) => {
     const existing = await getPlaybookBySlug(tx, ctx.workspace.id, input.slug);
-    if (
-      input.expectedUpdatedAt &&
-      existing?.updatedAt.getTime() !== input.expectedUpdatedAt.getTime()
-    ) {
-      throw new ConflictError(
-        `The ${input.slug} playbook was changed since you loaded it. Load it again and reapply your change.`,
-      );
-    }
     if (!existing) {
       if (!isBuiltinPlaybookSlug(input.slug)) {
         throw new NotFoundError("playbook", input.slug);
@@ -78,10 +70,7 @@ export async function updatePlaybook(args: {
         content: input.content,
         variables,
         updatedBy: tryGetActorUserId(ctx.actor),
-        // stored in seconds: always later than the last write, so a stale expectedUpdatedAt never matches
-        updatedAt: new Date(
-          Math.max(Date.now(), existing.updatedAt.getTime() + 1000),
-        ),
+        updatedAt: new Date(),
       })
       .where(
         and(

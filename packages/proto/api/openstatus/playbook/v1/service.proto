@@ -176,11 +176,6 @@ message UpdatePlaybookRequest {
     min_len: 1
     max_len: 500
   }];
-
-  // The updated_at of the playbook as you read it (RFC 3339 format). When set,
-  // the write is refused with failed_precondition if the playbook was changed
-  // or deleted since. Left out, the write always replaces the stored playbook.
-  optional string expected_updated_at = 6 [(gnostic.openapi.v3.property) = {example: {yaml: "\"2026-11-27T09:30:00.000Z\""}}];
 }
 
 // UpdatePlaybookResponse is the response after writing a playbook.

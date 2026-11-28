@@ -66,9 +66,6 @@ export const playbookServiceImpl: ServiceImpl<typeof PlaybookService> = {
           description: req.description,
           content: req.content,
           variables: req.variables,
-          expectedUpdatedAt: req.expectedUpdatedAt
-            ? new Date(req.expectedUpdatedAt)
-            : undefined,
         },
       });
       return { playbook: playbookToProto(row) };

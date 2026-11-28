@@ -79,7 +79,7 @@ const GetPlaybookInput = z
       .boolean()
       .optional()
       .describe(
-        "Set to true only when you are about to change the playbook: also returns `source`, `updatedAt`, and `variables` when the text uses any.",
+        "Set to true only when you are about to change the playbook: also returns `source`, and `variables` when the text uses any.",
       ),
   })
   .strict();
@@ -96,12 +96,6 @@ const GetPlaybookOutput = z.object({
   variables: playbookVariablesSchema
     .optional()
     .describe("The values currently set for the variables in `source`."),
-  updatedAt: z
-    .string()
-    .optional()
-    .describe(
-      "Only with forEdit: when the playbook was last changed. Send it as `expectedUpdatedAt` to update_playbook.",
-    ),
   note: z.string().optional(),
   error: z.string().optional(),
 });
@@ -140,7 +134,6 @@ export const getPlaybookTool: AgentTool<
       ...(input.forEdit
         ? {
             source: row.content,
-            updatedAt: row.updatedAt.toISOString(),
             ...(usesVariables ? { variables: row.variables ?? {} } : {}),
           }
         : usesVariables
@@ -168,13 +161,6 @@ const UpdatePlaybookInput = z
       .optional()
       .describe(
         "Values for the {{name}} variables in the text. They replace the stored values: a variable left out is unset, so send every value get_playbook (forEdit) returned that should stay.",
-      ),
-    expectedUpdatedAt: z
-      .string()
-      .datetime()
-      .optional()
-      .describe(
-        "The `updatedAt` get_playbook (forEdit) returned. The write is refused when someone changed the playbook since; then read it again and reapply the change. Leave it out only when the playbook does not exist yet.",
       ),
   })
   .strict();
@@ -315,9 +301,6 @@ export const updatePlaybookTool: AgentTool<
           description: input.description,
           content: input.content,
           variables: input.variables,
-          expectedUpdatedAt: input.expectedUpdatedAt
-            ? new Date(input.expectedUpdatedAt)
-            : undefined,
         },
       });
       return {

@@ -134,11 +134,9 @@ export function Client({ slug }: { slug: string }) {
   // A property save resends the saved text, so while the text has unsaved
   // changes every property goes with Save instead: two writes cannot cross.
   const textDirty = draft !== null && draft.trim() !== server;
-  // refused when someone else, or the agent, changed the playbook since this copy was loaded
-  const expectedUpdatedAt = playbook?.updatedAt;
   // Only for a variable the saved text already uses; the server drops the others.
   const saveValue = (name: string) => {
-    // a write in flight holds the updatedAt this one needs; the value stays unsaved for Save
+    // a write in flight is not in the copy this one resends; the value stays unsaved for Save
     if (!playbook || textDirty || saveProperty.isPending) return;
     if (!playbookVariableNames(playbook.content).includes(name)) return;
     const value = (playbookVariableValue(variables, name) ?? "").trim();
@@ -147,7 +145,6 @@ export function Client({ slug }: { slug: string }) {
       slug,
       content: playbook.content,
       variables: { ...variables, [name]: value },
-      expectedUpdatedAt,
     });
   };
   const saveHeading = (patch: Heading) => {
@@ -156,7 +153,6 @@ export function Client({ slug }: { slug: string }) {
       slug,
       content: playbook.content,
       variables: serverValues,
-      expectedUpdatedAt,
       ...patch,
     });
   };
@@ -180,8 +176,7 @@ export function Client({ slug }: { slug: string }) {
     );
   const busy = save.isPending || saveProperty.isPending;
   const canSave = !busy && (dirty || !playbook) && length > 0 && !tooLong;
-  const submit = () =>
-    save.mutate({ slug, content, variables, expectedUpdatedAt, ...heading });
+  const submit = () => save.mutate({ slug, content, variables, ...heading });
 
   const status = dirty
     ? { label: "Unsaved changes", variant: "warning" as const }
