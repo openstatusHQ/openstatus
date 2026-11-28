@@ -100,6 +100,7 @@ export function StatusUpdatesCopyInput({
   return (
     <div
       data-slot="status-updates-copy-input"
+      dir="ltr"
       className={cn("relative w-full", className)}
     >
       <Input
@@ -126,7 +127,7 @@ export function StatusUpdatesCopyInput({
             withToast: true,
           })
         }
-        className="absolute top-1/2 right-2 size-6 -translate-y-1/2 backdrop-blur-xs"
+        className="absolute end-2 top-1/2 size-6 -translate-y-1/2 backdrop-blur-xs"
       >
         {isCopied ? <Check /> : <Copy />}
         <span className="sr-only">{labels.ariaCopyLink}</span>

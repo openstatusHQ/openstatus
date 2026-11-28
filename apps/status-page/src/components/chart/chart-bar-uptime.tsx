@@ -55,6 +55,7 @@ export function ChartBarUptime({
 
   return (
     <ChartContainer
+      dir="ltr"
       config={chartConfig}
       className={cn("h-[130px] w-full", className)}
     >

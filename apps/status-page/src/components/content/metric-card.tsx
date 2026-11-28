@@ -140,8 +140,8 @@ export function MetricCardBadge({
     >
       {percentage !== 0 ? (
         <span>
-          {percentage > 0 ? <ChevronUp className="mr-px size-2.5" /> : null}
-          {percentage < 0 ? <ChevronDown className="mr-px size-2.5" /> : null}
+          {percentage > 0 ? <ChevronUp className="me-px size-2.5" /> : null}
+          {percentage < 0 ? <ChevronDown className="me-px size-2.5" /> : null}
         </span>
       ) : null}
       {Math.abs(percentage)}%

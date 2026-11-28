@@ -46,7 +46,7 @@ export function StatusMonitorTabsTriggerLabel({
   ...props
 }: React.ComponentProps<"div">) {
   return (
-    <div className={cn("w-full truncate text-left", className)} {...props} />
+    <div className={cn("w-full truncate text-start", className)} {...props} />
   );
 }
 
@@ -57,7 +57,7 @@ export function StatusMonitorTabsTriggerValue({
   return (
     <div
       className={cn(
-        "text-muted-foreground flex min-h-5 flex-row flex-wrap items-center gap-1 text-left text-xs",
+        "text-muted-foreground flex min-h-5 flex-row flex-wrap items-center gap-1 text-start text-xs",
         className,
       )}
       {...props}

@@ -237,7 +237,7 @@ export function FloatingButton({
   if (!display) return null;
 
   return (
-    <div className={cn("fixed right-4 bottom-4 z-50", className)}>
+    <div dir="ltr" className={cn("fixed right-4 bottom-4 z-50", className)}>
       <Popover>
         <PopoverTrigger asChild>
           <Button

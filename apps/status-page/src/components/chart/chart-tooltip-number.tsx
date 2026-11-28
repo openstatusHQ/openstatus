@@ -32,7 +32,7 @@ export function ChartTooltipNumber({
         }
       />
       <span>{label}</span>
-      <div className="text-foreground ml-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
+      <div className="text-foreground ms-auto flex items-baseline gap-0.5 font-mono font-medium tabular-nums">
         {value}
         <span className="text-muted-foreground font-normal">ms</span>
       </div>

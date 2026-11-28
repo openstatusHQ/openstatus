@@ -1288,10 +1288,13 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageToUpdateId));
   });
 
-  test("returns distinct enum values for tr, hi, ko and ja", async () => {
+  test("returns distinct enum values for tr, hi, ko, ja and ar", async () => {
     await db
       .update(page)
-      .set({ defaultLocale: "ja", locales: ["en", "tr", "hi", "ko", "ja"] })
+      .set({
+        defaultLocale: "ar",
+        locales: ["en", "tr", "hi", "ko", "ja", "ar"],
+      })
       .where(eq(page.id, testPageId));
 
     const res = await connectRequest(
@@ -1303,13 +1306,14 @@ describe("StatusPageService locale fields", () => {
     expect(res.status).toBe(200);
 
     const data = await res.json();
-    expect(data.statusPage.defaultLocale).toBe("LOCALE_JA");
+    expect(data.statusPage.defaultLocale).toBe("LOCALE_AR");
     expect(data.statusPage.locales).toEqual([
       "LOCALE_EN",
       "LOCALE_TR",
       "LOCALE_HI",
       "LOCALE_KO",
       "LOCALE_JA",
+      "LOCALE_AR",
     ]);
 
     // Restore defaults
@@ -1319,13 +1323,19 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageId));
   });
 
-  test("round-trips tr, hi, ko and ja through update", async () => {
+  test("round-trips tr, hi, ko, ja and ar through update", async () => {
     const res = await connectRequest(
       "UpdateStatusPage",
       {
         id: String(testPageToUpdateId),
         defaultLocale: "LOCALE_TR",
-        locales: ["LOCALE_TR", "LOCALE_HI", "LOCALE_KO", "LOCALE_JA"],
+        locales: [
+          "LOCALE_TR",
+          "LOCALE_HI",
+          "LOCALE_KO",
+          "LOCALE_JA",
+          "LOCALE_AR",
+        ],
       },
       { "x-openstatus-key": "1" },
     );
@@ -1339,6 +1349,7 @@ describe("StatusPageService locale fields", () => {
       "LOCALE_HI",
       "LOCALE_KO",
       "LOCALE_JA",
+      "LOCALE_AR",
     ]);
 
     const stored = await db
@@ -1347,7 +1358,7 @@ describe("StatusPageService locale fields", () => {
       .where(eq(page.id, testPageToUpdateId))
       .get();
     expect(stored?.defaultLocale).toBe("tr");
-    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja"]);
+    expect(stored?.locales).toEqual(["tr", "hi", "ko", "ja", "ar"]);
 
     // Restore defaults
     await db

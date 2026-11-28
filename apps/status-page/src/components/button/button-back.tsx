@@ -21,7 +21,7 @@ export function ButtonBack({
       {...props}
     >
       <Link href={href}>
-        <Back />
+        <Back className="rtl:-scale-x-100" />
         {t("Back")}
       </Link>
     </Button>

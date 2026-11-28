@@ -196,8 +196,8 @@ export function Client() {
                       status={e.status}
                       key={`${e.type}-${e.id}`}
                       className={cn(
-                        i === 0 && "rounded-tl-lg",
-                        i === events.length - 1 && "rounded-tr-lg",
+                        i === 0 && "rounded-ss-lg",
+                        i === events.length - 1 && "rounded-se-lg",
                       )}
                     >
                       {e.name}

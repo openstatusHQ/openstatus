@@ -67,7 +67,7 @@ export function StatusThemeSwitcher({
               onClick={() => onValueChange(v)}
             >
               <span>{labels.themeNames[v]}</span>
-              <span className="ml-auto">
+              <span className="ms-auto">
                 <ThemeIcon
                   value={v}
                   className={

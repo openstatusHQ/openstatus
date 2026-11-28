@@ -89,6 +89,7 @@ export function ChartAreaPercentiles({
 
   return (
     <ChartContainer
+      dir="ltr"
       config={chartConfig}
       className={cn("h-[100px] w-full", className)}
     >
