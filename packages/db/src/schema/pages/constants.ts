@@ -19,6 +19,7 @@ export const subdomainSafeList = [
   "notifications",
   "ship",
   "subscribers",
+  "events",
 ];
 
 export const pageAccessTypes = [
