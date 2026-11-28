@@ -67,7 +67,7 @@ export function StatusLocaleSwitcher({
               {locale.label}{" "}
               <span
                 className={cn(
-                  "ml-auto font-mono uppercase",
+                  "ms-auto font-mono uppercase",
                   locale.value === value
                     ? "text-foreground"
                     : "text-muted-foreground",

@@ -218,7 +218,17 @@ function useStatusBar({ dataLength, isTouch }: UseStatusBarProps) {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent, currentIndex: number) => {
-      switch (e.key) {
+      // Bars run right to left in RTL, so swap the horizontal arrows to keep
+      // them moving the focus the way they point.
+      const isRtl =
+        getComputedStyle(e.currentTarget as Element).direction === "rtl";
+      const key =
+        isRtl && e.key === "ArrowLeft"
+          ? "ArrowRight"
+          : isRtl && e.key === "ArrowRight"
+            ? "ArrowLeft"
+            : e.key;
+      switch (key) {
         case "Escape":
           e.preventDefault();
           setActiveIndex(null);
@@ -661,7 +671,7 @@ export function StatusBarCard({
           <Separator />
           <div className="text-muted-foreground flex cursor-pointer items-center p-2 text-xs">
             <span>{labels.clickAgainToUnpin}</span>
-            <kbd className="border-input bg-background text-muted-foreground ml-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded-sm border px-1.5 font-mono text-[10px] font-medium">
+            <kbd className="border-input bg-background text-muted-foreground ms-auto inline-flex h-5 max-h-5 min-w-5 items-center justify-center rounded-sm border px-1.5 font-mono text-[10px] font-medium">
               Esc
             </kbd>
           </div>
@@ -743,7 +753,7 @@ function StatusBarContent({
             : labels.requestStatus[status]}
         </div>
       </div>
-      <div className="text-muted-foreground ml-auto font-mono text-xs tracking-tight">
+      <div className="text-muted-foreground ms-auto font-mono text-xs tracking-tight">
         {value}
       </div>
     </div>
@@ -838,7 +848,7 @@ export function StatusBarEvent({
       </div>
       <div className="text-muted-foreground mt-1 text-xs">
         {labels.formatDateRange(from, to ?? undefined)}{" "}
-        <span className="text-muted-foreground/70 ml-1.5 font-mono">
+        <span className="text-muted-foreground/70 ms-1.5 font-mono">
           {formatDuration({ from, to, name, type, isAggregated, labels })}
         </span>
       </div>

@@ -97,7 +97,7 @@ export function FormCardSeparator({
 }
 
 const formCardFooterVariants = cva(
-  "flex items-center gap-2 border-t px-4 pb-4 [.border-t]:pt-4 [&>:last-child]:ml-auto",
+  "flex items-center gap-2 border-t px-4 pb-4 [.border-t]:pt-4 [&>:last-child]:ms-auto",
   {
     variants: {
       variant: {

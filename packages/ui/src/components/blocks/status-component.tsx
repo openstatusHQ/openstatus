@@ -267,6 +267,7 @@ export function StatusComponentTitle({
   return (
     <div
       data-slot="status-component-title"
+      dir="auto"
       className={cn(
         "text-foreground truncate font-mono text-base leading-5 font-medium",
         className,

@@ -367,7 +367,7 @@ export function StatusCalendar({
     >
       <header className="flex items-center gap-3 px-4 py-3">
         <div className="text-sm font-medium">{resolvedTitle}</div>
-        <div className="text-muted-foreground ml-auto flex items-center gap-1 text-sm">
+        <div className="text-muted-foreground ms-auto flex items-center gap-1 text-sm">
           <Button
             variant="ghost"
             size="icon"
@@ -375,7 +375,7 @@ export function StatusCalendar({
             aria-label="Previous month"
             onClick={() => setMonth(subMonths(currentMonth, 1))}
           >
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-4 rtl:rotate-180" />
           </Button>
           <span className="text-foreground text-center font-mono font-medium tabular-nums">
             {formatMonthYear(currentMonth)}
@@ -388,7 +388,7 @@ export function StatusCalendar({
             disabled={!canGoNext}
             onClick={() => setMonth(addMonths(currentMonth, 1))}
           >
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4 rtl:rotate-180" />
           </Button>
         </div>
       </header>
@@ -408,9 +408,9 @@ export function StatusCalendar({
               table: "w-full border-collapse",
               head_row: "flex w-full border-b",
               head_cell:
-                "flex-1 text-muted-foreground font-mono font-normal text-[0.7rem] uppercase tracking-wide py-1.5 border-r last:border-r-0",
+                "flex-1 text-muted-foreground font-mono font-normal text-[0.7rem] uppercase tracking-wide py-1.5 border-e last:border-e-0",
               row: "flex w-full border-b last:border-b-0",
-              cell: "flex-1 relative p-0 text-center text-sm border-r last:border-r-0 focus-within:relative focus-within:z-20",
+              cell: "flex-1 relative p-0 text-center text-sm border-e last:border-e-0 focus-within:relative focus-within:z-20",
               day: cn(
                 "text-foreground/80 inline-flex h-12 w-full items-center justify-center text-sm font-normal transition-colors",
                 "hover:bg-accent hover:text-accent-foreground",
@@ -654,7 +654,7 @@ export function StatusCalendarSkeleton({
         <div className="text-sm font-medium">
           {title ?? labels.calendarTitle}
         </div>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ms-auto flex items-center gap-1">
           <Skeleton className="size-7 rounded-md" />
           <Skeleton className="h-4 w-20" />
           <Skeleton className="size-7 rounded-md" />
@@ -665,7 +665,7 @@ export function StatusCalendarSkeleton({
           {Array.from({ length: 7 }).map((_, i) => (
             <div
               key={`weekday-${i}`}
-              className="flex flex-1 justify-center border-r py-1.5 last:border-r-0"
+              className="flex flex-1 justify-center border-e py-1.5 last:border-e-0"
             >
               <Skeleton className="h-3 w-4" />
             </div>
@@ -679,7 +679,7 @@ export function StatusCalendarSkeleton({
             {Array.from({ length: 7 }).map((_, col) => (
               <div
                 key={`cell-${row}-${col}`}
-                className="flex h-12 flex-1 items-center justify-center border-r last:border-r-0"
+                className="flex h-12 flex-1 items-center justify-center border-e last:border-e-0"
               >
                 <Skeleton className="h-4 w-6" />
               </div>

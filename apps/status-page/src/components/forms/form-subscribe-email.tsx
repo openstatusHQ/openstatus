@@ -170,7 +170,7 @@ export function FormSubscribeEmail({
                           control={form.control}
                           name="pageComponents"
                           render={({ field }) => (
-                            <FormItem className="flex items-center gap-2 pl-6">
+                            <FormItem className="flex items-center gap-2 ps-6">
                               <FormControl>
                                 <Checkbox
                                   checked={field.value?.includes(component.id)}

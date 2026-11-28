@@ -166,6 +166,7 @@ export function StatusEventTitle({
   return (
     <div
       data-slot="status-event-title"
+      dir="auto"
       className={cn("font-medium", className)}
       {...props}
     >
@@ -197,7 +198,7 @@ export function StatusEventTitleCheck({
   return (
     <div
       data-slot="status-event-title-check"
-      className={cn("flex items-center pl-1", className)}
+      className={cn("flex items-center ps-1", className)}
       {...props}
     >
       <TooltipProvider>
@@ -358,9 +359,12 @@ export function StatusEventAside({
   return (
     <div
       data-slot="status-event-aside"
-      className="border border-transparent lg:absolute lg:top-0 lg:-left-32 lg:h-full"
+      className="border border-transparent lg:absolute lg:-start-32 lg:top-0 lg:h-full"
     >
-      <div className={cn("lg:sticky lg:top-0 lg:left-0", className)} {...props}>
+      <div
+        className={cn("lg:sticky lg:start-0 lg:top-0", className)}
+        {...props}
+      >
         {children}
       </div>
     </div>
@@ -583,7 +587,7 @@ export function StatusEventTimelineReportUpdate({
       className="group"
     >
       <div className="flex flex-row items-center justify-between gap-2">
-        <div className="flex flex-row gap-4">
+        <div className="flex min-w-0 flex-1 flex-row gap-4">
           {withDot ? (
             <div className="flex flex-col">
               <div className="flex h-5 flex-col items-center justify-center">
@@ -592,7 +596,7 @@ export function StatusEventTimelineReportUpdate({
               {withSeparator ? <StatusEventTimelineSeparator /> : null}
             </div>
           ) : null}
-          <div className={cn(isLast ? "mb-0" : "mb-2")}>
+          <div className={cn("min-w-0 flex-1", isLast ? "mb-0" : "mb-2")}>
             <StatusEventTimelineTitle>
               <span>{labels.incidentStatus[report.status]}</span>{" "}
               {report.impactChanges?.length ? (
@@ -720,9 +724,11 @@ export function StatusEventTimelineMaintenance({
             {updates.length > 0 ? <StatusEventTimelineSeparator /> : null}
           </div>
         ) : null}
-        <div className={cn(updates.length > 0 ? "mb-2" : "mb-0")}>
+        <div
+          className={cn("min-w-0 flex-1", updates.length > 0 ? "mb-2" : "mb-0")}
+        >
           <StatusEventTimelineTitle>
-            <span>{maintenance.title}</span>{" "}
+            <span dir="auto">{maintenance.title}</span>{" "}
             <span className="text-muted-foreground/70">·</span>{" "}
             <span className="text-muted-foreground font-mono text-xs">
               <StatusTimestamp date={maintenance.from} variant="rich" asChild>
@@ -829,6 +835,7 @@ export function StatusEventTimelineMessage({
   return (
     <div
       data-slot="status-event-timeline-message"
+      dir="auto"
       className={cn(
         "text-muted-foreground py-1.5 font-mono text-sm",
         className,

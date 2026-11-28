@@ -154,6 +154,7 @@ export function StatusTitle({
   return (
     <div
       data-slot="status-title"
+      dir="auto"
       className={cn(
         "text-foreground text-lg leading-none font-semibold",
         className,
@@ -191,6 +192,7 @@ export function StatusDescription({
   return (
     <div
       data-slot="status-description"
+      dir="auto"
       className={cn("text-muted-foreground", className)}
     >
       {children}

@@ -62,7 +62,7 @@ export function Footer({
             date={new Date(dataUpdatedAt)}
             side="top"
             align="end"
-            className="text-muted-foreground/70 mr-2 flex items-center gap-1.5"
+            className="text-muted-foreground/70 me-2 flex items-center gap-1.5"
           >
             <Clock className="size-3" />
             <span className="font-mono text-xs">{timezone}</span>

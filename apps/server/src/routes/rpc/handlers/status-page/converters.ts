@@ -312,6 +312,7 @@ const DB_LOCALE_TO_PROTO: Record<Locale, ProtoLocale> = {
   hi: ProtoLocale.HI,
   ko: ProtoLocale.KO,
   ja: ProtoLocale.JA,
+  ar: ProtoLocale.AR,
 };
 
 const PROTO_LOCALE_TO_DB: Record<ProtoLocale, Locale | null> = {
@@ -323,6 +324,7 @@ const PROTO_LOCALE_TO_DB: Record<ProtoLocale, Locale | null> = {
   [ProtoLocale.HI]: "hi",
   [ProtoLocale.KO]: "ko",
   [ProtoLocale.JA]: "ja",
+  [ProtoLocale.AR]: "ar",
 };
 
 /**

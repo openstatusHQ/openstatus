@@ -185,6 +185,7 @@ function SimpleTimestamp({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger
+          dir="ltr"
           className={cn(
             "text-muted-foreground decoration-muted-foreground/30 font-mono underline decoration-dashed underline-offset-4",
             className,
@@ -194,7 +195,9 @@ function SimpleTimestamp({
           {children || labels.formatTimestamp(date)}
         </TooltipTrigger>
         <TooltipContent data-slot="status-timestamp-content">
-          <p className="font-mono">{format(date, "LLL dd, y HH:mm (z)")}</p>
+          <p dir="ltr" className="font-mono">
+            {format(date, "LLL dd, y HH:mm (z)")}
+          </p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
