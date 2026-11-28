@@ -4,7 +4,7 @@
 **Date:** 2026-11-28
 **Owner:** TBD
 **Scope:** v0 for small teams
-**Companions:** `DESIGN.md` in this folder
+**Companions:** `DESIGN.md`, `TECH.md`, `PLAN.md`
 
 ---
 
@@ -15,8 +15,8 @@ must act, when to escalate, or whether anyone acknowledged.
 
 This document defines **v0 of a native on-call product**: a small-team rotation
 with a primary and a secondary responder, acknowledgement confirmation,
-recurring schedules, phone alerts that bypass Do Not Disturb, and a short
-self-removal window that only applies when another engineer can cover.
+recurring schedules, and phone alerts delivered by a mobile app that breaks
+through Do Not Disturb.
 
 The document is organised around two things: the features we ship, and the
 blockers that stand between the design and a working page.
@@ -28,10 +28,10 @@ v0 is five capabilities. Nothing else ships.
 1. Primary and secondary responder.
 2. Acknowledgement confirmation.
 3. Recurring schedules.
-4. Phone alerts that bypass Do Not Disturb.
+4. Native push that bypasses Do Not Disturb.
 5. Short self-removal with a cover check.
 
-Every other capability is listed as a later phase and is out of scope for v0.
+Paging channels are push only. Email and Slack are not on-call channels in v0.
 
 ## 3. Features
 
@@ -55,6 +55,7 @@ to maintain.
 - An ordered participant list where position equals escalation order.
 - A configurable escalation delay.
 - Both roles visible at all times on the schedule and on the overview.
+- A registered device per participant.
 
 **Out of scope in v0.** More than two named roles, multiple schedules per team,
 follow-the-sun routing across regions.
@@ -62,8 +63,9 @@ follow-the-sun routing across regions.
 ### 3.2 Acknowledgement confirmation
 
 **What it does.** A page has a state: triggered, delivered, escalated,
-acknowledged, resolved. Acknowledging is one action from the dashboard, the page
-list, or the phone call. Acknowledgement stops escalation immediately.
+acknowledged, resolved. Acknowledging is one action from the dashboard or from
+the push notification on the lock screen. Acknowledgement stops escalation
+immediately.
 
 **Why it matters.** Acknowledgement is the only proof that a human has the
 problem. Without it, the team cannot tell a page that was handled from a page
@@ -71,7 +73,7 @@ that was ignored.
 
 **Required for it to work.**
 
-- Acknowledgement from at least two surfaces: dashboard and phone call.
+- Acknowledgement from at least two surfaces: dashboard and the notification.
 - A broadcast to primary, secondary, and admins naming who acknowledged and
   when.
 - A timeline entry with actor and time.
@@ -104,12 +106,12 @@ of a manual chore.
 **Out of scope in v0.** Layer-based schedules, per-day shift patterns, holiday
 calendars, iCal subscription.
 
-### 3.4 Phone alerts that bypass Do Not Disturb
+### 3.4 Native push that bypasses Do Not Disturb
 
-**What it does.** The primary receives a voice call within one minute of a page.
-The call states the monitor name and the failure. Pressing a key on the call
-acknowledges the page. If the call is not answered, escalation proceeds to the
-secondary. Email and Slack DM are sent alongside the call as context.
+**What it does.** Every responder installs a React Native Expo app and registers
+the device. A page is delivered as a push notification that breaks through Do
+Not Disturb, appears on the lock screen, and can be acknowledged without opening
+the app. If the page is not acknowledged, escalation proceeds to the secondary.
 
 **Why it matters.** Email and Slack do not wake a sleeping phone. A page that
 arrives silently is not a page. This feature is the difference between an alert
@@ -117,14 +119,14 @@ and an on-call product.
 
 **Required for it to work.**
 
-- A voice provider with call status callbacks and keypad input.
-- A verified phone number per responder.
-- A call retry policy before escalation.
-- Every delivery attempt recorded with its outcome.
-- A test page that reaches a real phone.
+- A registered device per responder.
+- iOS Critical Alerts entitlement, or Time Sensitive as the interim.
+- Android Do Not Disturb access granted by the user.
+- A delivery receipt per push, with a visible failure state.
+- Persisted delivery state, so a restart does not drop a page.
+- A test page that reaches a real device.
 
-**Out of scope in v0.** Mobile push, SMS, call recording, transcripts, voice
-menus beyond a single keypress.
+**Out of scope in v0.** Email, Slack DM, SMS, voice call, call recording.
 
 ### 3.5 Short self-removal with cover check
 
@@ -156,102 +158,136 @@ and the decision required.
 
 ### 4.1 Blockers by severity
 
-| ID | Blocker | Blocks | Severity |
-| --- | --- | --- | --- |
-| B1 | Do Not Disturb cannot be bypassed by email or Slack | 3.4 | Critical |
-| B2 | No mobile app, so no push channel | 3.4, future push | Critical |
-| B3 | Voice provider not chosen, no keypad acknowledgement | 3.4 | Critical |
-| B4 | Phone numbers unverified, no consent record | 3.4 | High |
-| B5 | Cover check has no rule for partial coverage | 3.5 | High |
-| B6 | Slack user mapping coverage is unknown | 3.2, context delivery | Medium |
-| B7 | One-minute paging latency is the current floor | 3.4 | Medium |
-| B8 | Page storm from many failing monitors | all | High |
-| B9 | Timezone and daylight saving correctness | 3.3 | Medium |
-| B10 | Plan gating and billing not modelled | launch | Medium |
-| B11 | No migration path from existing tools | adoption | Medium |
-| B12 | Support load from a trust-critical feature | launch | Medium |
+| ID | Blocker | Blocks | Severity | Status |
+| --- | --- | --- | --- | --- |
+| N1 | iOS Critical Alerts entitlement not granted | 3.4 | Critical | Open |
+| N2 | Android DND bypass is permission-gated | 3.4 | Critical | Open |
+| N4 | Push is the only paging channel, no fallback | 3.4 | Critical | Accepted |
+| N5 | Responder with no registered device is unreachable | 3.1, 3.2 | High | Open |
+| N6 | Decoupled service duplicates scope, audit, and limits | all | High | Accepted |
+| N7 | Two schedulers can double-fire escalation | 3.3 | High | Open |
+| N11 | Page storm from many failing monitors | all | High | Open |
+| N13 | Cover check has no rule for partial coverage | 3.5 | High | Open |
+| N3 | Expo Go cannot deliver; needs EAS build and native modules | 3.4 | High | Open |
+| N17 | In-memory retry is not durability | 3.4 | High | Open |
+| N8 | Push receipts are after-the-fact only | 3.4 | Medium | Open |
+| N9 | App Store review and TestFlight for design partners | launch | Medium | Open |
+| N10 | Timezone and daylight saving correctness | 3.3 | Medium | Open |
+| N12 | Plan gating and billing not modelled | launch | Medium | Open |
+| N14 | Support load on a trust-critical feature | launch | Medium | Open |
+| N16 | Effect v4 is a release candidate | all | Medium | Accepted |
+| N18 | Two error models across the boundary | all | Medium | Accepted |
+| N15 | No migration path from existing tools | adoption | Low | Later |
 
 ### 4.2 Detail
 
-**B1 — Do Not Disturb cannot be bypassed by email or Slack.**
-Email and Slack are silent under Do Not Disturb on both mobile platforms. SMS
-is also silent. A voice call is the only channel that rings through without a
-native app.
+**N1 — iOS Critical Alerts entitlement.**
+Push cannot bypass Do Not Disturb on iOS without
+`com.apple.developer.usernotifications.critical-alerts`. Apple grants it by
+application, only where a missed alert is a safety risk, and rejects often.
 
 Options:
 
-1. Voice call at launch. Works today, no app, no platform approval.
-2. Mobile app with critical push. Correct long term, months of work, and Apple
-   restricts the critical-alert entitlement.
+1. Apply now, ship with `interruptionLevel: "timeSensitive"` until approved.
+   Time Sensitive breaks through Focus only when the user allows it.
+2. Block v0 on the entitlement.
 
-Decision: voice call in v0.
+Decision: apply now, ship Time Sensitive as the interim, keep Critical Alerts
+as the target.
 
-**B2 — No mobile app.**
-Without an app there is no push, no in-app acknowledgement, and no reliable
-presence signal. This is why B1 has no cheap answer.
+**N2 — Android DND bypass is permission-gated.**
+A notification channel with `bypassDnd` works only after the user grants Do Not
+Disturb access in system settings. High importance alone does not bypass DND.
+Full-screen intent over the lock screen needs its own permission.
 
-Options:
+Required: an onboarding step that requests the access, detection of the granted
+state, and a warning on the responder row when it is missing.
 
-1. Ship v0 without any app and use voice as the wake-up channel.
-2. Build a minimal app before launch. Moves the timeline by months.
+**N3 — Expo Go cannot deliver this.**
+Critical alerts, full-screen intent, and custom channels need native modules
+and a config plugin. Expo Go is out. Testing requires an EAS development build
+and a config plugin around Notifee or equivalent.
 
-Decision: no app in v0.
+**N4 — Push is the only paging channel.**
+No email, no Slack, no SMS, no voice. If the device is offline, the token is
+stale, the app was force-stopped, or the OS throttles delivery, the page is lost
+with no second path.
 
-**B3 — Voice provider not chosen.**
-The repository already uses Twilio for SMS. Twilio voice can place calls and
-collect keypad input, but retry logic, call status handling, and the
-acknowledgement flow must be built. A paging-specific provider ships those
-pieces but adds a vendor and a cost.
+Accepted risk. Mitigation: visible delivery receipts, a per-responder
+"unreachable" state, and escalation continuing to the next responder.
 
-Decision needed: Twilio, or a paging-specific provider. This decision gates 3.4
-entirely.
+**N5 — A responder with no registered device cannot be paged.**
+Device registration becomes a precondition. A responder without a registered
+device must be blocked from a schedule, or the schedule must show the gap.
 
-**B4 — Phone numbers unverified.**
-A wrong or unverified number means a call that never arrives. Consent and
-retention rules for phone numbers must be defined before collecting them.
+**N6 — Decoupled service duplicates scope, audit, and limits.**
+`apps/on-call` owns its own data access and does not call `packages/services`.
+That duplicates scope checks, audit emission, plan limits, and workspace
+membership, and needs a lint exemption.
 
-Required: verification step before voice is enabled, and a visible state when a
-responder has no verified number.
+Accepted risk. Mitigation: `packages/on-call-shared` holds credential
+verification, scope checks, audit emission, and plan limit reads. Both servers
+import it, so the logic is written once and used by two entry points.
 
-**B5 — Cover check has no rule for partial coverage.**
-If the covering engineer is on call for the first hour of a three-hour window,
-the request must be blocked. Evaluating only the current moment would approve
-it and create a gap.
+**N7 — Two schedulers can double-fire escalation.**
+`apps/workflows` already runs cron. If `apps/on-call` runs its own sweeper,
+escalation must use a claim and lease, the pattern the notification outbox
+already uses, or a page escalates twice.
 
-Decision needed: block unless coverage exists for the whole window. Recommended.
+**N8 — Push receipts are after-the-fact.**
+A receipt tells us delivery failed. It does not reach a human. Failure handling
+is escalation, not retry.
 
-**B6 — Slack user mapping coverage is unknown.**
-Slack DM requires a mapped Slack account per responder. If mapping is missing,
-the DM silently does not send. Voice and email must therefore be the primary
-channels, and a missing mapping must be visible on the responder row.
+**N9 — App Store review and TestFlight.**
+Design-partner testing needs TestFlight and Play internal testing, with review
+time on the critical path for a public release.
 
-**B7 — One-minute paging latency.**
-The scheduler runs on a one-minute floor. The first page must be dispatched
-immediately after the incident is recorded, with the scheduler as a safety net,
-or the promise becomes "up to a minute" in the worst case.
-
-**B8 — Page storm.**
-Fifty failing monitors produce fifty pages. Without a per-workspace rate limit
-or grouping, the on-call engineer is flooded and the feature loses trust on the
-first bad day.
-
-**B9 — Timezone and daylight saving.**
+**N10 — Timezone and daylight saving.**
 A rotation expressed in fixed durations drifts across a daylight saving change.
-The handoff must be computed in the schedule's local time, and the timezone must
-be shown wherever a handoff is displayed.
+The handoff is computed in the schedule's local time and shown with its
+timezone.
 
-**B10 — Plan gating and billing not modelled.**
-On-call needs a plan limit and a gate. Without it, the feature ships to every
-tier with no way to control cost, especially voice.
+**N11 — Page storm.**
+Fifty failing monitors produce fifty pages to one device. A per-workspace rate
+limit or grouping is required before launch.
 
-**B11 — No migration path.**
-Teams arriving from another tool will not rebuild schedules by hand. An importer
-is not required for v0 but is required for adoption beyond design partners.
+**N12 — Plan gating and billing.**
+On-call needs a plan limit and a gate. Without it the feature ships to every
+tier with no cost control.
 
-**B12 — Support load.**
-A missed page is a trust incident, not a bug report. Support needs a runbook,
-delivery logs the team can read, and a test page so customers can verify
-themselves.
+**N13 — Cover check and partial coverage.**
+If the covering engineer is on call for the first hour of a three-hour window,
+the request must be blocked. Evaluating only the current moment approves it and
+creates a gap.
+
+**N14 — Support load.**
+A missed page is a trust incident, not a bug report. Support needs a runbook
+and delivery logs the team can read.
+
+**N15 — Migration path.**
+Teams arriving from another tool will not rebuild schedules by hand. Not
+required for v0, required for adoption beyond design partners.
+
+**N16 — Effect v4 is a release candidate.**
+`effect` is pinned at `4.0.0-rc.117` and shared by five packages. API churn is
+expected, and an upgrade touches all of them at once.
+
+Accepted risk. Mitigation: pin exactly, upgrade in one PR, never float the
+range.
+
+**N17 — In-memory retry is not durability.**
+`Effect.retry` lives in the process. A restart mid-retry loses the attempt.
+Delivery attempt count, next attempt time, and escalation time must be persisted
+in the database, with the Effect loop only as a ticker.
+
+Without this, a deploy during an outage silently drops pages.
+
+**N18 — Two error models across the boundary.**
+`packages/services` throws, `apps/on-call` uses typed Effect errors. Every call
+across that boundary needs an adapter, and an untyped throw can escape into the
+Effect channel as a defect.
+
+Accepted risk. Mitigation: one adapter module, no raw service calls in handlers.
 
 ## 5. Launch gates
 
@@ -261,10 +297,10 @@ v0 ships only when every gate passes.
    the next four weeks with primary and secondary named.
 2. The overview shows the current primary and secondary without navigation.
 3. A monitor incident pages the primary within one minute.
-4. The page reaches a phone with Do Not Disturb enabled.
-5. An unanswered call escalates to the secondary after the delay.
+4. The page reaches a device with Do Not Disturb enabled.
+5. An unacknowledged page escalates to the secondary after the delay.
 6. Acknowledging from the dashboard stops escalation.
-7. Acknowledging from the phone call stops escalation.
+7. Acknowledging from the push notification stops escalation.
 8. The secondary and all admins see who acknowledged, and when.
 9. A monitor recovery resolves the page and notifies everyone who was paged.
 10. An override replaces the rotation for its window and appears on the
@@ -272,25 +308,29 @@ v0 ships only when every gate passes.
 11. Self-removal succeeds when cover exists for the whole window.
 12. Self-removal is blocked with an explanation when cover does not exist.
 13. An empty schedule shows a warning and escalation continues.
-14. A test page reaches a real phone and can be acknowledged.
+14. A test page reaches a real device and can be acknowledged.
 15. A non-admin cannot change schedules, policies, or other people's coverage.
 16. Every page and every configuration change appears in the audit log.
 17. A burst of failing monitors does not send an unbounded number of pages.
+18. A restart during an active page does not lose the escalation.
 
 ## 6. Later phases
 
-**Next after v0.** SMS, Slack acknowledge buttons, signed acknowledge links,
-escalation repeat and maximum duration, page history filters, per-user channel
-preferences.
+**Next after v0.** Escalation repeat and maximum duration, page history filters,
+per-user channel preferences, response metrics.
 
-**After that.** Mobile push, voice menus, multiple schedules, follow-the-sun,
-response metrics, API and Terraform, importer for existing tools.
+**After that.** Multiple schedules, follow-the-sun, API and Terraform, importer
+for existing tools, additional delivery channels through the channel registry.
+
+**Not planned.** Email and Slack as on-call paging channels. They stay as
+monitor alert channels, not as a way to wake a responder.
 
 ## 7. Open decisions
 
-1. Voice provider: existing Twilio account, or a paging-specific provider.
-2. Should pressing a key on the call be the only phone acknowledgement path, or
-   is a dashboard acknowledgement equally valid? Recommended: both.
+1. If the Critical Alerts entitlement is refused, is Time Sensitive acceptable
+   as the permanent iOS ceiling?
+2. Should a responder without a registered device be blocked from a schedule,
+   or allowed with a visible warning? Recommended: blocked.
 3. Escalation delay: fixed at five minutes, or configurable per policy?
    Recommended: configurable, default five minutes.
 4. Maximum self-removal window: four hours, or longer? Recommended: four hours.

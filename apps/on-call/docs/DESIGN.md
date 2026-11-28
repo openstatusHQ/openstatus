@@ -3,7 +3,8 @@
 **Status:** Draft
 **Date:** 2026-11-28
 **Scope:** v0 for small teams
-**Companions:** `PRD.md` in this folder, `DESIGN.md` at the repository root
+**Companions:** `PRD.md`, `TECH.md`, `PLAN.md` in this folder, `DESIGN.md` at
+the repository root
 
 ---
 
@@ -63,10 +64,10 @@ Who is responding right now, and what is waiting on them.
 RIGHT NOW
 ┌───────────────────────────────────────────────────────────────┐
 │ ● Primary     Ana Souza        until Mon 09:00                │
-│               email · slack · phone verified                  │
+│               iPhone · push on · DND allowed                  │
 │                                                               │
 │ ● Secondary   Rui Costa        until Mon 09:00                │
-│               email · slack                                   │
+│               Android · push on · DND not granted  ▲          │
 │ ───────────────────────────────────────────────────────────── │
 │ ▲ Ana is off 14:00–16:00 today · Rui covers · "dentist"       │
 └───────────────────────────────────────────────────────────────┘
@@ -150,12 +151,11 @@ api.openstatus.dev returned 503                      ● Triggered
 
 [ Acknowledge ]   [ Escalate now ]   [ Resolve ]
 
-Activity 5
-  ┌ Ana Souza · voice call ──────────────────────── 2m ago ┐
-  │ rang 22s, no answer                                     │
+Activity 4
+  ┌ Ana Souza · iPhone ──────────────────────────── 2m ago ┐
+  │ push sent · receipt failed · device unreachable         │
   └─────────────────────────────────────────────────────────┘
-  ─ Ana Souza · email · delivered
-  ─ Ana Souza · slack DM · delivered
+  ─ Escalated to Rui Costa · step 2
   ─ Page triggered by monitor
   ─ Monitor incident opened
 
@@ -178,8 +178,9 @@ Notes:
 
 - The countdown is the tension of the screen. It gets its own block, not a
   badge, and it is the only element that updates in place.
-- A voice call attempt is a timeline card because it has an outcome to report.
-  Email and Slack deliveries are rows, because they have only a status.
+- A push delivery is a timeline card because it has an outcome to report: sent,
+  delivered, or failed with a receipt error.
+- An escalation is a row, because it has only a status.
 - `Acknowledge` is the first action in reading order and the widest.
 - `Resolve` is destructive-adjacent and confirms.
 - The aside is reference only. It never competes with the timeline.
@@ -212,7 +213,7 @@ Reason  [ Dentist appointment        ]
 
 Cover check
 ✓ Rui Costa is on call for the whole window
-✓ Rui has a verified phone number
+✓ Rui has a registered device
 
                               [ Remove me ]  [ Cancel ]
 ```
@@ -294,6 +295,64 @@ Empty state (no pages yet):
         Pages appear when a monitor with an on-call policy fails.
         [ Send a test page ]
 ```
+
+### 4.7 Mobile app onboarding
+
+The app has one job: receive a page and let the responder acknowledge it. Setup
+is three steps, each with a visible result.
+
+Step 1, device registration:
+
+```
+Join your team's on-call
+Sign in with your openstatus account.
+
+[ Continue with openstatus ]
+
+This device will receive pages for Platform and Payments.
+```
+
+Step 2, notification permission:
+
+```
+Allow notifications
+Pages arrive as notifications. Without this permission you cannot be paged.
+
+✓ Notifications allowed
+
+[ Open settings ]  [ Continue ]
+```
+
+Step 3, Do Not Disturb access:
+
+```
+Break through Do Not Disturb
+Pages must reach you even when your phone is silenced.
+
+iOS      Time Sensitive notifications  ✓ allowed
+Android  Do Not Disturb access        ✗ not granted  [ Grant ]
+
+[ Continue ]
+```
+
+Step 4, verification:
+
+```
+Send yourself a test page
+You will get a notification in a few seconds. Acknowledge it to finish.
+
+[ Send test page ]
+```
+
+Notes:
+
+- Every step states its result as a word, not a colored dot alone.
+- The Android grant opens system settings. The app re-reads the state on
+  return, and shows `✗ not granted` until it is true.
+- The test page is the last step and it must be acknowledged. Setup is not
+  complete until a real page has been received.
+- If the iOS entitlement is not granted, the screen says Time Sensitive instead
+  of Critical Alerts. It does not promise more than the platform allows.
 
 ## 5. Component map
 
@@ -385,13 +444,16 @@ policies, and zero pages. That is the first-run state for every new workspace.
    does not collide with the row's navigation target.
 3. **Countdown treatment.** Text only, or a thin progress rail under the
    escalation block? Recommendation: text only in v0.
-4. **Voice call detail.** Duration and outcome only. No recording, no
-   transcript.
+4. **DND permission UX.** A responder who denies the permission is still added
+   to the schedule in v0, with a warning. Confirm whether denial should block
+   schedule membership instead.
 5. **Density.** Three to five engineers fit the roster grid. At ten, the grid
    needs week paging. Decide the ceiling before building.
 6. **Overrides on the roster.** Shown inline as a replaced name, or as a
    separate row beneath the week? Recommendation: inline, with the original
    name struck through on hover only.
+7. **Receipt state on the page.** Show `sent` and `delivered` as two rows, or
+   one row that updates in place? Recommendation: one row, updated in place.
 
 ## 11. Worst cases to render before calling a screen done
 
