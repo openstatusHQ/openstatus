@@ -83,6 +83,18 @@ export type ApprovalBefore = {
   values: Record<string, unknown>;
 };
 
+/** `id` has the type of the input field `idField` names: an integer, or a slug. */
+export type ApprovalLoadBefore<TInput> = {
+  [K in keyof TInput & string]: {
+    /** Input field holding the target entity's id. */
+    idField: K;
+    load: (args: {
+      ctx: ServiceContext;
+      id: TInput[K];
+    }) => Promise<ApprovalBefore>;
+  };
+}[keyof TInput & string];
+
 export type ApprovalMeta<TInput> = {
   /**
    * Tuple — capped at one flag. Multi-flag UX deserves a modal, not 2^N
@@ -111,16 +123,7 @@ export type ApprovalMeta<TInput> = {
    * without sending the rest of the input (which may carry secrets).
    * Read-only; must not mutate.
    */
-  loadBefore?: {
-    /** Input field holding the target entity's id: an integer, or a slug. */
-    idField: keyof TInput & string;
-    load: (args: {
-      ctx: ServiceContext;
-      // safe because loadApprovalBefore parses the id with the tool's own id field schema
-      // oxlint-disable-next-line typescript/no-explicit-any -- an integer for most tools, a slug for playbooks
-      id: any;
-    }) => Promise<ApprovalBefore>;
-  };
+  loadBefore?: ApprovalLoadBefore<TInput>;
   /** Surface-rendered confirmation summary. */
   summarize: (input: TInput) => { title: string; lines: SummaryLine[] };
   /**

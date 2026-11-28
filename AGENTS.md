@@ -70,6 +70,11 @@ or spec that names things differently is wrong, not the table.
   the dashboard MCP page, and for a write tool `INTERNAL_WRITE_TOOLS`
   (`packages/services/src/agent-tools/prompt.ts`) and the approval list in
   `apps/server/src/routes/slack/system-prompt.ts`.
+- **A write tool with a long-text field** (a playbook's `content`) sets
+  `approval.summarizeChange`, so Slack shows the changed lines instead of a
+  truncated value, and gives the chat a `renderDraft` in `toolRenderers`.
+- **Resources are keyed by integer id.** `playbook` is keyed by slug on purpose:
+  its built-in slugs are addressable before a row exists. Do not copy that.
 - **Dashboard**: a "Create x" button opens a sheet form, and delete sits in the
   row's `QuickActions` behind a typed confirmation.
 - **One migration file per PR.** Regenerate rather than stack them.
