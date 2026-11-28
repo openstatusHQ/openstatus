@@ -34,6 +34,10 @@ export function useCommandMenuData({ open }: { open: boolean }) {
     trpc.incident.list.queryOptions(undefined, { enabled: open }),
   );
 
+  const { data: playbooks } = useQuery(
+    trpc.playbook.list.queryOptions(undefined, { enabled: open }),
+  );
+
   const otherWorkspaces =
     workspaces?.filter((w) => w.slug !== workspace?.slug) ?? [];
 
@@ -61,6 +65,7 @@ export function useCommandMenuData({ open }: { open: boolean }) {
   return {
     incidents,
     monitors,
+    playbooks,
     statusPages,
     statusReports,
     sortedStatusReports,
