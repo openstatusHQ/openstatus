@@ -234,6 +234,16 @@ export class EmailClient {
                 from: statusPageFrom(req.pageTitle),
                 subject: pageUpdateSubject(req),
                 to: subscriber.email,
+                // RFC 8058 one-click POSTs go to the hosted API, not the page
+                // link above, and it can't unsubscribe self-hosted subscribers
+                ...(env.SELF_HOST
+                  ? {}
+                  : {
+                      headers: {
+                        "List-Unsubscribe": `<https://api.openstatus.dev/public/unsubscribe/${subscriber.token}>`,
+                        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+                      },
+                    }),
                 react: (
                   <PageUpdateEmail
                     {...req}
