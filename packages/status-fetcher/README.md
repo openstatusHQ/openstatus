@@ -30,10 +30,10 @@ console.log(result.severity, result.status, result.description);
 ```
 
 For batch fan-out with per-item success/failure, use `Effect.forEach` +
-`Effect.either`:
+`Effect.result`:
 
 ```ts
-import { Effect, Either } from "effect";
+import { Effect, Result } from "effect";
 
 const results = await Effect.runPromise(
   Effect.forEach(
@@ -41,23 +41,23 @@ const results = await Effect.runPromise(
     (entry) => {
       const fetcher = fetchers.find((f) => f.canHandle(entry));
       if (!fetcher) {
-        return Effect.either(
+        return Effect.result(
           Effect.fail(
             new FetchError({ url: entry.status_page_url, entryId: entry.id }),
           ),
         );
       }
-      return fetcher.fetch(entry).pipe(Effect.either);
+      return fetcher.fetch(entry).pipe(Effect.result);
     },
     { concurrency: "unbounded" },
   ),
 );
 
 for (const r of results) {
-  if (Either.isRight(r)) {
-    /* r.right is the StatusResult */
+  if (Result.isSuccess(r)) {
+    /* r.success is the StatusResult */
   } else {
-    /* r.left is a FetchError */
+    /* r.failure is a FetchError */
   }
 }
 ```
@@ -123,7 +123,7 @@ and `fetch failed` when neither is set.
 
 Each `fetchJson` / `fetchText` call:
 
-- 30s timeout per attempt (via `Effect.timeoutFail`)
+- 30s timeout per attempt (via `Effect.timeoutOrElse`)
 - Up to 3 retries on transient errors with exponential backoff
   (`Schedule.exponential("100 millis").pipe(Schedule.jittered)`)
 - **4xx responses skip retry** (predicate fails fast)
@@ -195,7 +195,7 @@ configured.
 ## Testing
 
 ```sh
-bun test
+pnpm test
 ```
 
 Live smoke check against real status pages (GitHub, Linear, Slack,
