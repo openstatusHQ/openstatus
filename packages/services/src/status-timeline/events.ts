@@ -250,6 +250,13 @@ export function activeReportStatus(
   return worst;
 }
 
+/** Start of the window `getEvents` keeps; callers may pre-filter SQL with it. */
+export function eventWindowStart(pastDays: number, now = new Date()): Date {
+  const threshold = new Date(now);
+  threshold.setDate(threshold.getDate() - pastDays);
+  return threshold;
+}
+
 export function getEvents({
   maintenances,
   incidents,
@@ -277,8 +284,7 @@ export function getEvents({
   pastDays?: number;
 }): Event[] {
   const events: Event[] = [];
-  const pastThreshold = new Date();
-  pastThreshold.setDate(pastThreshold.getDate() - pastDays);
+  const pastThreshold = eventWindowStart(pastDays);
 
   // Filter maintenances - prioritize pageComponentId, fallback to monitorId for backward compatibility
   maintenances

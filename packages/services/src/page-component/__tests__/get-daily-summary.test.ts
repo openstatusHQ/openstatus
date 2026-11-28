@@ -2,6 +2,7 @@ import {
   maintenance,
   maintenancesToPageComponents,
   monitor,
+  monitorIncidentTable,
   page,
   pageComponent,
   statusReport,
@@ -204,6 +205,157 @@ describe("getPageComponentDailySummary", () => {
       expect(staticSummary.buckets.every((b) => b.status === "empty")).toBe(
         true,
       );
+    });
+  });
+
+  test("keeps only events inside the window, plus unresolved reports of any age", async () => {
+    await withTestTransaction(async (tx) => {
+      const pageRow = await tx
+        .insert(page)
+        .values({
+          workspaceId,
+          title: `${TEST_PREFIX}-window-page`,
+          description: "test",
+          slug: `${TEST_PREFIX}-window-${Date.now()}`,
+          customDomain: "",
+        })
+        .returning()
+        .get();
+
+      const mon = await tx
+        .insert(monitor)
+        .values({
+          workspaceId,
+          active: true,
+          url: "https://example.com",
+          name: `${TEST_PREFIX}-window-monitor`,
+          method: "GET",
+          jobType: "http",
+          periodicity: "10m",
+          regions: "ams",
+        })
+        .returning()
+        .get();
+
+      const component = await tx
+        .insert(pageComponent)
+        .values({
+          workspaceId,
+          pageId: pageRow.id,
+          type: "monitor",
+          monitorId: mon.id,
+          name: "API",
+          order: 0,
+        })
+        .returning()
+        .get();
+
+      const day = 86_400_000;
+      const now = Date.now();
+      const old = (n: number) => new Date(now - n * day);
+
+      const addMaintenance = async (title: string, from: Date, to: Date) => {
+        const row = await tx
+          .insert(maintenance)
+          .values({
+            workspaceId,
+            pageId: pageRow.id,
+            title,
+            message: title,
+            from,
+            to,
+          })
+          .returning()
+          .get();
+        await tx.insert(maintenancesToPageComponents).values({
+          maintenanceId: row.id,
+          pageComponentId: component.id,
+        });
+      };
+      await addMaintenance("old maintenance", old(30), old(29));
+      await addMaintenance("recent maintenance", old(2), old(1));
+
+      const addReport = async (
+        title: string,
+        status: "investigating" | "resolved",
+        dates: Date[],
+      ) => {
+        const row = await tx
+          .insert(statusReport)
+          .values({ workspaceId, pageId: pageRow.id, title, status })
+          .returning()
+          .get();
+        await tx.insert(statusReportsToPageComponents).values({
+          statusReportId: row.id,
+          pageComponentId: component.id,
+        });
+        for (const [i, date] of dates.entries()) {
+          await tx.insert(statusReportUpdate).values({
+            statusReportId: row.id,
+            status: i === dates.length - 1 ? status : "investigating",
+            date,
+            message: title,
+          });
+        }
+      };
+      await addReport("old resolved report", "resolved", [old(30), old(29)]);
+      await addReport("old unresolved report", "investigating", [old(30)]);
+      // started before the window, resolved inside it
+      await addReport("spanning report", "resolved", [old(30), old(2)]);
+
+      const incidents = await tx
+        .insert(monitorIncidentTable)
+        .values([
+          {
+            workspaceId,
+            monitorId: mon.id,
+            startedAt: old(31),
+            resolvedAt: old(29),
+          },
+          { workspaceId, monitorId: mon.id, startedAt: old(30) },
+          {
+            workspaceId,
+            monitorId: mon.id,
+            startedAt: old(3),
+            resolvedAt: old(1),
+          },
+          {
+            workspaceId,
+            monitorId: mon.id,
+            startedAt: old(2),
+            resolvedAt: old(1),
+            excusedAt: old(1),
+          },
+        ])
+        .returning()
+        .all();
+
+      const emptyTb = {
+        httpStatus45d: () => Promise.resolve({ data: [] }),
+      } as unknown as NonNullable<ServiceContext["tb"]>;
+
+      const { components } = await getPageComponentDailySummary({
+        ctx: { ...teamCtx, db: tx, tb: emptyTb },
+        input: { pageId: pageRow.id, workspaceId, days: 7 },
+      });
+
+      const events = components[0].events;
+      expect(
+        events
+          .filter((e) => e.type !== "incident")
+          .map((e) => e.name)
+          .sort(),
+      ).toEqual([
+        "old unresolved report",
+        "recent maintenance",
+        "spanning report",
+      ]);
+      expect(
+        events
+          .filter((e) => e.type === "incident")
+          .map((e) => e.id)
+          .sort((a, b) => a - b),
+      ).toEqual([incidents[1].id, incidents[2].id].sort((a, b) => a - b));
     });
   });
 
