@@ -157,7 +157,7 @@ catalog:
   drizzle-kit: 0.31.11
   drizzle-orm: 0.45.4
   drizzle-zod: 0.8.3
-  effect: 4.0.0-rc.117
+  effect: 4.1.7
   feed: 6.0.0
   geist: 1.9.2
   gray-matter: 4.0.3

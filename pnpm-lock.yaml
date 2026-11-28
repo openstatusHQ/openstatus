@@ -441,8 +441,8 @@ catalogs:
       specifier: 0.8.3
       version: 0.8.3
     effect:
-      specifier: 4.0.0-rc.117
-      version: 4.0.0-rc.117
+      specifier: 4.1.7
+      version: 4.1.7
     feed:
       specifier: 6.0.0
       version: 6.0.0
@@ -700,7 +700,7 @@ importers:
         version: 3.2.2(react@19.3.1)
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
+        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(effect@4.1.7)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.18.0
@@ -983,7 +983,7 @@ importers:
         version: 11.17.0(rollup@4.68.8)(webpack@5.111.1(@swc/core@1.16.2)(esbuild@0.28.2)(lightningcss@1.33.0)(postcss@8.5.33)(sharp@0.35.5(@types/node@26.6.6)))
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.117
+        version: 4.1.7
       hono:
         specifier: 'catalog:'
         version: 4.13.21
@@ -1176,7 +1176,7 @@ importers:
         version: 7.0.180(zod@4.6.7)
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.117
+        version: 4.1.7
       hono:
         specifier: 'catalog:'
         version: 4.13.21
@@ -1234,7 +1234,7 @@ importers:
         version: 1.5.0
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
+        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(effect@4.1.7)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
       '@libsql/client':
         specifier: 'catalog:'
         version: 0.18.0
@@ -1418,7 +1418,7 @@ importers:
     dependencies:
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
+        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(effect@4.1.7)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
       '@openpanel/nextjs':
         specifier: 'catalog:'
         version: 1.5.4(next@16.4.6(@babel/core@7.29.7(supports-color@8.1.1))(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(babel-plugin-macros@3.1.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1731,7 +1731,7 @@ importers:
         version: 0.45.4(@libsql/client@0.18.0)(@opentelemetry/api@1.10.0)(@types/pg@8.15.6)(@upstash/redis@1.38.0)(bun-types@1.4.2)
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.117
+        version: 4.1.7
       hono:
         specifier: 'catalog:'
         version: 4.13.21
@@ -2064,7 +2064,7 @@ importers:
         version: 0.13.11(typescript@7.0.2)(zod@4.6.7)
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.117
+        version: 4.1.7
       marked:
         specifier: 'catalog:'
         version: 18.2.1
@@ -2740,7 +2740,7 @@ importers:
         version: 12.4.0
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.117
+        version: 4.1.7
       ip-cidr:
         specifier: 'catalog:'
         version: 4.0.2
@@ -2768,7 +2768,7 @@ importers:
     dependencies:
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.117
+        version: 4.1.7
       node-html-parser:
         specifier: 'catalog:'
         version: 9.0.7
@@ -2808,7 +2808,7 @@ importers:
         version: 1.41.0
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-rc.117
+        version: 4.1.7
       zod:
         specifier: 'catalog:'
         version: 4.6.7
@@ -2949,7 +2949,7 @@ importers:
         version: 3.2.2(react@19.3.1)
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
+        version: 7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(effect@4.1.7)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)
       '@openstatus/icons':
         specifier: workspace:*
         version: link:../icons
@@ -9616,8 +9616,8 @@ packages:
   ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
-  effect@4.0.0-rc.117:
-    resolution: {integrity: sha512-UUyi9QiOW4nySFIBM3KnYbNMd9EZliOdKfBcyLD0mPMPheO2fkuXS5y0opjWc9oqzlJxPQICEGm8gGw3kh9j/w==}
+  effect@4.1.7:
+    resolution: {integrity: sha512-8QUe2XO3auHF5r7+bfIDWxyXlLA0sso4Sia1QYP+vrYA7qb3sq1u2eJmhyXGmKc8yZ+TY2SNxPozeMdyKmWing==}
 
   electron-to-chromium@1.5.434:
     resolution: {integrity: sha512-7EeFW9OLf1NN9NKQP9xdOE/XKqjxv7JDPP6AEAkHli11+Fae1OaLoNuAf13hQv1PPNtuES0pLQSPk2+fS3s8ww==}
@@ -13936,7 +13936,7 @@ snapshots:
       hono: 4.13.21
       zod: 4.6.7
 
-  '@hookform/resolvers@7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)':
+  '@hookform/resolvers@7.0.8(@standard-schema/spec@1.1.0)(ajv-formats@2.1.1(ajv@8.20.0))(ajv@8.20.0)(effect@4.1.7)(react-hook-form@7.92.0(@types/react@19.3.0)(react@19.3.1))(zod@4.6.7)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.92.0(@types/react@19.3.0)(react@19.3.1)
@@ -13944,6 +13944,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       ajv: 8.20.0
       ajv-formats: 2.1.1(ajv@8.20.0)
+      effect: 4.1.7
       zod: 4.6.7
 
   '@img/colour@1.1.0':
@@ -18534,7 +18535,7 @@ snapshots:
 
   ee-first@1.1.1: {}
 
-  effect@4.0.0-rc.117: {}
+  effect@4.1.7: {}
 
   electron-to-chromium@1.5.434: {}
 
