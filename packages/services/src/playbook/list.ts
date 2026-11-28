@@ -18,6 +18,14 @@ function rank(slug: string): number {
   return index === -1 ? builtinPlaybookSlugs.length : index;
 }
 
+/** Built-in slugs in their order, then custom ones by age. */
+export function comparePlaybooks(
+  a: { id: number; slug: string },
+  b: { id: number; slug: string },
+): number {
+  return rank(a.slug) - rank(b.slug) || a.id - b.id;
+}
+
 function withUsers(
   row: Playbook,
   users: Map<number, AttributedUserDetail>,
@@ -48,9 +56,7 @@ export async function listPlaybooks(args: {
     db,
     rows.flatMap((r) => [r.createdBy, r.updatedBy]),
   );
-  return rows
-    .sort((a, b) => rank(a.slug) - rank(b.slug) || a.id - b.id)
-    .map((r) => withUsers(r, users));
+  return rows.sort(comparePlaybooks).map((r) => withUsers(r, users));
 }
 
 /** `null` when the workspace has no playbook of that slug. */

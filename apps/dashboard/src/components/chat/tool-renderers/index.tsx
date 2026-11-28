@@ -453,7 +453,7 @@ export const toolRenderers: ToolRendererRegistry = {
     summary: (o) => itemsCountSummary(o.playbooks),
   },
   get_playbook: {
-    summary: (o) => (o.error ? o.error : `read ${o.slug}`),
+    summary: (o) => `read ${o.slug}`,
   },
   create_playbook: {
     renderDraft: (input) => [

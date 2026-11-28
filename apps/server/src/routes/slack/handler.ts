@@ -904,7 +904,10 @@ async function processEvent(body: SlackEvent, config: SlackConfig) {
     // A failed lookup costs the agent its playbooks, never the turn.
     const playbookNote = await loadPlaybookSection({
       ctx: { workspace: resolved.workspace, actor },
-    }).catch(() => "");
+    }).catch((error) => {
+      logger.warn("slack playbook section failed", { teamId, error });
+      return "";
+    });
 
     logger.info("slack agent invoked", {
       teamId,

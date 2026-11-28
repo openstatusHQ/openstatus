@@ -563,21 +563,20 @@ describe("agent tools", () => {
         ctx: c,
         input: { slug: "status-page" },
       });
-      expect(out.error).toBeUndefined();
       expect(out.content).toBe(
         `<playbook slug="status-page">\n${content}\n</playbook>`,
       );
     });
   });
 
-  test("get_playbook reports an empty slot as data", async () => {
+  test("get_playbook on an unwritten playbook is a not-found", async () => {
     await withTestTransaction(async (tx) => {
-      const out = await getPlaybookTool.run({
-        ctx: { ...ctx, db: tx },
-        input: { slug: "postmortem" },
-      });
-      expect(out.content).toBe("");
-      expect(out.error).toContain("postmortem");
+      await expect(
+        getPlaybookTool.run({
+          ctx: { ...ctx, db: tx },
+          input: { slug: "postmortem" },
+        }),
+      ).rejects.toBeInstanceOf(NotFoundError);
     });
   });
 

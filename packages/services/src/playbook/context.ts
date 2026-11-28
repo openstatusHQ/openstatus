@@ -1,6 +1,9 @@
+import { eq } from "@openstatus/db";
+import { playbook } from "@openstatus/db/src/schema";
+
 import { requireScope } from "../auth";
-import type { ServiceContext } from "../context";
-import { listPlaybooks } from "./list";
+import { getReadDb, type ServiceContext } from "../context";
+import { comparePlaybooks } from "./list";
 
 type PlaybookEntry = { slug: string; description: string };
 
@@ -10,7 +13,17 @@ export async function loadPlaybookSection(args: {
 }): Promise<string> {
   const { ctx } = args;
   requireScope(ctx, "incidents:read");
-  return buildPlaybookSection(await listPlaybooks({ ctx }));
+  // runs on every agent turn, so it leaves the content column out
+  const rows = await getReadDb(ctx)
+    .select({
+      id: playbook.id,
+      slug: playbook.slug,
+      description: playbook.description,
+    })
+    .from(playbook)
+    .where(eq(playbook.workspaceId, ctx.workspace.id))
+    .all();
+  return buildPlaybookSection(rows.sort(comparePlaybooks));
 }
 
 /** System-prompt section naming the team's playbooks, so the agent never has to list them. */

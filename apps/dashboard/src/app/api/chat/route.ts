@@ -150,7 +150,10 @@ export async function POST(req: NextRequest) {
   );
 
   // A failed lookup costs the agent its playbooks, never the turn.
-  const playbookSection = await loadPlaybookSection({ ctx }).catch(() => "");
+  const playbookSection = await loadPlaybookSection({ ctx }).catch((err) => {
+    console.warn("chat playbook section failed", err);
+    return "";
+  });
 
   const result = streamText({
     model,

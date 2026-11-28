@@ -97,7 +97,6 @@ const GetPlaybookOutput = z.object({
     .optional()
     .describe("The values currently set for the variables in `source`."),
   note: z.string().optional(),
-  error: z.string().optional(),
 });
 
 // an edit based on the filled-in text would bake the values into the playbook
@@ -114,16 +113,9 @@ export const getPlaybookTool: AgentTool<
   destructive: false,
   inputSchema: GetPlaybookInput,
   outputSchema: GetPlaybookOutput,
-  // An unwritten playbook is an answer ("the team has not written one"), not a failure.
   async run({ ctx, input }) {
     const row = await getPlaybook({ ctx, input });
-    if (!row) {
-      return {
-        slug: input.slug,
-        content: "",
-        error: `The team has not written a ${input.slug} playbook.`,
-      };
-    }
+    if (!row) throw new NotFoundError("playbook", input.slug);
     const usesVariables = playbookVariableNames(row.content).length > 0;
     return {
       slug: row.slug,
