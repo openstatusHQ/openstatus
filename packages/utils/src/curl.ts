@@ -54,7 +54,7 @@ export function buildCurlCommand(request: CurlRequest): string {
   let command = "curl";
   if (
     method === "POST" &&
-    headers.find((h) => h.key === "Content-Type")?.value ===
+    headers.find((h) => h.key.toLowerCase() === "content-type")?.value ===
       "application/octet-stream"
   ) {
     const parts = body.split(",");

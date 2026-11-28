@@ -152,6 +152,27 @@ func TestNewHTTPClientDoesNotReuseConnections(t *testing.T) {
 	assert.Equal(t, int32(2), newConns.Load())
 }
 
+func Test_HttpDecodesBinaryBodyForAnyContentTypeCase(t *testing.T) {
+	var got []byte
+	client := NewTestClient(func(req *http.Request) *http.Response {
+		got, _ = io.ReadAll(req.Body)
+		return &http.Response{StatusCode: http.StatusOK, Body: io.NopCloser(bytes.NewReader(nil)), Header: make(http.Header)}
+	})
+
+	_, err := checker.Http(context.Background(), client, request.HttpCheckerRequest{
+		URL:    "https://openstat.us",
+		Method: http.MethodPost,
+		Body:   "data:application/octet-stream;base64,aGVsbG8=",
+		Headers: []struct {
+			Key   string `json:"key"`
+			Value string `json:"value"`
+		}{{Key: "content-type", Value: "application/octet-stream"}},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []byte("hello"), got)
+}
+
 func Test_HttpRequestIDHeader(t *testing.T) {
 	type customHeader = struct {
 		Key   string `json:"key"`

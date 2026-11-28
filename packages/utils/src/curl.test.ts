@@ -94,6 +94,17 @@ describe("buildCurlCommand", () => {
     }
   });
 
+  it("matches the binary content type header case-insensitively", () => {
+    const command = buildCurlCommand({
+      url: "https://openstat.us",
+      method: "POST",
+      body: "data:application/octet-stream;base64,aGVsbG8=",
+      headers: [{ key: "content-type", value: "application/octet-stream" }],
+    });
+    expect(command).toContain("--data-binary @-");
+    expect(command).not.toContain("--data-raw");
+  });
+
   it("rejects malformed binary bodies before sending a request", async () => {
     let requests = 0;
     const server = await serve(() => {
