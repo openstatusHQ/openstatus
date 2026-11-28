@@ -4021,6 +4021,313 @@ components:
       title: WhatsappData
       additionalProperties: false
       description: WhatsappData contains configuration for WhatsApp notifications.
+    openstatus.playbook.v1.CreatePlaybookRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          examples:
+            - database-failover
+          title: slug
+          maxLength: 64
+          minLength: 1
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          description: |-
+            Slug of the new playbook (required): lowercase letters, digits and single
+             hyphens, max 64 characters. It cannot be one of the built-in slugs
+             (incident-response, status-page, maintenance-windows, postmortem) and
+             cannot be changed later.
+        title:
+          type: string
+          examples:
+            - Database failover
+          title: title
+          maxLength: 100
+          minLength: 1
+          description: Name of the playbook (required, 1 to 100 characters).
+        description:
+          type: string
+          examples:
+            - How we fail over the primary database.
+          title: description
+          maxLength: 500
+          minLength: 1
+          description: |-
+            What the playbook covers (required, 1 to 500 characters). The agent is
+             told the description and uses it to decide when to read the playbook.
+        content:
+          type: string
+          examples:
+            - Page {{dba_on_call}} before promoting the replica.
+          title: content
+          maxLength: 10000
+          minLength: 1
+          description: |-
+            The complete playbook in markdown (required, 1-10000 characters).
+             {{name}} marks a variable; names use lowercase letters, digits and
+             underscores.
+        variables:
+          type: object
+          title: variables
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 500
+          description: |-
+            Values for the variables in the content, by name. Names the content does
+             not use are dropped.
+      title: CreatePlaybookRequest
+      additionalProperties: false
+      description: CreatePlaybookRequest is the request to create a custom playbook.
+    openstatus.playbook.v1.CreatePlaybookRequest.VariablesEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: VariablesEntry
+      additionalProperties: false
+    openstatus.playbook.v1.CreatePlaybookResponse:
+      type: object
+      properties:
+        playbook:
+          title: playbook
+          description: The created playbook.
+          $ref: '#/components/schemas/openstatus.playbook.v1.Playbook'
+      title: CreatePlaybookResponse
+      additionalProperties: false
+      description: CreatePlaybookResponse is the response after creating a playbook.
+    openstatus.playbook.v1.DeletePlaybookRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          examples:
+            - status-page
+          title: slug
+          maxLength: 64
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          description: |-
+            Slug of the playbook to delete (required): lowercase letters,
+             digits and single hyphens, max 64 characters. Built-in slugs come with a
+             default title and description: incident-response, status-page,
+             maintenance-windows, postmortem. Any other slug is a custom playbook.
+      title: DeletePlaybookRequest
+      additionalProperties: false
+      description: DeletePlaybookRequest is the request to delete the playbook of a slug.
+    openstatus.playbook.v1.DeletePlaybookResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          title: success
+          description: Whether the deletion was successful.
+      title: DeletePlaybookResponse
+      additionalProperties: false
+      description: DeletePlaybookResponse is the response after deleting a playbook.
+    openstatus.playbook.v1.GetPlaybookRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          examples:
+            - status-page
+          title: slug
+          maxLength: 64
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          description: |-
+            Slug of the playbook to retrieve (required): lowercase letters,
+             digits and single hyphens, max 64 characters. Built-in slugs come with a
+             default title and description: incident-response, status-page,
+             maintenance-windows, postmortem. Any other slug is a custom playbook.
+      title: GetPlaybookRequest
+      additionalProperties: false
+      description: GetPlaybookRequest is the request to get the playbook of a slug.
+    openstatus.playbook.v1.GetPlaybookResponse:
+      type: object
+      properties:
+        playbook:
+          title: playbook
+          description: The requested playbook.
+          $ref: '#/components/schemas/openstatus.playbook.v1.Playbook'
+      title: GetPlaybookResponse
+      additionalProperties: false
+      description: GetPlaybookResponse is the response containing the playbook.
+    openstatus.playbook.v1.ListPlaybooksRequest:
+      type: object
+      title: ListPlaybooksRequest
+      additionalProperties: false
+      description: ListPlaybooksRequest is the request to list playbooks.
+    openstatus.playbook.v1.ListPlaybooksResponse:
+      type: object
+      properties:
+        playbooks:
+          type: array
+          items:
+            $ref: '#/components/schemas/openstatus.playbook.v1.PlaybookSummary'
+          title: playbooks
+          description: The playbooks the workspace has written.
+      title: ListPlaybooksResponse
+      additionalProperties: false
+      description: ListPlaybooksResponse is the response containing playbook summaries.
+    openstatus.playbook.v1.Playbook:
+      type: object
+      properties:
+        slug:
+          type: string
+          title: slug
+          description: Identifies the playbook. A workspace has at most one playbook per slug.
+        title:
+          type: string
+          title: title
+          description: Name of the playbook.
+        description:
+          type: string
+          title: description
+          description: What the playbook covers.
+        content:
+          type: string
+          title: content
+          description: The playbook in markdown, as written. {{name}} marks a variable.
+        variables:
+          type: object
+          title: variables
+          additionalProperties:
+            type: string
+            title: value
+          description: Values set for the variables in the content, by name.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the playbook was first written (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the playbook was last changed (RFC 3339 format).
+      title: Playbook
+      additionalProperties: false
+      description: Playbook is the team's written rules for one slug.
+    openstatus.playbook.v1.Playbook.VariablesEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: VariablesEntry
+      additionalProperties: false
+    openstatus.playbook.v1.PlaybookSummary:
+      type: object
+      properties:
+        slug:
+          type: string
+          title: slug
+          description: Identifies the playbook. A workspace has at most one playbook per slug.
+        title:
+          type: string
+          title: title
+          description: Name of the playbook.
+        description:
+          type: string
+          title: description
+          description: What the playbook covers.
+        createdAt:
+          type: string
+          title: created_at
+          description: Timestamp when the playbook was first written (RFC 3339 format).
+        updatedAt:
+          type: string
+          title: updated_at
+          description: Timestamp when the playbook was last changed (RFC 3339 format).
+      title: PlaybookSummary
+      additionalProperties: false
+      description: PlaybookSummary is a playbook without its text (used in list responses).
+    openstatus.playbook.v1.UpdatePlaybookRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          examples:
+            - status-page
+          title: slug
+          maxLength: 64
+          pattern: ^[a-z0-9]+(-[a-z0-9]+)*$
+          description: |-
+            Slug of the playbook to write (required): lowercase letters,
+             digits and single hyphens, max 64 characters. Built-in slugs come with a
+             default title and description: incident-response, status-page,
+             maintenance-windows, postmortem. Any other slug is a custom playbook.
+        content:
+          type: string
+          examples:
+            - Sign off every update with {{team_name}}.
+          title: content
+          maxLength: 10000
+          minLength: 1
+          description: |-
+            The complete playbook in markdown (required, 1-10000 characters). It
+             replaces the existing text. {{name}} marks a variable; names use lowercase
+             letters, digits and underscores.
+        variables:
+          type: object
+          title: variables
+          additionalProperties:
+            type: string
+            title: value
+            maxLength: 500
+          description: |-
+            Values for the variables in the content, by name. This replaces the stored
+             values: a variable left out is unset, and names the content does not use
+             are dropped.
+        title:
+          type:
+            - string
+            - "null"
+          title: title
+          maxLength: 100
+          minLength: 1
+          description: |-
+            Name of the playbook (1 to 100 characters). Left out, the stored title is
+             kept, or the default of a built-in slug on its first write.
+        description:
+          type:
+            - string
+            - "null"
+          title: description
+          maxLength: 500
+          minLength: 1
+          description: |-
+            What the playbook covers (1 to 500 characters). Left out, the stored
+             description is kept, or the default of a built-in slug on its first write.
+      title: UpdatePlaybookRequest
+      additionalProperties: false
+      description: UpdatePlaybookRequest is the request to write the playbook of a slug.
+    openstatus.playbook.v1.UpdatePlaybookRequest.VariablesEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: VariablesEntry
+      additionalProperties: false
+    openstatus.playbook.v1.UpdatePlaybookResponse:
+      type: object
+      properties:
+        playbook:
+          title: playbook
+          description: The written playbook.
+          $ref: '#/components/schemas/openstatus.playbook.v1.Playbook'
+      title: UpdatePlaybookResponse
+      additionalProperties: false
+      description: UpdatePlaybookResponse is the response after writing a playbook.
     openstatus.private_location.v1.CreatePrivateLocationRequest:
       type: object
       properties:
@@ -6528,6 +6835,10 @@ tags:
     description: |
       Declare and run incidents: lifecycle (open -> mitigated -> resolved, or canceled),
       timeline notes, a linked status report, and the postmortem.
+  - name: PlaybookService
+    description: |
+      Read and write the team's playbooks: how they run incidents, write on the status
+      page, schedule maintenance and write postmortems. One playbook per slug.
   - name: MaintenanceService
     description: |
       Schedule maintenance windows for status page components. Subscribers can be
@@ -8421,6 +8732,206 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/openstatus.notification.v1.UpdateNotificationResponse'
+  /rpc/openstatus.playbook.v1.PlaybookService/CreatePlaybook:
+    post:
+      tags:
+        - PlaybookService
+      summary: CreatePlaybook
+      description: |-
+        CreatePlaybook creates a custom playbook under a new slug. It fails when
+         the slug is taken or is one of the built-in slugs.
+      operationId: PlaybookService_CreatePlaybook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.playbook.v1.CreatePlaybookRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.CreatePlaybookResponse'
+  /rpc/openstatus.playbook.v1.PlaybookService/DeletePlaybook:
+    post:
+      tags:
+        - PlaybookService
+      summary: DeletePlaybook
+      description: DeletePlaybook removes the playbook of a slug.
+      operationId: PlaybookService_DeletePlaybook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.playbook.v1.DeletePlaybookRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.DeletePlaybookResponse'
+  /rpc/openstatus.playbook.v1.PlaybookService/GetPlaybook:
+    get:
+      tags:
+        - PlaybookService
+      summary: GetPlaybook
+      description: GetPlaybook retrieves the playbook of a slug.
+      operationId: PlaybookService_GetPlaybook.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.GetPlaybookRequest'
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.GetPlaybookResponse'
+    post:
+      tags:
+        - PlaybookService
+      summary: GetPlaybook
+      description: GetPlaybook retrieves the playbook of a slug.
+      operationId: PlaybookService_GetPlaybook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.playbook.v1.GetPlaybookRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.GetPlaybookResponse'
+  /rpc/openstatus.playbook.v1.PlaybookService/ListPlaybooks:
+    get:
+      tags:
+        - PlaybookService
+      summary: ListPlaybooks
+      description: ListPlaybooks returns the playbooks the workspace has written, without their text.
+      operationId: PlaybookService_ListPlaybooks.get
+      parameters:
+        - name: message
+          in: query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.ListPlaybooksRequest'
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.ListPlaybooksResponse'
+    post:
+      tags:
+        - PlaybookService
+      summary: ListPlaybooks
+      description: ListPlaybooks returns the playbooks the workspace has written, without their text.
+      operationId: PlaybookService_ListPlaybooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.playbook.v1.ListPlaybooksRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.ListPlaybooksResponse'
+  /rpc/openstatus.playbook.v1.PlaybookService/UpdatePlaybook:
+    post:
+      tags:
+        - PlaybookService
+      summary: UpdatePlaybook
+      description: |-
+        UpdatePlaybook replaces the text and variables of a playbook. A built-in
+         slug is created on its first write; an unknown custom slug is not found.
+      operationId: PlaybookService_UpdatePlaybook
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/openstatus.playbook.v1.UpdatePlaybookRequest'
+        required: true
+      responses:
+        "429":
+          $ref: '#/components/responses/RateLimited'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/openstatus.playbook.v1.UpdatePlaybookResponse'
   /rpc/openstatus.private_location.v1.PrivateLocationService/CreatePrivateLocation:
     post:
       tags:

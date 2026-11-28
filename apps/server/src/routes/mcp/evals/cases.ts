@@ -233,6 +233,19 @@ export const cases: EvalCase[] = [
     expectedTool: "create_component_group",
     requiredArgs: ["pageId", "name"],
   },
+  // Playbooks: read when asked about the team's process, left alone otherwise
+  {
+    id: "select.get_playbook",
+    prompt:
+      "What does our incident response playbook say about when something is critical?",
+    expectedTool: "get_playbook",
+    argEquals: { slug: "incident-response" },
+  },
+  {
+    id: "select.no_playbook_for_monitor_health",
+    prompt: "Is the API monitor healthy?",
+    expectedTool: "list_monitors",
+  },
   {
     id: "prereq.update_maintenance_gets_maintenance_first",
     prompt: "Push maintenance 5 to end at 16:00 UTC today.",

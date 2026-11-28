@@ -74,7 +74,7 @@ function ApprovalCard({
 }) {
   const modifier = useModifierKey();
   const idField = toolBeforeIdField(toolName);
-  const entityId = idField ? integerField(input, idField) : undefined;
+  const entityId = idField ? idFieldValue(input, idField) : undefined;
   const loadsBefore = entityId !== undefined;
   const trpc = useTRPC();
   // Fetched fresh for every card (a revert must not reuse the snapshot taken
@@ -216,16 +216,21 @@ function ChangesTableSkeleton({ fields }: { fields: (string | undefined)[] }) {
 }
 
 /**
- * The entity id from a tool input. The preview query is a GET, so only this
+ * The entity id (an integer, or a slug) from a tool input. The preview query is a GET, so only this
  * goes in its URL, never free-text fields that may carry secrets (monitor
  * headers, bodies).
  */
-function integerField(input: unknown, field: string): number | undefined {
+function idFieldValue(
+  input: unknown,
+  field: string,
+): number | string | undefined {
   if (!input || typeof input !== "object") return undefined;
   const value = (input as Record<string, unknown>)[field];
-  return typeof value === "number" && Number.isInteger(value)
-    ? value
-    : undefined;
+  if (typeof value === "number") {
+    return Number.isInteger(value) ? value : undefined;
+  }
+  // a slug; anything longer is not an id
+  return typeof value === "string" && value.length <= 64 ? value : undefined;
 }
 
 function ToolDisclosure({

@@ -1,0 +1,27 @@
+---
+title: "Playbooks"
+description: "Write down how your team runs incidents, and the agent follows it."
+image: "/assets/changelog/playbooks.png"
+publishedAt: "2026-11-28"
+category: "incidents"
+author: "openstatus"
+---
+
+Every team runs incidents a little differently: what counts as critical, who takes command, how a status update is worded, which sections a postmortem has. Until now the agent could not know any of that, so its drafts followed our defaults instead of your rules.
+
+A playbook is a markdown document that says how your team does something. Four come with a template you can save as is and edit later:
+
+- **Incident response.** Severities, roles, steps, update cadence, escalation.
+- **Status page.** Tone, what to say and what never to say.
+- **Maintenance windows.** How a maintenance window differs from a maintenance on a status page, and when you use which.
+- **Postmortem.** The sections of your postmortems and what goes in each.
+
+For anything else your team does its own way, such as a database failover, create a custom playbook with its own title and description.
+
+The agent reads the relevant playbook when you ask how the team does something, and before it drafts a status report, a maintenance notice or a postmortem. That works in Slack, in the dashboard assistant and over the MCP server. A playbook decides wording, structure, severity and process; it never replaces the approval step.
+
+Write `{{name}}` in the text to add a variable, such as `{{commander}}` or `{{channel}}`, and set its value next to the editor. The rule stays the same when the on-call engineer or the channel changes.
+
+Playbooks live under [**Agents > Playbooks**](https://app.openstatus.dev/agents/playbooks#playbooks) in the dashboard.
+
+Read the [playbooks reference](/docs/reference/playbooks) for the details.

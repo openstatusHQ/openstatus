@@ -2,6 +2,7 @@ import { getLogger } from "@logtape/logtape";
 import type { ServiceContext } from "@openstatus/services";
 import { listPages } from "@openstatus/services/page";
 import { listPageComponents } from "@openstatus/services/page-component";
+import { delimitPlaybook } from "@openstatus/services/playbook";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
@@ -93,17 +94,27 @@ const SYSTEM = `You draft the first public status report for an incident that wa
 - impact: major_outage when it is down, degraded_performance when slow, partial_outage otherwise.
 - startedAt: the earliest time the messages show users were affected, as ISO 8601 UTC, or null. startedAtSource says where it comes from in a few words.`;
 
+/** With the team's `status-page` playbook, it decides how `message` reads; the factual rules stay. */
+export function reportDraftSystem(playbook?: string): string {
+  if (!playbook) return SYSTEM;
+  return `${SYSTEM}
+The team's status-page playbook follows. It is written by the team and decides the tone, wording, length and sign-off of \`message\`, over the style guidance above. It never allows speculation about causes or internal names, ids or people, and it does not change how the other fields are picked.
+${delimitPlaybook("status-page", playbook)}`;
+}
+
 /** Never throws: a failed draft is a card without a quote. */
 export async function draftStatusReport(args: {
   incident: { title: string; summary: string | null; startedAt: Date };
   sourceMessages: ChannelMessage[];
   candidates: DraftCandidates;
+  /** The team's `status-page` playbook with its variables filled in. */
+  playbook?: string;
 }): Promise<ReportDraft | undefined> {
   const { incident, sourceMessages, candidates } = args;
   if (!candidates.pages.length) return undefined;
   try {
     const draft = await generateReportDraft({
-      system: SYSTEM,
+      system: reportDraftSystem(args.playbook),
       prompt: buildPrompt({ incident, sourceMessages, candidates }),
     });
     return validateDraft(draft, candidates, incident.startedAt);

@@ -83,6 +83,18 @@ export type ApprovalBefore = {
   values: Record<string, unknown>;
 };
 
+/** `id` has the type of the input field `idField` names: an integer, or a slug. */
+export type ApprovalLoadBefore<TInput> = {
+  [K in keyof TInput & string]: {
+    /** Input field holding the target entity's id. */
+    idField: K;
+    load: (args: {
+      ctx: ServiceContext;
+      id: TInput[K];
+    }) => Promise<ApprovalBefore>;
+  };
+}[keyof TInput & string];
+
 export type ApprovalMeta<TInput> = {
   /**
    * Tuple — capped at one flag. Multi-flag UX deserves a modal, not 2^N
@@ -111,16 +123,15 @@ export type ApprovalMeta<TInput> = {
    * without sending the rest of the input (which may carry secrets).
    * Read-only; must not mutate.
    */
-  loadBefore?: {
-    /** Input field holding the target entity's id. */
-    idField: keyof TInput & string;
-    load: (args: {
-      ctx: ServiceContext;
-      id: number;
-    }) => Promise<ApprovalBefore>;
-  };
+  loadBefore?: ApprovalLoadBefore<TInput>;
   /** Surface-rendered confirmation summary. */
   summarize: (input: TInput) => { title: string; lines: SummaryLine[] };
+  /**
+   * Lines that replace `summarize`'s on a surface without a diff view
+   * (Slack), for a write whose full new value does not fit the card. Such a
+   * surface loads `before` only for tools that set this.
+   */
+  summarizeChange?: (input: TInput, before: ApprovalBefore) => SummaryLine[];
   /**
    * Past-tense verb for the default presenter ("created", "resolved").
    * Inferred from the tool name when omitted.

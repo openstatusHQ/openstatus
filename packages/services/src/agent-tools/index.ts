@@ -53,6 +53,12 @@ import {
   createComponentGroupTool,
   updateComponentGroupTool,
 } from "./page-component-group";
+import {
+  createPlaybookTool,
+  getPlaybookTool,
+  listPlaybooksTool,
+  updatePlaybookTool,
+} from "./playbook";
 import { listPrivateLocationsTool } from "./private-location";
 import {
   addStatusReportUpdateTool,
@@ -116,6 +122,12 @@ export {
   createComponentGroupTool,
   updateComponentGroupTool,
 } from "./page-component-group";
+export {
+  createPlaybookTool,
+  getPlaybookTool,
+  listPlaybooksTool,
+  updatePlaybookTool,
+} from "./playbook";
 export { listPrivateLocationsTool } from "./private-location";
 export { getWorkspaceTool } from "./workspace";
 export {
@@ -190,6 +202,10 @@ export const agentTools = {
   add_maintenance_update: addMaintenanceUpdateTool,
   update_maintenance_update: updateMaintenanceUpdateTool,
   delete_maintenance_update: deleteMaintenanceUpdateTool,
+  list_playbooks: listPlaybooksTool,
+  get_playbook: getPlaybookTool,
+  create_playbook: createPlaybookTool,
+  update_playbook: updatePlaybookTool,
   list_monitors: listMonitorsTool,
   create_monitor: createMonitorTool,
   update_monitor: updateMonitorTool,
@@ -252,10 +268,20 @@ export type AgentToolOutput<N extends AgentToolName> = z.infer<
   (typeof agentTools)[N]["outputSchema"]
 >;
 
+// safe because every tool's inputSchema is a z.object; a tool without `shape` yields undefined
+function inputFieldSchema(
+  tool: AnyAgentTool,
+  field: string,
+): z.ZodType | undefined {
+  return (tool.inputSchema as { shape?: Record<string, z.ZodType> }).shape?.[
+    field
+  ];
+}
+
 export const LoadApprovalBeforeInput = z.object({
   toolName: z.string(),
-  /** The pending call's integer input fields; the tool's `idField` is one. */
-  ids: z.record(z.string(), z.number().int()),
+  /** The pending call's id input fields (integer or slug); the tool's `idField` is one. */
+  ids: z.record(z.string(), z.union([z.number().int(), z.string().max(64)])),
 });
 export type LoadApprovalBeforeInput = z.infer<typeof LoadApprovalBeforeInput>;
 
@@ -279,10 +305,13 @@ export async function loadApprovalBefore(args: {
   if (!tool || !loadBefore || !isAgentToolAvailable(tool, ctx.workspace)) {
     return null;
   }
-  const id = ids[loadBefore.idField];
-  if (id === undefined) return null;
+  // an id of the wrong type (a slug for an integer id) reads as no snapshot
+  const id = inputFieldSchema(tool, loadBefore.idField)?.safeParse(
+    ids[loadBefore.idField],
+  );
+  if (!id?.success || id.data === undefined) return null;
   try {
-    return await loadBefore.load({ ctx, id });
+    return await loadBefore.load({ ctx, id: id.data });
   } catch (err) {
     if (err instanceof NotFoundError || err instanceof ForbiddenError) {
       return null;

@@ -14,6 +14,7 @@ const PAGE = "openstatus.status_page.v1.StatusPageService";
 const REPORT = "openstatus.status_report.v1.StatusReportService";
 const INCIDENT = "openstatus.incident.v1.IncidentService";
 const MAINTENANCE = "openstatus.maintenance.v1.MaintenanceService";
+const PLAYBOOK = "openstatus.playbook.v1.PlaybookService";
 const NOTIFICATION = "openstatus.notification.v1.NotificationService";
 const PRIVATE_LOCATION =
   "openstatus.private_location.v1.PrivateLocationService";
@@ -89,6 +90,12 @@ describe("requiredScopeFor", () => {
     );
     expect(requiredScopeFor(MAINTENANCE, { name: "CreateMaintenance" })).toBe(
       "incidents:write",
+    );
+    expect(requiredScopeFor(PLAYBOOK, { name: "UpdatePlaybook" })).toBe(
+      "incidents:write",
+    );
+    expect(requiredScopeFor(PLAYBOOK, { name: "ListPlaybooks" })).toBe(
+      "incidents:read",
     );
     expect(requiredScopeFor(NOTIFICATION, { name: "CreateNotification" })).toBe(
       "notifications:write",
@@ -220,6 +227,7 @@ describe("scopeInterceptor", () => {
       [REPORT, "CreateStatusReport"],
       [INCIDENT, "DeclareIncident"],
       [MAINTENANCE, "ListMaintenances"],
+      [PLAYBOOK, "UpdatePlaybook"],
     ] as const) {
       const { result } = await run(service, method, {
         scopes: ["incidents:write"],

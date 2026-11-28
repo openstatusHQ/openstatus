@@ -134,6 +134,7 @@ const BEFORE_ID_FIELDS: Record<string, string> = {
   update_maintenance: "maintenanceId",
   update_maintenance_update: "id",
   update_incident: "id",
+  update_playbook: "slug",
 };
 
 describe("toolBeforeIdField", () => {

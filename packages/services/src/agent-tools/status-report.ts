@@ -31,6 +31,7 @@ import {
 } from "../status-report/schemas";
 import { formatComponentImpacts } from "../status-report/utils";
 import { beforeSnapshot } from "./approval-before";
+import { playbookHint } from "./playbook-hint";
 import type { AgentTool, SummaryLine } from "./types";
 
 // Agent surfaces send only the impacts that CHANGED (see system prompt). Carry
@@ -337,7 +338,8 @@ export const createStatusReportTool: AgentTool<
 > = {
   name: "create_status_report",
   description:
-    "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page.",
+    "Create a new status report on a public status page. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report persists even if the notify dispatch fails; `notified` reports the actual outcome. pageId MUST come from list_status_pages — never guess. pageComponentIds (if supplied) MUST come from list_page_components({ pageId }) and belong to the same page." +
+    playbookHint("status-page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: CreateStatusReportInputShape,
@@ -472,7 +474,8 @@ export const addStatusReportUpdateTool: AgentTool<
 > = {
   name: "add_status_report_update",
   description:
-    "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Sets the report's status to the new value (use resolve_status_report instead if the new status would be 'resolved'). Subscriber notifications dispatch as part of this call only — no retroactive notify. The update persists even if the notify dispatch fails; `notified` reports the actual outcome.",
+    "Append a new public update to an existing status report. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Sets the report's status to the new value (use resolve_status_report instead if the new status would be 'resolved'). Subscriber notifications dispatch as part of this call only — no retroactive notify. The update persists even if the notify dispatch fails; `notified` reports the actual outcome." +
+    playbookHint("status-page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: AddStatusReportUpdateInputShape,
@@ -699,7 +702,8 @@ export const resolveStatusReportTool: AgentTool<
 > = {
   name: "resolve_status_report",
   description:
-    "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report flips to resolved even if the notify dispatch fails; `notified` reports the actual outcome.",
+    "Resolve an active status report. Appends a final public update with the supplied message and flips status to 'resolved'. PUBLIC, AUDIT-LOGGED, AND POTENTIALLY NOTIFIES SUBSCRIBERS — irreversible side effects. Subscriber notifications dispatch as part of this call only — no retroactive notify. The report flips to resolved even if the notify dispatch fails; `notified` reports the actual outcome." +
+    playbookHint("status-page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: ResolveStatusReportInputShape,
@@ -786,7 +790,8 @@ export const updateStatusReportUpdateTool: AgentTool<
 > = {
   name: "update_status_report_update",
   description:
-    "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status, including to 'resolved'. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result.",
+    "Edit an existing status report timeline entry (message, date, status, component impacts). PUBLIC and AUDIT-LOGGED. Does not notify subscribers. Editing the latest entry's status re-derives the report's status, including to 'resolved'. The update id MUST come from list_status_reports (`updates[].id`; `latestUpdate.id` is the newest) or a prior create/add result." +
+    playbookHint("status-page"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: UpdateStatusReportUpdateInputShape,

@@ -62,6 +62,7 @@ import {
 import { updateMaintenanceChanges } from "./update-maintenance";
 import { updateMonitorChanges } from "./update-monitor";
 import { updatePageComponentChanges } from "./update-page-component";
+import { updatePlaybookChanges } from "./update-playbook";
 import { updateStatusPageChanges } from "./update-status-page";
 import { updateStatusReportChanges } from "./update-status-report";
 
@@ -447,6 +448,30 @@ export const toolRenderers: ToolRendererRegistry = {
       <ChangesTable changes={getAuditLogChanges(output)} />
     ),
     summary: (o) => `${o.action} · #${o.id}`,
+  },
+  list_playbooks: {
+    summary: (o) => itemsCountSummary(o.playbooks),
+  },
+  get_playbook: {
+    summary: (o) => `read ${o.slug}`,
+  },
+  create_playbook: {
+    renderDraft: (input) => [
+      { field: "slug", after: input.slug },
+      { field: "title", after: input.title },
+      { field: "description", after: input.description },
+      { field: "content", after: input.content },
+      ...Object.entries(input.variables ?? {}).map(([name, value]) => ({
+        field: name,
+        after: value,
+      })),
+    ],
+    summary: (o) => `created ${o.slug}`,
+  },
+  update_playbook: {
+    beforeIdField: "slug",
+    renderDraft: updatePlaybookChanges,
+    summary: (o) => `${o.created ? "created" : "updated"} ${o.slug}`,
   },
   search_docs: {
     renderResult: ({ output }) => <ResultTable {...searchDocsTable(output)} />,

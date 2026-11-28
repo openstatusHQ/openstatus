@@ -57,7 +57,7 @@ Both credentials carry a list of scopes. A scope is a resource group plus `:read
 |---|---|
 | `monitors` | monitors, tags, private locations, monitor incidents, on-demand checks, linking notification channels |
 | `pages` | status pages, components, component groups, provider import (which also needs `monitors:write` and `incidents:write`) |
-| `incidents` | status reports and their updates, managed incidents, postmortems, maintenance |
+| `incidents` | status reports and their updates, managed incidents, postmortems, maintenance, playbooks |
 | `notifications` | notification channels |
 | `subscribers` | `:read` lists subscribers, `:write` subscribes, imports and unsubscribes |
 
@@ -76,7 +76,7 @@ The server only advertises tools the credential can call. Read only sees `list_*
 
 ## Tools
 
-The server exposes 51 tools (49 on plans without the `audit-log` feature), grouped by resource: 46 scoped to the workspace tied to your credential, 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)), and `submit_feedback` (see [Feedback](#feedback)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
+The server exposes 55 tools (53 on plans without the `audit-log` feature), grouped by resource: 50 scoped to the workspace tied to your credential, 4 public content tools that read openstatus.dev pages on any credential and any scope (see [Content](#content)), and `submit_feedback` (see [Feedback](#feedback)). The **Scope** column is what the credential needs; `<group>:write` also covers that group's read tools. Mutations write to the audit log with `actor_type = "mcp"` (see [Audit log](#audit-log)), and a credential may create about 30 resources per hour.
 
 ### Pages
 
@@ -132,6 +132,19 @@ These tools act on declared incidents, not on monitor downtime, and are internal
 | `get_postmortem`      | `incidents:read` | Read the incident's postmortem (markdown), if one was drafted. |
 | `draft_postmortem`    | `incidents:write` | Save a postmortem draft for a resolved incident. Replaces an existing draft; an approved postmortem can't be redrafted. |
 | `approve_postmortem`  | `incidents:write` | Approve the draft and, by default, close the incident. Only an owner, an admin or the incident's commander can approve. |
+
+### Playbooks
+
+The team's own rules for incidents, status page updates, maintenance and postmortems. See the [Playbooks reference](/docs/reference/playbooks).
+
+| Tool              | Scope | Purpose |
+|-------------------|----------|---------|
+| `list_playbooks`  | `incidents:read` | Which playbooks the workspace has written (the built-in `incident-response`, `status-page`, `maintenance-windows`, `postmortem` and any custom ones), each with `slug`, `title`, `description` and `updatedAt`. Never returns their text. |
+| `get_playbook`    | `incidents:read` | One playbook's text by `slug`, with its variables filled in. With `forEdit: true` it also returns `source` (the text as written, which is what an edit starts from) and, when the text uses `{{name}}` variables, `variables` (the values set). Fails with `NOT_FOUND` when the workspace has no playbook for that slug. |
+| `create_playbook` | `incidents:write` | Create a custom playbook: a new `slug`, `title`, `description`, the `content` in markdown and optional `variables`. Fails when the slug is taken or is one of the built-in ones. |
+| `update_playbook` | `incidents:write` | Write an existing playbook, or a built-in one for the first time: `slug`, the complete `content` in markdown (it replaces the whole text) and optional `variables`, `title` and `description`. `variables` replaces the stored values: one left out is unset. Fails for a custom slug that does not exist. |
+
+There is no delete tool: a playbook is deleted in the dashboard. The server instructions tell the model to read the relevant playbook before it drafts a status report, a maintenance notice or a postmortem, and the description of each of those tools says the same.
 
 ### Monitors
 

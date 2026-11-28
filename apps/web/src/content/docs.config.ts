@@ -273,6 +273,7 @@ export const docsNav: DocsNavSection[] = [
         slug: "reference/incident-management",
         label: "Incident Management Reference",
       },
+      { slug: "reference/playbooks", label: "Playbooks Reference" },
       { slug: "reference/location", label: "Location Reference" },
       {
         slug: "reference/private-location",

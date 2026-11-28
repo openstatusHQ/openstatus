@@ -297,6 +297,8 @@ export async function buildConfirmationBlocks(args: {
   actionId: string;
   tool: AnyAgentTool;
   input: unknown;
+  /** Replace the summary's lines; see `ApprovalMeta.summarizeChange`. */
+  changeLines?: SummaryLine[];
   resolvers?: RefResolvers;
 }): Promise<Block[]> {
   const { actionId, tool, input, resolvers } = args;
@@ -311,7 +313,9 @@ export async function buildConfirmationBlocks(args: {
   const report = await resolveReport(input, resolvers);
   const lines = [
     report ? `*Report:* ${escapeText(report.title)}` : null,
-    ...(await Promise.all(summary.lines.map((l) => renderLine(l, resolvers)))),
+    ...(await Promise.all(
+      (args.changeLines ?? summary.lines).map((l) => renderLine(l, resolvers)),
+    )),
   ]
     .filter((l) => l !== null)
     .join("\n");

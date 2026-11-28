@@ -21,7 +21,7 @@ audit row: the legacy v1 incident `PUT`.
 ## Shape of a verb
 
 - **One file per verb** under `packages/services/src/<entity>/` (`create.ts`,
-  `update.ts`, `remove.ts`), re-exported from that entity's `index.ts`. Callers
+  `update.ts`, `delete.ts`), re-exported from that entity's `index.ts`. Callers
   import from `@openstatus/services/<entity>`.
 - **Signature:** `async function verbEntity(args: { ctx: ServiceContext; input: VerbInput })`.
   `ctx` carries `workspace`, `actor`, and an optional `db`/transaction.
@@ -44,6 +44,10 @@ audit row: the legacy v1 incident `PUT`.
 - **`withTransaction(ctx, async (tx) => …)`** wraps every mutation; it reuses an
   outer transaction if one was threaded through `ctx`, otherwise opens one.
   Inside the block, write through `tx` — never `defaultDb`.
+- **One transaction per operation.** A read the write depends on (the row a
+  merge starts from, a limit count) happens inside the same transaction. A
+  caller that reads and then calls a verb, such as an agent tool's `run`, opens
+  the transaction itself and passes `{ ...ctx, db: tx }` to both.
 - **Every read and write filters by `ctx.workspace.id`.** Use the
   `getXInWorkspace` fetch-or-throw helpers in the entity's `internal.ts`.
 - **Throw `ServiceError` subclasses** from `./errors`. Routers convert them with
@@ -90,7 +94,7 @@ must carry a reason.
 Verbs require a group scope, `<group>:read` or `<group>:write`, where the
 group is one of `monitors` (monitor, monitor-tag, private-location,
 monitor-incident, frozen-uptime, maintenance-window), `pages` (page, page-component,
-page-component-group, import), `incidents` (status-report, incident,
+page-component-group, import), `incidents` (status-report, incident, playbook,
 maintenance), `notifications` and `subscribers` (page-subscriber). Workspace,
 billing, members, invitations, API keys, OAuth, SSO and integrations require
 `admin`, which only the internal `*` token satisfies. "Write" means any DB

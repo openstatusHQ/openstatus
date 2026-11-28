@@ -9,6 +9,7 @@ import {
 import type { DB, ServiceContext } from "../../context";
 import { ConflictError, ForbiddenError } from "../../errors";
 import { SLACK_BOT_SCOPES } from "../../integration/slack-scopes";
+import { updatePlaybook } from "../../playbook/update";
 import type { Workspace } from "../../types";
 import {
   bindIncidentSlackChannel,
@@ -19,6 +20,7 @@ import {
   setIncidentStatus,
   type SlackHistoryClient,
 } from "../index";
+import { postmortemSystem } from "../postmortem-draft";
 
 let workspace: Workspace;
 let freeWorkspace: Workspace;
@@ -318,6 +320,58 @@ describe("generatePostmortemDraft", () => {
       });
       expect(draft.sourceTranscript).toBeNull();
       expect(draft.content).toContain("had no Slack channel");
+    });
+  });
+
+  test("the team's postmortem playbook replaces the default sections", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...makeUserCtx(workspace, { userId }), db: tx };
+      const row = await resolvedIncident(tx, ctx, false);
+      await updatePlaybook({
+        ctx,
+        input: {
+          slug: "postmortem",
+          content: "## What broke\n## Customer impact",
+        },
+      });
+      const systems: string[] = [];
+      const draft = await generatePostmortemDraft({
+        ctx,
+        incidentId: row.id,
+        generate: async ({ system }) => {
+          systems.push(system);
+          return "## What broke";
+        },
+      });
+      expect(systems[0]).toContain("## What broke\n## Customer impact");
+      expect(systems[0]).not.toContain("## What went well");
+      expect(systems[0]).toContain("Never mention internal IDs");
+      expect(systems[0]).toContain("No preamble");
+      expect(draft.content).toContain("Follows the team's postmortem playbook");
+    });
+  });
+
+  test("without a playbook the system prompt is the default one", async () => {
+    await withTestTransaction(async (tx) => {
+      const ctx = { ...makeUserCtx(workspace, { userId }), db: tx };
+      const row = await resolvedIncident(tx, ctx, false);
+      const systems: string[] = [];
+      const draft = await generatePostmortemDraft({
+        ctx,
+        incidentId: row.id,
+        generate: async ({ system }) => {
+          systems.push(system);
+          return "## Summary";
+        },
+      });
+      expect(systems[0]).toBe(postmortemSystem());
+      expect(systems[0]).toContain(
+        "blameless incident postmortems for an engineering team.\nWrite GitHub-flavored markdown with exactly these sections, in order:\n## Summary\n",
+      );
+      expect(systems[0]).toContain(
+        "## Action items\nUse only the facts given.",
+      );
+      expect(draft.content).not.toContain("playbook");
     });
   });
 

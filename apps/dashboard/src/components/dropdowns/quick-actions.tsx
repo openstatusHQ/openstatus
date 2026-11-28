@@ -97,8 +97,11 @@ export function QuickActions({
     setValue("");
   };
 
+  // "delete" entries are rendered by deleteAction, never as a plain item
+  const items = actions?.filter((item) => item.id !== "delete") ?? [];
+
   // nothing to offer: no trigger, but keep its footprint so row columns stay aligned
-  if (!actions?.some((item) => item.id !== "delete") && !deleteAction) {
+  if (!items.length && !deleteAction) {
     return children ? null : (
       <span aria-hidden className={cn("block size-7 shrink-0", className)} />
     );
@@ -124,27 +127,24 @@ export function QuickActions({
           <DropdownMenuLabel className="sr-only">
             Quick Actions
           </DropdownMenuLabel>
-          {actions
-            ?.filter((item) => item.id !== "delete")
-            .map((item) => (
-              <DropdownMenuGroup key={item.id}>
-                <DropdownMenuItem
-                  variant={item.variant}
-                  disabled={!item.onClick}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    item.onClick?.();
-                  }}
-                >
-                  <item.icon className="text-muted-foreground" />
-                  <span className="truncate">{item.label}</span>
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-            ))}
+          {items.map((item) => (
+            <DropdownMenuGroup key={item.id}>
+              <DropdownMenuItem
+                variant={item.variant}
+                disabled={!item.onClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  item.onClick?.();
+                }}
+              >
+                <item.icon className="text-muted-foreground" />
+                <span className="truncate">{item.label}</span>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          ))}
           {deleteAction && (
             <>
-              {/* NOTE: add a separator only if actions exist */}
-              {actions?.length ? <DropdownMenuSeparator /> : null}
+              {items.length ? <DropdownMenuSeparator /> : null}
               <AlertDialogTrigger asChild>
                 <DropdownMenuItem variant="destructive">
                   <Delete className="text-muted-foreground" />

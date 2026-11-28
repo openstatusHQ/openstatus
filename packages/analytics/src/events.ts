@@ -228,6 +228,18 @@ export const Events = {
     name: "incident_removed",
     channel: "incident_management",
   },
+  CreatePlaybook: {
+    name: "playbook_created",
+    channel: "playbook",
+  },
+  UpdatePlaybook: {
+    name: "playbook_updated",
+    channel: "playbook",
+  },
+  DeletePlaybook: {
+    name: "playbook_deleted",
+    channel: "playbook",
+  },
   InviteUser: {
     name: "user_invited",
     channel: "team",

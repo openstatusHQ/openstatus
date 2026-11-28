@@ -1,4 +1,10 @@
 import type { RouterOutputs } from "@openstatus/api";
+import {
+  builtinPlaybookSlugs,
+  isBuiltinPlaybookSlug,
+  playbookDefaultDescription,
+  playbookDefaultTitle,
+} from "@openstatus/db/src/schema/playbooks/constants";
 
 import type { CommandMenuGroup } from "../types";
 
@@ -8,6 +14,7 @@ type StatusReport = RouterOutputs["statusReport"]["list"][number];
 type Maintenance = RouterOutputs["maintenance"]["list"][number];
 type Workspace = RouterOutputs["workspace"]["list"][number];
 type Incident = RouterOutputs["incident"]["list"][number];
+type Playbook = RouterOutputs["playbook"]["list"][number];
 
 export function incidentsGroup(
   incidents: Incident[] | undefined,
@@ -111,6 +118,34 @@ export function maintenancesGroup(
         href: `/status-pages/${m.pageId}/maintenances`,
       },
     })),
+  };
+}
+
+export function playbooksGroup(
+  playbooks: Playbook[] | undefined,
+): CommandMenuGroup | null {
+  if (!playbooks) return null;
+  const custom = playbooks.filter((p) => !isBuiltinPlaybookSlug(p.slug));
+  // built-in slugs always have a page, written or not
+  const slugs = [...builtinPlaybookSlugs, ...custom.map((p) => p.slug)];
+  return {
+    heading: "Playbooks",
+    idleLimit: 5,
+    items: slugs.map((slug) => {
+      const playbook = playbooks.find((p) => p.slug === slug);
+      const title = playbook?.title ?? playbookDefaultTitle(slug);
+      return {
+        value: `playbook-${slug}`,
+        label: title,
+        description: playbook ? slug : `${slug} · empty`,
+        keywords: [
+          title,
+          slug,
+          playbook?.description ?? playbookDefaultDescription(slug),
+        ].filter(Boolean),
+        action: { type: "navigate", href: `/agents/playbooks/${slug}` },
+      };
+    }),
   };
 }
 

@@ -12,6 +12,7 @@ import { registerMaintenanceTools } from "./tools/maintenance";
 import { registerMonitorTools } from "./tools/monitor";
 import { registerNotificationTools } from "./tools/notification";
 import { registerPageTools } from "./tools/page";
+import { registerPlaybookTools } from "./tools/playbook";
 import { registerPrivateLocationTools } from "./tools/private-location";
 import { registerStatusReportTools } from "./tools/status-report";
 import { registerWorkspaceTools } from "./tools/workspace";
@@ -52,6 +53,7 @@ export function createMcpServer(
   registerStatusReportTools(server, ctx);
   registerIncidentTools(server, ctx);
   registerMaintenanceTools(server, ctx);
+  registerPlaybookTools(server, ctx);
   registerMonitorTools(server, ctx);
   registerNotificationTools(server, ctx);
   registerPrivateLocationTools(server, ctx);

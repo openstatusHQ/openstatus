@@ -57,6 +57,7 @@ export const FOLDER_GROUP = {
   "status-report": "incidents",
   incident: "incidents",
   maintenance: "incidents",
+  playbook: "incidents",
   notification: "notifications",
   "page-subscriber": "subscribers",
 };

@@ -1,4 +1,4 @@
-import type { IconProps, IconType } from "@openstatus/icons";
+import { BookOpen, type IconProps, type IconType } from "@openstatus/icons";
 import { ModelContextProtocolIcon, SlackIcon } from "@openstatus/icons/brand";
 
 // brand icons take no `size` prop; map it to width/height so NavTabs/breadcrumb render them at 16px
@@ -28,5 +28,11 @@ export const AGENT_TABS: {
     label: "MCP Server",
     icon: withSize(ModelContextProtocolIcon),
     docs: "https://www.openstatus.dev/docs/reference/mcp-server",
+  },
+  {
+    value: "playbooks",
+    label: "Playbooks",
+    icon: BookOpen,
+    docs: "https://www.openstatus.dev/docs/reference/playbooks",
   },
 ];

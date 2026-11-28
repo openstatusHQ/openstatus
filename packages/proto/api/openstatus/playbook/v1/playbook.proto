@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package openstatus.playbook.v1;
+
+option go_package = "github.com/openstatushq/openstatus/packages/proto/openstatus/playbook/v1;playbookv1";
+
+// PlaybookSummary is a playbook without its text (used in list responses).
+message PlaybookSummary {
+  // Identifies the playbook. A workspace has at most one playbook per slug.
+  string slug = 1;
+
+  // Name of the playbook.
+  string title = 2;
+
+  // What the playbook covers.
+  string description = 3;
+
+  // Timestamp when the playbook was first written (RFC 3339 format).
+  string created_at = 4;
+
+  // Timestamp when the playbook was last changed (RFC 3339 format).
+  string updated_at = 5;
+}
+
+// Playbook is the team's written rules for one slug.
+message Playbook {
+  // Identifies the playbook. A workspace has at most one playbook per slug.
+  string slug = 1;
+
+  // Name of the playbook.
+  string title = 2;
+
+  // What the playbook covers.
+  string description = 3;
+
+  // The playbook in markdown, as written. {{name}} marks a variable.
+  string content = 4;
+
+  // Values set for the variables in the content, by name.
+  map<string, string> variables = 5;
+
+  // Timestamp when the playbook was first written (RFC 3339 format).
+  string created_at = 6;
+
+  // Timestamp when the playbook was last changed (RFC 3339 format).
+  string updated_at = 7;
+}

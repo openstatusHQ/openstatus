@@ -16,7 +16,7 @@ import { AGENT_TABS } from "./constants";
 
 export function NavActions() {
   const pathname = usePathname();
-  const segment = pathname.split("/").pop() ?? "";
+  const segment = pathname.split("/")[2] ?? "";
   const currentTab = AGENT_TABS.find((tab) => tab.value === segment);
   const docs = currentTab?.docs ?? "https://www.openstatus.dev/docs";
 

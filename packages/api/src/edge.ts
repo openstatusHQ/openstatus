@@ -18,6 +18,7 @@ import { oauthRouter } from "./router/oauth";
 import { pageRouter } from "./router/page";
 import { pageComponentRouter } from "./router/pageComponent";
 import { pageSubscriberRouter } from "./router/pageSubscriber";
+import { playbookRouter } from "./router/playbook";
 import { privateLocationRouter } from "./router/privateLocation";
 import { statusPageRouter } from "./router/statusPage";
 import { statusReportRouter } from "./router/statusReport";
@@ -46,6 +47,7 @@ export const edgeRouter = createTRPCRouter({
   monitorTag: monitorTagRouter,
   maintenance: maintenanceRouter,
   maintenanceWindow: maintenanceWindowRouter,
+  playbook: playbookRouter,
   member: memberRouter,
   checker: checkerRouter,
   feedback: feedbackRouter,

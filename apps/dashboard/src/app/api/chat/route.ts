@@ -12,6 +12,7 @@ import {
   getChatSession,
   setChatSessionMessages,
 } from "@openstatus/services/chat-session";
+import { loadPlaybookSection } from "@openstatus/services/playbook";
 import {
   type UIMessage,
   convertToModelMessages,
@@ -148,12 +149,19 @@ export async function POST(req: NextRequest) {
     { tools, ignoreIncompleteToolCalls: true },
   );
 
+  // A failed lookup costs the agent its playbooks, never the turn.
+  const playbookSection = await loadPlaybookSection({ ctx }).catch((err) => {
+    console.warn("chat playbook section failed", err);
+    return "";
+  });
+
   const result = streamText({
     model,
     system: buildAgentSystemPrompt({
       workspaceName: ctx.workspace.name ?? "Unknown",
       surface: "dashboard",
       canNotifySubscribers: ctx.workspace.limits["status-subscribers"] === true,
+      appendix: playbookSection || undefined,
     }),
     messages: modelMessages,
     tools,

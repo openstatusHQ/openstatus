@@ -4,6 +4,7 @@ import {
   incidentsGroup,
   maintenancesGroup,
   monitorsGroup,
+  playbooksGroup,
   statusPagesGroup,
   statusReportsGroup,
   workspacesGroup,
@@ -27,6 +28,7 @@ describe("empty input", () => {
     expect(statusReportsGroup(undefined)).toBeNull();
     expect(maintenancesGroup([], new Map())).toBeNull();
     expect(workspacesGroup([], () => {})).toBeNull();
+    expect(playbooksGroup(undefined)).toBeNull();
   });
 });
 
@@ -159,6 +161,39 @@ describe("maintenancesGroup", () => {
       new Map(),
     );
     expect(group?.items[0].keywords).toEqual(["Patch"]);
+  });
+});
+
+describe("playbooksGroup", () => {
+  const group = playbooksGroup(
+    rows<Arg<typeof playbooksGroup>>([
+      { slug: "status-page", title: "Comms", description: "How we write" },
+      { slug: "billing", title: "Billing", description: null },
+    ]),
+  );
+
+  it("lists every built-in, written or not, then custom playbooks", () => {
+    expect(group?.items.map((i) => i.value)).toEqual([
+      "playbook-incident-response",
+      "playbook-status-page",
+      "playbook-maintenance-windows",
+      "playbook-postmortem",
+      "playbook-billing",
+    ]);
+  });
+
+  it("uses the saved title and falls back to the default for empty ones", () => {
+    expect(group?.items[0]).toMatchObject({
+      label: "Incident response",
+      description: "incident-response · empty",
+      action: { type: "navigate", href: "/agents/playbooks/incident-response" },
+    });
+    expect(group?.items[1]).toMatchObject({
+      label: "Comms",
+      description: "status-page",
+      keywords: ["Comms", "status-page", "How we write"],
+    });
+    expect(group?.items[4].keywords).toEqual(["Billing", "billing"]);
   });
 });
 

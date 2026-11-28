@@ -22,6 +22,7 @@ import {
   updateIncident,
 } from "../incident";
 import { beforeSnapshot } from "./approval-before";
+import { playbookHint } from "./playbook-hint";
 import type { AgentTool, SummaryLine } from "./types";
 
 const title = z.string().trim().min(1).max(256);
@@ -205,7 +206,8 @@ export const declareIncidentTool: AgentTool<
 > = {
   name: "declare_incident",
   description:
-    "Declare a managed incident: the team's internal record of an outage, with a timeline and a commander. Internal only — nothing is published; use create_status_report for public communication.",
+    "Declare a managed incident: the team's internal record of an outage, with a timeline and a commander. Internal only — nothing is published; use create_status_report for public communication." +
+    playbookHint("incident-response"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: DeclareIncidentInput,
@@ -482,7 +484,8 @@ export const draftPostmortemTool: AgentTool<
 > = {
   name: "draft_postmortem",
   description:
-    "Save a postmortem draft for a resolved managed incident. Build it from get_incident (timeline, linked status report) and the conversation; never invent facts. Replaces an existing draft; an approved postmortem can't be redrafted.",
+    "Save a postmortem draft for a resolved managed incident. Build it from get_incident (timeline, linked status report) and the conversation; never invent facts. Replaces an existing draft; an approved postmortem can't be redrafted." +
+    playbookHint("postmortem"),
   scope: "incidents:write",
   destructive: true,
   inputSchema: DraftPostmortemToolInput,
